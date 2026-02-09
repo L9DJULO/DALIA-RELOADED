@@ -7,6 +7,7 @@ const SCORE_LABELS = {
   composition: { label: 'Composition', icon: '📐', tip: 'Équilibre AD/AP, tank, CC, engage' },
   mastery:     { label: 'Maîtrise',    icon: '⭐', tip: 'Votre tier personnel sur ce champion' },
   draft_risk:  { label: 'Risque draft',icon: '🎲', tip: "Sécurité du pick (counter dispo, blind pick…)" },
+  ml_prediction: { label: 'IA Draft', icon: '🧠', tip: 'Prédiction du modèle ML entraîné sur 15K+ games D2+' },
 };
 
 function barGradient(val) {
@@ -33,7 +34,8 @@ export default function ScoreBreakdown({ breakdown }) {
       </div>
       <div className="grid grid-cols-2 gap-x-5 gap-y-2">
         {Object.entries(SCORE_LABELS).map(([key, { label, icon, tip }]) => {
-          const val = breakdown[key] ?? 0;
+          const val = breakdown[key];
+          if (val == null) return null;   // hide row if score absent (e.g. ML model not loaded)
           return (
             <div key={key} className="group" title={tip}>
               <div className="flex items-center justify-between mb-0.5">

@@ -120,8 +120,10 @@ export default function RecommendationCard({ rec, rank, champData, isWildcard = 
                 { key: 'matchup', icon: '⚔' },
                 { key: 'composition', icon: '📐' },
                 { key: 'draft_risk', icon: '🎲' },
+                { key: 'ml_prediction', icon: '🧠' },
               ].map(({ key, icon }) => {
-                const v = rec.breakdown?.[key] ?? 50;
+                const v = rec.breakdown?.[key];
+                if (v == null) return null;
                 const c = v >= 65 ? 'text-dalia-green' : v >= 45 ? 'text-dalia-muted' : 'text-dalia-red';
                 return <span key={key} className={`text-[10px] ${c}`} title={key}>{icon}{v.toFixed(0)}</span>;
               })}
