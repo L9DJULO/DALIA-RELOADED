@@ -1,25 +1,35 @@
 #!/usr/bin/env python3
 """Riot API Match Data Collector for DALIA ML.
 
-Collects D2+ ranked matches (last 30 days) for training a draft prediction model.
+Collects D2+ ranked matches for training a draft prediction model.
+Supports PRODUCTION API keys (high rate limits) and multi-region collection.
 
 Usage:
     cd backend
+    # Use API key from .env (recommended):
+    python -m app.ml.collect_matches --target 15000
+
+    # Or pass key explicitly:
     python -m app.ml.collect_matches --api-key RGAPI-xxx --target 15000
+
+    # Multi-region for maximum data diversity:
+    python -m app.ml.collect_matches --regions euw1 na1 kr --target 20000
 
 Flow:
     1. Fetch D2+ player list (D2, D1, Master, GM, Challenger)
-    2. Get PUUID for each player via summoner-v4
+    2. Get PUUID for each player via league entries / summoner-v4
     3. Get ranked match IDs (last 30 days)
     4. Deduplicate match IDs
     5. Fetch match details
     6. Extract team compositions + outcome
     7. Save to JSONL (incremental, resumable)
 
-Rate limiting:
-    Development key: 20 req/s, 100 req/2min.
-    Bottleneck is 100/2min = ~0.83 req/s.
-    ~15K matches ≈ 5-6 hours to collect.
+Rate limiting (Production key):
+    match-v5:       2000 req/10s
+    league-v4:      50 req/10s (entries), 30 req/10s (apex)
+    summoner-v4:    1600 req/1min
+    account-v1:     1000 req/1min
+    → ~15K matches ≈ 15-25 minutes (vs 5-6 hours with dev key)
 """
 from __future__ import annotations
 
@@ -28,6 +38,7 @@ import json
 import logging
 import os
 import random
+import shutil
 import sys
 import time
 from collections import deque
@@ -35,6 +46,13 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
 import httpx
+
+# Load .env if available
+try:
+    from dotenv import load_dotenv
+    load_dotenv(Path(__file__).resolve().parent.parent.parent / ".env")
+except ImportError:
+    pass
 
 logging.basicConfig(
     level=logging.INFO,
@@ -55,17 +73,31 @@ PLATFORM_TO_REGIONAL = {
 ROLE_ORDER = ["TOP", "JUNGLE", "MIDDLE", "BOTTOM", "UTILITY"]
 ROLE_KEYS = ["top", "jg", "mid", "bot", "sup"]
 
+# ── Rate limit presets ───────────────────────────────────────────────────
+RATE_LIMITS = {
+    "dev": {
+        "short_limit": 20, "short_window": 1.0,
+        "long_limit": 100, "long_window": 121.0,
+    },
+    "production": {
+        # Production keys have per-method limits; we use conservative global limits
+        # match-v5 = 2000/10s, league = 50/10s → safe middle ground
+        "short_limit": 45, "short_window": 1.0,
+        "long_limit": 2000, "long_window": 121.0,
+    },
+}
+
 
 # ── Rate limiter ─────────────────────────────────────────────────────────
 class RateLimiter:
-    """Token-bucket rate limiter for Riot API development keys."""
+    """Dual token-bucket rate limiter — adapts to dev or production keys."""
 
-    def __init__(self, short_limit: int = 20, short_window: float = 1.0,
-                 long_limit: int = 100, long_window: float = 121.0):
-        self.short_limit = short_limit
-        self.short_window = short_window
-        self.long_limit = long_limit
-        self.long_window = long_window
+    def __init__(self, key_type: str = "production"):
+        preset = RATE_LIMITS.get(key_type, RATE_LIMITS["production"])
+        self.short_limit = preset["short_limit"]
+        self.short_window = preset["short_window"]
+        self.long_limit = preset["long_limit"]
+        self.long_window = preset["long_window"]
         self._short_times: deque = deque()
         self._long_times: deque = deque()
 
@@ -105,20 +137,26 @@ class RateLimiter:
 class RiotClient:
     """Synchronous Riot API client with rate limiting and retry."""
 
-    def __init__(self, api_key: str, platform: str = "euw1"):
+    def __init__(self, api_key: str, platform: str = "euw1", key_type: str = "production"):
         self.api_key = api_key
         self.platform = platform.lower()
         self.regional = PLATFORM_TO_REGIONAL.get(self.platform, "europe")
-        self.limiter = RateLimiter()
+        self.limiter = RateLimiter(key_type)
         self._client = httpx.Client(
             timeout=30.0,
             headers={"X-Riot-Token": api_key},
             follow_redirects=True,
         )
         self._request_count = 0
+        self._start_time = time.time()
 
     def close(self):
         self._client.close()
+
+    @property
+    def requests_per_second(self) -> float:
+        elapsed = time.time() - self._start_time
+        return self._request_count / max(elapsed, 1)
 
     def _get(self, base: str, path: str, params: dict = None) -> Any:
         """Make a rate-limited GET request with retry on 429."""
@@ -140,7 +178,7 @@ class RiotClient:
                     return None
                 elif resp.status_code == 403:
                     logger.error("403 Forbidden — API key expired or invalid")
-                    raise SystemExit("API key expired!")
+                    raise SystemExit("API key expired or invalid!")
                 else:
                     logger.warning("HTTP %d for %s (attempt %d)", resp.status_code, path, attempt + 1)
                     time.sleep(2 ** attempt)
@@ -161,15 +199,16 @@ class RiotClient:
         return self._get(self.regional, path, params)
 
     # ── League endpoints ──
-    def get_league_entries(self, tier: str, division: str, page: int = 1) -> List[Dict]:
-        """Get league entries for a tier/division page."""
+    def get_league_entries(self, tier: str, division: str, page: int = 1) -> list[dict]:
+        """Get league entries for a tier/division page.
+        Modern API returns puuid directly in entries."""
         data = self._platform_get(
             f"/lol/league/v4/entries/RANKED_SOLO_5x5/{tier}/{division}",
             {"page": page},
         )
         return data if isinstance(data, list) else []
 
-    def get_apex_league(self, tier: str) -> List[Dict]:
+    def get_apex_league(self, tier: str) -> list[dict]:
         """Get Master/GM/Challenger league entries."""
         endpoint_map = {
             "MASTER": "/lol/league/v4/masterleagues/by-queue/RANKED_SOLO_5x5",
@@ -184,16 +223,8 @@ class RiotClient:
             return data["entries"]
         return []
 
-    # ── Summoner endpoint ──
-    def get_puuid(self, summoner_id: str) -> Optional[str]:
-        """Get PUUID from encrypted summoner ID."""
-        data = self._platform_get(f"/lol/summoner/v4/summoners/{summoner_id}")
-        if data:
-            return data.get("puuid")
-        return None
-
     # ── Match endpoints ──
-    def get_match_ids(self, puuid: str, start_time: int, count: int = 100) -> List[str]:
+    def get_match_ids(self, puuid: str, start_time: int, count: int = 100) -> list[str]:
         """Get ranked match IDs for a player since start_time (epoch seconds)."""
         data = self._regional_get(
             f"/lol/match/v5/matches/by-puuid/{puuid}/ids",
@@ -201,13 +232,13 @@ class RiotClient:
         )
         return data if isinstance(data, list) else []
 
-    def get_match(self, match_id: str) -> Optional[Dict]:
+    def get_match(self, match_id: str) -> Optional[dict]:
         """Get full match details."""
         return self._regional_get(f"/lol/match/v5/matches/{match_id}")
 
 
 # ── Match data extraction ────────────────────────────────────────────────
-def extract_draft(match_data: Dict) -> Optional[Dict]:
+def extract_draft(match_data: dict) -> Optional[dict]:
     """Extract team compositions from Riot match data.
 
     Returns dict with:
@@ -224,14 +255,14 @@ def extract_draft(match_data: Dict) -> Optional[Dict]:
     if duration < 300:
         return None
 
-    # Skip non-5v5
+    # Skip non-5v5 or non-classic
     participants = info.get("participants", [])
     if len(participants) != 10:
         return None
 
     # Separate teams
-    blue_team = {}  # role → champion_id
-    red_team = {}
+    blue_team: dict[str, int] = {}
+    red_team: dict[str, int] = {}
     for p in participants:
         team_id = p.get("teamId", 0)
         role = p.get("teamPosition", "").upper()
@@ -259,7 +290,7 @@ def extract_draft(match_data: Dict) -> Optional[Dict]:
     if blue_win is None:
         return None
 
-    result = {"blue_win": blue_win, "duration": duration}
+    result: dict = {"blue_win": blue_win, "duration": duration}
 
     # Add champion IDs in role order
     for role, key in zip(ROLE_ORDER, ROLE_KEYS):
@@ -288,20 +319,20 @@ class Checkpoint:
         self.matches_file = output_dir / "matches.jsonl"
         self.progress_file = output_dir / "progress.json"
 
-    def load_players(self) -> List[Dict]:
+    def load_players(self) -> list[dict]:
         if self.players_file.exists():
             return json.loads(self.players_file.read_text())
         return []
 
-    def save_players(self, players: List[Dict]):
+    def save_players(self, players: list[dict]):
         self.players_file.write_text(json.dumps(players))
 
-    def load_match_ids(self) -> List[str]:
+    def load_match_ids(self) -> list[str]:
         if self.match_ids_file.exists():
             return json.loads(self.match_ids_file.read_text())
         return []
 
-    def save_match_ids(self, match_ids: List[str]):
+    def save_match_ids(self, match_ids: list[str]):
         self.match_ids_file.write_text(json.dumps(match_ids))
 
     def load_progress(self) -> Set[str]:
@@ -312,7 +343,7 @@ class Checkpoint:
     def save_progress(self, done: Set[str]):
         self.progress_file.write_text(json.dumps(list(done)))
 
-    def append_match(self, draft: Dict):
+    def append_match(self, draft: dict):
         with open(self.matches_file, "a") as f:
             f.write(json.dumps(draft) + "\n")
 
@@ -324,18 +355,20 @@ class Checkpoint:
 
 
 # ── Main collection pipeline ────────────────────────────────────────────
-def collect_players(client: RiotClient, max_players: int = 800) -> List[Dict]:
-    """Collect D2+ player summoner IDs."""
-    logger.info("=== Phase 1: Collecting D2+ player list ===")
+def collect_players(client: RiotClient, max_players: int = 800) -> list[dict]:
+    """Collect D2+ player summoner IDs and PUUIDs."""
+    logger.info("=== Phase 1: Collecting D2+ player list [%s] ===", client.platform)
 
-    entries = []
+    entries: list[dict] = []
 
     # Apex leagues (small, get all)
     for tier in ["CHALLENGER", "GRANDMASTER", "MASTER"]:
         data = client.get_apex_league(tier)
         logger.info("  %s: %d players", tier, len(data))
         for e in data:
-            entries.append({"summonerId": e["summonerId"], "tier": tier})
+            puuid = e.get("puuid")
+            if puuid:
+                entries.append({"puuid": puuid, "tier": tier})
 
     # Diamond I & II (paginated)
     for division in ["I", "II"]:
@@ -345,7 +378,9 @@ def collect_players(client: RiotClient, max_players: int = 800) -> List[Dict]:
             if not data:
                 break
             for e in data:
-                entries.append({"summonerId": e["summonerId"], "tier": f"DIAMOND_{division}"})
+                puuid = e.get("puuid")
+                if puuid:
+                    entries.append({"puuid": puuid, "tier": f"DIAMOND_{division}"})
             logger.info("  DIAMOND %s page %d: %d players", division, page, len(data))
             page += 1
             if len(data) < 205:  # page is full at 205
@@ -360,36 +395,9 @@ def collect_players(client: RiotClient, max_players: int = 800) -> List[Dict]:
     return entries
 
 
-def resolve_puuids(client: RiotClient, players: List[Dict], checkpoint: Checkpoint) -> List[Dict]:
-    """Resolve summoner IDs to PUUIDs."""
-    logger.info("=== Phase 2: Resolving PUUIDs (%d players) ===", len(players))
-
-    resolved = 0
-    for i, p in enumerate(players):
-        if "puuid" in p:
-            resolved += 1
-            continue
-
-        puuid = client.get_puuid(p["summonerId"])
-        if puuid:
-            p["puuid"] = puuid
-            resolved += 1
-        else:
-            p["puuid"] = None
-
-        if (i + 1) % 50 == 0:
-            logger.info("  PUUIDs resolved: %d/%d", resolved, len(players))
-            checkpoint.save_players(players)
-
-    checkpoint.save_players(players)
-    players = [p for p in players if p.get("puuid")]
-    logger.info("Players with PUUIDs: %d", len(players))
-    return players
-
-
-def collect_match_ids(client: RiotClient, players: List[Dict], checkpoint: Checkpoint) -> List[str]:
+def collect_match_ids(client: RiotClient, players: list[dict], checkpoint: Checkpoint) -> list[str]:
     """Get match IDs from player match histories."""
-    logger.info("=== Phase 3: Collecting match IDs ===")
+    logger.info("=== Phase 2: Collecting match IDs ===")
 
     # 30 days ago in epoch seconds
     start_time = int(time.time()) - 30 * 24 * 3600
@@ -405,8 +413,8 @@ def collect_match_ids(client: RiotClient, players: List[Dict], checkpoint: Check
         all_ids.update(ids)
 
         if (i + 1) % 25 == 0:
-            logger.info("  Players scanned: %d/%d — unique matches: %d",
-                        i + 1, len(players), len(all_ids))
+            logger.info("  Players scanned: %d/%d — unique matches: %d (%.1f req/s)",
+                        i + 1, len(players), len(all_ids), client.requests_per_second)
 
     match_list = list(all_ids)
     random.shuffle(match_list)
@@ -417,12 +425,12 @@ def collect_match_ids(client: RiotClient, players: List[Dict], checkpoint: Check
 
 def collect_matches(
     client: RiotClient,
-    match_ids: List[str],
+    match_ids: list[str],
     checkpoint: Checkpoint,
     target: int,
 ) -> int:
     """Fetch match details and extract drafts."""
-    logger.info("=== Phase 4: Fetching match details (target=%d) ===", target)
+    logger.info("=== Phase 3: Fetching match details (target=%d) ===", target)
 
     done = checkpoint.load_progress()
     collected = checkpoint.count_matches()
@@ -457,10 +465,14 @@ def collect_matches(
 
         if collected % 100 == 0:
             checkpoint.save_progress(done)
-            eta_min = (target - collected) * 1.25 / 60  # ~1.25s per request avg
+            rps = client.requests_per_second
+            remaining = target - collected
+            eta_sec = remaining / max(rps, 0.1)
             logger.info(
-                "  Collected: %d/%d  (skipped=%d, errors=%d, API calls=%d, ETA=%.0fmin)",
-                collected, target, skipped, errors, client._request_count, eta_min,
+                "  Collected: %d/%d  (skipped=%d, errors=%d, API calls=%d, "
+                "%.1f req/s, ETA=%.0f min)",
+                collected, target, skipped, errors, client._request_count,
+                rps, eta_sec / 60,
             )
 
     checkpoint.save_progress(done)
@@ -468,13 +480,139 @@ def collect_matches(
     return collected
 
 
+# ── Multi-region pipeline ────────────────────────────────────────────────
+def run_for_region(
+    api_key: str,
+    platform: str,
+    key_type: str,
+    target: int,
+    max_players: int,
+    output_dir: Path,
+) -> int:
+    """Run the full collection pipeline for a single region."""
+    region_dir = output_dir / platform
+    checkpoint = Checkpoint(region_dir)
+    client = RiotClient(api_key, platform, key_type)
+
+    try:
+        # Phase 1: Players
+        players = checkpoint.load_players()
+        if not players:
+            players = collect_players(client, max_players)
+            checkpoint.save_players(players)
+        else:
+            logger.info("Loaded %d players from checkpoint [%s]", len(players), platform)
+
+        # Phase 2: Match IDs (puuid comes directly from league API now)
+        match_ids = checkpoint.load_match_ids()
+        if not match_ids:
+            match_ids = collect_match_ids(client, players, checkpoint)
+        else:
+            logger.info("Loaded %d match IDs from checkpoint [%s]", len(match_ids), platform)
+
+        # Phase 3: Match details
+        current = checkpoint.count_matches()
+        if current < target:
+            collect_matches(client, match_ids, checkpoint, target)
+        else:
+            logger.info("Already have %d matches (target=%d) [%s]", current, target, platform)
+
+        return checkpoint.count_matches()
+
+    except KeyboardInterrupt:
+        logger.info("\nInterrupted! Progress saved — rerun to resume.")
+        return checkpoint.count_matches()
+    except SystemExit as e:
+        logger.error(str(e))
+        return checkpoint.count_matches()
+    finally:
+        client.close()
+
+
+def merge_regions(output_dir: Path, regions: list[str]) -> Path:
+    """Merge match data from multiple regions into a single JSONL file."""
+    merged_path = output_dir / "matches.jsonl"
+    seen_ids: Set[str] = set()
+    total = 0
+
+    # Load existing merged matches if any
+    if merged_path.exists():
+        with open(merged_path) as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                m = json.loads(line)
+                mid = m.get("match_id", "")
+                if mid:
+                    seen_ids.add(mid)
+                    total += 1
+
+    # Append new matches from each region
+    new = 0
+    for region in regions:
+        region_file = output_dir / region / "matches.jsonl"
+        if not region_file.exists():
+            continue
+        with open(region_file) as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                m = json.loads(line)
+                mid = m.get("match_id", "")
+                if mid and mid not in seen_ids:
+                    seen_ids.add(mid)
+                    with open(merged_path, "a") as out:
+                        out.write(line + "\n")
+                    new += 1
+
+    total += new
+    logger.info("Merged: %d total matches (%d new from this run)", total, new)
+    return merged_path
+
+
 # ── CLI ──────────────────────────────────────────────────────────────────
 def main():
-    parser = argparse.ArgumentParser(description="Collect D2+ ranked matches for DALIA ML")
-    parser.add_argument("--api-key", required=True, help="Riot API key (RGAPI-xxx)")
-    parser.add_argument("--platform", default="euw1", help="Platform (euw1, na1, kr, …)")
-    parser.add_argument("--target", type=int, default=15000, help="Target number of matches")
-    parser.add_argument("--max-players", type=int, default=800, help="Max players to scan")
+    parser = argparse.ArgumentParser(
+        description="Collect D2+ ranked matches for DALIA ML training",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # Basic (uses .env API key, EUW only):
+  python -m app.ml.collect_matches --target 10000
+
+  # Multi-region for maximum data:
+  python -m app.ml.collect_matches --regions euw1 na1 kr --target 20000
+
+  # With dev key (slower rate limits):
+  python -m app.ml.collect_matches --api-key RGAPI-xxx --key-type dev --target 5000
+        """,
+    )
+    parser.add_argument(
+        "--api-key",
+        default=os.getenv("RIOT_API_KEY", ""),
+        help="Riot API key (default: from .env RIOT_API_KEY)",
+    )
+    parser.add_argument(
+        "--key-type",
+        choices=["dev", "production"],
+        default="production",
+        help="API key type — affects rate limiting (default: production)",
+    )
+    parser.add_argument(
+        "--regions",
+        nargs="+",
+        default=None,
+        help="Platforms to collect from (e.g., euw1 na1 kr). Default: single region from --platform",
+    )
+    parser.add_argument(
+        "--platform",
+        default=os.getenv("RIOT_PLATFORM", "euw1"),
+        help="Platform for single-region mode (default: from .env or euw1)",
+    )
+    parser.add_argument("--target", type=int, default=15000, help="Target number of matches (total across regions)")
+    parser.add_argument("--max-players", type=int, default=800, help="Max players to scan per region")
     parser.add_argument(
         "--output",
         default=str(Path(__file__).resolve().parent.parent / "data" / "matches"),
@@ -482,49 +620,72 @@ def main():
     )
     args = parser.parse_args()
 
+    if not args.api_key:
+        logger.error("No API key! Set RIOT_API_KEY in backend/.env or use --api-key")
+        sys.exit(1)
+
     output_dir = Path(args.output)
-    checkpoint = Checkpoint(output_dir)
-    client = RiotClient(args.api_key, args.platform)
 
-    try:
-        # Phase 1: Players
-        players = checkpoint.load_players()
-        if not players:
-            players = collect_players(client, args.max_players)
-            checkpoint.save_players(players)
-        else:
-            logger.info("Loaded %d players from checkpoint", len(players))
+    # Determine regions
+    if args.regions:
+        regions = args.regions
+    else:
+        regions = [args.platform]
 
-        # Phase 2: PUUIDs
-        needs_puuid = sum(1 for p in players if "puuid" not in p)
-        if needs_puuid > 0:
-            players = resolve_puuids(client, players, checkpoint)
-        else:
-            players = [p for p in players if p.get("puuid")]
-            logger.info("All %d players already have PUUIDs", len(players))
+    # Split target across regions
+    per_region = args.target // len(regions) + 1
 
-        # Phase 3: Match IDs
-        match_ids = checkpoint.load_match_ids()
-        if not match_ids:
-            match_ids = collect_match_ids(client, players, checkpoint)
-        else:
-            logger.info("Loaded %d match IDs from checkpoint", len(match_ids))
+    logger.info("=" * 55)
+    logger.info("  DALIA Match Collector")
+    logger.info("  Regions: %s", ", ".join(r.upper() for r in regions))
+    logger.info("  Target: %d matches (%d per region)", args.target, per_region)
+    logger.info("  Key type: %s", args.key_type)
+    logger.info("=" * 55)
 
-        # Phase 4: Match details
-        current = checkpoint.count_matches()
-        if current < args.target:
-            collect_matches(client, match_ids, checkpoint, args.target)
-        else:
-            logger.info("Already have %d matches (target=%d)", current, args.target)
+    total = 0
+    for region in regions:
+        logger.info("")
+        logger.info("--- Region: %s ---", region.upper())
+        count = run_for_region(
+            api_key=args.api_key,
+            platform=region,
+            key_type=args.key_type,
+            target=per_region,
+            max_players=args.max_players,
+            output_dir=output_dir,
+        )
+        total += count
 
-    except KeyboardInterrupt:
-        logger.info("\nInterrupted! Progress saved — rerun to resume.")
-    except SystemExit as e:
-        logger.error(str(e))
-    finally:
-        client.close()
+    # Merge if multi-region
+    if len(regions) > 1:
+        logger.info("")
+        logger.info("--- Merging regions ---")
+        merged_path = merge_regions(output_dir, regions)
+        logger.info("Merged file: %s", merged_path)
+    else:
+        # For single region, ensure matches.jsonl exists at root level too
+        region_file = output_dir / regions[0] / "matches.jsonl"
+        merged_file = output_dir / "matches.jsonl"
+        if region_file.exists() and not merged_file.exists():
+            shutil.copy2(region_file, merged_file)
+        elif region_file.exists():
+            merge_regions(output_dir, regions)
 
-    logger.info("Total matches: %d — saved to %s", checkpoint.count_matches(), checkpoint.matches_file)
+    final_count = 0
+    final_path = output_dir / "matches.jsonl"
+    if final_path.exists():
+        with open(final_path) as f:
+            final_count = sum(1 for _ in f)
+
+    logger.info("")
+    logger.info("=" * 55)
+    logger.info("  DONE — %d total matches", final_count)
+    logger.info("  File: %s", final_path)
+    logger.info("=" * 55)
+    logger.info("")
+    logger.info("Next step — train the model:")
+    logger.info("  cd backend")
+    logger.info("  python -m app.ml.train --data %s", final_path)
 
 
 if __name__ == "__main__":

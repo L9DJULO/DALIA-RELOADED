@@ -3,3 +3,12 @@ backend/venv/
 __pycache__/
 *.pyc
 frontend/node_modules/
+
+# Environment / secrets
+.env
+backend/.env
+
+# ML data (too large for git)
+backend/app/data/matches/
+backend/app/data/models/
+*.pt

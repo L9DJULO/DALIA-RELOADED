@@ -188,8 +188,75 @@ class ScoringWeights(BaseModel):
 
 - **Backend** : Python 3.10+, FastAPI, httpx, Pydantic
 - **Frontend** : React 18, Vite, TailwindCSS, Zustand, Lucide icons
-- **Data** : Lolalytics (D2+ stats), Riot Data Dragon (champion data, images)
+- **Data** : Lolalytics (D2+ stats), Riot Data Dragon (champion data, images), Riot API (match history)
+- **ML** : PyTorch (DraftNet — champion embeddings + cross-role matchup interactions)
 - **Cache** : Fichier JSON local avec TTL
+
+---
+
+## 🤖 Module IA / Machine Learning
+
+### Architecture du modèle
+
+**DraftNet** — Réseau de neurones qui apprend à prédire P(victoire blue) à partir de la composition des 10 champions.
+
+| Composant | Description |
+|---|---|
+| **Champion Embeddings** | Chaque champion → vecteur appris de 32 dimensions |
+| **Role Projections** | Projections spécifiques par rôle (Fiora top ≠ Fiora mid) |
+| **Matchup Interactions** | Produit scalaire de chaque paire (blue_role_i, red_role_j) — capture les menaces cross-role |
+| **MLP** | Concat features + interactions → 256 → 128 → 64 → 1 (logit) |
+
+### Pipeline complet
+
+```
+1. Collecte    →  2. Entraînement  →  3. Intégration
+   (Riot API)       (PyTorch)          (DraftEngine)
+```
+
+### Étape 1 — Collecter les données (matches D2+)
+
+```bash
+cd backend
+
+# Collecte basique (EUW, ~15K matches, ~20 min avec clé prod) :
+python -m app.ml.collect_matches --target 15000
+
+# Multi-région pour plus de diversité (recommandé) :
+python -m app.ml.collect_matches --regions euw1 na1 kr --target 20000
+
+# Avec clé de développement (plus lent) :
+python -m app.ml.collect_matches --api-key RGAPI-xxx --key-type dev --target 5000
+```
+
+Le collecteur :
+- Récupère les joueurs D2+ (Challenger → Diamond II)
+- Collecte les match IDs ranked des 30 derniers jours
+- Extrait les compositions (10 champion IDs + résultat)
+- **Résumable** : si interrompu, relancer la même commande reprend là où on s'est arrêté
+- Sauvegarde en `backend/app/data/matches/matches.jsonl`
+
+### Étape 2 — Entraîner le modèle
+
+```bash
+cd backend
+python -m app.ml.train --data app/data/matches/matches.jsonl --epochs 60
+```
+
+Options :
+- `--epochs 60` — nombre d'epochs (défaut: 60)
+- `--batch-size 256` — taille du batch (défaut: 256)
+- `--embed-dim 32` — dimension des embeddings (défaut: 32)
+- `--hidden-dim 256` — taille du MLP caché (défaut: 256)
+
+Résultat : `backend/app/data/models/draft_model.pt`
+
+### Étape 3 — Utilisation automatique
+
+Le `DraftEngine` charge le modèle automatiquement au démarrage si le fichier `.pt` existe.
+Le score ML obtient **20% d'influence** sur le score total (blend avec les sous-scores classiques).
+
+Si le modèle n'est pas encore entraîné, le moteur fonctionne normalement avec les 6 autres sous-scores.
 
 ---
 

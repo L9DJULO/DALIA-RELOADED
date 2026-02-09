@@ -1,6 +1,11 @@
 """DALIA configuration — scoring weights, API URLs, cache settings."""
+import os
 from pathlib import Path
 from pydantic import BaseModel
+from dotenv import load_dotenv
+
+# Load .env from backend/ directory
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -16,6 +21,10 @@ class ScoringWeights(BaseModel):
 
 
 class Config(BaseModel):
+    # ── Riot API ──
+    riot_api_key: str = os.getenv("RIOT_API_KEY", "")
+    riot_platform: str = os.getenv("RIOT_PLATFORM", "euw1")
+
     # ── External data sources ──
     ddragon_url: str = "https://ddragon.leagueoflegends.com"
     lolalytics_base: str = "https://a1.lolalytics.com"
