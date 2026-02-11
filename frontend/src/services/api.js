@@ -39,4 +39,11 @@ export const updatePool = (role, entries, username = 'default') =>
 // ── Patch ─────────────────────────────────────────────
 export const fetchPatch = () => api.get('/patch').then((r) => r.data);
 
+// ── LCU (Live Client) ─────────────────────────────────
+export const fetchLCUStatus = () => api.get('/lcu/status').then((r) => r.data);
+export const connectLCU = () => api.post('/lcu/connect').then((r) => r.data);
+export const startLCUPolling = (interval = 1.0) => 
+  api.post('/lcu/start-polling', null, { params: { interval } }).then((r) => r.data);
+export const stopLCUPolling = () => api.post('/lcu/stop-polling').then((r) => r.data);
+
 export default api;

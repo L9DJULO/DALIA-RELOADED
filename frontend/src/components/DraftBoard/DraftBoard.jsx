@@ -1,22 +1,22 @@
-import React, { useState, useMemo, useCallback } from 'react';
-import { RotateCcw, Zap } from 'lucide-react';
+import React, { useState, useCallback } from 'react';
+import { RotateCcw, Zap, ChevronRight } from 'lucide-react';
 import useDraftStore from '../../stores/draftStore';
 import useUserStore, { ROLES } from '../../stores/userStore';
 import DraftSlot from './DraftSlot';
 import BanSlot from './BanSlot';
 import ChampionSelector from './ChampionSelector';
 import RecommendationPanel from '../Recommendations/RecommendationPanel';
+import LCUStatus from './LCUStatus';
 
 const ROLE_LABELS = { top: 'Top', jungle: 'Jungle', mid: 'Mid', bot: 'Bot', support: 'Support' };
-const TEAM_COLORS = { blue: 'text-dalia-blue', red: 'text-dalia-red' };
 
 export default function DraftBoard({ champions }) {
   const {
-    myTeam, myRole, myPickOrder,
+    myTeam, myRole,
     blueBans, redBans, bluePicks, redPicks,
-    setMyTeam, setMyRole, setMyPickOrder,
+    setMyTeam, setMyRole,
     setBan, setPick, clearPick, resetDraft,
-    recommendations, loading, warnings,
+    loading,
     getRecommendations,
   } = useDraftStore();
 
@@ -24,7 +24,7 @@ export default function DraftBoard({ champions }) {
 
   // Selector state
   const [selectorOpen, setSelectorOpen] = useState(false);
-  const [selectorTarget, setSelectorTarget] = useState(null); // { type: 'ban'|'pick', team, index/role }
+  const [selectorTarget, setSelectorTarget] = useState(null);
 
   const unavailableIds = useDraftStore((s) => s.getAllUnavailableIds());
 
@@ -50,62 +50,62 @@ export default function DraftBoard({ champions }) {
   }, [championPool, weightOverrides, getRecommendations]);
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)]">
+    <div className="flex h-[calc(100vh-4rem)]">
       {/* ── Left: Draft board ── */}
-      <div className="w-[520px] border-r border-white/[0.06] flex flex-col bg-dalia-surface/80 backdrop-blur-sm shrink-0">
+      <div className="w-[540px] border-r border-slate-800 flex flex-col bg-slate-900/50 shrink-0">
         {/* Setup bar */}
-        <div className="p-3 border-b border-white/[0.06] space-y-2">
-          <div className="flex items-center gap-3">
-            <label className="text-xs text-dalia-muted">Équipe :</label>
-            <div className="flex gap-1">
-              {['blue', 'red'].map((t) => (
-                <button
-                  key={t}
-                  onClick={() => setMyTeam(t)}
-                  className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
-                    myTeam === t
-                      ? t === 'blue'
-                        ? 'bg-dalia-blue/20 text-dalia-blue border border-dalia-blue/40'
-                        : 'bg-dalia-red/20 text-dalia-red border border-dalia-red/40'
-                      : 'bg-dalia-card border border-dalia-border text-dalia-muted'
-                  }`}
+        <div className="p-4 border-b border-slate-800">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-4">
+              {/* Team selector */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-500 font-medium">Équipe</span>
+                <div className="flex gap-1 bg-slate-800 rounded-lg p-1">
+                  {['blue', 'red'].map((t) => (
+                    <button
+                      key={t}
+                      onClick={() => setMyTeam(t)}
+                      className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                        myTeam === t
+                          ? t === 'blue'
+                            ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30'
+                            : 'bg-red-500 text-white shadow-lg shadow-red-500/30'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      {t === 'blue' ? 'Blue' : 'Red'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Role selector */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-500 font-medium">Rôle</span>
+                <select
+                  value={myRole}
+                  onChange={(e) => setMyRole(e.target.value)}
+                  className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white font-medium focus:outline-none focus:border-amber-500"
                 >
-                  {t === 'blue' ? 'Blue Side' : 'Red Side'}
-                </button>
-              ))}
+                  {ROLES.map((r) => (
+                    <option key={r} value={r}>{ROLE_LABELS[r]}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
-            <label className="text-xs text-dalia-muted ml-3">Rôle :</label>
-            <select
-              value={myRole}
-              onChange={(e) => setMyRole(e.target.value)}
-              className="bg-dalia-card border border-dalia-border rounded px-2 py-1 text-xs text-dalia-text"
-            >
-              {ROLES.map((r) => (
-                <option key={r} value={r}>{ROLE_LABELS[r]}</option>
-              ))}
-            </select>
-
-            <label className="text-xs text-dalia-muted ml-3">Pick :</label>
-            <select
-              value={myPickOrder}
-              onChange={(e) => setMyPickOrder(Number(e.target.value))}
-              className="bg-dalia-card border border-dalia-border rounded px-2 py-1 text-xs text-dalia-text"
-            >
-              {[1,2,3,4,5].map((n) => (
-                <option key={n} value={n}>{n}e</option>
-              ))}
-            </select>
+            {/* LCU Status */}
+            <LCUStatus />
           </div>
         </div>
 
         {/* Bans */}
-        <div className="p-3 border-b border-white/[0.06]">
-          <div className="text-[10px] uppercase tracking-wider text-dalia-muted mb-2">Bans</div>
-          <div className="flex gap-4 justify-between">
+        <div className="p-4 border-b border-slate-800">
+          <div className="text-xs uppercase tracking-wider text-slate-500 font-medium mb-3">Bans</div>
+          <div className="flex gap-6 justify-between">
             <div className="flex-1">
-              <div className="text-[10px] text-dalia-blue mb-1">Blue</div>
-              <div className="flex gap-1">
+              <div className="text-[10px] text-blue-400 font-medium mb-2">Blue Side</div>
+              <div className="flex gap-1.5">
                 {blueBans.map((ban, i) => (
                   <BanSlot
                     key={`bb${i}`}
@@ -117,8 +117,8 @@ export default function DraftBoard({ champions }) {
               </div>
             </div>
             <div className="flex-1">
-              <div className="text-[10px] text-dalia-red mb-1 text-right">Red</div>
-              <div className="flex gap-1 justify-end">
+              <div className="text-[10px] text-red-400 font-medium mb-2 text-right">Red Side</div>
+              <div className="flex gap-1.5 justify-end">
                 {redBans.map((ban, i) => (
                   <BanSlot
                     key={`rb${i}`}
@@ -133,11 +133,11 @@ export default function DraftBoard({ champions }) {
         </div>
 
         {/* Picks */}
-        <div className="flex-1 p-3 overflow-y-auto">
-          <div className="flex gap-4">
+        <div className="flex-1 p-4 overflow-y-auto">
+          <div className="flex gap-6">
             {/* Blue team picks */}
-            <div className="flex-1 space-y-1.5">
-              <div className="text-[10px] uppercase tracking-wider text-dalia-blue mb-1">Blue Side</div>
+            <div className="flex-1 space-y-2">
+              <div className="text-[10px] uppercase tracking-wider text-blue-400 font-medium mb-2">Blue Side</div>
               {ROLES.map((role) => (
                 <DraftSlot
                   key={`bp-${role}`}
@@ -153,15 +153,17 @@ export default function DraftBoard({ champions }) {
             </div>
 
             {/* VS divider */}
-            <div className="flex flex-col items-center justify-center gap-1">
-              <div className="w-[1px] flex-1 bg-gradient-to-b from-transparent via-dalia-accent/20 to-transparent" />
-              <div className="text-[10px] text-dalia-accent/40 font-bold tracking-widest">VS</div>
-              <div className="w-[1px] flex-1 bg-gradient-to-b from-transparent via-dalia-accent/20 to-transparent" />
+            <div className="flex flex-col items-center justify-center py-4">
+              <div className="w-px flex-1 bg-gradient-to-b from-transparent via-slate-700 to-transparent" />
+              <div className="my-3 w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center">
+                <ChevronRight size={14} className="text-slate-500" />
+              </div>
+              <div className="w-px flex-1 bg-gradient-to-b from-transparent via-slate-700 to-transparent" />
             </div>
 
             {/* Red team picks */}
-            <div className="flex-1 space-y-1.5">
-              <div className="text-[10px] uppercase tracking-wider text-dalia-red mb-1 text-right">Red Side</div>
+            <div className="flex-1 space-y-2">
+              <div className="text-[10px] uppercase tracking-wider text-red-400 font-medium mb-2 text-right">Red Side</div>
               {ROLES.map((role) => (
                 <DraftSlot
                   key={`rp-${role}`}
@@ -179,19 +181,19 @@ export default function DraftBoard({ champions }) {
         </div>
 
         {/* Action buttons */}
-        <div className="p-3 border-t border-white/[0.06] flex gap-2">
+        <div className="p-4 border-t border-slate-800 flex gap-3">
           <button onClick={handleAnalyze} disabled={loading} className="btn-primary flex-1 gap-2">
-            <Zap size={14} />
-            {loading ? 'Analyse…' : 'Analyser le draft'}
+            <Zap size={16} />
+            {loading ? 'Analyse...' : 'Analyser le draft'}
           </button>
-          <button onClick={resetDraft} className="btn-secondary">
-            <RotateCcw size={14} />
+          <button onClick={resetDraft} className="btn-secondary px-3" title="Réinitialiser">
+            <RotateCcw size={16} />
           </button>
         </div>
       </div>
 
       {/* ── Right: Recommendations ── */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto bg-slate-950">
         <RecommendationPanel champions={champions} />
       </div>
 

@@ -93,7 +93,7 @@
   "Nidalee":    {"damage":[20,75,5],  "ratings":[1,2,5,2,2,2,4,3,1], "roles":["jungle"]},
   "Nilah":      {"damage":[85,5,10],  "ratings":[1,2,1,2,4,2,4,5,2], "roles":["bot"]},
   "Nocturne":   {"damage":[80,10,10], "ratings":[2,4,1,4,3,1,4,3,2], "roles":["jungle","top"]},
-  "NunuWillump":{"damage":[15,70,15], "ratings":[3,4,2,1,4,2,2,2,4], "roles":["jungle"]},
+  "Nunu":       {"damage":[15,70,15], "ratings":[3,4,2,1,4,2,2,2,4], "roles":["jungle","mid"]},
   "Olaf":       {"damage":[75,10,15], "ratings":[1,3,1,3,3,1,2,4,4], "roles":["top","jungle"]},
   "Orianna":    {"damage":[10,85,5],  "ratings":[3,3,4,1,5,4,3,3,1], "roles":["mid"]},
   "Ornn":       {"damage":[20,65,15], "ratings":[4,4,2,1,5,4,2,2,5], "roles":["top"]},

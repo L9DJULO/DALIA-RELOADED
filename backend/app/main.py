@@ -7,6 +7,7 @@ from app.api.routes import router
 from app.services.champion_data import ChampionDatabase
 from app.services.data_fetcher import LolalyticsFetcher
 from app.services.draft_engine import DraftEngine
+from app.services.lcu_connector import get_lcu_connector
 
 
 @asynccontextmanager
@@ -18,14 +19,21 @@ async def lifespan(app: FastAPI):
     await champion_db.initialize()
 
     draft_engine = DraftEngine(champion_db, fetcher)
+    
+    # Initialize LCU connector and start polling
+    lcu_connector = get_lcu_connector()
+    await lcu_connector.start_polling(interval=1.0)
 
     app.state.champion_db = champion_db
     app.state.fetcher = fetcher
     app.state.draft_engine = draft_engine
+    app.state.lcu_connector = lcu_connector
 
     yield
 
     # --- Shutdown ---
+    await lcu_connector.stop_polling()
+    await lcu_connector.disconnect()
     await fetcher.close()
 
 

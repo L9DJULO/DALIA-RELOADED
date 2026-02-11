@@ -30,10 +30,15 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen bg-slate-950">
         <div className="text-center">
-          <div className="text-4xl font-display text-dalia-accent mb-4">DALIA</div>
-          <div className="text-dalia-muted animate-pulse">Chargement des champions…</div>
+          <div className="w-12 h-12 mx-auto mb-4 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/30">
+            <svg className="w-6 h-6 text-white animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
+          <div className="text-xl font-bold text-white mb-1">DALIA</div>
+          <div className="text-sm text-slate-500">Chargement des champions...</div>
         </div>
       </div>
     );

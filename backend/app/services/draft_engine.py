@@ -30,6 +30,7 @@ from app.models.draft import (
     DraftResponse,
     DraftState,
     MatchupDetail,
+    MLExplanation,
     PoolEntry,
     Recommendation,
     ScoreBreakdown,
@@ -157,8 +158,10 @@ class DraftEngine:
 
         # ML prediction (optional — only if model is trained and loaded)
         ml_s = 50.0
+        ml_expl = None
         if self.ml is not None:
-            ml_s = self.ml.score(champ.id, role, draft)
+            ml_s, ml_expl_raw = self.ml.score_with_explanation(champ.id, role, draft)
+            ml_expl = MLExplanation(**ml_expl_raw)
 
         # ── 1. Weighted base ──
         base = (
@@ -171,8 +174,11 @@ class DraftEngine:
         )
 
         # Blend ML score if available (replaces part of the base)
+        # Weight adapts to confidence: high=25%, medium=18%, low=10%
+        # Increased weights to give ML more influence on final score
         if self.ml is not None and ml_s != 50.0:
-            ml_weight = 0.20  # ML gets 20% influence
+            conf = ml_expl.confidence if ml_expl else "low"
+            ml_weight = {"high": 0.25, "medium": 0.18, "low": 0.10}.get(conf, 0.10)
             base = base * (1.0 - ml_weight) + ml_s * ml_weight
 
         # ── 2. Multiplicative penalties for critical weaknesses ──
@@ -211,6 +217,7 @@ class DraftEngine:
             mastery=round(mast_s, 1),
             draft_risk=round(risk_s, 1),
             ml_prediction=round(ml_s, 1) if self.ml is not None else None,
+            ml_explanation=ml_expl,
         )
 
         # Details for UI
@@ -317,17 +324,28 @@ class DraftEngine:
         unavailable: set,
         pool_entries: List[PoolEntry],
     ) -> List[Recommendation]:
-        """Find champions NOT in the user's pool with exceptionally high scores."""
+        """Find champions NOT in the user's pool with exceptionally high scores.
+        
+        Only suggests champions that are:
+        1. Meta-viable in the role (meta score >= 45)
+        2. High total score (>= wildcard_min_score)
+        """
         pool_ids = {pe.champion_id for pe in pool_entries}
         all_for_role = self.db.champions_for_role(role)
 
         meta_scores = await self.meta.scores_for_role(role)
+        
+        # Filter: only champions with decent meta score for this role
+        # This prevents off-role suggestions like Nunu top
+        MIN_META_FOR_WILDCARD = 45.0
         candidates = [
             c for c in all_for_role
-            if c.id not in pool_ids and c.id not in unavailable
+            if c.id not in pool_ids 
+            and c.id not in unavailable
+            and meta_scores.get(c.id, 0) >= MIN_META_FOR_WILDCARD
         ]
         candidates.sort(key=lambda c: meta_scores.get(c.id, 0), reverse=True)
-        candidates = candidates[:20]
+        candidates = candidates[:15]
 
         wildcards: List[Recommendation] = []
         best_wildcard: Optional[Recommendation] = None

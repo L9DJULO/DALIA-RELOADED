@@ -1,14 +1,81 @@
-venv/
-backend/venv/
-__pycache__/
-*.pyc
-frontend/node_modules/
+# ═══════════════════════════════════════════════════════════════════════
+# DALIA — .gitignore
+# ═══════════════════════════════════════════════════════════════════════
 
-# Environment / secrets
+# ── Python ──
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+*.egg
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ── Virtual environments ──
+venv/
+.venv/
+ENV/
+env/
+backend/venv/
+
+# ── Environment / Secrets ──
 .env
+.env.local
+.env.*.local
 backend/.env
 
-# ML data (too large for git)
+# ── Node.js ──
+node_modules/
+frontend/node_modules/
+
+# ── Build outputs ──
+dist/
+build/
+frontend/dist/
+*.bundle.js
+
+# ── IDE / Editor ──
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ── Logs ──
+*.log
+nohup.out
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ── ML / Data (too large for git) ──
 backend/app/data/matches/
 backend/app/data/models/
 *.pt
+*.pth
+*.onnx
+*.pkl
+
+# ── Cache (regenerated at runtime) ──
+backend/app/data/cache/
+!backend/app/data/cache/.gitkeep
+
+# ── User data (personal) ──
+backend/app/data/users/
+!backend/app/data/users/.gitkeep
+
+# ── Testing ──
+coverage/
+.coverage
+htmlcov/
+
+# ── Misc ──
+*.bak
+*.tmp
+*.temp

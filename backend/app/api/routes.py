@@ -165,3 +165,80 @@ async def current_patch(request: Request):
     ver = await fetcher.get_ddragon_version()
     patch = await fetcher.get_current_patch()
     return {"version": ver, "patch": patch}
+
+
+# ═════════════════════════════════════════════════════════════════════════
+#  LCU (League Client) LIVE DRAFT
+# ═════════════════════════════════════════════════════════════════════════
+def _get_lcu(request: Request):
+    return request.app.state.lcu_connector
+
+
+@router.get("/lcu/status")
+async def lcu_status(request: Request):
+    """Check LCU connection status and current state."""
+    lcu = _get_lcu(request)
+    db = _get_db(request)
+    state = lcu.state
+    
+    # Convert champion IDs to champion info
+    def resolve_champions(ids: list) -> list:
+        result = []
+        for cid in ids:
+            c = db.get_by_id(cid)
+            if c:
+                result.append({"id": c.id, "key": c.key, "name": c.name})
+            else:
+                result.append({"id": cid, "key": str(cid), "name": f"Unknown ({cid})"})
+        return result
+    
+    def resolve_picks(picks: dict) -> dict:
+        result = {}
+        for role, cid in picks.items():
+            c = db.get_by_id(cid)
+            if c:
+                result[role] = {"id": c.id, "key": c.key, "name": c.name}
+            else:
+                result[role] = {"id": cid, "key": str(cid), "name": f"Unknown ({cid})"}
+        return result
+    
+    return {
+        "connected": state.connected,
+        "in_champ_select": state.in_champ_select,
+        "game_phase": state.game_phase,
+        "my_team": state.my_team,
+        "my_role": state.my_role,
+        "ally_bans": resolve_champions(state.ally_bans),
+        "enemy_bans": resolve_champions(state.enemy_bans),
+        "ally_picks": resolve_picks(state.ally_picks),
+        "enemy_picks": resolve_picks(state.enemy_picks),
+        "current_action_type": state.current_action_type,
+        "is_my_turn": state.is_my_turn,
+        "timer_remaining": state.timer_remaining,
+    }
+
+
+@router.post("/lcu/connect")
+async def lcu_connect(request: Request):
+    """Manually trigger LCU connection."""
+    lcu = _get_lcu(request)
+    connected = await lcu.connect()
+    if connected:
+        return {"status": "connected", "message": "Successfully connected to League Client"}
+    return {"status": "disconnected", "message": "Could not connect. Is League of Legends running?"}
+
+
+@router.post("/lcu/start-polling")
+async def lcu_start_polling(request: Request, interval: float = 1.0):
+    """Start automatic polling of draft state."""
+    lcu = _get_lcu(request)
+    await lcu.start_polling(interval)
+    return {"status": "polling", "interval": interval}
+
+
+@router.post("/lcu/stop-polling")
+async def lcu_stop_polling(request: Request):
+    """Stop automatic polling."""
+    lcu = _get_lcu(request)
+    await lcu.stop_polling()
+    return {"status": "stopped"}

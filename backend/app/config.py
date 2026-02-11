@@ -12,12 +12,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 class ScoringWeights(BaseModel):
     """Weights used by the draft engine to combine sub-scores (must sum to ~1.0)."""
-    meta: float = 0.12
-    matchup: float = 0.40
-    synergy: float = 0.10
-    composition: float = 0.15
-    mastery: float = 0.08
-    draft_risk: float = 0.15
+    meta: float = 0.18          # ↑ increased from 0.12 - meta matters more
+    matchup: float = 0.45       # ↑ increased from 0.40 - matchups are king
+    synergy: float = 0.05       # ↓ decreased from 0.10 - synergy overrated
+    composition: float = 0.12   # slightly reduced
+    mastery: float = 0.08       # unchanged
+    draft_risk: float = 0.07    # ↓ decreased from 0.15 - less weight on blind pick risk
 
 
 class Config(BaseModel):
@@ -33,8 +33,8 @@ class Config(BaseModel):
     cache_dir: str = str(BASE_DIR / "app" / "data" / "cache")
     cache_ttl_hours: int = 6
 
-    # ── Rank / Queue filter (Diamond 2+ Ranked Solo) ──
-    rank_tier: str = "d2_plus"
+    # ── Rank / Queue filter (Master+ Ranked Solo) ──
+    rank_tier: str = "master_plus"
     queue: str = "ranked"
     region: str = "all"
 
@@ -52,8 +52,8 @@ class Config(BaseModel):
     user_data_dir: str = str(BASE_DIR / "app" / "data" / "users")
 
     # ── Wild-card / off-meta suggestion ──
-    wildcard_min_score: float = 50.0  # minimum score to suggest off-pool champ
-    wildcard_max_suggestions: int = 3
+    wildcard_min_score: float = 60.0  # ↑ increased from 50 - stricter to avoid bad suggestions
+    wildcard_max_suggestions: int = 2  # ↓ reduced from 3
 
 
 config = Config()

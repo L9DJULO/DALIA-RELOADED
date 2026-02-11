@@ -1,8 +1,6 @@
 import React from 'react';
 import { Plus, Check } from 'lucide-react';
 
-const DMG_COLORS = { AD: 'text-red-400', AP: 'text-blue-400', Mixed: 'text-purple-400' };
-
 export default function ChampionCard({ champion, inPool, onAdd, compact = false, onClick, selected }) {
   const handleClick = (e) => {
     if (onClick) return onClick(champion);
@@ -13,12 +11,12 @@ export default function ChampionCard({ champion, inPool, onAdd, compact = false,
     return (
       <button
         onClick={handleClick}
-        className={`relative group rounded-lg overflow-hidden border transition-all duration-150 ${
+        className={`relative group rounded-xl overflow-hidden border-2 transition-all duration-200 ${
           selected
-            ? 'border-dalia-accent ring-2 ring-dalia-accent/40'
+            ? 'border-amber-500 ring-2 ring-amber-500/30'
             : inPool
-                ? 'border-dalia-accent/50 opacity-80'
-                : 'border-dalia-border hover:border-dalia-accent/50'
+                ? 'border-emerald-500/50 opacity-90'
+                : 'border-slate-700 hover:border-slate-500 hover:scale-105'
         }`}
       >
         <img
@@ -28,24 +26,20 @@ export default function ChampionCard({ champion, inPool, onAdd, compact = false,
           loading="lazy"
         />
         {/* Overlay on hover */}
-        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity
-                        flex items-center justify-center">
+        <div className={`absolute inset-0 bg-black/60 flex items-center justify-center transition-opacity ${
+          inPool ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+        }`}>
           {inPool ? (
-            <Check size={18} className="text-dalia-green" />
+            <Check size={20} className="text-emerald-400" />
           ) : (
-            <Plus size={18} className="text-dalia-accent" />
+            <Plus size={20} className="text-white" />
           )}
         </div>
         {/* Name */}
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent
-                        px-1 py-0.5 text-[9px] text-center truncate">
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent
+                        px-1 py-1 text-[10px] text-center truncate text-white font-medium">
           {champion.name}
         </div>
-        {/* Damage type dot */}
-        <div className={`absolute top-0.5 right-0.5 w-2 h-2 rounded-full ${
-          champion.primary_damage_type === 'AD' ? 'bg-red-400' :
-          champion.primary_damage_type === 'AP' ? 'bg-blue-400' : 'bg-purple-400'
-        }`} />
       </button>
     );
   }
@@ -54,23 +48,20 @@ export default function ChampionCard({ champion, inPool, onAdd, compact = false,
   return (
     <button
       onClick={handleClick}
-      className={`card flex items-center gap-3 p-2 hover:bg-dalia-surface transition-colors w-full text-left ${
-        selected ? 'border-dalia-accent ring-1 ring-dalia-accent/40' : ''
+      className={`rounded-xl border flex items-center gap-3 p-2.5 bg-slate-800/50 hover:bg-slate-800 transition-all w-full text-left ${
+        selected ? 'border-amber-500 ring-1 ring-amber-500/30' : 'border-slate-700 hover:border-slate-600'
       }`}
     >
       <img
         src={champion.image_url}
         alt={champion.name}
-        className="w-10 h-10 rounded-md object-cover"
+        className="w-11 h-11 rounded-lg object-cover border border-slate-700"
         loading="lazy"
       />
       <div className="flex-1 min-w-0">
-        <div className="text-sm font-medium truncate">{champion.name}</div>
-        <div className="flex items-center gap-2 text-xs text-dalia-muted">
-          <span className={DMG_COLORS[champion.primary_damage_type]}>
-            {champion.primary_damage_type}
-          </span>
-          <span>{champion.roles?.join(', ')}</span>
+        <div className="text-sm font-medium text-white truncate">{champion.name}</div>
+        <div className="text-xs text-slate-400">
+          {champion.roles?.join(', ')}
         </div>
       </div>
     </button>

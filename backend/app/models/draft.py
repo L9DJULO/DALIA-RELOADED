@@ -86,6 +86,16 @@ class DraftState(BaseModel):
         return None
 
 
+class MLExplanation(BaseModel):
+    """Human-readable explanation for the ML prediction."""
+    win_probability: float = 0.5         # calibrated (temperature-scaled)
+    win_probability_raw: float = 0.5     # raw model output (often extreme)
+    confidence: str = "low"              # "low" | "medium" | "high"
+    known_champions: int = 0
+    champion_games: int = 0              # how many training games for this champ
+    reasons: List[str] = Field(default_factory=list)
+
+
 class ScoreBreakdown(BaseModel):
     """Detailed score breakdown for a champion recommendation."""
     meta: float = 0.0
@@ -94,7 +104,8 @@ class ScoreBreakdown(BaseModel):
     composition: float = 0.0
     mastery: float = 0.0
     draft_risk: float = 0.0
-    ml_prediction: Optional[float] = None  # None if ML model not available
+    ml_prediction: Optional[float] = None
+    ml_explanation: Optional[MLExplanation] = None
 
 
 class MatchupDetail(BaseModel):

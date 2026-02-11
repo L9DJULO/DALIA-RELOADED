@@ -10,7 +10,6 @@ const useDraftStore = create((set, get) => ({
   // ── Draft setup ──
   myTeam: 'blue',         // "blue" | "red"
   myRole: 'mid',
-  myPickOrder: 1,         // 1-5 within my team
 
   // ── Bans ──
   blueBans: [null, null, null, null, null],
@@ -35,7 +34,6 @@ const useDraftStore = create((set, get) => ({
   // ═════════════════════════════════════════════════════════
   setMyTeam: (team) => set({ myTeam: team }),
   setMyRole: (role) => set({ myRole: role }),
-  setMyPickOrder: (n) => set({ myPickOrder: n }),
 
   // ── Bans ──
   setBan: (team, index, champion) => {
@@ -114,7 +112,6 @@ const useDraftStore = create((set, get) => ({
     return {
       my_team: s.myTeam,
       my_role: s.myRole,
-      my_pick_order: s.myPickOrder,
       bans,
       ally_picks: allyPicks,
       enemy_picks: enemyPicks,

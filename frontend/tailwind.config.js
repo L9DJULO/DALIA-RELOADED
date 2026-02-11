@@ -4,24 +4,20 @@ export default {
   theme: {
     extend: {
       colors: {
-        // LoL-inspired dark palette
-        dalia: {
-          bg:      '#0a0e14',
-          surface: '#111927',
-          card:    '#1a2332',
-          border:  '#2a3a4d',
-          accent:  '#c8aa6e',    // gold
-          blue:    '#0397ab',
-          red:     '#c24b4b',
-          green:   '#2dbd6e',
-          purple:  '#9b59b6',
-          text:    '#cdd6e0',
-          muted:   '#6b7a8d',
+        // Clean modern palette
+        primary: {
+          50: '#fffbeb',
+          100: '#fef3c7',
+          200: '#fde68a',
+          300: '#fcd34d',
+          400: '#fbbf24',
+          500: '#f59e0b',
+          600: '#d97706',
+          700: '#b45309',
         },
       },
       fontFamily: {
-        display: ['"Beaufort for LOL"', 'Georgia', 'serif'],
-        body:    ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
       },
     },
   },

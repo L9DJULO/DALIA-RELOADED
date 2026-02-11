@@ -1,63 +1,70 @@
 import React from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
-import { Swords, Users } from 'lucide-react';
+import { Swords, Users, Zap } from 'lucide-react';
 
 const NAV = [
-  { to: '/draft', label: 'Draft', icon: Swords },
-  { to: '/pool', label: 'Mon Pool', icon: Users },
+  { to: '/draft', label: 'Draft', icon: Swords, desc: 'Analyse en temps réel' },
+  { to: '/pool', label: 'Champions', icon: Users, desc: 'Gérer mon pool' },
 ];
 
 export default function Layout({ patchInfo }) {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-slate-950">
       {/* ── Header ── */}
-      <header className="h-14 bg-dalia-surface/80 backdrop-blur-xl border-b border-white/[0.06] flex items-center px-5 gap-6 shrink-0 relative z-30">
-        {/* Subtle gradient line at top */}
-        <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-dalia-accent/40 to-transparent" />
-
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <span className="text-xl font-display text-dalia-accent tracking-[0.2em] font-bold">DALIA</span>
-            <span className="absolute -bottom-1 left-0 right-0 h-[2px] bg-gradient-to-r from-dalia-accent/60 to-transparent rounded-full" />
+      <header className="h-16 bg-slate-900/90 backdrop-blur-xl border-b border-slate-700/50 flex items-center px-6 shrink-0 relative z-30">
+        {/* Logo */}
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
+              <Zap size={18} className="text-white" />
+            </div>
+            <div>
+              <span className="text-lg font-bold text-white tracking-tight">DALIA</span>
+              <span className="text-[10px] text-slate-500 block -mt-1">Draft Assistant</span>
+            </div>
           </div>
-          {patchInfo && (
-            <span className="text-[10px] text-dalia-muted/70 border border-dalia-border/40 rounded-md px-2 py-0.5 ml-1">
-              {patchInfo.patch}
-            </span>
-          )}
         </div>
 
-        <nav className="flex items-center gap-1 ml-6">
-          {NAV.map(({ to, label, icon: Icon }) => (
+        {/* Navigation */}
+        <nav className="flex items-center gap-1 ml-10">
+          {NAV.map(({ to, label, icon: Icon, desc }) => (
             <NavLink
               key={to}
               to={to}
               className={({ isActive }) =>
-                `flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                `relative flex items-center gap-2.5 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                   isActive
-                    ? 'bg-dalia-accent/10 text-dalia-accent shadow-sm shadow-dalia-accent/10'
-                    : 'text-dalia-muted hover:text-dalia-text hover:bg-white/[0.03]'
+                    ? 'bg-slate-800 text-white'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
                 }`
               }
             >
-              <Icon size={15} strokeWidth={2} />
-              {label}
+              {({ isActive }) => (
+                <>
+                  <Icon size={16} strokeWidth={2} className={isActive ? 'text-amber-500' : ''} />
+                  <span>{label}</span>
+                </>
+              )}
             </NavLink>
           ))}
         </nav>
 
-        <div className="ml-auto flex items-center gap-3 text-[11px] text-dalia-muted/60">
-          <div className="flex items-center gap-1.5">
-            <div className="w-1.5 h-1.5 rounded-full bg-dalia-green animate-pulse" />
-            <span>Emerald+</span>
+        {/* Right side info */}
+        <div className="ml-auto flex items-center gap-4">
+          {patchInfo && (
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/50 border border-slate-700/50">
+              <div className="w-2 h-2 rounded-full bg-emerald-500" />
+              <span className="text-xs text-slate-300">Patch {patchInfo.patch}</span>
+            </div>
+          )}
+          <div className="text-xs text-slate-500">
+            Données Ranked • Master+
           </div>
-          <span className="text-dalia-border">|</span>
-          <span>Ranked Solo</span>
         </div>
       </header>
 
       {/* ── Main content ── */}
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto bg-gradient-to-b from-slate-950 to-slate-900">
         <Outlet />
       </main>
     </div>

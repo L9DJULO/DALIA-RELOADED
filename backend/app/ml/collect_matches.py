@@ -357,11 +357,11 @@ class Checkpoint:
 # ── Main collection pipeline ────────────────────────────────────────────
 def collect_players(client: RiotClient, max_players: int = 800) -> list[dict]:
     """Collect D2+ player summoner IDs and PUUIDs."""
-    logger.info("=== Phase 1: Collecting D2+ player list [%s] ===", client.platform)
+    logger.info("=== Phase 1: Collecting Master+ player list [%s] ===", client.platform)
 
     entries: list[dict] = []
 
-    # Apex leagues (small, get all)
+    # Apex leagues (Challenger, Grandmaster, Master)
     for tier in ["CHALLENGER", "GRANDMASTER", "MASTER"]:
         data = client.get_apex_league(tier)
         logger.info("  %s: %d players", tier, len(data))
@@ -370,23 +370,7 @@ def collect_players(client: RiotClient, max_players: int = 800) -> list[dict]:
             if puuid:
                 entries.append({"puuid": puuid, "tier": tier})
 
-    # Diamond I & II (paginated)
-    for division in ["I", "II"]:
-        page = 1
-        while True:
-            data = client.get_league_entries("DIAMOND", division, page)
-            if not data:
-                break
-            for e in data:
-                puuid = e.get("puuid")
-                if puuid:
-                    entries.append({"puuid": puuid, "tier": f"DIAMOND_{division}"})
-            logger.info("  DIAMOND %s page %d: %d players", division, page, len(data))
-            page += 1
-            if len(data) < 205:  # page is full at 205
-                break
-
-    logger.info("Total D2+ players found: %d", len(entries))
+    logger.info("Total Master+ players found: %d", len(entries))
 
     # Shuffle and limit
     random.shuffle(entries)
@@ -575,7 +559,7 @@ def merge_regions(output_dir: Path, regions: list[str]) -> Path:
 # ── CLI ──────────────────────────────────────────────────────────────────
 def main():
     parser = argparse.ArgumentParser(
-        description="Collect D2+ ranked matches for DALIA ML training",
+        description="Collect Master+ ranked matches for DALIA ML training",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:

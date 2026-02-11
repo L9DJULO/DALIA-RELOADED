@@ -7,9 +7,11 @@ If the model file doesn't exist, gracefully returns 50 (neutral).
 """
 from __future__ import annotations
 
+import json
 import logging
+import math
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 from app.models.draft import DraftPick, DraftState
 from app.services.champion_data import ChampionDatabase
@@ -46,6 +48,8 @@ class MLPredictor:
         self.db = champion_db
         self._model = None
         self._available = False
+        self._champ_game_counts: Dict[int, int] = {}
+        self._total_training_games: int = 0
 
         if model_path is None:
             model_path = str(
@@ -53,6 +57,7 @@ class MLPredictor:
             )
         self._model_path = model_path
         self._load_model()
+        self._load_game_counts()
 
     def _load_model(self):
         """Try to load the trained model. Silently skip if unavailable."""
@@ -83,14 +88,38 @@ class MLPredictor:
             logger.warning("Failed to load ML model: %s", e)
             self._available = False
 
+    def _load_game_counts(self):
+        """Count champion appearances in training data for confidence estimation."""
+        matches_path = Path(__file__).resolve().parent.parent / "data" / "matches" / "matches.jsonl"
+        if not matches_path.exists():
+            logger.info("No matches.jsonl — cannot compute game counts")
+            return
+        counts: Dict[int, int] = {}
+        total = 0
+        try:
+            with open(matches_path) as f:
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    m = json.loads(line)
+                    total += 1
+                    for k in ["blue_top", "blue_jg", "blue_mid", "blue_bot", "blue_sup",
+                              "red_top", "red_jg", "red_mid", "red_bot", "red_sup"]:
+                        cid = m.get(k, 0)
+                        if cid > 0:
+                            counts[cid] = counts.get(cid, 0) + 1
+            self._champ_game_counts = counts
+            self._total_training_games = total
+            logger.info("Loaded game counts for %d champions from %d matches", len(counts), total)
+        except Exception as e:
+            logger.warning("Failed to load game counts: %s", e)
+
     def is_available(self) -> bool:
         return self._available
 
     def _build_team_vector(self, picks: List[DraftPick], candidate_id: int = 0, candidate_role: str = "") -> List[int]:
-        """Build [top, jg, mid, bot, sup] champion ID vector from draft picks.
-
-        Fills known positions, puts candidate in its role, 0 for unknown slots.
-        """
+        """Build [top, jg, mid, bot, sup] champion ID vector from draft picks."""
         team = [0, 0, 0, 0, 0]
 
         for pick in picks:
@@ -108,32 +137,33 @@ class MLPredictor:
 
         return team
 
+    def _count_known(self, draft: DraftState, candidate_id: int, role: str) -> int:
+        """Count how many of the 10 champion slots are filled."""
+        blue = self._build_team_vector(draft.ally_picks, candidate_id, role)
+        red = self._build_team_vector(draft.enemy_picks)
+        if draft.my_team == "red":
+            blue, red = red, blue
+        return sum(1 for c in blue + red if c > 0)
+
     def predict_win_probability(
         self, candidate_id: int, role: str, draft: DraftState,
     ) -> float:
-        """Predict P(our team wins) with candidate in role.
-
-        Returns 0.5 if model unavailable or draft incomplete.
-        """
+        """Predict P(our team wins) with candidate in role."""
         if not self._available or self._model is None:
             return 0.5
 
-        # Build team vectors
         blue_team = self._build_team_vector(draft.ally_picks, candidate_id, role)
         red_team = self._build_team_vector(draft.enemy_picks)
 
-        # Account for side
         if draft.my_team == "red":
             blue_team, red_team = red_team, blue_team
-            # We're red, so P(we win) = 1 - P(blue wins)
             flip = True
         else:
             flip = False
 
-        # Check we have at least some known champions
         known = sum(1 for c in blue_team + red_team if c > 0)
         if known < 4:
-            return 0.5  # too little info
+            return 0.5
 
         try:
             prob = self._model.predict_proba(blue_team, red_team)
@@ -144,20 +174,124 @@ class MLPredictor:
             logger.warning("ML prediction error: %s", e)
             return 0.5
 
-    def score(self, candidate_id: int, role: str, draft: DraftState) -> float:
-        """Return 0-100 score for the draft engine.
+    # ─── Temperature scaling (standard ML calibration) ─────────────────
+    TEMPERATURE = 5.0  # T > 1 softens overconfident predictions toward 50%
 
-        Maps P(win) to a score:
-            P=0.50 → 50 (neutral)
-            P=0.55 → 60 (slight edge)
-            P=0.60 → 70 (good)
-            P=0.45 → 40 (bad)
+    def _calibrate(self, p: float) -> float:
+        """Temperature-scale the raw model probability.
 
-        Uses 2× scaling so differences are visible:
-            score = 50 + (P - 0.5) × 200, clamped to [10, 90]
+        The model (~60% accuracy) outputs extreme probabilities (5% / 95%).
+        Temperature scaling in logit space is the standard calibration fix:
+          logit = log(p / (1-p))
+          logit_cal = logit / T
+          p_cal = sigmoid(logit_cal)
+
+        With T=5: P=0.05 → 0.36,  P=0.95 → 0.64  (much more reasonable)
         """
-        p = self.predict_win_probability(candidate_id, role, draft)
+        p = max(1e-6, min(1 - 1e-6, p))
+        logit = math.log(p / (1 - p))
+        logit_cal = logit / self.TEMPERATURE
+        return 1.0 / (1.0 + math.exp(-logit_cal))
 
-        # Linear scaling: P=0.55 → 60, P=0.60 → 70, P=0.45 → 40
-        raw = 50.0 + (p - 0.5) * 200.0
-        return round(max(10.0, min(90.0, raw)), 1)
+    def _p_to_score(self, p: float) -> float:
+        """Convert raw probability to 0-100 score.
+
+        1. Temperature-scale the raw P (pulls extremes toward 0.5)
+        2. Map calibrated P to score with moderate scaling
+        Result: scores realistically range ~30-70 for a 60%-accuracy model.
+        """
+        p_cal = self._calibrate(p)
+        raw = 50.0 + (p_cal - 0.5) * 100.0
+        return round(max(30.0, min(70.0, raw)), 1)
+
+    def score(self, candidate_id: int, role: str, draft: DraftState) -> float:
+        """Return 0-100 score for the draft engine."""
+        p = self.predict_win_probability(candidate_id, role, draft)
+        return self._p_to_score(p)
+
+    def score_with_explanation(
+        self, candidate_id: int, role: str, draft: DraftState,
+    ) -> Tuple[float, dict]:
+        """Return (score 0-100, explanation dict)."""
+        p_raw = self.predict_win_probability(candidate_id, role, draft)
+        p_cal = self._calibrate(p_raw)
+        s = self._p_to_score(p_raw)
+        expl = self._build_explanation(candidate_id, role, draft, p_raw, p_cal, s)
+        return s, expl
+
+    def _build_explanation(
+        self, candidate_id: int, role: str, draft: DraftState,
+        prob_raw: float, prob_cal: float, score: float,
+    ) -> dict:
+        """Build a human-readable explanation dict for the ML prediction."""
+        known = self._count_known(draft, candidate_id, role)
+        games = self._champ_game_counts.get(candidate_id, 0)
+        champ = self.db.get_by_id(candidate_id)
+        name = champ.name if champ else f"Champion {candidate_id}"
+
+        # Confidence based on data quality
+        if known >= 8 and games >= 200:
+            confidence = "high"
+        elif known >= 6 and games >= 80:
+            confidence = "medium"
+        else:
+            confidence = "low"
+
+        reasons: List[str] = []
+
+        # ── 1. Win probability (use calibrated value for user-facing text) ──
+        pct_cal = f"{prob_cal:.0%}"
+        pct_raw = f"{prob_raw:.0%}"
+        if prob_cal >= 0.56:
+            reasons.append(f"Le modèle prédit un avantage ({pct_cal} winrate ajusté) avec {name}")
+        elif prob_cal >= 0.52:
+            reasons.append(f"Le modèle prédit un léger avantage ({pct_cal} winrate ajusté) avec {name}")
+        elif prob_cal <= 0.44:
+            reasons.append(f"Le modèle prédit un désavantage ({pct_cal} winrate ajusté) avec {name}")
+        elif prob_cal <= 0.48:
+            reasons.append(f"Le modèle prédit un léger désavantage ({pct_cal} winrate ajusté) avec {name}")
+        else:
+            reasons.append(f"Le modèle prédit un match équilibré ({pct_cal} winrate ajusté) avec {name}")
+
+        # Show raw value for transparency
+        if abs(prob_raw - prob_cal) > 0.05:
+            reasons.append(
+                f"(Valeur brute du modèle : {pct_raw} — ajustée car le modèle est sur-confiant)"
+            )
+
+        # ── 2. Data quality warnings ──
+        if games < 50:
+            reasons.append(
+                f"⚠ Très peu de données : {name} vu dans seulement {games} games "
+                f"d'entraînement → prédiction peu fiable"
+            )
+        elif games < 150:
+            reasons.append(f"Données limitées : {name} vu dans {games} games d'entraînement")
+        else:
+            reasons.append(f"Données OK : {name} vu dans {games} games d'entraînement")
+
+        # ── 3. Draft completeness ──
+        if known < 6:
+            reasons.append(
+                f"Draft partiel ({known}/10 champions connus) → prédiction moins précise"
+            )
+        elif known >= 9:
+            reasons.append(f"Draft quasi-complet ({known}/10) → prédiction plus fiable")
+
+        # ── 4. Model accuracy reminder ──
+        reasons.append(
+            f"Précision du modèle : ~60% (entraîné sur {self._total_training_games} games D2+)"
+        )
+
+        # ── 5. Confidence summary ──
+        conf_labels = {"high": "élevée", "medium": "moyenne", "low": "faible"}
+        reasons.append(f"Confiance globale : {conf_labels[confidence]}")
+
+        return {
+            "win_probability": round(prob_cal, 4),
+            "win_probability_raw": round(prob_raw, 4),
+            "confidence": confidence,
+            "known_champions": known,
+            "champion_games": games,
+            "reasons": reasons,
+        }

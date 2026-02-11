@@ -1,18 +1,18 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Search, Plus, X } from 'lucide-react';
+import { Search, Save, Check } from 'lucide-react';
 import useUserStore, { ROLES, TIERS } from '../../stores/userStore';
 import RoleTierList from './RoleTierList';
 import ChampionCard from './ChampionCard';
+import RoleIcon from '../RoleIcon';
 
 const ROLE_LABELS = { top: 'Top', jungle: 'Jungle', mid: 'Mid', bot: 'Bot', support: 'Support' };
-const ROLE_ICONS = { top: '⚔️', jungle: '🌿', mid: '🔮', bot: '🏹', support: '🛡️' };
 
 const TIER_COLORS = {
-  S: 'bg-red-500 hover:bg-red-600',
-  A: 'bg-orange-500 hover:bg-orange-600',
-  B: 'bg-dalia-accent hover:bg-dalia-accent/80',
-  C: 'bg-blue-500 hover:bg-blue-600',
-  D: 'bg-gray-500 hover:bg-gray-600',
+  S: 'bg-red-500 hover:bg-red-400 shadow-red-500/30',
+  A: 'bg-orange-500 hover:bg-orange-400 shadow-orange-500/30',
+  B: 'bg-amber-500 hover:bg-amber-400 shadow-amber-500/30',
+  C: 'bg-blue-500 hover:bg-blue-400 shadow-blue-500/30',
+  D: 'bg-slate-500 hover:bg-slate-400 shadow-slate-500/30',
 };
 
 /* ── Tier picker popover ── */
@@ -30,18 +30,18 @@ function TierPicker({ champion, position, onSelect, onClose }) {
   return (
     <div
       ref={ref}
-      className="fixed z-50 bg-dalia-card border border-dalia-border rounded-lg shadow-xl p-2"
+      className="fixed z-50 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl p-3"
       style={{ left: position.x, top: position.y }}
     >
-      <div className="text-xs text-dalia-muted mb-1.5 px-1 truncate max-w-[140px]">
-        {champion.name}
+      <div className="text-xs text-slate-400 mb-2 px-1">
+        Ajouter <span className="text-white font-medium">{champion.name}</span>
       </div>
-      <div className="flex gap-1">
+      <div className="flex gap-1.5">
         {TIERS.map((tier) => (
           <button
             key={tier}
             onClick={() => onSelect(tier)}
-            className={`w-8 h-8 rounded-md text-xs font-bold text-white transition-colors ${TIER_COLORS[tier]}`}
+            className={`w-9 h-9 rounded-lg text-sm font-bold text-white transition-all shadow-lg ${TIER_COLORS[tier]}`}
           >
             {tier}
           </button>
@@ -55,7 +55,8 @@ export default function ChampionPoolEditor({ champions }) {
   const [activeRole, setActiveRole] = useState('mid');
   const [search, setSearch] = useState('');
   const [filterByRole, setFilterByRole] = useState(false);
-  const [tierPicker, setTierPicker] = useState(null); // { champion, x, y }
+  const [tierPicker, setTierPicker] = useState(null);
+  const [saved, setSaved] = useState(false);
   const { championPool, addToPool, savePool } = useUserStore();
 
   const poolIdsForRole = useMemo(() => {
@@ -66,16 +67,13 @@ export default function ChampionPoolEditor({ champions }) {
 
   const filteredChampions = useMemo(() => {
     let list = champions;
-    // Optional role filter
     if (filterByRole) {
       list = list.filter((c) => c.roles.includes(activeRole));
     }
-    // Filter by search
     if (search) {
       const q = search.toLowerCase();
       list = list.filter((c) => c.name.toLowerCase().includes(q));
     }
-    // Sort: pool members first, then alphabetical
     list.sort((a, b) => {
       const aIn = poolIdsForRole.has(a.id) ? 0 : 1;
       const bIn = poolIdsForRole.has(b.id) ? 0 : 1;
@@ -86,12 +84,12 @@ export default function ChampionPoolEditor({ champions }) {
   }, [champions, activeRole, search, poolIdsForRole, filterByRole]);
 
   const handleChampClick = (champion, e) => {
-    if (poolIdsForRole.has(champion.id)) return; // already in pool for this role
+    if (poolIdsForRole.has(champion.id)) return;
     const rect = e.currentTarget.getBoundingClientRect();
     setTierPicker({
       champion,
-      x: Math.min(rect.left, window.innerWidth - 220),
-      y: rect.bottom + 4,
+      x: Math.min(rect.left, window.innerWidth - 240),
+      y: rect.bottom + 8,
     });
   };
 
@@ -104,72 +102,83 @@ export default function ChampionPoolEditor({ champions }) {
 
   const handleSave = async () => {
     await savePool(activeRole);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
   };
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)]">
+    <div className="flex h-[calc(100vh-4rem)]">
       {/* ── Left: Tier list per role ── */}
-      <div className="w-80 border-r border-dalia-border flex flex-col bg-dalia-surface">
+      <div className="w-80 border-r border-slate-800 flex flex-col bg-slate-900/50">
         {/* Role tabs */}
-        <div className="flex border-b border-dalia-border">
+        <div className="flex border-b border-slate-800">
           {ROLES.map((role) => (
             <button
               key={role}
               onClick={() => { setActiveRole(role); setTierPicker(null); }}
-              className={`flex-1 py-2.5 text-xs font-medium transition-colors ${
+              className={`flex-1 py-3 text-xs font-medium transition-all ${
                 activeRole === role
-                  ? 'bg-dalia-accent/15 text-dalia-accent border-b-2 border-dalia-accent'
-                  : 'text-dalia-muted hover:text-dalia-text'
+                  ? 'bg-slate-800 text-white border-b-2 border-amber-500'
+                  : 'text-slate-500 hover:text-white hover:bg-slate-800/50'
               }`}
             >
-              <span className="block text-base">{ROLE_ICONS[role]}</span>
+              <RoleIcon role={role} size={18} className="text-slate-400 group-hover:text-white mx-auto mb-1" />
               {ROLE_LABELS[role]}
             </button>
           ))}
         </div>
 
         {/* Tier list */}
-        <div className="flex-1 overflow-y-auto p-3">
+        <div className="flex-1 overflow-y-auto p-4">
           <RoleTierList role={activeRole} champions={champions} />
         </div>
 
-        <div className="p-3 border-t border-dalia-border">
-          <button onClick={handleSave} className="btn-primary w-full text-xs">
-            Sauvegarder {ROLE_LABELS[activeRole]}
+        <div className="p-4 border-t border-slate-800">
+          <button 
+            onClick={handleSave} 
+            className={`w-full py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+              saved 
+                ? 'bg-emerald-500 text-white' 
+                : 'bg-amber-500 hover:bg-amber-400 text-white shadow-lg shadow-amber-500/25'
+            }`}
+          >
+            {saved ? <Check size={16} /> : <Save size={16} />}
+            {saved ? 'Sauvegardé !' : `Sauvegarder ${ROLE_LABELS[activeRole]}`}
           </button>
         </div>
       </div>
 
       {/* ── Right: Champion browser ── */}
-      <div className="flex-1 flex flex-col">
-        <div className="p-4 border-b border-dalia-border flex items-center gap-3">
+      <div className="flex-1 flex flex-col bg-slate-950">
+        <div className="p-4 border-b border-slate-800 flex items-center gap-4">
           <div className="relative flex-1 max-w-md">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-dalia-muted" />
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Rechercher un champion…"
-              className="w-full bg-dalia-card border border-dalia-border rounded-lg pl-9 pr-3 py-2 text-sm
-                         text-dalia-text placeholder-dalia-muted focus:outline-none focus:border-dalia-accent"
+              placeholder="Rechercher un champion..."
+              className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-10 pr-4 py-2.5 text-sm
+                         text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 transition-colors"
             />
           </div>
 
-          {/* Toggle: filter by role */}
           <button
             onClick={() => setFilterByRole(!filterByRole)}
-            className={`text-xs px-2.5 py-1.5 rounded-md border transition-colors ${
+            className={`text-xs px-3 py-2 rounded-lg border font-medium transition-all ${
               filterByRole
-                ? 'border-dalia-accent bg-dalia-accent/15 text-dalia-accent'
-                : 'border-dalia-border text-dalia-muted hover:text-dalia-text'
+                ? 'border-amber-500/50 bg-amber-500/10 text-amber-400'
+                : 'border-slate-700 text-slate-400 hover:text-white hover:border-slate-600'
             }`}
           >
             {filterByRole ? `${ROLE_LABELS[activeRole]} uniquement` : 'Tous les champions'}
           </button>
 
-          <span className="text-xs text-dalia-muted">
-            {filteredChampions.length} champions • {(championPool[activeRole] || []).length} dans le pool
-          </span>
+          <div className="text-xs text-slate-500">
+            <span className="text-slate-300 font-medium">{filteredChampions.length}</span> champions 
+            <span className="mx-1.5">•</span>
+            <span className="text-amber-400 font-medium">{(championPool[activeRole] || []).length}</span> dans le pool
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4">

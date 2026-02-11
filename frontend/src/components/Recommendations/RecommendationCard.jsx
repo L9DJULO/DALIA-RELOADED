@@ -1,189 +1,205 @@
 import React, { useState } from 'react';
-import { ChevronDown, ChevronUp, AlertTriangle, Shield, Swords, Sparkles } from 'lucide-react';
+import { ChevronDown, ChevronUp, TrendingUp, TrendingDown, Minus, Users, Crosshair, Swords } from 'lucide-react';
 import ScoreBreakdown from './ScoreBreakdown';
 
-const TAG_STYLES = {
-  'safe-blind':       'tag-green',
-  'counter-pick':     'tag-red',
-  'flex':             'tag-blue',
-  'off-meta':         'tag-purple',
-  'last-pick-counter':'tag-gold',
-  'meta-forte':       'tag-gold',
-};
-
-const TAG_LABELS = {
-  'safe-blind':       'Safe Blind',
-  'counter-pick':     'Counter',
-  'flex':             'Flex',
-  'off-meta':         'Off-meta',
-  'last-pick-counter':'Last Pick',
-  'meta-forte':       'Méta',
-};
-
-/* ── Circular SVG score gauge ── */
-function ScoreGauge({ value, size = 58 }) {
-  const strokeW = 3.5;
-  const radius = (size - strokeW * 2) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const progress = Math.max(0, Math.min(100, value)) / 100;
-  const offset = circumference * (1 - progress);
-  const color =
-    value >= 70 ? '#2dbd6e' :
-    value >= 50 ? '#c8aa6e' :
-    value >= 35 ? '#f59e0b' : '#c24b4b';
-  const glow =
-    value >= 70 ? 'rgba(45,189,110,0.25)' :
-    value >= 50 ? 'rgba(200,170,110,0.2)' :
-    value >= 35 ? 'rgba(245,158,11,0.2)' : 'rgba(194,75,75,0.2)';
+/* ── Score display ── */
+function ScoreDisplay({ value, size = 'md' }) {
+  const getColor = (v) => {
+    if (v >= 70) return { text: 'text-emerald-400', bg: 'bg-emerald-500/20', border: 'border-emerald-500/30' };
+    if (v >= 55) return { text: 'text-amber-400', bg: 'bg-amber-500/20', border: 'border-amber-500/30' };
+    if (v >= 40) return { text: 'text-slate-400', bg: 'bg-slate-500/20', border: 'border-slate-500/30' };
+    return { text: 'text-red-400', bg: 'bg-red-500/20', border: 'border-red-500/30' };
+  };
+  
+  const colors = getColor(value);
+  const sizeClasses = size === 'lg' 
+    ? 'w-14 h-14 text-lg' 
+    : 'w-11 h-11 text-sm';
 
   return (
-    <div className="relative shrink-0" style={{ width: size, height: size }}>
-      <svg className="transform -rotate-90" width={size} height={size}>
-        <circle cx={size/2} cy={size/2} r={radius}
-          stroke="#1e293b" strokeWidth={strokeW} fill="none" />
-        <circle cx={size/2} cy={size/2} r={radius}
-          stroke={color} strokeWidth={strokeW} fill="none"
-          strokeDasharray={circumference} strokeDashoffset={offset}
-          strokeLinecap="round"
-          className="transition-all duration-700 ease-out"
-          style={{ filter: `drop-shadow(0 0 4px ${glow})` }} />
-      </svg>
-      <div className="absolute inset-0 flex items-center justify-center">
-        <span className="font-bold text-base tabular-nums" style={{ color }}>
-          {value.toFixed(0)}
-        </span>
-      </div>
+    <div className={`${sizeClasses} rounded-xl ${colors.bg} border ${colors.border} flex items-center justify-center font-bold ${colors.text}`}>
+      {value.toFixed(0)}
     </div>
   );
 }
 
-/* ── Delta badge ── */
-function DeltaBadge({ value, suffix = '%' }) {
-  const pos = value > 0.05;
-  const neg = value < -0.05;
+/* ── Winrate indicator ── */
+function WinrateIndicator({ delta }) {
+  if (Math.abs(delta) < 0.5) {
+    return (
+      <div className="flex items-center gap-1 text-slate-500 text-xs">
+        <Minus size={12} />
+        <span>Neutre</span>
+      </div>
+    );
+  }
+  
+  const positive = delta > 0;
   return (
-    <span className={`font-mono text-xs tabular-nums ${pos ? 'text-dalia-green' : neg ? 'text-dalia-red' : 'text-dalia-muted'}`}>
-      {pos ? '+' : ''}{value.toFixed(1)}{suffix}
-    </span>
+    <div className={`flex items-center gap-1 text-xs ${positive ? 'text-emerald-400' : 'text-red-400'}`}>
+      {positive ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+      <span>{positive ? '+' : ''}{delta.toFixed(1)}%</span>
+    </div>
+  );
+}
+
+/* ── Quick stat pill ── */
+function StatPill({ icon: Icon, label, value, color = 'slate' }) {
+  const colorClasses = {
+    emerald: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+    amber: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+    red: 'bg-red-500/10 text-red-400 border-red-500/20',
+    slate: 'bg-slate-700/50 text-slate-300 border-slate-600/50',
+  };
+
+  return (
+    <div className={`flex items-center gap-1.5 px-2 py-1 rounded-lg border text-xs ${colorClasses[color]}`}>
+      <Icon size={12} />
+      <span className="text-slate-400">{label}</span>
+      <span className="font-medium">{value}</span>
+    </div>
   );
 }
 
 export default function RecommendationCard({ rec, rank, champData, isWildcard = false }) {
   const [expanded, setExpanded] = useState(false);
 
-  const borderClass =
-    rank === 1 && !isWildcard ? 'border-dalia-accent/30 glow-accent' :
-    isWildcard ? 'border-dalia-purple/20' : 'border-dalia-border/40';
-  const bgClass =
-    rank === 1 && !isWildcard ? 'bg-gradient-to-r from-dalia-accent/[0.06] to-dalia-card/80' :
-    isWildcard ? 'bg-gradient-to-r from-dalia-purple/[0.04] to-dalia-card/80' : 'bg-dalia-card/60';
+  // Determine card style based on rank
+  const getCardStyle = () => {
+    if (rank === 1 && !isWildcard) {
+      return 'bg-gradient-to-r from-amber-500/5 to-slate-900/80 border-amber-500/30 shadow-lg shadow-amber-500/5';
+    }
+    if (isWildcard) {
+      return 'bg-slate-900/60 border-slate-700/50';
+    }
+    return 'bg-slate-900/60 border-slate-700/50 hover:border-slate-600';
+  };
+
+  // Calculate key metrics for display
+  const matchupScore = rec.breakdown?.matchup ?? 50;
+  const synergyScore = rec.breakdown?.synergy ?? 50;
 
   return (
-    <div className={`rounded-xl border backdrop-blur-sm p-3 transition-all duration-200 hover:border-dalia-accent/30 ${borderClass} ${bgClass}`}>
-      <div className="flex items-center gap-3">
-        {/* Rank */}
-        <div className={`w-6 text-center font-bold text-sm ${
-          rank === 1 ? 'text-dalia-accent' : rank <= 3 ? 'text-dalia-text/70' : 'text-dalia-muted/50'
-        }`}>{rank}</div>
-
-        {/* Champion portrait */}
-        <div className="relative">
-          <div className={`w-12 h-12 rounded-lg overflow-hidden border ${
-            rank === 1 && !isWildcard ? 'border-dalia-accent/40' : 'border-dalia-border/40'
+    <div className={`rounded-xl border backdrop-blur-sm transition-all duration-200 ${getCardStyle()}`}>
+      <div className="p-3">
+        <div className="flex items-center gap-3">
+          {/* Rank indicator */}
+          <div className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-sm ${
+            rank === 1 
+              ? 'bg-amber-500/20 text-amber-400' 
+              : rank <= 3 
+                ? 'bg-slate-700/50 text-slate-300' 
+                : 'bg-slate-800/50 text-slate-500'
           }`}>
-            <img src={champData?.image_url || ''} alt={rec.champion_name}
-              className="w-full h-full object-cover" />
+            {rank}
           </div>
-          {isWildcard && (
-            <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-dalia-purple flex items-center justify-center">
-              <Sparkles size={9} className="text-white" />
-            </div>
-          )}
-        </div>
 
-        {/* Name + Tags + mini indicators */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="font-semibold text-sm">{rec.champion_name}</span>
-            {rec.tags?.map((t) => (
-              <span key={t} className={`tag ${TAG_STYLES[t] || 'tag-gold'}`}>
-                {TAG_LABELS[t] || t}
-              </span>
-            ))}
-          </div>
-          <div className="flex items-center gap-3 mt-1">
-            <span className="text-[10px] text-dalia-muted/60">
-              Confiance {rec.confidence?.toFixed(0) || '?'}%
-            </span>
-            <div className="flex items-center gap-1.5">
-              {[
-                { key: 'matchup', icon: '⚔' },
-                { key: 'composition', icon: '📐' },
-                { key: 'draft_risk', icon: '🎲' },
-                { key: 'ml_prediction', icon: '🧠' },
-              ].map(({ key, icon }) => {
-                const v = rec.breakdown?.[key];
-                if (v == null) return null;
-                const c = v >= 65 ? 'text-dalia-green' : v >= 45 ? 'text-dalia-muted' : 'text-dalia-red';
-                return <span key={key} className={`text-[10px] ${c}`} title={key}>{icon}{v.toFixed(0)}</span>;
-              })}
+          {/* Champion portrait */}
+          <div className="relative">
+            <div className={`w-12 h-12 rounded-xl overflow-hidden border-2 ${
+              rank === 1 && !isWildcard ? 'border-amber-500/40' : 'border-slate-700'
+            }`}>
+              <img 
+                src={champData?.image_url || ''} 
+                alt={rec.champion_name}
+                className="w-full h-full object-cover"
+              />
             </div>
           </div>
+
+          {/* Champion info */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-white">{rec.champion_name}</span>
+              {isWildcard && (
+                <span className="px-1.5 py-0.5 rounded text-[10px] bg-slate-700 text-slate-400 border border-slate-600">
+                  Hors pool
+                </span>
+              )}
+            </div>
+            
+            {/* Quick stats row */}
+            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+              <StatPill 
+                icon={Crosshair} 
+                label="Matchup" 
+                value={`${matchupScore.toFixed(0)}`}
+                color={matchupScore >= 60 ? 'emerald' : matchupScore >= 45 ? 'amber' : 'red'}
+              />
+              <StatPill 
+                icon={Users} 
+                label="Synergie" 
+                value={`${synergyScore.toFixed(0)}`}
+                color={synergyScore >= 60 ? 'emerald' : synergyScore >= 45 ? 'amber' : 'slate'}
+              />
+              {rec.confidence && (
+                <div className="text-[10px] text-slate-500">
+                  {rec.confidence.toFixed(0)}% fiable
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Main score */}
+          <ScoreDisplay value={rec.total_score} size="lg" />
+
+          {/* Expand button */}
+          <button 
+            onClick={() => setExpanded(!expanded)}
+            className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+          >
+            {expanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+          </button>
         </div>
-
-        {/* Score gauge */}
-        <ScoreGauge value={rec.total_score} />
-
-        {/* Expand */}
-        <button onClick={() => setExpanded(!expanded)}
-          className="p-1.5 rounded-lg hover:bg-white/[0.05] text-dalia-muted hover:text-dalia-text transition-colors">
-          {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-        </button>
       </div>
 
       {/* ── Expanded details ── */}
       {expanded && (
-        <div className="mt-3 pt-3 border-t border-white/[0.06] space-y-4 animate-fade-in-up">
+        <div className="px-3 pb-3 pt-1 border-t border-slate-700/50 space-y-4 animate-fade-in-up">
           <ScoreBreakdown breakdown={rec.breakdown} />
 
-          {/* Matchups */}
+          {/* Matchups details */}
           {rec.matchup_details?.length > 0 && (
-            <div>
-              <div className="text-[11px] font-semibold text-dalia-muted/80 mb-2 flex items-center gap-1.5 uppercase tracking-wider">
-                <Swords size={11} /> Matchups
+            <div className="space-y-2">
+              <div className="text-xs font-medium text-slate-400 uppercase tracking-wider">
+                Matchups
               </div>
               <div className="space-y-1">
-                {rec.matchup_details.map((d, i) => (
-                  <div key={i} className={`flex items-center text-xs gap-2 py-0.5 ${
-                    d.is_lane_opponent ? 'bg-white/[0.02] rounded-md px-1.5 -mx-1.5' : ''
-                  }`}>
-                    <span className={`w-5 text-center ${d.is_lane_opponent ? 'text-dalia-accent' : 'text-dalia-muted/40'}`}>
-                      {d.is_lane_opponent ? '⚔️' : '•'}
+                {rec.matchup_details.slice(0, 5).map((d, i) => (
+                  <div 
+                    key={i} 
+                    className={`flex items-center text-xs py-1.5 px-2 rounded-lg ${
+                      d.is_lane_opponent ? 'bg-slate-800/80' : 'bg-slate-800/30'
+                    }`}
+                  >
+                    <span className={`w-5 text-center flex justify-center ${d.is_lane_opponent ? 'text-amber-500' : 'text-slate-600'}`}>
+                      {d.is_lane_opponent ? <Swords size={12} /> : '•'}
                     </span>
-                    <span className="w-20 truncate text-dalia-text/80">{d.opponent_name}</span>
-                    <span className="text-dalia-muted/50 w-12 text-[10px]">{d.opponent_role}</span>
-                    <DeltaBadge value={d.delta} />
-                    <span className="text-dalia-muted/40 text-[10px]">({d.win_rate.toFixed(1)}% WR)</span>
-                    {d.games === 0 && <span className="text-[9px] text-dalia-muted/30 italic">estimé</span>}
+                    <span className="flex-1 text-slate-300">{d.opponent_name}</span>
+                    <span className="text-slate-500 text-[10px] w-16">{d.opponent_role}</span>
+                    <WinrateIndicator delta={d.delta} />
+                    <span className="text-slate-500 text-[10px] ml-2 w-14 text-right">
+                      {d.win_rate.toFixed(1)}% WR
+                    </span>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          {/* Synergies */}
+          {/* Synergies details */}
           {rec.synergy_details?.length > 0 && (
-            <div>
-              <div className="text-[11px] font-semibold text-dalia-muted/80 mb-2 flex items-center gap-1.5 uppercase tracking-wider">
-                <Shield size={11} /> Synergies
+            <div className="space-y-2">
+              <div className="text-xs font-medium text-slate-400 uppercase tracking-wider">
+                Synergies
               </div>
               <div className="space-y-1">
-                {rec.synergy_details.map((d, i) => (
-                  <div key={i} className="flex items-center text-xs gap-2 py-0.5">
-                    <span className="text-dalia-muted/40 w-5 text-center">•</span>
-                    <span className="w-20 truncate text-dalia-text/80">{d.ally_name}</span>
-                    <span className="text-dalia-muted/50 w-12 text-[10px]">{d.ally_role}</span>
-                    <DeltaBadge value={d.delta} />
+                {rec.synergy_details.slice(0, 4).map((d, i) => (
+                  <div key={i} className="flex items-center text-xs py-1.5 px-2 rounded-lg bg-slate-800/30">
+                    <span className="text-slate-600 w-5 text-center">•</span>
+                    <span className="flex-1 text-slate-300">{d.ally_name}</span>
+                    <span className="text-slate-500 text-[10px] w-16">{d.ally_role}</span>
+                    <WinrateIndicator delta={d.delta} />
                   </div>
                 ))}
               </div>
@@ -192,16 +208,21 @@ export default function RecommendationCard({ rec, rank, champData, isWildcard = 
 
           {/* Composition warnings */}
           {rec.composition_warnings?.length > 0 && (
-            <div>
-              <div className="text-[11px] font-semibold text-dalia-muted/80 mb-2 flex items-center gap-1.5 uppercase tracking-wider">
-                <AlertTriangle size={11} /> Alertes
+            <div className="space-y-2">
+              <div className="text-xs font-medium text-slate-400 uppercase tracking-wider">
+                Points d'attention
               </div>
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 {rec.composition_warnings.map((w, i) => (
-                  <div key={i} className={`text-xs flex items-start gap-2 ${
-                    w.severity === 'critical' ? 'text-dalia-red/90' : 'text-orange-400/80'
-                  }`}>
-                    <AlertTriangle size={11} className="shrink-0 mt-0.5" />
+                  <div 
+                    key={i} 
+                    className={`text-xs py-1.5 px-2 rounded-lg flex items-start gap-2 ${
+                      w.severity === 'critical' 
+                        ? 'bg-red-500/10 text-red-400 border border-red-500/20' 
+                        : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                    }`}
+                  >
+                    <span className="shrink-0 mt-0.5">⚠</span>
                     <span>{w.message}</span>
                   </div>
                 ))}

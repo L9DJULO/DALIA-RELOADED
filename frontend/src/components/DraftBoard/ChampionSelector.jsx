@@ -31,42 +31,45 @@ export default function ChampionSelector({ champions, unavailableIds, onSelect, 
     : `Pick ${target?.role || '?'} (${target?.team || '?'})`;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="bg-dalia-surface/95 backdrop-blur-xl border border-white/[0.08] rounded-2xl w-[600px] max-h-[80vh] flex flex-col shadow-2xl shadow-black/40">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+      <div className="bg-slate-900 border border-slate-700 rounded-2xl w-[640px] max-h-[85vh] flex flex-col shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-white/[0.06]">
+        <div className="flex items-center justify-between p-4 border-b border-slate-800">
           <div>
-            <div className="text-sm font-semibold">{titleText}</div>
-            <div className="text-xs text-dalia-muted">Choisir un champion</div>
+            <div className="text-base font-semibold text-white">{titleText}</div>
+            <div className="text-xs text-slate-500">Sélectionner un champion</div>
           </div>
-          <button onClick={onClose} className="p-1 rounded hover:bg-dalia-card text-dalia-muted hover:text-dalia-text">
-            <X size={18} />
+          <button 
+            onClick={onClose} 
+            className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+          >
+            <X size={20} />
           </button>
         </div>
 
         {/* Search + filters */}
-        <div className="p-3 space-y-2 border-b border-white/[0.06]">
+        <div className="p-4 space-y-3 border-b border-slate-800">
           <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-dalia-muted" />
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
             <input
               autoFocus
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Rechercher…"
-              className="w-full bg-dalia-card border border-dalia-border rounded-lg pl-8 pr-3 py-2 text-sm
-                         text-dalia-text placeholder-dalia-muted focus:outline-none focus:border-dalia-accent"
+              placeholder="Rechercher..."
+              className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-10 pr-4 py-2.5 text-sm
+                         text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 transition-colors"
             />
           </div>
-          <div className="flex gap-1">
+          <div className="flex gap-1.5">
             {ROLE_FILTER.map((r) => (
               <button
                 key={r}
                 onClick={() => setRoleFilter(r)}
-                className={`px-2.5 py-1 rounded text-xs transition-colors ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                   roleFilter === r
-                    ? 'bg-dalia-accent/20 text-dalia-accent'
-                    : 'text-dalia-muted hover:text-dalia-text hover:bg-dalia-card'
+                    ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800 border border-transparent'
                 }`}
               >
                 {ROLE_LABELS[r]}
@@ -76,8 +79,8 @@ export default function ChampionSelector({ champions, unavailableIds, onSelect, 
         </div>
 
         {/* Champion grid */}
-        <div className="flex-1 overflow-y-auto p-3">
-          <div className="grid grid-cols-7 gap-1.5">
+        <div className="flex-1 overflow-y-auto p-4">
+          <div className="grid grid-cols-8 gap-2">
             {filtered.map((champ) => {
               const disabled = unavailableIds.has(champ.id);
               return (
@@ -85,10 +88,10 @@ export default function ChampionSelector({ champions, unavailableIds, onSelect, 
                   key={champ.id}
                   disabled={disabled}
                   onClick={() => onSelect(champ)}
-                  className={`relative rounded-lg overflow-hidden border transition-all group ${
+                  className={`relative rounded-xl overflow-hidden border transition-all group ${
                     disabled
-                      ? 'opacity-25 cursor-not-allowed border-dalia-border grayscale'
-                      : 'border-dalia-border hover:border-dalia-accent cursor-pointer'
+                      ? 'opacity-30 cursor-not-allowed border-slate-800 grayscale'
+                      : 'border-slate-700 hover:border-amber-500 hover:scale-105 cursor-pointer'
                   }`}
                 >
                   <img
@@ -97,8 +100,8 @@ export default function ChampionSelector({ champions, unavailableIds, onSelect, 
                     className="w-full aspect-square object-cover"
                     loading="lazy"
                   />
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent
-                                  px-0.5 py-0.5 text-[8px] text-center truncate">
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent
+                                  px-1 py-1 text-[9px] text-center truncate text-white font-medium">
                     {champ.name}
                   </div>
                 </button>
