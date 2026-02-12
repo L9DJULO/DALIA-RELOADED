@@ -117,6 +117,13 @@ POSITION_MAP = {
     "utility": "support",
 }
 
+# Standard cell-to-role mapping in ranked (cells 0-4 = blue, 5-9 = red)
+# Within each team the order is: top, jungle, mid, bot, support
+CELL_TO_ROLE = {
+    0: "top", 1: "jungle", 2: "mid", 3: "bot", 4: "support",
+    5: "top", 6: "jungle", 7: "mid", 8: "bot", 9: "support",
+}
+
 
 class LCUConnector:
     """
@@ -348,8 +355,9 @@ class LCUConnector:
         my_team = session.get("myTeam", [])
         their_team = session.get("theirTeam", [])
         
-        # Build cell_id -> position map
+        # Build cell_id -> position map for both teams
         cell_positions = {}
+        
         for member in my_team:
             cell_id = member.get("cellId", -1)
             position = POSITION_MAP.get(member.get("assignedPosition", ""), "")
@@ -365,13 +373,21 @@ class LCUConnector:
                 state.ally_picks[position] = champion_id
         
         # Enemy team picks
+        # NOTE: The LCU API does NOT provide assignedPosition for the enemy
+        # team, so we infer the role from the cellId using the standard
+        # ranked mapping (0/5=top, 1/6=jungle, 2/7=mid, 3/8=bot, 4/9=support).
         for member in their_team:
+            cell_id = member.get("cellId", -1)
             position = POSITION_MAP.get(member.get("assignedPosition", ""), "")
+            if not position:
+                position = CELL_TO_ROLE.get(cell_id, "")
+            cell_positions[cell_id] = position
+            
             champion_id = member.get("championId", 0)
             if champion_id > 0 and position:
                 state.enemy_picks[position] = champion_id
         
-        # Parse actions for bans and in-progress picks
+        # Parse actions for bans, enemy picks, and in-progress state
         actions = session.get("actions", [])
         
         for action_group in actions:
@@ -392,6 +408,13 @@ class LCUConnector:
                     else:
                         if champion_id not in state.enemy_bans:
                             state.enemy_bans.append(champion_id)
+                
+                # Track enemy picks from actions (fallback if theirTeam
+                # did not already provide the champion).
+                if action_type == "pick" and completed and champion_id > 0 and not is_ally:
+                    position = cell_positions.get(actor_cell, CELL_TO_ROLE.get(actor_cell, ""))
+                    if position and position not in state.enemy_picks:
+                        state.enemy_picks[position] = champion_id
                 
                 # Track current action
                 if is_in_progress:
