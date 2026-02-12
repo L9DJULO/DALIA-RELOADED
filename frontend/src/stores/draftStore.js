@@ -23,6 +23,7 @@ const useDraftStore = create((set, get) => ({
   recommendations: [],
   compSummary: {},
   warnings: [],
+  winProbability: null,
   loading: false,
   error: null,
 
@@ -68,6 +69,7 @@ const useDraftStore = create((set, get) => ({
       recommendations: [],
       compSummary: {},
       warnings: [],
+      winProbability: null,
       currentAction: 0,
       error: null,
     }),
@@ -129,6 +131,7 @@ const useDraftStore = create((set, get) => ({
         recommendations: data.recommendations || [],
         compSummary: data.team_composition_summary || {},
         warnings: data.warnings || [],
+        winProbability: data.win_probability ?? null,
         loading: false,
       });
     } catch (e) {

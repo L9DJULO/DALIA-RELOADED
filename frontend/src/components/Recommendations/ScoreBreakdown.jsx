@@ -1,28 +1,37 @@
-import React from 'react';
-import { BarChart3, Swords, Users, LayoutGrid, Star, Dice6, Brain } from 'lucide-react';
+import { BarChart3, Swords, Users, LayoutGrid, Star, Dice6, Brain, HelpCircle } from 'lucide-react';
 
 const SCORE_LABELS = {
-  meta:        { label: 'Meta',        Icon: BarChart3, tip: 'Force du champion dans le patch actuel' },
-  matchup:     { label: 'Matchups',    Icon: Swords, tip: 'Winrate contre les ennemis révélés' },
-  synergy:     { label: 'Synergies',   Icon: Users, tip: 'Synergie avec les alliés' },
-  composition: { label: 'Composition', Icon: LayoutGrid, tip: 'Équilibre AD/AP, tank, CC, engage' },
-  mastery:     { label: 'Maîtrise',    Icon: Star, tip: 'Votre tier personnel sur ce champion' },
-  draft_risk:  { label: 'Risque draft',Icon: Dice6, tip: "Sécurité du pick (counter dispo, blind pick…)" },
-  ml_prediction: { label: 'IA Draft', Icon: Brain, tip: 'Prédiction du modèle ML' },
+  meta:        { label: 'Meta',        Icon: BarChart3, tip: 'Force du champion dans le patch actuel (winrate, pickrate, banrate en Master+)' },
+  matchup:     { label: 'Matchups',    Icon: Swords, tip: "Performance contre les ennemis révélés — pondéré ×3 pour l'adversaire direct de lane" },
+  synergy:     { label: 'Synergies',   Icon: Users, tip: 'Winrate en duo avec les alliés déjà sélectionnés' },
+  composition: { label: 'Composition', Icon: LayoutGrid, tip: 'Équilibre de la compo : répartition AD/AP, tank, CC, engage, peel' },
+  mastery:     { label: 'Maîtrise',    Icon: Star, tip: 'Votre niveau sur ce champion (basé sur le tier que vous avez renseigné dans votre pool)' },
+  draft_risk:  { label: 'Risque draft',Icon: Dice6, tip: 'Sécurité du pick : nombre de counters encore disponibles, risque de blind pick' },
+  ml_prediction: { label: 'IA Draft', Icon: Brain, tip: "Prédiction du modèle d'IA entraîné sur des milliers de parties Master+" },
 };
 
-function barColor(val) {
-  if (val >= 70) return 'bg-emerald-500';
-  if (val >= 55) return 'bg-amber-500';
-  if (val >= 40) return 'bg-slate-500';
-  return 'bg-red-500';
+function scoreColor(val) {
+  if (val >= 70) return { bar: 'bg-emerald-500', text: 'text-emerald-400' };
+  if (val >= 55) return { bar: 'bg-sky-500', text: 'text-sky-400' };
+  if (val >= 40) return { bar: 'bg-amber-500', text: 'text-amber-400' };
+  return { bar: 'bg-red-500', text: 'text-red-400' };
 }
 
-function textColor(val) {
-  if (val >= 70) return 'text-emerald-400';
-  if (val >= 55) return 'text-amber-400';
-  if (val >= 40) return 'text-slate-400';
-  return 'text-red-400';
+/* ── Info tooltip bubble ── */
+function InfoTooltip({ text }) {
+  return (
+    <span className="relative group/tip ml-1 inline-flex">
+      <HelpCircle size={12} className="text-slate-600 hover:text-slate-400 cursor-help transition-colors" />
+      <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 
+                        w-56 px-3 py-2 rounded-lg bg-slate-700 border border-slate-600 
+                        text-[11px] text-slate-200 leading-relaxed shadow-xl
+                        opacity-0 group-hover/tip:opacity-100 transition-opacity duration-150 z-50
+                        before:content-[''] before:absolute before:top-full before:left-1/2 before:-translate-x-1/2
+                        before:border-4 before:border-transparent before:border-t-slate-700">
+        {text}
+      </span>
+    </span>
+  );
 }
 
 /* ── ML Explanation panel ── */
@@ -79,20 +88,22 @@ export default function ScoreBreakdown({ breakdown }) {
         {Object.entries(SCORE_LABELS).map(([key, { label, Icon, tip }]) => {
           const val = breakdown[key];
           if (val == null) return null;
+          const colors = scoreColor(val);
           return (
-            <div key={key} className="group" title={tip}>
+            <div key={key}>
               <div className="flex items-center justify-between mb-1">
                 <span className="text-[11px] text-slate-400 flex items-center gap-1.5">
                   <Icon size={12} />
                   <span>{label}</span>
+                  <InfoTooltip text={tip} />
                 </span>
-                <span className={`text-xs font-bold tabular-nums ${textColor(val)}`}>
+                <span className={`text-xs font-bold tabular-nums ${colors.text}`}>
                   {val.toFixed(0)}
                 </span>
               </div>
               <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
                 <div
-                  className={`h-full rounded-full ${barColor(val)} transition-all duration-500 ease-out`}
+                  className={`h-full rounded-full ${colors.bar} transition-all duration-500 ease-out`}
                   style={{ width: `${Math.min(val, 100)}%` }}
                 />
               </div>

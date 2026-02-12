@@ -79,3 +79,7 @@ htmlcov/
 *.bak
 *.tmp
 *.temp
+nul
+
+# ── PyInstaller ──
+*.spec

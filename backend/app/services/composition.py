@@ -15,10 +15,10 @@ Score 0-100 starts at 100 (perfect) and deductions are applied for imbalances.
 from __future__ import annotations
 
 import logging
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 from app.models.champion import Champion
-from app.models.draft import CompositionWarning, DraftPick, DraftState
+from app.models.draft import CompositionWarning, DraftState
 from app.services.champion_data import ChampionDatabase
 
 logger = logging.getLogger("dalia.composition")
@@ -163,13 +163,50 @@ class CompositionAnalyzer:
 
         return warns
 
-    def team_summary(self, candidate: Champion, draft: DraftState) -> Dict[str, float]:
-        """Return a breakdown of team attributes for the UI radar chart."""
+    # Role-based damage weight: carries contribute more than supports
+    _ROLE_DAMAGE_WEIGHT = {
+        "top": 1.0, "jungle": 1.0, "mid": 1.2, "bot": 1.2, "support": 0.4,
+    }
+
+    def team_summary(self, candidate: Champion, draft: DraftState, candidate_role: str = "") -> Dict[str, float]:
+        """Return a breakdown of team attributes for the UI.
+
+        Damage values are *weighted* totals so that supports don't skew
+        the AD/AP distribution as much as carries.
+        """
         team = self._resolve_team(draft, candidate)
         n = max(len(team), 1)
+
+        # Build (champion, role) pairs for weighted damage calculation
+        ally_roles = {ap.champion_id: ap.role for ap in draft.ally_picks if ap.champion_id}
+        champ_roles = []
+        for c in team:
+            role = ally_roles.get(c.id, "") or ""
+            if c.id == candidate.id and candidate_role:
+                role = candidate_role
+            champ_roles.append((c, role))
+
+        # Weighted damage distribution
+        total_w = 0.0
+        w_phys = 0.0
+        w_mag = 0.0
+        w_true = 0.0
+        for c, role in champ_roles:
+            w = self._ROLE_DAMAGE_WEIGHT.get(role, 1.0)
+            total_w += w
+            w_phys += c.damage.physical * w
+            w_mag += c.damage.magical * w
+            w_true += c.damage.true_dmg * w
+        if total_w > 0:
+            w_phys /= total_w
+            w_mag /= total_w
+            w_true /= total_w
+
         return {
-            "damage_physical": round(sum(c.damage.physical for c in team) / n, 1),
-            "damage_magical": round(sum(c.damage.magical for c in team) / n, 1),
+            "damage_physical": round(w_phys, 1),
+            "damage_magical": round(w_mag, 1),
+            "damage_true": round(w_true, 1),
+            "team_size": n,
             "cc": round(sum(c.ratings.cc for c in team) / n, 1),
             "engage": round(sum(c.ratings.engage for c in team) / n, 1),
             "poke": round(sum(c.ratings.poke for c in team) / n, 1),

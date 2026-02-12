@@ -25,7 +25,6 @@ from typing import Dict, List, Optional
 from app.config import config
 from app.models.champion import Champion
 from app.models.draft import (
-    CompositionWarning,
     DraftRequest,
     DraftResponse,
     DraftState,
@@ -51,7 +50,7 @@ except ImportError:
 
 logger = logging.getLogger("dalia.engine")
 
-TIER_TO_MASTERY = {"S": 82, "A": 68, "B": 54, "C": 40, "D": 25}
+TIER_TO_MASTERY = {"S": 90, "A": 72, "B": 55, "C": 38, "D": 10}
 
 
 def _clamp(v: float, lo: float = 0.0, hi: float = 100.0) -> float:
@@ -100,7 +99,7 @@ class DraftEngine:
         pool_entries = pool.get(role, [])
         if not pool_entries:
             all_for_role = self.db.champions_for_role(role)
-            pool_entries = [PoolEntry(champion_id=c.id, champion_key=c.key, tier="C") for c in all_for_role]
+            pool_entries = [PoolEntry(champion_id=c.id, champion_key=c.key, tier="D") for c in all_for_role]
 
         # Filter out banned & already picked
         unavailable = draft.all_unavailable_ids
@@ -129,14 +128,22 @@ class DraftEngine:
         if scored:
             top = self.db.get_by_id(scored[0].champion_id)
             if top:
-                comp_summary = self.composition.team_summary(top, draft)
+                comp_summary = self.composition.team_summary(top, draft, candidate_role=role)
                 comp_warns = self.composition.warnings(top, draft)
                 global_warnings = [w.message for w in comp_warns]
+
+        # 6. Win probability from ML model (best recommendation)
+        win_prob = None
+        if self.ml is not None and scored:
+            top_rec = scored[0]
+            if top_rec.breakdown.ml_explanation and top_rec.breakdown.ml_explanation.win_probability:
+                win_prob = round(top_rec.breakdown.ml_explanation.win_probability * 100, 1)
 
         return DraftResponse(
             recommendations=scored[:15],
             team_composition_summary=comp_summary,
             warnings=global_warnings,
+            win_probability=win_prob,
         )
 
     # ── Scoring pipeline (non-linear) ────────────────────────────────────
@@ -248,6 +255,9 @@ class DraftEngine:
         # Confidence (data-quality aware)
         confidence = self._compute_confidence(draft, mu_details, syn_details_raw)
 
+        # Game count for this champion in this role (sample size info)
+        meta_games = self.meta.games(champ.id, role)
+
         return Recommendation(
             champion_id=champ.id,
             champion_key=champ.key,
@@ -260,6 +270,7 @@ class DraftEngine:
             is_pool_champion=True,
             tags=tags,
             confidence=confidence,
+            meta_games=meta_games,
         )
 
     # ── Draft risk (counter-pick exposure) ───────────────────────────────
@@ -337,12 +348,14 @@ class DraftEngine:
         
         # Filter: only champions with decent meta score for this role
         # This prevents off-role suggestions like Nunu top
+        # Also exclude champions with too few games — stats are unreliable
         MIN_META_FOR_WILDCARD = 45.0
         candidates = [
             c for c in all_for_role
             if c.id not in pool_ids 
             and c.id not in unavailable
             and meta_scores.get(c.id, 0) >= MIN_META_FOR_WILDCARD
+            and self.meta.games(c.id, role) >= config.min_games_reliable
         ]
         candidates.sort(key=lambda c: meta_scores.get(c.id, 0), reverse=True)
         candidates = candidates[:15]
@@ -376,6 +389,11 @@ class DraftEngine:
         match_s: float, risk_s: float, comp_s: float,
     ) -> List[str]:
         tags: List[str] = []
+
+        # Low-data warning: champion has very few games → stats unreliable
+        games = self.meta.games(champ.id, draft.my_role)
+        if 0 < games < config.min_games_reliable:
+            tags.append("low-data")
 
         # Safe blind: high safety + not a vulnerable archetype + decent matchups
         is_vulnerable_carry = ("Marksman" in champ.tags or "Assassin" in champ.tags) and champ.ratings.tankiness <= 2
@@ -423,10 +441,10 @@ class DraftEngine:
             base += data_ratio * 25.0  # up to +25 for full data coverage
 
             # Heavy penalty for mostly heuristic data
-            if data_ratio < 0.5:
-                base -= 20  # most matchups are estimated = very uncertain
-            elif data_ratio < 0.3:
+            if data_ratio < 0.3:
                 base -= 30  # almost no real data
+            elif data_ratio < 0.5:
+                base -= 20  # most matchups are estimated = very uncertain
         else:
             base -= 10  # no enemies = less confident
 

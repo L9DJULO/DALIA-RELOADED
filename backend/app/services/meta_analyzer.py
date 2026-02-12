@@ -10,6 +10,7 @@ from __future__ import annotations
 import logging
 from typing import Dict, List, Optional
 
+from app.config import config
 from app.models.champion import ChampionStats
 from app.services.champion_data import ChampionDatabase
 from app.services.data_fetcher import LolalyticsFetcher
@@ -73,7 +74,31 @@ class MetaAnalyzer:
 
         # Weighted combination — WR is the primary meta indicator
         # 52.63% WR = genuinely strong regardless of pick/ban popularity
-        return round(_clamp(wr_score * 0.80 + pr_score * 0.15 + br_score * 0.05), 1)
+        raw = wr_score * 0.80 + pr_score * 0.15 + br_score * 0.05
+
+        # ── Sample-size confidence multiplier ──
+        # Champions with very few games have unreliable stats (e.g. Senna ADC
+        # at 3 k games vs Kai'Sa at 100 k+).  We penalise low-data champions
+        # so they don't get recommended over proven picks.
+        games = stats.games
+        min_rel = config.min_games_reliable       # 5 000
+        full_conf = config.min_games_full_confidence  # 50 000
+        if games < min_rel:
+            # Very few games → heavy penalty (×0.35 – ×0.65)
+            confidence = 0.35 + 0.30 * (games / min_rel)
+        elif games < full_conf:
+            # Moderate games → gentle ramp from 0.65 → 1.0
+            ratio = (games - min_rel) / (full_conf - min_rel)
+            confidence = 0.65 + 0.35 * ratio
+        else:
+            confidence = 1.0
+
+        return round(_clamp(raw * confidence), 1)
+
+    def games(self, champion_id: int, role: str) -> int:
+        """Return number of games for a (champion, role).  0 if unknown."""
+        stats = self.db.get_stats(champion_id, role)
+        return stats.games if stats else 0
 
     # ── Bulk ─────────────────────────────────────────────────────────────
     async def scores_for_role(self, role: str) -> Dict[int, float]:

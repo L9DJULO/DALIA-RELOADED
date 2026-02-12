@@ -1,172 +1,3676 @@
 {
   "__doc__": "Champion overrides — damage:[phys,mag,true], ratings:[cc,engage,poke,split,tf,util,burst,dps,tank], roles:[lanes]",
-  "Aatrox":     {"damage":[82,10,8],  "ratings":[3,4,2,3,4,2,3,4,4], "roles":["top"]},
-  "Ahri":       {"damage":[5,90,5],   "ratings":[3,2,3,2,4,2,4,2,1], "roles":["mid"]},
-  "Akali":      {"damage":[30,65,5],  "ratings":[1,3,2,4,3,1,5,3,1], "roles":["mid","top"]},
-  "Akshan":     {"damage":[80,15,5],  "ratings":[1,2,3,3,3,2,3,4,1], "roles":["mid","top"]},
-  "Alistar":    {"damage":[25,60,15], "ratings":[5,5,1,1,4,3,2,1,5], "roles":["support"]},
-  "Ambessa":    {"damage":[75,20,5],  "ratings":[2,4,2,3,3,1,4,3,3], "roles":["top"]},
-  "Amumu":      {"damage":[10,80,10], "ratings":[5,5,1,1,5,2,2,2,4], "roles":["jungle","support"]},
-  "Anivia":     {"damage":[5,90,5],   "ratings":[3,1,4,1,5,3,3,4,1], "roles":["mid"]},
-  "Annie":      {"damage":[5,90,5],   "ratings":[4,4,2,1,4,1,5,2,1], "roles":["mid","support"]},
-  "Aphelios":   {"damage":[85,10,5],  "ratings":[2,1,3,2,4,2,3,5,1], "roles":["bot"]},
-  "Ashe":       {"damage":[80,10,10], "ratings":[3,3,4,1,4,4,2,4,1], "roles":["bot","support"]},
-  "AurelionSol":{"damage":[5,90,5],   "ratings":[2,1,3,1,5,1,4,4,1], "roles":["mid"]},
-  "Aurora":     {"damage":[5,90,5],   "ratings":[3,3,3,2,4,2,4,3,1], "roles":["mid","top"]},
-  "Azir":       {"damage":[10,85,5],  "ratings":[2,2,4,2,5,1,3,5,1], "roles":["mid"]},
-  "Bard":       {"damage":[20,70,10], "ratings":[3,4,3,1,4,5,3,1,2], "roles":["support"]},
-  "BelVeth":    {"damage":[70,10,20], "ratings":[1,2,1,4,3,1,3,5,2], "roles":["jungle"]},
-  "Blitzcrank": {"damage":[25,65,10], "ratings":[4,5,1,1,3,2,3,1,3], "roles":["support"]},
-  "Brand":      {"damage":[5,90,5],   "ratings":[2,1,4,1,5,1,4,4,1], "roles":["support","mid"]},
-  "Braum":      {"damage":[30,55,15], "ratings":[4,3,1,1,4,4,1,1,5], "roles":["support"]},
-  "Briar":      {"damage":[75,15,10], "ratings":[2,4,1,3,3,1,4,4,2], "roles":["jungle"]},
-  "Caitlyn":    {"damage":[90,5,5],   "ratings":[2,1,5,2,3,2,3,4,1], "roles":["bot"]},
-  "Camille":    {"damage":[50,15,35], "ratings":[2,4,2,5,3,1,4,3,2], "roles":["top"]},
-  "Cassiopeia": {"damage":[5,85,10],  "ratings":[3,1,3,1,4,2,3,5,1], "roles":["mid","bot"]},
-  "ChoGath":    {"damage":[25,55,20], "ratings":[4,3,2,2,4,2,4,2,5], "roles":["top","mid"]},
-  "Corki":      {"damage":[30,65,5],  "ratings":[1,1,4,2,4,1,4,4,1], "roles":["mid"]},
-  "Darius":     {"damage":[70,5,25],  "ratings":[2,3,1,3,3,1,4,4,4], "roles":["top"]},
-  "Diana":      {"damage":[15,80,5],  "ratings":[3,5,1,2,5,1,5,3,2], "roles":["jungle","mid"]},
-  "DrMundo":    {"damage":[45,40,15], "ratings":[1,2,2,3,3,1,1,3,5], "roles":["top","jungle"]},
-  "Draven":     {"damage":[92,3,5],   "ratings":[1,1,2,2,3,1,4,5,1], "roles":["bot"]},
-  "Ekko":       {"damage":[10,85,5],  "ratings":[2,3,2,3,3,2,5,3,1], "roles":["jungle","mid"]},
-  "Elise":      {"damage":[20,75,5],  "ratings":[2,3,2,1,2,1,5,2,1], "roles":["jungle"]},
-  "Evelynn":    {"damage":[10,85,5],  "ratings":[2,2,1,2,2,1,5,3,1], "roles":["jungle"]},
-  "Ezreal":     {"damage":[60,35,5],  "ratings":[1,1,5,2,3,1,3,4,1], "roles":["bot"]},
-  "Fiddlesticks":{"damage":[5,90,5],  "ratings":[3,5,2,1,5,2,4,3,1], "roles":["jungle"]},
-  "Fiora":      {"damage":[55,5,40],  "ratings":[1,2,1,5,2,1,4,4,2], "roles":["top"]},
-  "Fizz":       {"damage":[15,80,5],  "ratings":[2,3,1,2,3,1,5,3,1], "roles":["mid"]},
-  "Galio":      {"damage":[20,75,5],  "ratings":[4,4,2,1,5,3,3,2,4], "roles":["mid","support"]},
-  "Gangplank":  {"damage":[75,15,10], "ratings":[1,1,4,3,4,3,4,3,1], "roles":["top","mid"]},
-  "Garen":      {"damage":[60,15,25], "ratings":[1,2,1,3,3,1,4,3,5], "roles":["top"]},
-  "Gnar":       {"damage":[65,25,10], "ratings":[4,4,3,3,4,2,3,3,3], "roles":["top"]},
-  "Gragas":     {"damage":[20,75,5],  "ratings":[3,4,3,2,4,2,4,2,3], "roles":["jungle","top","mid"]},
-  "Graves":     {"damage":[85,10,5],  "ratings":[1,2,2,3,3,1,4,4,2], "roles":["jungle"]},
-  "Gwen":       {"damage":[15,50,35], "ratings":[1,2,1,4,3,1,3,4,2], "roles":["top"]},
-  "Hecarim":    {"damage":[70,20,10], "ratings":[2,5,1,2,4,1,4,3,3], "roles":["jungle"]},
-  "Heimerdinger":{"damage":[10,85,5], "ratings":[2,1,4,3,3,2,3,4,1], "roles":["top","mid","support"]},
-  "Hwei":       {"damage":[5,90,5],   "ratings":[3,2,5,1,4,3,4,3,1], "roles":["mid","support"]},
-  "Illaoi":     {"damage":[80,10,10], "ratings":[1,2,2,4,3,1,3,4,3], "roles":["top"]},
-  "Irelia":     {"damage":[55,35,10], "ratings":[2,3,1,4,3,1,4,4,2], "roles":["top","mid"]},
-  "Ivern":      {"damage":[15,70,15], "ratings":[3,2,2,1,4,5,1,1,1], "roles":["jungle"]},
-  "Janna":      {"damage":[15,70,15], "ratings":[3,1,3,1,3,5,2,1,1], "roles":["support"]},
-  "JarvanIV":   {"damage":[80,10,10], "ratings":[3,5,2,2,4,3,3,3,3], "roles":["jungle","top"]},
-  "Jax":        {"damage":[45,35,20], "ratings":[2,3,1,5,3,1,3,4,3], "roles":["top","jungle"]},
-  "Jayce":      {"damage":[75,20,5],  "ratings":[2,2,5,3,3,1,4,3,1], "roles":["top","mid"]},
-  "Jhin":       {"damage":[85,10,5],  "ratings":[3,1,4,1,4,3,4,3,1], "roles":["bot"]},
-  "Jinx":       {"damage":[90,5,5],   "ratings":[2,1,3,2,4,1,3,5,1], "roles":["bot"]},
-  "KSante":     {"damage":[40,40,20], "ratings":[3,4,2,3,4,2,3,3,5], "roles":["top"]},
-  "KaiSa":      {"damage":[45,50,5],  "ratings":[1,2,3,2,4,1,5,4,1], "roles":["bot"]},
-  "Kalista":    {"damage":[85,5,10],  "ratings":[1,2,2,2,3,2,3,5,1], "roles":["bot"]},
-  "Karma":      {"damage":[10,85,5],  "ratings":[2,1,4,1,3,5,2,2,1], "roles":["support","mid"]},
-  "Karthus":    {"damage":[5,90,5],   "ratings":[1,1,3,1,5,2,4,5,1], "roles":["jungle","bot"]},
-  "Kassadin":   {"damage":[15,80,5],  "ratings":[1,3,1,3,3,1,5,3,2], "roles":["mid"]},
-  "Katarina":   {"damage":[30,65,5],  "ratings":[1,3,1,3,4,1,5,4,1], "roles":["mid"]},
-  "Kayle":      {"damage":[30,60,10], "ratings":[1,1,3,4,4,3,3,5,1], "roles":["top"]},
-  "Kayn":       {"damage":[80,15,5],  "ratings":[2,3,1,3,3,1,4,4,2], "roles":["jungle"]},
-  "Kennen":     {"damage":[25,70,5],  "ratings":[3,5,3,2,5,1,4,3,1], "roles":["top"]},
-  "KhaZix":     {"damage":[90,5,5],   "ratings":[1,2,1,3,2,1,5,3,1], "roles":["jungle"]},
-  "Kindred":    {"damage":[75,15,10], "ratings":[1,2,3,2,3,3,3,5,1], "roles":["jungle"]},
-  "Kled":       {"damage":[80,10,10], "ratings":[2,5,1,4,3,1,4,3,3], "roles":["top"]},
-  "KogMaw":     {"damage":[50,35,15], "ratings":[1,1,4,1,4,1,2,5,1], "roles":["bot"]},
-  "LeBlanc":    {"damage":[10,85,5],  "ratings":[2,2,3,3,2,1,5,2,1], "roles":["mid"]},
-  "LeeSin":     {"damage":[82,10,8],  "ratings":[2,4,1,2,3,2,4,3,2], "roles":["jungle","top"]},
-  "Leona":      {"damage":[20,65,15], "ratings":[5,5,1,1,4,2,1,1,5], "roles":["support"]},
-  "Lillia":     {"damage":[10,80,10], "ratings":[2,2,3,2,4,1,2,4,2], "roles":["jungle","top"]},
-  "Lissandra":  {"damage":[5,90,5],   "ratings":[4,4,3,1,5,2,4,2,2], "roles":["mid"]},
-  "Lucian":     {"damage":[70,25,5],  "ratings":[1,2,3,2,3,1,4,4,1], "roles":["bot","mid"]},
-  "Lulu":       {"damage":[15,75,10], "ratings":[3,1,3,1,4,5,2,1,1], "roles":["support"]},
-  "Lux":        {"damage":[5,90,5],   "ratings":[3,1,5,1,4,3,5,2,1], "roles":["support","mid"]},
-  "Malphite":   {"damage":[25,65,10], "ratings":[3,5,2,1,5,1,4,1,5], "roles":["top","support"]},
-  "Malzahar":   {"damage":[5,90,5],   "ratings":[3,2,3,3,4,2,3,3,1], "roles":["mid"]},
-  "Maokai":     {"damage":[15,70,15], "ratings":[4,4,2,1,5,3,2,2,5], "roles":["support","jungle","top"]},
-  "MasterYi":   {"damage":[55,15,30], "ratings":[1,1,1,4,2,1,3,5,1], "roles":["jungle"]},
-  "Mel":        {"damage":[5,90,5],   "ratings":[2,2,4,1,4,3,4,3,1], "roles":["mid"]},
-  "Milio":      {"damage":[10,80,10], "ratings":[2,1,3,1,4,5,2,1,1], "roles":["support"]},
-  "MissFortune":{"damage":[80,15,5],  "ratings":[2,1,4,1,4,1,4,4,1], "roles":["bot"]},
-  "Mordekaiser":{"damage":[10,85,5],  "ratings":[1,2,2,4,3,1,4,3,3], "roles":["top"]},
-  "Morgana":    {"damage":[10,85,5],  "ratings":[4,1,3,1,4,4,3,2,1], "roles":["support","mid"]},
-  "Nami":       {"damage":[10,80,10], "ratings":[3,2,3,1,4,5,3,1,1], "roles":["support"]},
-  "Nasus":      {"damage":[65,20,15], "ratings":[2,1,1,5,3,1,2,4,4], "roles":["top"]},
-  "Nautilus":   {"damage":[15,70,15], "ratings":[5,5,1,1,4,2,2,1,5], "roles":["support"]},
-  "Neeko":      {"damage":[10,85,5],  "ratings":[3,3,3,1,4,2,4,2,1], "roles":["mid","support"]},
-  "Nidalee":    {"damage":[20,75,5],  "ratings":[1,2,5,2,2,2,4,3,1], "roles":["jungle"]},
-  "Nilah":      {"damage":[85,5,10],  "ratings":[1,2,1,2,4,2,4,5,2], "roles":["bot"]},
-  "Nocturne":   {"damage":[80,10,10], "ratings":[2,4,1,4,3,1,4,3,2], "roles":["jungle","top"]},
-  "Nunu":       {"damage":[15,70,15], "ratings":[3,4,2,1,4,2,2,2,4], "roles":["jungle","mid"]},
-  "Olaf":       {"damage":[75,10,15], "ratings":[1,3,1,3,3,1,2,4,4], "roles":["top","jungle"]},
-  "Orianna":    {"damage":[10,85,5],  "ratings":[3,3,4,1,5,4,3,3,1], "roles":["mid"]},
-  "Ornn":       {"damage":[20,65,15], "ratings":[4,4,2,1,5,4,2,2,5], "roles":["top"]},
-  "Pantheon":   {"damage":[80,10,10], "ratings":[2,4,2,2,3,2,5,2,2], "roles":["support","top","mid"]},
-  "Poppy":      {"damage":[65,20,15], "ratings":[3,3,1,2,3,2,3,2,4], "roles":["jungle","top","support"]},
-  "Pyke":       {"damage":[85,5,10],  "ratings":[3,4,2,1,3,1,5,2,1], "roles":["support"]},
-  "Qiyana":     {"damage":[85,10,5],  "ratings":[3,3,2,3,4,1,5,2,1], "roles":["mid","jungle"]},
-  "Quinn":      {"damage":[85,10,5],  "ratings":[2,1,3,5,2,2,4,3,1], "roles":["top"]},
-  "Rakan":      {"damage":[15,70,15], "ratings":[3,5,1,1,5,4,2,1,2], "roles":["support"]},
-  "Rammus":     {"damage":[20,65,15], "ratings":[3,4,1,1,4,2,2,2,5], "roles":["jungle"]},
-  "RekSai":     {"damage":[80,10,10], "ratings":[2,4,1,2,3,2,4,3,3], "roles":["jungle"]},
-  "Rell":       {"damage":[20,65,15], "ratings":[5,5,1,1,5,3,1,1,5], "roles":["support"]},
-  "RenataGlasc":{"damage":[10,80,10], "ratings":[3,2,3,1,4,5,2,1,1], "roles":["support"]},
-  "Renekton":   {"damage":[80,10,10], "ratings":[2,3,1,3,3,1,4,3,3], "roles":["top"]},
-  "Rengar":     {"damage":[85,10,5],  "ratings":[1,2,1,3,2,1,5,3,1], "roles":["jungle","top"]},
-  "Riven":      {"damage":[90,5,5],   "ratings":[2,3,1,4,3,1,4,4,2], "roles":["top"]},
-  "Rumble":     {"damage":[10,85,5],  "ratings":[2,2,3,2,5,1,3,4,2], "roles":["top","mid"]},
-  "Ryze":       {"damage":[10,85,5],  "ratings":[2,1,3,3,4,2,3,4,2], "roles":["mid","top"]},
-  "Samira":     {"damage":[82,13,5],  "ratings":[1,3,1,2,4,1,5,4,1], "roles":["bot"]},
-  "Sejuani":    {"damage":[15,70,15], "ratings":[5,5,1,1,5,2,2,2,5], "roles":["jungle","top"]},
-  "Senna":      {"damage":[70,10,20], "ratings":[2,1,4,1,4,4,2,3,1], "roles":["support","bot"]},
-  "Seraphine":  {"damage":[10,85,5],  "ratings":[3,1,4,1,5,5,2,2,1], "roles":["support","mid","bot"]},
-  "Sett":       {"damage":[65,10,25], "ratings":[2,4,1,3,4,1,4,3,4], "roles":["top","support"]},
-  "Shaco":      {"damage":[70,25,5],  "ratings":[2,1,2,4,2,2,4,3,1], "roles":["jungle","support"]},
-  "Shen":       {"damage":[30,50,20], "ratings":[3,4,1,3,4,4,2,2,4], "roles":["top","support"]},
-  "Shyvana":    {"damage":[40,50,10], "ratings":[1,2,2,3,3,1,3,4,3], "roles":["jungle"]},
-  "Singed":     {"damage":[10,80,10], "ratings":[2,2,1,4,3,2,1,3,4], "roles":["top"]},
-  "Sion":       {"damage":[65,25,10], "ratings":[4,4,2,3,4,2,2,2,5], "roles":["top"]},
-  "Sivir":      {"damage":[85,10,5],  "ratings":[1,1,3,2,4,2,2,5,1], "roles":["bot"]},
-  "Skarner":    {"damage":[35,50,15], "ratings":[4,5,1,1,4,2,2,2,5], "roles":["jungle","top"]},
-  "Smolder":    {"damage":[55,40,5],  "ratings":[1,1,4,2,4,1,3,5,1], "roles":["bot","mid"]},
-  "Sona":       {"damage":[10,80,10], "ratings":[2,1,3,1,4,5,2,2,1], "roles":["support"]},
-  "Soraka":     {"damage":[10,80,10], "ratings":[2,1,3,1,4,5,1,1,1], "roles":["support"]},
-  "Swain":      {"damage":[10,85,5],  "ratings":[3,2,3,1,5,2,3,4,3], "roles":["support","mid","bot"]},
-  "Sylas":      {"damage":[15,80,5],  "ratings":[2,3,2,2,4,1,4,3,2], "roles":["mid","top"]},
-  "Syndra":     {"damage":[5,90,5],   "ratings":[2,1,4,1,4,1,5,3,1], "roles":["mid"]},
-  "TahmKench":  {"damage":[25,60,15], "ratings":[3,2,2,2,3,4,2,2,5], "roles":["top","support"]},
-  "Taliyah":    {"damage":[10,85,5],  "ratings":[2,2,4,1,4,2,4,3,1], "roles":["mid","jungle"]},
-  "Talon":      {"damage":[85,10,5],  "ratings":[1,2,2,4,2,1,5,3,1], "roles":["mid","jungle"]},
-  "Taric":      {"damage":[55,30,15], "ratings":[3,2,1,1,4,5,2,1,4], "roles":["support"]},
-  "Teemo":      {"damage":[20,75,5],  "ratings":[2,1,3,4,2,2,3,3,1], "roles":["top"]},
-  "Thresh":     {"damage":[30,55,15], "ratings":[4,4,2,1,4,4,2,1,3], "roles":["support"]},
-  "Tristana":   {"damage":[88,7,5],   "ratings":[1,2,2,4,3,1,4,5,1], "roles":["bot","mid"]},
-  "Trundle":    {"damage":[80,5,15],  "ratings":[1,2,1,5,3,2,2,4,4], "roles":["jungle","top"]},
-  "Tryndamere": {"damage":[90,5,5],   "ratings":[1,2,1,5,2,1,3,5,2], "roles":["top"]},
-  "TwistedFate":{"damage":[30,65,5],  "ratings":[2,2,3,3,4,3,3,3,1], "roles":["mid"]},
-  "Twitch":     {"damage":[72,23,5],  "ratings":[1,1,2,2,4,1,3,5,1], "roles":["bot","jungle"]},
-  "Udyr":       {"damage":[40,45,15], "ratings":[2,3,1,3,3,1,2,3,4], "roles":["jungle","top"]},
-  "Urgot":      {"damage":[70,10,20], "ratings":[2,2,2,3,4,1,3,4,4], "roles":["top"]},
-  "Varus":      {"damage":[55,35,10], "ratings":[2,1,5,1,4,2,4,4,1], "roles":["bot","mid"]},
-  "Vayne":      {"damage":[55,5,40],  "ratings":[1,1,1,3,3,1,3,5,1], "roles":["bot","top"]},
-  "Veigar":     {"damage":[5,90,5],   "ratings":[3,1,3,1,4,1,5,3,1], "roles":["mid","bot"]},
-  "VelKoz":     {"damage":[5,85,10],  "ratings":[2,1,5,1,4,1,4,4,1], "roles":["support","mid"]},
-  "Vex":        {"damage":[5,90,5],   "ratings":[3,3,3,1,4,1,5,3,1], "roles":["mid"]},
-  "Vi":         {"damage":[65,25,10], "ratings":[3,5,1,2,3,1,4,3,3], "roles":["jungle"]},
-  "Viego":      {"damage":[70,15,15], "ratings":[2,3,1,3,3,1,4,4,2], "roles":["jungle"]},
-  "Viktor":     {"damage":[5,90,5],   "ratings":[2,1,4,1,4,2,4,4,1], "roles":["mid"]},
-  "Vladimir":   {"damage":[5,90,5],   "ratings":[1,2,3,3,5,1,4,4,2], "roles":["mid","top"]},
-  "Volibear":   {"damage":[40,45,15], "ratings":[2,4,1,3,3,1,3,3,4], "roles":["top","jungle"]},
-  "Warwick":    {"damage":[50,35,15], "ratings":[2,3,1,3,3,1,3,4,3], "roles":["jungle","top"]},
-  "Wukong":     {"damage":[85,5,10],  "ratings":[3,4,1,2,4,1,4,3,3], "roles":["jungle","top"]},
-  "Xayah":      {"damage":[88,7,5],   "ratings":[2,1,3,2,4,1,4,4,1], "roles":["bot"]},
-  "Xerath":     {"damage":[5,90,5],   "ratings":[2,1,5,1,4,1,4,4,1], "roles":["support","mid"]},
-  "XinZhao":    {"damage":[75,15,10], "ratings":[2,5,1,2,3,1,4,3,3], "roles":["jungle"]},
-  "Yasuo":      {"damage":[88,7,5],   "ratings":[2,2,1,3,4,1,4,5,1], "roles":["mid","bot","top"]},
-  "Yone":       {"damage":[55,30,15], "ratings":[2,4,2,3,4,1,4,5,1], "roles":["mid","top"]},
-  "Yorick":     {"damage":[80,10,10], "ratings":[1,1,1,5,2,1,2,4,3], "roles":["top"]},
-  "Yuumi":      {"damage":[10,80,10], "ratings":[2,1,2,1,3,5,1,1,1], "roles":["support"]},
-  "Zac":        {"damage":[10,80,10], "ratings":[4,5,1,1,5,2,2,2,5], "roles":["jungle","top"]},
-  "Zed":        {"damage":[90,5,5],   "ratings":[1,2,2,4,2,1,5,3,1], "roles":["mid"]},
-  "Zeri":       {"damage":[65,30,5],  "ratings":[1,1,3,2,3,1,2,5,1], "roles":["bot"]},
-  "Ziggs":      {"damage":[5,90,5],   "ratings":[1,1,5,3,4,1,4,4,1], "roles":["bot","mid"]},
-  "Zilean":     {"damage":[10,85,5],  "ratings":[2,1,3,1,4,5,2,2,1], "roles":["support","mid"]},
-  "Zoe":        {"damage":[5,90,5],   "ratings":[2,1,5,1,3,1,5,2,1], "roles":["mid"]},
-  "Zyra":       {"damage":[5,90,5],   "ratings":[3,2,4,1,4,2,4,3,1], "roles":["support","mid"]}
+  "Aatrox": {
+    "damage": [
+      82,
+      10,
+      8
+    ],
+    "ratings": [
+      3,
+      4,
+      2,
+      3,
+      4,
+      2,
+      3,
+      4,
+      4
+    ],
+    "roles": [
+      "top"
+    ]
+  },
+  "Ahri": {
+    "damage": [
+      5,
+      90,
+      5
+    ],
+    "ratings": [
+      3,
+      2,
+      3,
+      2,
+      4,
+      2,
+      4,
+      2,
+      1
+    ],
+    "roles": [
+      "mid"
+    ]
+  },
+  "Akali": {
+    "damage": [
+      30,
+      65,
+      5
+    ],
+    "ratings": [
+      1,
+      3,
+      2,
+      4,
+      3,
+      1,
+      5,
+      3,
+      1
+    ],
+    "roles": [
+      "mid",
+      "top"
+    ]
+  },
+  "Akshan": {
+    "damage": [
+      80,
+      15,
+      5
+    ],
+    "ratings": [
+      1,
+      2,
+      3,
+      3,
+      3,
+      2,
+      3,
+      4,
+      1
+    ],
+    "roles": [
+      "mid",
+      "top"
+    ]
+  },
+  "Alistar": {
+    "damage": [
+      25,
+      60,
+      15
+    ],
+    "ratings": [
+      5,
+      5,
+      1,
+      1,
+      4,
+      3,
+      2,
+      1,
+      5
+    ],
+    "roles": [
+      "support"
+    ]
+  },
+  "Ambessa": {
+    "damage": [
+      75,
+      20,
+      5
+    ],
+    "ratings": [
+      2,
+      4,
+      2,
+      3,
+      3,
+      1,
+      4,
+      3,
+      3
+    ],
+    "roles": [
+      "top"
+    ]
+  },
+  "Amumu": {
+    "damage": [
+      10,
+      80,
+      10
+    ],
+    "ratings": [
+      5,
+      5,
+      1,
+      1,
+      5,
+      2,
+      2,
+      2,
+      4
+    ],
+    "roles": [
+      "jungle",
+      "support"
+    ]
+  },
+  "Anivia": {
+    "damage": [
+      5,
+      90,
+      5
+    ],
+    "ratings": [
+      3,
+      1,
+      4,
+      1,
+      5,
+      3,
+      3,
+      4,
+      1
+    ],
+    "roles": [
+      "mid"
+    ]
+  },
+  "Annie": {
+    "damage": [
+      5,
+      90,
+      5
+    ],
+    "ratings": [
+      4,
+      4,
+      2,
+      1,
+      4,
+      1,
+      5,
+      2,
+      1
+    ],
+    "roles": [
+      "mid",
+      "support"
+    ]
+  },
+  "Aphelios": {
+    "damage": [
+      85,
+      10,
+      5
+    ],
+    "ratings": [
+      2,
+      1,
+      3,
+      2,
+      4,
+      2,
+      3,
+      5,
+      1
+    ],
+    "roles": [
+      "bot"
+    ]
+  },
+  "Ashe": {
+    "damage": [
+      80,
+      10,
+      10
+    ],
+    "ratings": [
+      3,
+      3,
+      4,
+      1,
+      4,
+      4,
+      2,
+      4,
+      1
+    ],
+    "roles": [
+      "bot",
+      "support"
+    ]
+  },
+  "AurelionSol": {
+    "damage": [
+      5,
+      90,
+      5
+    ],
+    "ratings": [
+      2,
+      1,
+      3,
+      1,
+      5,
+      1,
+      4,
+      4,
+      1
+    ],
+    "roles": [
+      "mid"
+    ]
+  },
+  "Aurora": {
+    "damage": [
+      5,
+      90,
+      5
+    ],
+    "ratings": [
+      3,
+      3,
+      3,
+      2,
+      4,
+      2,
+      4,
+      3,
+      1
+    ],
+    "roles": [
+      "mid",
+      "top"
+    ]
+  },
+  "Azir": {
+    "damage": [
+      10,
+      85,
+      5
+    ],
+    "ratings": [
+      2,
+      2,
+      4,
+      2,
+      5,
+      1,
+      3,
+      5,
+      1
+    ],
+    "roles": [
+      "mid"
+    ]
+  },
+  "Bard": {
+    "damage": [
+      20,
+      70,
+      10
+    ],
+    "ratings": [
+      3,
+      4,
+      3,
+      1,
+      4,
+      5,
+      3,
+      1,
+      2
+    ],
+    "roles": [
+      "support"
+    ]
+  },
+  "Belveth": {
+    "damage": [
+      70,
+      10,
+      20
+    ],
+    "ratings": [
+      1,
+      2,
+      1,
+      4,
+      3,
+      1,
+      3,
+      5,
+      2
+    ],
+    "roles": [
+      "jungle"
+    ]
+  },
+  "Blitzcrank": {
+    "damage": [
+      25,
+      65,
+      10
+    ],
+    "ratings": [
+      4,
+      5,
+      1,
+      1,
+      3,
+      2,
+      3,
+      1,
+      3
+    ],
+    "roles": [
+      "support"
+    ]
+  },
+  "Brand": {
+    "damage": [
+      5,
+      90,
+      5
+    ],
+    "ratings": [
+      2,
+      1,
+      4,
+      1,
+      5,
+      1,
+      4,
+      4,
+      1
+    ],
+    "roles": [
+      "support",
+      "mid"
+    ]
+  },
+  "Braum": {
+    "damage": [
+      30,
+      55,
+      15
+    ],
+    "ratings": [
+      4,
+      3,
+      1,
+      1,
+      4,
+      4,
+      1,
+      1,
+      5
+    ],
+    "roles": [
+      "support"
+    ]
+  },
+  "Briar": {
+    "damage": [
+      75,
+      15,
+      10
+    ],
+    "ratings": [
+      2,
+      4,
+      1,
+      3,
+      3,
+      1,
+      4,
+      4,
+      2
+    ],
+    "roles": [
+      "jungle"
+    ]
+  },
+  "Caitlyn": {
+    "damage": [
+      90,
+      5,
+      5
+    ],
+    "ratings": [
+      2,
+      1,
+      5,
+      2,
+      3,
+      2,
+      3,
+      4,
+      1
+    ],
+    "roles": [
+      "bot"
+    ]
+  },
+  "Camille": {
+    "damage": [
+      50,
+      15,
+      35
+    ],
+    "ratings": [
+      2,
+      4,
+      2,
+      5,
+      3,
+      1,
+      4,
+      3,
+      2
+    ],
+    "roles": [
+      "top"
+    ]
+  },
+  "Cassiopeia": {
+    "damage": [
+      5,
+      85,
+      10
+    ],
+    "ratings": [
+      3,
+      1,
+      3,
+      1,
+      4,
+      2,
+      3,
+      5,
+      1
+    ],
+    "roles": [
+      "mid",
+      "bot"
+    ]
+  },
+  "Chogath": {
+    "damage": [
+      25,
+      55,
+      20
+    ],
+    "ratings": [
+      4,
+      3,
+      2,
+      2,
+      4,
+      2,
+      4,
+      2,
+      5
+    ],
+    "roles": [
+      "top",
+      "mid"
+    ]
+  },
+  "Corki": {
+    "damage": [
+      30,
+      65,
+      5
+    ],
+    "ratings": [
+      1,
+      1,
+      4,
+      2,
+      4,
+      1,
+      4,
+      4,
+      1
+    ],
+    "roles": [
+      "mid"
+    ]
+  },
+  "Darius": {
+    "damage": [
+      70,
+      5,
+      25
+    ],
+    "ratings": [
+      2,
+      3,
+      1,
+      3,
+      3,
+      1,
+      4,
+      4,
+      4
+    ],
+    "roles": [
+      "top"
+    ]
+  },
+  "Diana": {
+    "damage": [
+      15,
+      80,
+      5
+    ],
+    "ratings": [
+      3,
+      5,
+      1,
+      2,
+      5,
+      1,
+      5,
+      3,
+      2
+    ],
+    "roles": [
+      "jungle",
+      "mid"
+    ]
+  },
+  "DrMundo": {
+    "damage": [
+      45,
+      40,
+      15
+    ],
+    "ratings": [
+      1,
+      2,
+      2,
+      3,
+      3,
+      1,
+      1,
+      3,
+      5
+    ],
+    "roles": [
+      "top",
+      "jungle"
+    ]
+  },
+  "Draven": {
+    "damage": [
+      92,
+      3,
+      5
+    ],
+    "ratings": [
+      1,
+      1,
+      2,
+      2,
+      3,
+      1,
+      4,
+      5,
+      1
+    ],
+    "roles": [
+      "bot"
+    ]
+  },
+  "Ekko": {
+    "damage": [
+      10,
+      85,
+      5
+    ],
+    "ratings": [
+      2,
+      3,
+      2,
+      3,
+      3,
+      2,
+      5,
+      3,
+      1
+    ],
+    "roles": [
+      "jungle",
+      "mid"
+    ]
+  },
+  "Elise": {
+    "damage": [
+      20,
+      75,
+      5
+    ],
+    "ratings": [
+      2,
+      3,
+      2,
+      1,
+      2,
+      1,
+      5,
+      2,
+      1
+    ],
+    "roles": [
+      "jungle"
+    ]
+  },
+  "Evelynn": {
+    "damage": [
+      10,
+      85,
+      5
+    ],
+    "ratings": [
+      2,
+      2,
+      1,
+      2,
+      2,
+      1,
+      5,
+      3,
+      1
+    ],
+    "roles": [
+      "jungle"
+    ]
+  },
+  "Ezreal": {
+    "damage": [
+      60,
+      35,
+      5
+    ],
+    "ratings": [
+      1,
+      1,
+      5,
+      2,
+      3,
+      1,
+      3,
+      4,
+      1
+    ],
+    "roles": [
+      "bot"
+    ]
+  },
+  "Fiddlesticks": {
+    "damage": [
+      5,
+      90,
+      5
+    ],
+    "ratings": [
+      3,
+      5,
+      2,
+      1,
+      5,
+      2,
+      4,
+      3,
+      1
+    ],
+    "roles": [
+      "jungle"
+    ]
+  },
+  "Fiora": {
+    "damage": [
+      55,
+      5,
+      40
+    ],
+    "ratings": [
+      1,
+      2,
+      1,
+      5,
+      2,
+      1,
+      4,
+      4,
+      2
+    ],
+    "roles": [
+      "top"
+    ]
+  },
+  "Fizz": {
+    "damage": [
+      15,
+      80,
+      5
+    ],
+    "ratings": [
+      2,
+      3,
+      1,
+      2,
+      3,
+      1,
+      5,
+      3,
+      1
+    ],
+    "roles": [
+      "mid"
+    ]
+  },
+  "Galio": {
+    "damage": [
+      20,
+      75,
+      5
+    ],
+    "ratings": [
+      4,
+      4,
+      2,
+      1,
+      5,
+      3,
+      3,
+      2,
+      4
+    ],
+    "roles": [
+      "mid",
+      "support"
+    ]
+  },
+  "Gangplank": {
+    "damage": [
+      75,
+      15,
+      10
+    ],
+    "ratings": [
+      1,
+      1,
+      4,
+      3,
+      4,
+      3,
+      4,
+      3,
+      1
+    ],
+    "roles": [
+      "top",
+      "mid"
+    ]
+  },
+  "Garen": {
+    "damage": [
+      60,
+      15,
+      25
+    ],
+    "ratings": [
+      1,
+      2,
+      1,
+      3,
+      3,
+      1,
+      4,
+      3,
+      5
+    ],
+    "roles": [
+      "top"
+    ]
+  },
+  "Gnar": {
+    "damage": [
+      65,
+      25,
+      10
+    ],
+    "ratings": [
+      4,
+      4,
+      3,
+      3,
+      4,
+      2,
+      3,
+      3,
+      3
+    ],
+    "roles": [
+      "top"
+    ]
+  },
+  "Gragas": {
+    "damage": [
+      20,
+      75,
+      5
+    ],
+    "ratings": [
+      3,
+      4,
+      3,
+      2,
+      4,
+      2,
+      4,
+      2,
+      3
+    ],
+    "roles": [
+      "jungle",
+      "top",
+      "mid"
+    ]
+  },
+  "Graves": {
+    "damage": [
+      85,
+      10,
+      5
+    ],
+    "ratings": [
+      1,
+      2,
+      2,
+      3,
+      3,
+      1,
+      4,
+      4,
+      2
+    ],
+    "roles": [
+      "jungle"
+    ]
+  },
+  "Gwen": {
+    "damage": [
+      15,
+      50,
+      35
+    ],
+    "ratings": [
+      1,
+      2,
+      1,
+      4,
+      3,
+      1,
+      3,
+      4,
+      2
+    ],
+    "roles": [
+      "top"
+    ]
+  },
+  "Hecarim": {
+    "damage": [
+      70,
+      20,
+      10
+    ],
+    "ratings": [
+      2,
+      5,
+      1,
+      2,
+      4,
+      1,
+      4,
+      3,
+      3
+    ],
+    "roles": [
+      "jungle"
+    ]
+  },
+  "Heimerdinger": {
+    "damage": [
+      10,
+      85,
+      5
+    ],
+    "ratings": [
+      2,
+      1,
+      4,
+      3,
+      3,
+      2,
+      3,
+      4,
+      1
+    ],
+    "roles": [
+      "top",
+      "mid",
+      "support"
+    ]
+  },
+  "Hwei": {
+    "damage": [
+      5,
+      90,
+      5
+    ],
+    "ratings": [
+      3,
+      2,
+      5,
+      1,
+      4,
+      3,
+      4,
+      3,
+      1
+    ],
+    "roles": [
+      "mid",
+      "support"
+    ]
+  },
+  "Illaoi": {
+    "damage": [
+      80,
+      10,
+      10
+    ],
+    "ratings": [
+      1,
+      2,
+      2,
+      4,
+      3,
+      1,
+      3,
+      4,
+      3
+    ],
+    "roles": [
+      "top"
+    ]
+  },
+  "Irelia": {
+    "damage": [
+      55,
+      35,
+      10
+    ],
+    "ratings": [
+      2,
+      3,
+      1,
+      4,
+      3,
+      1,
+      4,
+      4,
+      2
+    ],
+    "roles": [
+      "top",
+      "mid"
+    ]
+  },
+  "Ivern": {
+    "damage": [
+      15,
+      70,
+      15
+    ],
+    "ratings": [
+      3,
+      2,
+      2,
+      1,
+      4,
+      5,
+      1,
+      1,
+      1
+    ],
+    "roles": [
+      "jungle"
+    ]
+  },
+  "Janna": {
+    "damage": [
+      15,
+      70,
+      15
+    ],
+    "ratings": [
+      3,
+      1,
+      3,
+      1,
+      3,
+      5,
+      2,
+      1,
+      1
+    ],
+    "roles": [
+      "support"
+    ]
+  },
+  "JarvanIV": {
+    "damage": [
+      80,
+      10,
+      10
+    ],
+    "ratings": [
+      3,
+      5,
+      2,
+      2,
+      4,
+      3,
+      3,
+      3,
+      3
+    ],
+    "roles": [
+      "jungle",
+      "top"
+    ]
+  },
+  "Jax": {
+    "damage": [
+      45,
+      35,
+      20
+    ],
+    "ratings": [
+      2,
+      3,
+      1,
+      5,
+      3,
+      1,
+      3,
+      4,
+      3
+    ],
+    "roles": [
+      "top",
+      "jungle"
+    ]
+  },
+  "Jayce": {
+    "damage": [
+      75,
+      20,
+      5
+    ],
+    "ratings": [
+      2,
+      2,
+      5,
+      3,
+      3,
+      1,
+      4,
+      3,
+      1
+    ],
+    "roles": [
+      "top",
+      "mid"
+    ]
+  },
+  "Jhin": {
+    "damage": [
+      85,
+      10,
+      5
+    ],
+    "ratings": [
+      3,
+      1,
+      4,
+      1,
+      4,
+      3,
+      4,
+      3,
+      1
+    ],
+    "roles": [
+      "bot"
+    ]
+  },
+  "Jinx": {
+    "damage": [
+      90,
+      5,
+      5
+    ],
+    "ratings": [
+      2,
+      1,
+      3,
+      2,
+      4,
+      1,
+      3,
+      5,
+      1
+    ],
+    "roles": [
+      "bot"
+    ]
+  },
+  "KSante": {
+    "damage": [
+      40,
+      40,
+      20
+    ],
+    "ratings": [
+      3,
+      4,
+      2,
+      3,
+      4,
+      2,
+      3,
+      3,
+      5
+    ],
+    "roles": [
+      "top"
+    ]
+  },
+  "Kaisa": {
+    "damage": [
+      45,
+      50,
+      5
+    ],
+    "ratings": [
+      1,
+      2,
+      3,
+      2,
+      4,
+      1,
+      5,
+      4,
+      1
+    ],
+    "roles": [
+      "bot"
+    ]
+  },
+  "Kalista": {
+    "damage": [
+      85,
+      5,
+      10
+    ],
+    "ratings": [
+      1,
+      2,
+      2,
+      2,
+      3,
+      2,
+      3,
+      5,
+      1
+    ],
+    "roles": [
+      "bot"
+    ]
+  },
+  "Karma": {
+    "damage": [
+      10,
+      85,
+      5
+    ],
+    "ratings": [
+      2,
+      1,
+      4,
+      1,
+      3,
+      5,
+      2,
+      2,
+      1
+    ],
+    "roles": [
+      "support",
+      "mid"
+    ]
+  },
+  "Karthus": {
+    "damage": [
+      5,
+      90,
+      5
+    ],
+    "ratings": [
+      1,
+      1,
+      3,
+      1,
+      5,
+      2,
+      4,
+      5,
+      1
+    ],
+    "roles": [
+      "jungle",
+      "bot"
+    ]
+  },
+  "Kassadin": {
+    "damage": [
+      15,
+      80,
+      5
+    ],
+    "ratings": [
+      1,
+      3,
+      1,
+      3,
+      3,
+      1,
+      5,
+      3,
+      2
+    ],
+    "roles": [
+      "mid"
+    ]
+  },
+  "Katarina": {
+    "damage": [
+      30,
+      65,
+      5
+    ],
+    "ratings": [
+      1,
+      3,
+      1,
+      3,
+      4,
+      1,
+      5,
+      4,
+      1
+    ],
+    "roles": [
+      "mid"
+    ]
+  },
+  "Kayle": {
+    "damage": [
+      30,
+      60,
+      10
+    ],
+    "ratings": [
+      1,
+      1,
+      3,
+      4,
+      4,
+      3,
+      3,
+      5,
+      1
+    ],
+    "roles": [
+      "top"
+    ]
+  },
+  "Kayn": {
+    "damage": [
+      80,
+      15,
+      5
+    ],
+    "ratings": [
+      2,
+      3,
+      1,
+      3,
+      3,
+      1,
+      4,
+      4,
+      2
+    ],
+    "roles": [
+      "jungle"
+    ]
+  },
+  "Kennen": {
+    "damage": [
+      25,
+      70,
+      5
+    ],
+    "ratings": [
+      3,
+      5,
+      3,
+      2,
+      5,
+      1,
+      4,
+      3,
+      1
+    ],
+    "roles": [
+      "top"
+    ]
+  },
+  "Khazix": {
+    "damage": [
+      90,
+      5,
+      5
+    ],
+    "ratings": [
+      1,
+      2,
+      1,
+      3,
+      2,
+      1,
+      5,
+      3,
+      1
+    ],
+    "roles": [
+      "jungle"
+    ]
+  },
+  "Kindred": {
+    "damage": [
+      75,
+      15,
+      10
+    ],
+    "ratings": [
+      1,
+      2,
+      3,
+      2,
+      3,
+      3,
+      3,
+      5,
+      1
+    ],
+    "roles": [
+      "jungle"
+    ]
+  },
+  "Kled": {
+    "damage": [
+      80,
+      10,
+      10
+    ],
+    "ratings": [
+      2,
+      5,
+      1,
+      4,
+      3,
+      1,
+      4,
+      3,
+      3
+    ],
+    "roles": [
+      "top"
+    ]
+  },
+  "KogMaw": {
+    "damage": [
+      50,
+      35,
+      15
+    ],
+    "ratings": [
+      1,
+      1,
+      4,
+      1,
+      4,
+      1,
+      2,
+      5,
+      1
+    ],
+    "roles": [
+      "bot"
+    ]
+  },
+  "Leblanc": {
+    "damage": [
+      10,
+      85,
+      5
+    ],
+    "ratings": [
+      2,
+      2,
+      3,
+      3,
+      2,
+      1,
+      5,
+      2,
+      1
+    ],
+    "roles": [
+      "mid"
+    ]
+  },
+  "LeeSin": {
+    "damage": [
+      82,
+      10,
+      8
+    ],
+    "ratings": [
+      2,
+      4,
+      1,
+      2,
+      3,
+      2,
+      4,
+      3,
+      2
+    ],
+    "roles": [
+      "jungle",
+      "top"
+    ]
+  },
+  "Leona": {
+    "damage": [
+      20,
+      65,
+      15
+    ],
+    "ratings": [
+      5,
+      5,
+      1,
+      1,
+      4,
+      2,
+      1,
+      1,
+      5
+    ],
+    "roles": [
+      "support"
+    ]
+  },
+  "Lillia": {
+    "damage": [
+      10,
+      80,
+      10
+    ],
+    "ratings": [
+      2,
+      2,
+      3,
+      2,
+      4,
+      1,
+      2,
+      4,
+      2
+    ],
+    "roles": [
+      "jungle",
+      "top"
+    ]
+  },
+  "Lissandra": {
+    "damage": [
+      5,
+      90,
+      5
+    ],
+    "ratings": [
+      4,
+      4,
+      3,
+      1,
+      5,
+      2,
+      4,
+      2,
+      2
+    ],
+    "roles": [
+      "mid"
+    ]
+  },
+  "Lucian": {
+    "damage": [
+      70,
+      25,
+      5
+    ],
+    "ratings": [
+      1,
+      2,
+      3,
+      2,
+      3,
+      1,
+      4,
+      4,
+      1
+    ],
+    "roles": [
+      "bot",
+      "mid"
+    ]
+  },
+  "Lulu": {
+    "damage": [
+      15,
+      75,
+      10
+    ],
+    "ratings": [
+      3,
+      1,
+      3,
+      1,
+      4,
+      5,
+      2,
+      1,
+      1
+    ],
+    "roles": [
+      "support"
+    ]
+  },
+  "Lux": {
+    "damage": [
+      5,
+      90,
+      5
+    ],
+    "ratings": [
+      3,
+      1,
+      5,
+      1,
+      4,
+      3,
+      5,
+      2,
+      1
+    ],
+    "roles": [
+      "support",
+      "mid"
+    ]
+  },
+  "Malphite": {
+    "damage": [
+      25,
+      65,
+      10
+    ],
+    "ratings": [
+      3,
+      5,
+      2,
+      1,
+      5,
+      1,
+      4,
+      1,
+      5
+    ],
+    "roles": [
+      "top",
+      "support"
+    ]
+  },
+  "Malzahar": {
+    "damage": [
+      5,
+      90,
+      5
+    ],
+    "ratings": [
+      3,
+      2,
+      3,
+      3,
+      4,
+      2,
+      3,
+      3,
+      1
+    ],
+    "roles": [
+      "mid"
+    ]
+  },
+  "Maokai": {
+    "damage": [
+      15,
+      70,
+      15
+    ],
+    "ratings": [
+      4,
+      4,
+      2,
+      1,
+      5,
+      3,
+      2,
+      2,
+      5
+    ],
+    "roles": [
+      "support",
+      "jungle",
+      "top"
+    ]
+  },
+  "MasterYi": {
+    "damage": [
+      55,
+      15,
+      30
+    ],
+    "ratings": [
+      1,
+      1,
+      1,
+      4,
+      2,
+      1,
+      3,
+      5,
+      1
+    ],
+    "roles": [
+      "jungle"
+    ]
+  },
+  "Mel": {
+    "damage": [
+      5,
+      90,
+      5
+    ],
+    "ratings": [
+      2,
+      2,
+      4,
+      1,
+      4,
+      3,
+      4,
+      3,
+      1
+    ],
+    "roles": [
+      "mid"
+    ]
+  },
+  "Milio": {
+    "damage": [
+      10,
+      80,
+      10
+    ],
+    "ratings": [
+      2,
+      1,
+      3,
+      1,
+      4,
+      5,
+      2,
+      1,
+      1
+    ],
+    "roles": [
+      "support"
+    ]
+  },
+  "MissFortune": {
+    "damage": [
+      80,
+      15,
+      5
+    ],
+    "ratings": [
+      2,
+      1,
+      4,
+      1,
+      4,
+      1,
+      4,
+      4,
+      1
+    ],
+    "roles": [
+      "bot"
+    ]
+  },
+  "MonkeyKing": {
+    "damage": [
+      85,
+      5,
+      10
+    ],
+    "ratings": [
+      3,
+      4,
+      1,
+      2,
+      4,
+      1,
+      4,
+      3,
+      3
+    ],
+    "roles": [
+      "jungle",
+      "top"
+    ]
+  },
+  "Mordekaiser": {
+    "damage": [
+      10,
+      85,
+      5
+    ],
+    "ratings": [
+      1,
+      2,
+      2,
+      4,
+      3,
+      1,
+      4,
+      3,
+      3
+    ],
+    "roles": [
+      "top"
+    ]
+  },
+  "Morgana": {
+    "damage": [
+      10,
+      85,
+      5
+    ],
+    "ratings": [
+      4,
+      1,
+      3,
+      1,
+      4,
+      4,
+      3,
+      2,
+      1
+    ],
+    "roles": [
+      "support",
+      "mid"
+    ]
+  },
+  "Naafiri": {
+    "damage": [
+      85,
+      10,
+      5
+    ],
+    "ratings": [
+      1,
+      3,
+      1,
+      3,
+      3,
+      1,
+      5,
+      3,
+      1
+    ],
+    "roles": [
+      "jungle",
+      "mid"
+    ]
+  },
+  "Nami": {
+    "damage": [
+      10,
+      80,
+      10
+    ],
+    "ratings": [
+      3,
+      2,
+      3,
+      1,
+      4,
+      5,
+      3,
+      1,
+      1
+    ],
+    "roles": [
+      "support"
+    ]
+  },
+  "Nasus": {
+    "damage": [
+      65,
+      20,
+      15
+    ],
+    "ratings": [
+      2,
+      1,
+      1,
+      5,
+      3,
+      1,
+      2,
+      4,
+      4
+    ],
+    "roles": [
+      "top"
+    ]
+  },
+  "Nautilus": {
+    "damage": [
+      15,
+      70,
+      15
+    ],
+    "ratings": [
+      5,
+      5,
+      1,
+      1,
+      4,
+      2,
+      2,
+      1,
+      5
+    ],
+    "roles": [
+      "support"
+    ]
+  },
+  "Neeko": {
+    "damage": [
+      10,
+      85,
+      5
+    ],
+    "ratings": [
+      3,
+      3,
+      3,
+      1,
+      4,
+      2,
+      4,
+      2,
+      1
+    ],
+    "roles": [
+      "mid",
+      "support"
+    ]
+  },
+  "Nidalee": {
+    "damage": [
+      20,
+      75,
+      5
+    ],
+    "ratings": [
+      1,
+      2,
+      5,
+      2,
+      2,
+      2,
+      4,
+      3,
+      1
+    ],
+    "roles": [
+      "jungle"
+    ]
+  },
+  "Nilah": {
+    "damage": [
+      85,
+      5,
+      10
+    ],
+    "ratings": [
+      1,
+      2,
+      1,
+      2,
+      4,
+      2,
+      4,
+      5,
+      2
+    ],
+    "roles": [
+      "bot"
+    ]
+  },
+  "Nocturne": {
+    "damage": [
+      80,
+      10,
+      10
+    ],
+    "ratings": [
+      2,
+      4,
+      1,
+      4,
+      3,
+      1,
+      4,
+      3,
+      2
+    ],
+    "roles": [
+      "jungle",
+      "top"
+    ]
+  },
+  "Nunu": {
+    "damage": [
+      15,
+      70,
+      15
+    ],
+    "ratings": [
+      3,
+      4,
+      2,
+      1,
+      4,
+      2,
+      2,
+      2,
+      4
+    ],
+    "roles": [
+      "jungle",
+      "mid"
+    ]
+  },
+  "Olaf": {
+    "damage": [
+      75,
+      10,
+      15
+    ],
+    "ratings": [
+      1,
+      3,
+      1,
+      3,
+      3,
+      1,
+      2,
+      4,
+      4
+    ],
+    "roles": [
+      "top",
+      "jungle"
+    ]
+  },
+  "Orianna": {
+    "damage": [
+      10,
+      85,
+      5
+    ],
+    "ratings": [
+      3,
+      3,
+      4,
+      1,
+      5,
+      4,
+      3,
+      3,
+      1
+    ],
+    "roles": [
+      "mid"
+    ]
+  },
+  "Ornn": {
+    "damage": [
+      20,
+      65,
+      15
+    ],
+    "ratings": [
+      4,
+      4,
+      2,
+      1,
+      5,
+      4,
+      2,
+      2,
+      5
+    ],
+    "roles": [
+      "top"
+    ]
+  },
+  "Pantheon": {
+    "damage": [
+      80,
+      10,
+      10
+    ],
+    "ratings": [
+      2,
+      4,
+      2,
+      2,
+      3,
+      2,
+      5,
+      2,
+      2
+    ],
+    "roles": [
+      "support",
+      "top",
+      "mid"
+    ]
+  },
+  "Poppy": {
+    "damage": [
+      65,
+      20,
+      15
+    ],
+    "ratings": [
+      3,
+      3,
+      1,
+      2,
+      3,
+      2,
+      3,
+      2,
+      4
+    ],
+    "roles": [
+      "jungle",
+      "top",
+      "support"
+    ]
+  },
+  "Pyke": {
+    "damage": [
+      85,
+      5,
+      10
+    ],
+    "ratings": [
+      3,
+      4,
+      2,
+      1,
+      3,
+      1,
+      5,
+      2,
+      1
+    ],
+    "roles": [
+      "support"
+    ]
+  },
+  "Qiyana": {
+    "damage": [
+      85,
+      10,
+      5
+    ],
+    "ratings": [
+      3,
+      3,
+      2,
+      3,
+      4,
+      1,
+      5,
+      2,
+      1
+    ],
+    "roles": [
+      "mid",
+      "jungle"
+    ]
+  },
+  "Quinn": {
+    "damage": [
+      85,
+      10,
+      5
+    ],
+    "ratings": [
+      2,
+      1,
+      3,
+      5,
+      2,
+      2,
+      4,
+      3,
+      1
+    ],
+    "roles": [
+      "top"
+    ]
+  },
+  "Rakan": {
+    "damage": [
+      15,
+      70,
+      15
+    ],
+    "ratings": [
+      3,
+      5,
+      1,
+      1,
+      5,
+      4,
+      2,
+      1,
+      2
+    ],
+    "roles": [
+      "support"
+    ]
+  },
+  "Rammus": {
+    "damage": [
+      20,
+      65,
+      15
+    ],
+    "ratings": [
+      3,
+      4,
+      1,
+      1,
+      4,
+      2,
+      2,
+      2,
+      5
+    ],
+    "roles": [
+      "jungle"
+    ]
+  },
+  "RekSai": {
+    "damage": [
+      80,
+      10,
+      10
+    ],
+    "ratings": [
+      2,
+      4,
+      1,
+      2,
+      3,
+      2,
+      4,
+      3,
+      3
+    ],
+    "roles": [
+      "jungle"
+    ]
+  },
+  "Rell": {
+    "damage": [
+      20,
+      65,
+      15
+    ],
+    "ratings": [
+      5,
+      5,
+      1,
+      1,
+      5,
+      3,
+      1,
+      1,
+      5
+    ],
+    "roles": [
+      "support"
+    ]
+  },
+  "Renata": {
+    "damage": [
+      10,
+      80,
+      10
+    ],
+    "ratings": [
+      3,
+      2,
+      3,
+      1,
+      4,
+      5,
+      2,
+      1,
+      1
+    ],
+    "roles": [
+      "support"
+    ]
+  },
+  "Renekton": {
+    "damage": [
+      80,
+      10,
+      10
+    ],
+    "ratings": [
+      2,
+      3,
+      1,
+      3,
+      3,
+      1,
+      4,
+      3,
+      3
+    ],
+    "roles": [
+      "top"
+    ]
+  },
+  "Rengar": {
+    "damage": [
+      85,
+      10,
+      5
+    ],
+    "ratings": [
+      1,
+      2,
+      1,
+      3,
+      2,
+      1,
+      5,
+      3,
+      1
+    ],
+    "roles": [
+      "jungle",
+      "top"
+    ]
+  },
+  "Riven": {
+    "damage": [
+      90,
+      5,
+      5
+    ],
+    "ratings": [
+      2,
+      3,
+      1,
+      4,
+      3,
+      1,
+      4,
+      4,
+      2
+    ],
+    "roles": [
+      "top"
+    ]
+  },
+  "Rumble": {
+    "damage": [
+      10,
+      85,
+      5
+    ],
+    "ratings": [
+      2,
+      2,
+      3,
+      2,
+      5,
+      1,
+      3,
+      4,
+      2
+    ],
+    "roles": [
+      "top",
+      "mid"
+    ]
+  },
+  "Ryze": {
+    "damage": [
+      10,
+      85,
+      5
+    ],
+    "ratings": [
+      2,
+      1,
+      3,
+      3,
+      4,
+      2,
+      3,
+      4,
+      2
+    ],
+    "roles": [
+      "mid",
+      "top"
+    ]
+  },
+  "Samira": {
+    "damage": [
+      82,
+      13,
+      5
+    ],
+    "ratings": [
+      1,
+      3,
+      1,
+      2,
+      4,
+      1,
+      5,
+      4,
+      1
+    ],
+    "roles": [
+      "bot"
+    ]
+  },
+  "Sejuani": {
+    "damage": [
+      15,
+      70,
+      15
+    ],
+    "ratings": [
+      5,
+      5,
+      1,
+      1,
+      5,
+      2,
+      2,
+      2,
+      5
+    ],
+    "roles": [
+      "jungle",
+      "top"
+    ]
+  },
+  "Senna": {
+    "damage": [
+      70,
+      10,
+      20
+    ],
+    "ratings": [
+      2,
+      1,
+      4,
+      1,
+      4,
+      4,
+      2,
+      3,
+      1
+    ],
+    "roles": [
+      "support",
+      "bot"
+    ]
+  },
+  "Seraphine": {
+    "damage": [
+      10,
+      85,
+      5
+    ],
+    "ratings": [
+      3,
+      1,
+      4,
+      1,
+      5,
+      5,
+      2,
+      2,
+      1
+    ],
+    "roles": [
+      "support",
+      "mid",
+      "bot"
+    ]
+  },
+  "Sett": {
+    "damage": [
+      65,
+      10,
+      25
+    ],
+    "ratings": [
+      2,
+      4,
+      1,
+      3,
+      4,
+      1,
+      4,
+      3,
+      4
+    ],
+    "roles": [
+      "top",
+      "support"
+    ]
+  },
+  "Shaco": {
+    "damage": [
+      70,
+      25,
+      5
+    ],
+    "ratings": [
+      2,
+      1,
+      2,
+      4,
+      2,
+      2,
+      4,
+      3,
+      1
+    ],
+    "roles": [
+      "jungle",
+      "support"
+    ]
+  },
+  "Shen": {
+    "damage": [
+      30,
+      50,
+      20
+    ],
+    "ratings": [
+      3,
+      4,
+      1,
+      3,
+      4,
+      4,
+      2,
+      2,
+      4
+    ],
+    "roles": [
+      "top",
+      "support"
+    ]
+  },
+  "Shyvana": {
+    "damage": [
+      40,
+      50,
+      10
+    ],
+    "ratings": [
+      1,
+      2,
+      2,
+      3,
+      3,
+      1,
+      3,
+      4,
+      3
+    ],
+    "roles": [
+      "jungle"
+    ]
+  },
+  "Singed": {
+    "damage": [
+      10,
+      80,
+      10
+    ],
+    "ratings": [
+      2,
+      2,
+      1,
+      4,
+      3,
+      2,
+      1,
+      3,
+      4
+    ],
+    "roles": [
+      "top"
+    ]
+  },
+  "Sion": {
+    "damage": [
+      65,
+      25,
+      10
+    ],
+    "ratings": [
+      4,
+      4,
+      2,
+      3,
+      4,
+      2,
+      2,
+      2,
+      5
+    ],
+    "roles": [
+      "top"
+    ]
+  },
+  "Sivir": {
+    "damage": [
+      85,
+      10,
+      5
+    ],
+    "ratings": [
+      1,
+      1,
+      3,
+      2,
+      4,
+      2,
+      2,
+      5,
+      1
+    ],
+    "roles": [
+      "bot"
+    ]
+  },
+  "Skarner": {
+    "damage": [
+      35,
+      50,
+      15
+    ],
+    "ratings": [
+      4,
+      5,
+      1,
+      1,
+      4,
+      2,
+      2,
+      2,
+      5
+    ],
+    "roles": [
+      "jungle",
+      "top"
+    ]
+  },
+  "Smolder": {
+    "damage": [
+      55,
+      40,
+      5
+    ],
+    "ratings": [
+      1,
+      1,
+      4,
+      2,
+      4,
+      1,
+      3,
+      5,
+      1
+    ],
+    "roles": [
+      "bot",
+      "mid"
+    ]
+  },
+  "Sona": {
+    "damage": [
+      10,
+      80,
+      10
+    ],
+    "ratings": [
+      2,
+      1,
+      3,
+      1,
+      4,
+      5,
+      2,
+      2,
+      1
+    ],
+    "roles": [
+      "support"
+    ]
+  },
+  "Soraka": {
+    "damage": [
+      10,
+      80,
+      10
+    ],
+    "ratings": [
+      2,
+      1,
+      3,
+      1,
+      4,
+      5,
+      1,
+      1,
+      1
+    ],
+    "roles": [
+      "support"
+    ]
+  },
+  "Swain": {
+    "damage": [
+      10,
+      85,
+      5
+    ],
+    "ratings": [
+      3,
+      2,
+      3,
+      1,
+      5,
+      2,
+      3,
+      4,
+      3
+    ],
+    "roles": [
+      "support",
+      "mid",
+      "bot"
+    ]
+  },
+  "Sylas": {
+    "damage": [
+      15,
+      80,
+      5
+    ],
+    "ratings": [
+      2,
+      3,
+      2,
+      2,
+      4,
+      1,
+      4,
+      3,
+      2
+    ],
+    "roles": [
+      "mid",
+      "top"
+    ]
+  },
+  "Syndra": {
+    "damage": [
+      5,
+      90,
+      5
+    ],
+    "ratings": [
+      2,
+      1,
+      4,
+      1,
+      4,
+      1,
+      5,
+      3,
+      1
+    ],
+    "roles": [
+      "mid"
+    ]
+  },
+  "TahmKench": {
+    "damage": [
+      25,
+      60,
+      15
+    ],
+    "ratings": [
+      3,
+      2,
+      2,
+      2,
+      3,
+      4,
+      2,
+      2,
+      5
+    ],
+    "roles": [
+      "top",
+      "support"
+    ]
+  },
+  "Taliyah": {
+    "damage": [
+      10,
+      85,
+      5
+    ],
+    "ratings": [
+      2,
+      2,
+      4,
+      1,
+      4,
+      2,
+      4,
+      3,
+      1
+    ],
+    "roles": [
+      "mid",
+      "jungle"
+    ]
+  },
+  "Talon": {
+    "damage": [
+      85,
+      10,
+      5
+    ],
+    "ratings": [
+      1,
+      2,
+      2,
+      4,
+      2,
+      1,
+      5,
+      3,
+      1
+    ],
+    "roles": [
+      "mid",
+      "jungle"
+    ]
+  },
+  "Taric": {
+    "damage": [
+      55,
+      30,
+      15
+    ],
+    "ratings": [
+      3,
+      2,
+      1,
+      1,
+      4,
+      5,
+      2,
+      1,
+      4
+    ],
+    "roles": [
+      "support"
+    ]
+  },
+  "Teemo": {
+    "damage": [
+      20,
+      75,
+      5
+    ],
+    "ratings": [
+      2,
+      1,
+      3,
+      4,
+      2,
+      2,
+      3,
+      3,
+      1
+    ],
+    "roles": [
+      "top"
+    ]
+  },
+  "Thresh": {
+    "damage": [
+      30,
+      55,
+      15
+    ],
+    "ratings": [
+      4,
+      4,
+      2,
+      1,
+      4,
+      4,
+      2,
+      1,
+      3
+    ],
+    "roles": [
+      "support"
+    ]
+  },
+  "Tristana": {
+    "damage": [
+      88,
+      7,
+      5
+    ],
+    "ratings": [
+      1,
+      2,
+      2,
+      4,
+      3,
+      1,
+      4,
+      5,
+      1
+    ],
+    "roles": [
+      "bot",
+      "mid"
+    ]
+  },
+  "Trundle": {
+    "damage": [
+      80,
+      5,
+      15
+    ],
+    "ratings": [
+      1,
+      2,
+      1,
+      5,
+      3,
+      2,
+      2,
+      4,
+      4
+    ],
+    "roles": [
+      "jungle",
+      "top"
+    ]
+  },
+  "Tryndamere": {
+    "damage": [
+      90,
+      5,
+      5
+    ],
+    "ratings": [
+      1,
+      2,
+      1,
+      5,
+      2,
+      1,
+      3,
+      5,
+      2
+    ],
+    "roles": [
+      "top"
+    ]
+  },
+  "TwistedFate": {
+    "damage": [
+      30,
+      65,
+      5
+    ],
+    "ratings": [
+      2,
+      2,
+      3,
+      3,
+      4,
+      3,
+      3,
+      3,
+      1
+    ],
+    "roles": [
+      "mid"
+    ]
+  },
+  "Twitch": {
+    "damage": [
+      72,
+      23,
+      5
+    ],
+    "ratings": [
+      1,
+      1,
+      2,
+      2,
+      4,
+      1,
+      3,
+      5,
+      1
+    ],
+    "roles": [
+      "bot",
+      "jungle"
+    ]
+  },
+  "Udyr": {
+    "damage": [
+      40,
+      45,
+      15
+    ],
+    "ratings": [
+      2,
+      3,
+      1,
+      3,
+      3,
+      1,
+      2,
+      3,
+      4
+    ],
+    "roles": [
+      "jungle",
+      "top"
+    ]
+  },
+  "Urgot": {
+    "damage": [
+      70,
+      10,
+      20
+    ],
+    "ratings": [
+      2,
+      2,
+      2,
+      3,
+      4,
+      1,
+      3,
+      4,
+      4
+    ],
+    "roles": [
+      "top"
+    ]
+  },
+  "Varus": {
+    "damage": [
+      55,
+      35,
+      10
+    ],
+    "ratings": [
+      2,
+      1,
+      5,
+      1,
+      4,
+      2,
+      4,
+      4,
+      1
+    ],
+    "roles": [
+      "bot",
+      "mid"
+    ]
+  },
+  "Vayne": {
+    "damage": [
+      55,
+      5,
+      40
+    ],
+    "ratings": [
+      1,
+      1,
+      1,
+      3,
+      3,
+      1,
+      3,
+      5,
+      1
+    ],
+    "roles": [
+      "bot",
+      "top"
+    ]
+  },
+  "Veigar": {
+    "damage": [
+      5,
+      90,
+      5
+    ],
+    "ratings": [
+      3,
+      1,
+      3,
+      1,
+      4,
+      1,
+      5,
+      3,
+      1
+    ],
+    "roles": [
+      "mid",
+      "bot"
+    ]
+  },
+  "Velkoz": {
+    "damage": [
+      5,
+      85,
+      10
+    ],
+    "ratings": [
+      2,
+      1,
+      5,
+      1,
+      4,
+      1,
+      4,
+      4,
+      1
+    ],
+    "roles": [
+      "support",
+      "mid"
+    ]
+  },
+  "Vex": {
+    "damage": [
+      5,
+      90,
+      5
+    ],
+    "ratings": [
+      3,
+      3,
+      3,
+      1,
+      4,
+      1,
+      5,
+      3,
+      1
+    ],
+    "roles": [
+      "mid"
+    ]
+  },
+  "Vi": {
+    "damage": [
+      65,
+      25,
+      10
+    ],
+    "ratings": [
+      3,
+      5,
+      1,
+      2,
+      3,
+      1,
+      4,
+      3,
+      3
+    ],
+    "roles": [
+      "jungle"
+    ]
+  },
+  "Viego": {
+    "damage": [
+      70,
+      15,
+      15
+    ],
+    "ratings": [
+      2,
+      3,
+      1,
+      3,
+      3,
+      1,
+      4,
+      4,
+      2
+    ],
+    "roles": [
+      "jungle"
+    ]
+  },
+  "Viktor": {
+    "damage": [
+      5,
+      90,
+      5
+    ],
+    "ratings": [
+      2,
+      1,
+      4,
+      1,
+      4,
+      2,
+      4,
+      4,
+      1
+    ],
+    "roles": [
+      "mid"
+    ]
+  },
+  "Vladimir": {
+    "damage": [
+      5,
+      90,
+      5
+    ],
+    "ratings": [
+      1,
+      2,
+      3,
+      3,
+      5,
+      1,
+      4,
+      4,
+      2
+    ],
+    "roles": [
+      "mid",
+      "top"
+    ]
+  },
+  "Volibear": {
+    "damage": [
+      40,
+      45,
+      15
+    ],
+    "ratings": [
+      2,
+      4,
+      1,
+      3,
+      3,
+      1,
+      3,
+      3,
+      4
+    ],
+    "roles": [
+      "top",
+      "jungle"
+    ]
+  },
+  "Warwick": {
+    "damage": [
+      50,
+      35,
+      15
+    ],
+    "ratings": [
+      2,
+      3,
+      1,
+      3,
+      3,
+      1,
+      3,
+      4,
+      3
+    ],
+    "roles": [
+      "jungle",
+      "top"
+    ]
+  },
+  "Xayah": {
+    "damage": [
+      88,
+      7,
+      5
+    ],
+    "ratings": [
+      2,
+      1,
+      3,
+      2,
+      4,
+      1,
+      4,
+      4,
+      1
+    ],
+    "roles": [
+      "bot"
+    ]
+  },
+  "Xerath": {
+    "damage": [
+      5,
+      90,
+      5
+    ],
+    "ratings": [
+      2,
+      1,
+      5,
+      1,
+      4,
+      1,
+      4,
+      4,
+      1
+    ],
+    "roles": [
+      "support",
+      "mid"
+    ]
+  },
+  "XinZhao": {
+    "damage": [
+      75,
+      15,
+      10
+    ],
+    "ratings": [
+      2,
+      5,
+      1,
+      2,
+      3,
+      1,
+      4,
+      3,
+      3
+    ],
+    "roles": [
+      "jungle"
+    ]
+  },
+  "Yasuo": {
+    "damage": [
+      88,
+      7,
+      5
+    ],
+    "ratings": [
+      2,
+      2,
+      1,
+      3,
+      4,
+      1,
+      4,
+      5,
+      1
+    ],
+    "roles": [
+      "mid",
+      "bot",
+      "top"
+    ]
+  },
+  "Yone": {
+    "damage": [
+      55,
+      30,
+      15
+    ],
+    "ratings": [
+      2,
+      4,
+      2,
+      3,
+      4,
+      1,
+      4,
+      5,
+      1
+    ],
+    "roles": [
+      "mid",
+      "top"
+    ]
+  },
+  "Yorick": {
+    "damage": [
+      80,
+      10,
+      10
+    ],
+    "ratings": [
+      1,
+      1,
+      1,
+      5,
+      2,
+      1,
+      2,
+      4,
+      3
+    ],
+    "roles": [
+      "top"
+    ]
+  },
+  "Yuumi": {
+    "damage": [
+      10,
+      80,
+      10
+    ],
+    "ratings": [
+      2,
+      1,
+      2,
+      1,
+      3,
+      5,
+      1,
+      1,
+      1
+    ],
+    "roles": [
+      "support"
+    ]
+  },
+  "Zaahen": {
+    "damage": [
+      70,
+      20,
+      10
+    ],
+    "ratings": [
+      2,
+      4,
+      1,
+      3,
+      3,
+      1,
+      4,
+      3,
+      3
+    ],
+    "roles": [
+      "top",
+      "jungle"
+    ]
+  },
+  "Zac": {
+    "damage": [
+      10,
+      80,
+      10
+    ],
+    "ratings": [
+      4,
+      5,
+      1,
+      1,
+      5,
+      2,
+      2,
+      2,
+      5
+    ],
+    "roles": [
+      "jungle",
+      "top"
+    ]
+  },
+  "Zed": {
+    "damage": [
+      90,
+      5,
+      5
+    ],
+    "ratings": [
+      1,
+      2,
+      2,
+      4,
+      2,
+      1,
+      5,
+      3,
+      1
+    ],
+    "roles": [
+      "mid"
+    ]
+  },
+  "Zeri": {
+    "damage": [
+      65,
+      30,
+      5
+    ],
+    "ratings": [
+      1,
+      1,
+      3,
+      2,
+      3,
+      1,
+      2,
+      5,
+      1
+    ],
+    "roles": [
+      "bot"
+    ]
+  },
+  "Ziggs": {
+    "damage": [
+      5,
+      90,
+      5
+    ],
+    "ratings": [
+      1,
+      1,
+      5,
+      3,
+      4,
+      1,
+      4,
+      4,
+      1
+    ],
+    "roles": [
+      "bot",
+      "mid"
+    ]
+  },
+  "Zilean": {
+    "damage": [
+      10,
+      85,
+      5
+    ],
+    "ratings": [
+      2,
+      1,
+      3,
+      1,
+      4,
+      5,
+      2,
+      2,
+      1
+    ],
+    "roles": [
+      "support",
+      "mid"
+    ]
+  },
+  "Zoe": {
+    "damage": [
+      5,
+      90,
+      5
+    ],
+    "ratings": [
+      2,
+      1,
+      5,
+      1,
+      3,
+      1,
+      5,
+      2,
+      1
+    ],
+    "roles": [
+      "mid"
+    ]
+  },
+  "Zyra": {
+    "damage": [
+      5,
+      90,
+      5
+    ],
+    "ratings": [
+      3,
+      2,
+      4,
+      1,
+      4,
+      2,
+      4,
+      3,
+      1
+    ],
+    "roles": [
+      "support",
+      "mid"
+    ]
+  }
 }

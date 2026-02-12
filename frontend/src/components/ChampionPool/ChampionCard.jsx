@@ -1,10 +1,9 @@
-import React from 'react';
-import { Plus, Check } from 'lucide-react';
+import { Plus, Check, ArrowUpDown } from 'lucide-react';
 
 export default function ChampionCard({ champion, inPool, onAdd, compact = false, onClick, selected }) {
   const handleClick = (e) => {
     if (onClick) return onClick(champion);
-    if (!inPool && onAdd) onAdd(e);
+    if (onAdd) onAdd(e);
   };
 
   if (compact) {
@@ -27,14 +26,20 @@ export default function ChampionCard({ champion, inPool, onAdd, compact = false,
         />
         {/* Overlay on hover */}
         <div className={`absolute inset-0 bg-black/60 flex items-center justify-center transition-opacity ${
-          inPool ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+          inPool ? 'opacity-60 hover:opacity-100' : 'opacity-0 group-hover:opacity-100'
         }`}>
           {inPool ? (
-            <Check size={20} className="text-emerald-400" />
+            <ArrowUpDown size={18} className="text-amber-400" />
           ) : (
             <Plus size={20} className="text-white" />
           )}
         </div>
+        {/* In-pool indicator */}
+        {inPool && (
+          <div className="absolute top-0.5 right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-500 flex items-center justify-center">
+            <Check size={9} className="text-white" />
+          </div>
+        )}
         {/* Name */}
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent
                         px-1 py-1 text-[10px] text-center truncate text-white font-medium">

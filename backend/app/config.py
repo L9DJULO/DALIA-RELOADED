@@ -12,12 +12,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 class ScoringWeights(BaseModel):
     """Weights used by the draft engine to combine sub-scores (must sum to ~1.0)."""
-    meta: float = 0.18          # ↑ increased from 0.12 - meta matters more
-    matchup: float = 0.45       # ↑ increased from 0.40 - matchups are king
-    synergy: float = 0.05       # ↓ decreased from 0.10 - synergy overrated
-    composition: float = 0.12   # slightly reduced
-    mastery: float = 0.08       # unchanged
-    draft_risk: float = 0.07    # ↓ decreased from 0.15 - less weight on blind pick risk
+    meta: float = 0.10          # ↓ reduced from 0.18 - meta matters less than mastery
+    matchup: float = 0.35       # ↓ slightly reduced - still most important
+    synergy: float = 0.05       # unchanged
+    composition: float = 0.15   # ↑ increased from 0.12 - comp matters more
+    mastery: float = 0.25       # ↑ greatly increased from 0.08 - tier has huge impact
+    draft_risk: float = 0.05    # ↓ decreased from 0.07
 
 
 class Config(BaseModel):
@@ -44,6 +44,12 @@ class Config(BaseModel):
     # ── Patch blending (handle low sample sizes on new patches) ──
     min_games_threshold: int = 100
     patch_blend_current_weight: float = 0.7
+
+    # ── Sample-size filter (30-day window) ──
+    # Champions below this threshold are excluded from wildcards and heavily
+    # penalised in meta score because their stats are unreliable.
+    min_games_reliable: int = 5_000      # below → heavy penalty / excluded from wildcards
+    min_games_full_confidence: int = 50_000  # above → no penalty at all
 
     # ── Counter / matchup data uses 30-day window for better coverage ──
     counter_patch: str = "30"  # "30" = last 30 days (more data for cross-lane matchups)

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { Search, Save, Check } from 'lucide-react';
 import useUserStore, { ROLES, TIERS } from '../../stores/userStore';
 import RoleTierList from './RoleTierList';
@@ -16,7 +16,7 @@ const TIER_COLORS = {
 };
 
 /* ── Tier picker popover ── */
-function TierPicker({ champion, position, onSelect, onClose }) {
+function TierPicker({ champion, position, onSelect, onClose, isUpdate = false }) {
   const ref = useRef(null);
 
   useEffect(() => {
@@ -27,14 +27,19 @@ function TierPicker({ champion, position, onSelect, onClose }) {
     return () => document.removeEventListener('mousedown', handler);
   }, [onClose]);
 
+  // Calculate position: if too close to bottom, open upward
+  const popoverHeight = 80; // approximate height of the popover
+  const openUpward = position.y + popoverHeight > window.innerHeight;
+  const top = openUpward ? position.y - popoverHeight - 8 : position.y;
+
   return (
     <div
       ref={ref}
       className="fixed z-50 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl p-3"
-      style={{ left: position.x, top: position.y }}
+      style={{ left: Math.min(position.x, window.innerWidth - 240), top: Math.max(8, top) }}
     >
       <div className="text-xs text-slate-400 mb-2 px-1">
-        Ajouter <span className="text-white font-medium">{champion.name}</span>
+        {isUpdate ? 'Changer tier de' : 'Ajouter'} <span className="text-white font-medium">{champion.name}</span>
       </div>
       <div className="flex gap-1.5">
         {TIERS.map((tier) => (
@@ -57,7 +62,7 @@ export default function ChampionPoolEditor({ champions }) {
   const [filterByRole, setFilterByRole] = useState(false);
   const [tierPicker, setTierPicker] = useState(null);
   const [saved, setSaved] = useState(false);
-  const { championPool, addToPool, savePool } = useUserStore();
+  const { championPool, addToPool, changeTier, savePool } = useUserStore();
 
   const poolIdsForRole = useMemo(() => {
     const ids = new Set();
@@ -84,10 +89,10 @@ export default function ChampionPoolEditor({ champions }) {
   }, [champions, activeRole, search, poolIdsForRole, filterByRole]);
 
   const handleChampClick = (champion, e) => {
-    if (poolIdsForRole.has(champion.id)) return;
     const rect = e.currentTarget.getBoundingClientRect();
     setTierPicker({
       champion,
+      isUpdate: poolIdsForRole.has(champion.id),
       x: Math.min(rect.left, window.innerWidth - 240),
       y: rect.bottom + 8,
     });
@@ -95,7 +100,11 @@ export default function ChampionPoolEditor({ champions }) {
 
   const handleTierSelect = (tier) => {
     if (tierPicker) {
-      addToPool(activeRole, tierPicker.champion, tier);
+      if (tierPicker.isUpdate) {
+        changeTier(activeRole, tierPicker.champion.id, tier);
+      } else {
+        addToPool(activeRole, tierPicker.champion, tier);
+      }
       setTierPicker(null);
     }
   };
@@ -204,6 +213,7 @@ export default function ChampionPoolEditor({ champions }) {
         <TierPicker
           champion={tierPicker.champion}
           position={{ x: tierPicker.x, y: tierPicker.y }}
+          isUpdate={tierPicker.isUpdate}
           onSelect={handleTierSelect}
           onClose={() => setTierPicker(null)}
         />

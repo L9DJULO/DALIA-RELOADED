@@ -141,6 +141,7 @@ class Recommendation(BaseModel):
     is_pool_champion: bool = True
     tags: List[str] = Field(default_factory=list)  # "safe-blind", "counter-pick", "off-meta", "flex"
     confidence: float = 50.0            # 0-100 how confident the engine is
+    meta_games: int = 0                 # total games played in role (30d) — sample size indicator
 
 
 class PoolEntry(BaseModel):
@@ -160,3 +161,4 @@ class DraftResponse(BaseModel):
     recommendations: List[Recommendation]
     team_composition_summary: Dict[str, float] = Field(default_factory=dict)
     warnings: List[str] = Field(default_factory=list)
+    win_probability: Optional[float] = None  # 0-100, from ML model

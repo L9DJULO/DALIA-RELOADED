@@ -1,10 +1,10 @@
 import React from 'react';
-import { AlertTriangle, TrendingUp, Lightbulb, Swords, BarChart3 } from 'lucide-react';
+import { AlertTriangle, TrendingUp, Lightbulb, Swords, BarChart3, Trophy } from 'lucide-react';
 import useDraftStore from '../../stores/draftStore';
 import RecommendationCard from './RecommendationCard';
 
 export default function RecommendationPanel({ champions }) {
-  const { recommendations, compSummary, warnings, loading, error } = useDraftStore();
+  const { recommendations, compSummary, warnings, winProbability, loading, error } = useDraftStore();
 
   const champMap = React.useMemo(() => {
     const m = {};
@@ -99,31 +99,81 @@ export default function RecommendationPanel({ champions }) {
       {/* Comp summary */}
       {Object.keys(compSummary).length > 0 && (
         <div className="rounded-xl border border-slate-700/50 bg-slate-900/50 p-4 animate-fade-in-up">
-          <div className="text-xs font-medium text-slate-400 mb-3 uppercase tracking-wider">
-            Équilibre de la composition
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-xs font-medium text-slate-400 uppercase tracking-wider">
+              Équilibre de la composition
+            </div>
+            {winProbability != null && (
+              <div className="flex items-center gap-1.5">
+                <Trophy size={14} className={winProbability >= 52 ? 'text-emerald-400' : winProbability >= 48 ? 'text-amber-400' : 'text-red-400'} />
+                <span className={`text-sm font-bold tabular-nums ${
+                  winProbability >= 52 ? 'text-emerald-400' : winProbability >= 48 ? 'text-amber-400' : 'text-red-400'
+                }`}>
+                  {winProbability.toFixed(1)}%
+                </span>
+                <span className="text-[10px] text-slate-500">win (IA)</span>
+              </div>
+            )}
           </div>
-          <div className="flex flex-wrap gap-x-6 gap-y-2">
-            {Object.entries(compSummary).map(([key, val]) => {
-              const label = key
-                .replace('damage_', 'DMG ')
-                .replace('_', ' ')
-                .replace(/\b\w/g, c => c.toUpperCase());
-              const pct = Math.round((val / 5) * 100);
-              return (
-                <div key={key} className="flex items-center gap-2 text-xs">
-                  <span className="text-slate-500 w-24 truncate capitalize">{label}</span>
-                  <div className="w-20 h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full rounded-full bg-amber-500/70 transition-all" 
-                      style={{ width: `${Math.min(pct, 100)}%` }} 
-                    />
+
+          {/* Stacked damage distribution bar */}
+          {(compSummary.damage_physical != null || compSummary.damage_magical != null) && (() => {
+            const phys = compSummary.damage_physical || 0;
+            const mag = compSummary.damage_magical || 0;
+            const trueDmg = compSummary.damage_true || 0;
+            const total = phys + mag + trueDmg || 1;
+            const pPhys = (phys / total) * 100;
+            const pMag = (mag / total) * 100;
+            const pTrue = (trueDmg / total) * 100;
+            const empty = compSummary.team_size < 5 ? ((5 - compSummary.team_size) / 5) * 100 : 0;
+            // Scale filled portion
+            const scale = (100 - empty) / 100;
+            return (
+              <div className="mb-4">
+                <div className="flex items-center justify-between text-[10px] text-slate-500 mb-1.5">
+                  <span>Répartition des dégâts</span>
+                  <div className="flex gap-3">
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-red-500 inline-block" /> AD {(pPhys).toFixed(0)}%</span>
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-blue-500 inline-block" /> AP {(pMag).toFixed(0)}%</span>
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-slate-300 inline-block" /> Brut {(pTrue).toFixed(0)}%</span>
                   </div>
-                  <span className="text-slate-400 w-6 text-right tabular-nums">
-                    {typeof val === 'number' ? val.toFixed(1) : val}
-                  </span>
                 </div>
-              );
-            })}
+                <div className="h-4 bg-slate-800 rounded-full overflow-hidden flex">
+                  <div className="bg-red-500 transition-all duration-500" style={{ width: `${pPhys * scale}%` }} title={`AD: ${pPhys.toFixed(1)}%`} />
+                  <div className="bg-blue-500 transition-all duration-500" style={{ width: `${pMag * scale}%` }} title={`AP: ${pMag.toFixed(1)}%`} />
+                  <div className="bg-slate-300 transition-all duration-500" style={{ width: `${pTrue * scale}%` }} title={`Brut: ${pTrue.toFixed(1)}%`} />
+                  {empty > 0 && (
+                    <div className="bg-slate-700/50 transition-all duration-500 flex items-center justify-center" style={{ width: `${empty}%` }}>
+                      <span className="text-[9px] text-slate-500">{5 - compSummary.team_size} slot{5 - compSummary.team_size > 1 ? 's' : ''}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Other stats */}
+          <div className="flex flex-wrap gap-x-6 gap-y-2">
+            {Object.entries(compSummary)
+              .filter(([key]) => !key.startsWith('damage_') && key !== 'team_size')
+              .map(([key, val]) => {
+                const label = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                const pct = Math.round((val / 5) * 100);
+                return (
+                  <div key={key} className="flex items-center gap-2 text-xs">
+                    <span className="text-slate-500 w-24 truncate capitalize">{label}</span>
+                    <div className="w-20 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full rounded-full bg-amber-500/70 transition-all" 
+                        style={{ width: `${Math.min(pct, 100)}%` }} 
+                      />
+                    </div>
+                    <span className="text-slate-400 w-6 text-right tabular-nums">
+                      {typeof val === 'number' ? val.toFixed(1) : val}
+                    </span>
+                  </div>
+                );
+              })}
           </div>
         </div>
       )}

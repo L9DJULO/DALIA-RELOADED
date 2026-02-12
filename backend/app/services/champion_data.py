@@ -107,7 +107,11 @@ class ChampionDatabase:
     async def initialize(self):
         """Load champion list from Data Dragon and apply overrides."""
         raw = await self.fetcher.fetch_all_champions_ddragon()
-        overrides = self._load_overrides()
+        overrides_raw = self._load_overrides()
+        # Build case-insensitive lookup so "KhaZix" matches DDragon's "Khazix"
+        overrides: Dict[str, Any] = {}
+        for ok, ov in overrides_raw.items():
+            overrides[ok.lower()] = ov
 
         for key, info in raw.items():
             cid = int(info["key"])
@@ -119,8 +123,8 @@ class ChampionDatabase:
             ratings = _auto_ratings(tags)
             roles = _default_roles(tags, key)
 
-            # Apply overrides
-            ov = overrides.get(key, {})
+            # Apply overrides (case-insensitive)
+            ov = overrides.get(key.lower(), {})
             if "damage" in ov:
                 d = ov["damage"]
                 damage = DamageProfile(physical=d[0], magical=d[1], true_dmg=d[2])
