@@ -32,28 +32,70 @@ class MetaAnalyzer:
 
     # ── Pre-load tier list for a whole role ──────────────────────────────
     async def load_tierlist(self, role: str):
-        """Fetch + cache tier list for *role* so score() is synchronous."""
+        """Fetch + cache blended tier list for *role* so score() is synchronous.
+
+        Blending strategy:
+          • Fetch BOTH the current-patch tier list AND the 30-day tier list.
+          • For each champion, compute a **game-count–weighted average** of
+            WR / PR / BR  (prorata des games en Master+).
+          • This ensures:
+            – Early-patch (few games) → 30-day data dominates = stable stats
+            – Mid-patch (many games)  → current patch pushes stats toward fresh meta
+          • The game count stored = max(current, 30d) to avoid double-counting
+            (the 30d window *includes* the current patch).
+        """
         if role in self._loaded_roles:
             return
 
-        raw = await self.fetcher.fetch_tierlist(role=role)
-        entries = LolalyticsFetcher.parse_tierlist(raw)
+        # Fetch both data sources in parallel-ish fashion
+        raw_current = await self.fetcher.fetch_tierlist(role=role, patch="current")
+        raw_30d = await self.fetcher.fetch_tierlist(role=role, patch="30")
 
-        for e in entries:
-            cid = e["champion_id"]
+        entries_current = LolalyticsFetcher.parse_tierlist(raw_current)
+        entries_30d = LolalyticsFetcher.parse_tierlist(raw_30d)
+
+        # Index by champion_id for fast lookup
+        cur_by_id = {e["champion_id"]: e for e in entries_current}
+        t30_by_id = {e["champion_id"]: e for e in entries_30d}
+
+        all_ids = set(cur_by_id.keys()) | set(t30_by_id.keys())
+
+        for cid in all_ids:
+            cur = cur_by_id.get(cid)
+            t30 = t30_by_id.get(cid)
+
+            if cur and t30:
+                # Weighted average — prorata des games
+                gc, g30 = cur["games"], t30["games"]
+                total_w = gc + g30
+                if total_w <= 0:
+                    continue
+                wr = (cur["win_rate"] * gc + t30["win_rate"] * g30) / total_w
+                pr = (cur["pick_rate"] * gc + t30["pick_rate"] * g30) / total_w
+                br = (cur["ban_rate"] * gc + t30["ban_rate"] * g30) / total_w
+                # 30d includes current patch → don't double-count
+                games = max(gc, g30)
+            elif cur:
+                wr, pr, br, games = cur["win_rate"], cur["pick_rate"], cur["ban_rate"], cur["games"]
+            else:  # t30 only
+                wr, pr, br, games = t30["win_rate"], t30["pick_rate"], t30["ban_rate"], t30["games"]
+
             stats = ChampionStats(
                 champion_id=cid,
                 role=role,
-                win_rate=e.get("win_rate", 50.0),
-                pick_rate=e.get("pick_rate", 0.0),
-                ban_rate=e.get("ban_rate", 0.0),
-                games=e.get("games", 0),
-                patch=str(e.get("patch", "")),
+                win_rate=round(wr, 2),
+                pick_rate=round(pr, 2),
+                ban_rate=round(br, 2),
+                games=games,
+                patch="blended",
             )
             self.db.set_stats(stats)
 
         self._loaded_roles.add(role)
-        logger.info("Meta tier list loaded for %s — %d entries", role, len(entries))
+        logger.info(
+            "Meta tier list loaded for %s — %d entries (blended current+30d)",
+            role, len(all_ids),
+        )
 
     # ── Score ────────────────────────────────────────────────────────────
     def score(self, champion_id: int, role: str) -> float:

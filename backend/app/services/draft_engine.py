@@ -122,15 +122,25 @@ class DraftEngine:
         # Sort descending by total score
         scored.sort(key=lambda r: r.total_score, reverse=True)
 
-        # 5. Team composition summary (using the top recommendation)
+        # 5. Team composition summary (from current allies only, without candidate)
         comp_summary: Dict[str, float] = {}
         global_warnings: List[str] = []
-        if scored:
-            top = self.db.get_by_id(scored[0].champion_id)
-            if top:
-                comp_summary = self.composition.team_summary(top, draft, candidate_role=role)
-                comp_warns = self.composition.warnings(top, draft)
-                global_warnings = [w.message for w in comp_warns]
+        ally_champs = []
+        for ap in draft.ally_picks:
+            if ap.champion_id is not None:
+                c = self.db.get_by_id(ap.champion_id)
+                if c:
+                    ally_champs.append(c)
+
+        if ally_champs:
+            comp_summary = self.composition.team_summary_from_list(
+                ally_champs, draft, candidate_role=role
+            )
+            if scored:
+                top = self.db.get_by_id(scored[0].champion_id)
+                if top:
+                    comp_warns = self.composition.warnings(top, draft)
+                    global_warnings = [w.message for w in comp_warns]
 
         # 6. Win probability from ML model (best recommendation)
         win_prob = None
@@ -200,10 +210,18 @@ class DraftEngine:
             if match_s < 28:
                 base *= 0.80  # total ×0.55 at match=25
 
-        # Very risky blind pick
-        if risk_s < 35:
-            penalty = 0.65 + (risk_s / 100.0) * 0.35  # risk=20 → ×0.72
+        # Risky blind pick — softer penalty, and exempt when no enemies visible
+        # (first pick scenario should not be heavily punished)
+        if risk_s < 35 and has_enemies:
+            penalty = 0.70 + (risk_s / 100.0) * 0.30  # risk=20 → ×0.76
             base *= penalty
+
+        # ── First pick floor ──
+        # When no enemies are visible, scores should stay reasonable.
+        # Opponents realistically can't pick 5 counters, so first pick
+        # isn't as bad as pure counter analysis suggests.
+        if not has_enemies:
+            base = max(base, 38.0)  # floor: never below 38 on first pick
 
         # ── 3. Multiplicative bonus when draft fits well ──
         # Rewards good matchups regardless of comp theory
@@ -278,6 +296,8 @@ class DraftEngine:
         """Higher score = safer to pick now. Lower = risky blind pick.
 
         Considers champion archetype: immobile carries are inherently risky.
+        Also accounts for the practical reality that opponents can't draft
+        5 counters without ruining their own team composition.
         """
         # Archetype vulnerability modifier
         vuln = 0
@@ -318,13 +338,19 @@ class DraftEngine:
         dangerous = sum(1 for _, d in available_counters if d < -2.0)
 
         picks_left = draft.remaining_enemy_picks
-        base_safety = 60.0 - picks_left * 4 - vuln
 
-        counter_penalty = max(0, -worst_delta) * 2.5
-        density_penalty = dangerous * 3
+        # Realistic counter exposure: opponents can realistically dedicate
+        # at most 1-2 picks to counter you without ruining their own comp.
+        # So we cap the picks_left impact and reduce density penalty.
+        effective_picks = min(picks_left, 2)  # max 2 realistic counter picks
+        base_safety = 60.0 - effective_picks * 6 - vuln * 0.7
+
+        counter_penalty = max(0, -worst_delta) * 2.0
+        # Density matters less — they can't pick all counters
+        density_penalty = min(dangerous, 3) * 2
 
         safety = base_safety - counter_penalty - density_penalty
-        return round(_clamp(safety, 10.0, 85.0), 1)
+        return round(_clamp(safety, 15.0, 85.0), 1)
 
     # ── Wild-card / off-meta suggestions ─────────────────────────────────
     async def _wild_card_suggestions(
@@ -396,10 +422,11 @@ class DraftEngine:
             tags.append("low-data")
 
         # Safe blind: high safety + not a vulnerable archetype + decent matchups
+        # NOT relevant if the lane opponent is already revealed (it's not blind anymore)
         is_vulnerable_carry = ("Marksman" in champ.tags or "Assassin" in champ.tags) and champ.ratings.tankiness <= 2
         enemies_exist = len([e for e in draft.enemy_picks if e.champion_id]) > 0
         matchup_ok = match_s >= 50 or not enemies_exist
-        if risk_s >= 72 and not is_vulnerable_carry and comp_s >= 55 and matchup_ok:
+        if risk_s >= 72 and not is_vulnerable_carry and comp_s >= 55 and matchup_ok and not draft.my_lane_opponent_revealed:
             tags.append("safe-blind")
 
         # Counter-pick: only if we have meaningful enemy data and score is high
@@ -407,8 +434,8 @@ class DraftEngine:
         if match_s >= 62 and enemies_revealed:
             tags.append("counter-pick")
 
-        # Flex: truly flexible (3+ roles)
-        if len(champ.roles) >= 3:
+        # Flex: truly flexible (2+ roles) — but useless on last pick (no ambiguity)
+        if len(champ.roles) >= 2 and not draft.is_last_pick:
             tags.append("flex")
 
         # Last-pick counter

@@ -16,6 +16,7 @@ from app.api.routes import router
 from app.services.champion_data import ChampionDatabase
 from app.services.data_fetcher import LolalyticsFetcher
 from app.services.draft_engine import DraftEngine
+from app.services.ban_recommender import BanRecommender
 from app.services.lcu_connector import get_lcu_connector
 
 logger = logging.getLogger("dalia.app")
@@ -51,6 +52,11 @@ async def lifespan(app: FastAPI):
 
     draft_engine = DraftEngine(champion_db, fetcher)
     
+    # Initialize ban recommender (reuses engine's sub-analyzers)
+    ban_recommender = BanRecommender(
+        champion_db, fetcher, draft_engine.matchup, draft_engine.meta
+    )
+    
     # Initialize LCU connector and start polling
     lcu_connector = get_lcu_connector()
     await lcu_connector.start_polling(interval=1.0)
@@ -58,6 +64,7 @@ async def lifespan(app: FastAPI):
     app.state.champion_db = champion_db
     app.state.fetcher = fetcher
     app.state.draft_engine = draft_engine
+    app.state.ban_recommender = ban_recommender
     app.state.lcu_connector = lcu_connector
 
     yield

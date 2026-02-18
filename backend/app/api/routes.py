@@ -3,14 +3,17 @@ from __future__ import annotations
 
 import json
 import logging
+import uuid
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from fastapi import APIRouter, Request
 from pydantic import BaseModel
 
 from app.config import config
 from app.models.draft import DraftRequest, DraftResponse, PoolEntry
+from app.models.history import HistoryEntry, HistoryStats, HistoryPick
 from app.models.user import UserProfile
 
 logger = logging.getLogger("dalia.api")
@@ -30,10 +33,32 @@ def _get_fetcher(request: Request):
     return request.app.state.fetcher
 
 
+def _get_ban_recommender(request: Request):
+    return request.app.state.ban_recommender
+
+
 def _user_path(username: str = "default") -> Path:
     d = Path(config.user_data_dir)
     d.mkdir(parents=True, exist_ok=True)
     return d / f"{username}.json"
+
+
+def _history_path(username: str = "default") -> Path:
+    d = Path(config.user_data_dir) / "history"
+    d.mkdir(parents=True, exist_ok=True)
+    return d / f"{username}_history.json"
+
+
+def _load_history(username: str = "default") -> List[dict]:
+    p = _history_path(username)
+    if p.exists():
+        return json.loads(p.read_text(encoding="utf-8"))
+    return []
+
+
+def _save_history(entries: List[dict], username: str = "default"):
+    p = _history_path(username)
+    p.write_text(json.dumps(entries, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 # ═════════════════════════════════════════════════════════════════════════
@@ -242,3 +267,188 @@ async def lcu_stop_polling(request: Request):
     lcu = _get_lcu(request)
     await lcu.stop_polling()
     return {"status": "stopped"}
+
+
+# ═════════════════════════════════════════════════════════════════════════
+#  LCU OVERLAY DATA (compact endpoint for overlay window)
+# ═════════════════════════════════════════════════════════════════════════
+@router.get("/lcu/overlay")
+async def lcu_overlay(request: Request):
+    """Compact endpoint for the overlay: LCU state + top 3 recommendations."""
+    lcu = _get_lcu(request)
+    db = _get_db(request)
+    engine = _get_engine(request)
+    state = lcu.state
+
+    def resolve(cid):
+        c = db.get_by_id(cid)
+        return {"id": c.id, "key": c.key, "name": c.name} if c else {"id": cid, "key": str(cid), "name": "?"}
+
+    result = {
+        "connected": state.connected,
+        "in_champ_select": state.in_champ_select,
+        "game_phase": state.game_phase,
+        "my_team": state.my_team,
+        "my_role": state.my_role,
+        "is_my_turn": state.is_my_turn,
+        "current_action_type": state.current_action_type,
+        "timer_remaining": state.timer_remaining,
+        "ally_bans": [resolve(cid) for cid in state.ally_bans],
+        "enemy_bans": [resolve(cid) for cid in state.enemy_bans],
+        "ally_picks": {r: resolve(cid) for r, cid in state.ally_picks.items()},
+        "enemy_picks": {r: resolve(cid) for r, cid in state.enemy_picks.items()},
+        "recommendations": [],
+        "ban_suggestions": [],
+    }
+    return result
+
+
+# ═════════════════════════════════════════════════════════════════════════
+#  DRAFT HISTORY
+# ═════════════════════════════════════════════════════════════════════════
+@router.get("/history")
+async def get_history(username: str = "default", limit: int = 50):
+    """Return draft history entries, newest first."""
+    entries = _load_history(username)
+    entries.sort(key=lambda e: e.get("timestamp", ""), reverse=True)
+    return entries[:limit]
+
+
+@router.post("/history")
+async def save_history_entry(entry: HistoryEntry, username: str = "default"):
+    """Save a new draft session to history."""
+    entries = _load_history(username)
+    if not entry.id:
+        entry.id = str(uuid.uuid4())
+    if not entry.timestamp:
+        entry.timestamp = datetime.now(timezone.utc).isoformat()
+    entries.append(entry.model_dump())
+    _save_history(entries, username)
+    return {"status": "saved", "id": entry.id}
+
+
+class HistoryResultUpdate(BaseModel):
+    result: str  # "win" | "loss" | "remake"
+    notes: str = ""
+
+
+@router.patch("/history/{entry_id}")
+async def update_history_result(
+    entry_id: str, body: HistoryResultUpdate, username: str = "default"
+):
+    """Update the result of a history entry (win/loss/remake)."""
+    entries = _load_history(username)
+    for e in entries:
+        if e.get("id") == entry_id:
+            e["result"] = body.result
+            e["notes"] = body.notes
+            _save_history(entries, username)
+            return {"status": "updated", "id": entry_id}
+    return {"status": "not_found", "id": entry_id}
+
+
+@router.delete("/history/{entry_id}")
+async def delete_history_entry(entry_id: str, username: str = "default"):
+    """Delete a history entry."""
+    entries = _load_history(username)
+    entries = [e for e in entries if e.get("id") != entry_id]
+    _save_history(entries, username)
+    return {"status": "deleted", "id": entry_id}
+
+
+@router.get("/history/stats")
+async def get_history_stats(username: str = "default"):
+    """Aggregated statistics from draft history."""
+    entries = _load_history(username)
+    total = len(entries)
+    wins = sum(1 for e in entries if e.get("result") == "win")
+    losses = sum(1 for e in entries if e.get("result") == "loss")
+    remakes = sum(1 for e in entries if e.get("result") == "remake")
+    unrecorded = total - wins - losses - remakes
+    played = wins + losses
+    wr = round((wins / played * 100), 1) if played > 0 else 0.0
+
+    # Most picked champions
+    champ_stats = {}
+    for e in entries:
+        cid = e.get("my_champion_id")
+        if not cid:
+            continue
+        if cid not in champ_stats:
+            champ_stats[cid] = {"champion_id": cid, "champion_name": e.get("my_champion_name", "?"), "champion_key": e.get("my_champion_key", ""), "count": 0, "wins": 0}
+        champ_stats[cid]["count"] += 1
+        if e.get("result") == "win":
+            champ_stats[cid]["wins"] += 1
+
+    most_picked = sorted(champ_stats.values(), key=lambda x: -x["count"])[:10]
+    for mp in most_picked:
+        p = mp["count"]
+        w = mp["wins"]
+        mp["win_rate"] = round(w / p * 100, 1) if p > 0 else 0.0
+
+    # By role
+    by_role = {}
+    for e in entries:
+        r = e.get("my_role", "")
+        if not r:
+            continue
+        if r not in by_role:
+            by_role[r] = {"games": 0, "wins": 0}
+        by_role[r]["games"] += 1
+        if e.get("result") == "win":
+            by_role[r]["wins"] += 1
+    for r, d in by_role.items():
+        d["win_rate"] = round(d["wins"] / d["games"] * 100, 1) if d["games"] > 0 else 0.0
+
+    # Recommendation follow rate
+    followed = 0
+    followed_wins = 0
+    scores = []
+    probs = []
+    for e in entries:
+        if e.get("recommendation_score"):
+            scores.append(e["recommendation_score"])
+        if e.get("win_probability"):
+            probs.append(e["win_probability"])
+        if e.get("recommended_champion") and e.get("my_champion_key") == e.get("recommended_champion"):
+            followed += 1
+            if e.get("result") == "win":
+                followed_wins += 1
+
+    return {
+        "total_games": total,
+        "wins": wins,
+        "losses": losses,
+        "remakes": remakes,
+        "unrecorded": unrecorded,
+        "win_rate": wr,
+        "avg_recommendation_score": round(sum(scores) / len(scores), 1) if scores else 0,
+        "avg_win_probability": round(sum(probs) / len(probs), 1) if probs else 0,
+        "most_picked": most_picked,
+        "by_role": by_role,
+        "followed_recommendation": followed,
+        "followed_recommendation_wins": followed_wins,
+    }
+
+
+# ═════════════════════════════════════════════════════════════════════════
+#  BAN RECOMMENDATIONS
+# ═════════════════════════════════════════════════════════════════════════
+class BanRequest(BaseModel):
+    my_role: str = "mid"
+    champion_pool: Dict[str, List[PoolEntry]] = {}
+    already_banned: List[int] = []
+    already_picked: List[int] = []
+
+
+@router.post("/draft/bans")
+async def recommend_bans(body: BanRequest, request: Request):
+    """Get ban recommendations based on pool and meta."""
+    recommender = _get_ban_recommender(request)
+    bans = await recommender.recommend_bans(
+        my_role=body.my_role,
+        champion_pool=body.champion_pool,
+        already_banned=body.already_banned,
+        already_picked=body.already_picked,
+    )
+    return {"ban_suggestions": bans}

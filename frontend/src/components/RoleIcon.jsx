@@ -19,13 +19,17 @@ const ROLE_PATHS = {
   ),
 };
 
+const ROLE_LABELS = { top: 'Top', jungle: 'Jungle', mid: 'Mid', bot: 'Bot', support: 'Support' };
+
 export default function RoleIcon({ role, size = 16, className = '' }) {
   return (
-    <svg 
-      width={size} 
-      height={size} 
-      viewBox="0 0 20 20" 
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 20 20"
       className={className}
+      role="img"
+      aria-label={ROLE_LABELS[role] || role}
     >
       {ROLE_PATHS[role]}
     </svg>

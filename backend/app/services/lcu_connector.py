@@ -8,10 +8,13 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import json
 import logging
 import os
 import re
 import ssl
+import subprocess
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable, Dict, List, Optional
@@ -135,11 +138,14 @@ class LCUConnector:
     
     # Common LoL installation paths
     DEFAULT_PATHS = [
-        # Windows
+        # Windows – common Riot install locations
         r"C:\Riot Games\League of Legends",
         r"D:\Riot Games\League of Legends",
+        r"E:\Riot Games\League of Legends",
         r"C:\Program Files\Riot Games\League of Legends",
         r"C:\Program Files (x86)\Riot Games\League of Legends",
+        r"D:\Program Files\Riot Games\League of Legends",
+        r"D:\Program Files (x86)\Riot Games\League of Legends",
         # Mac
         "/Applications/League of Legends.app/Contents/LoL",
     ]
@@ -158,6 +164,7 @@ class LCUConnector:
         self._running = False
         self._poll_task: Optional[asyncio.Task] = None
         self._callbacks: List[Callable[[LiveDraftState], None]] = []
+        self._last_not_found_logged: float = 0  # throttle "not found" warnings
         
         # SSL context that ignores certificate verification (LCU uses self-signed cert)
         self._ssl_context = ssl.create_default_context()
@@ -186,42 +193,204 @@ class LCUConnector:
             except Exception as e:
                 logger.error(f"Callback error: {e}")
     
+    # ------------------------------------------------------------------
+    # Lockfile discovery helpers
+    # ------------------------------------------------------------------
+
     def _find_lockfile(self) -> Optional[Path]:
-        """Find the LoL lockfile."""
+        """Find the LoL lockfile using multiple strategies."""
         # Try custom path first
         if self.lol_path:
             lockfile = Path(self.lol_path) / "lockfile"
             if lockfile.exists():
                 return lockfile
-        
-        # Try default paths
+
+        # 1) Static default paths
         for path in self.DEFAULT_PATHS:
             lockfile = Path(path) / "lockfile"
             if lockfile.exists():
                 logger.info(f"Found lockfile at: {lockfile}")
                 return lockfile
-        
-        # Try to find via running process (Windows)
-        try:
-            import subprocess
-            result = subprocess.run(
-                ["wmic", "process", "where", "name='LeagueClientUx.exe'", 
-                 "get", "ExecutablePath"],
-                capture_output=True, text=True, timeout=5
+
+        # 2) Windows-only strategies
+        if os.name == "nt":
+            found = (
+                self._find_lockfile_via_powershell()
+                or self._find_lockfile_via_wmic()
+                or self._find_lockfile_via_registry()
+                or self._find_lockfile_via_riot_yaml()
             )
-            if result.returncode == 0:
-                lines = [l.strip() for l in result.stdout.split("\n") if l.strip() and "ExecutablePath" not in l]
-                if lines:
-                    exe_path = Path(lines[0])
-                    # Go up to League of Legends directory
-                    lol_dir = exe_path.parent.parent.parent
+            if found:
+                return found
+
+        return None
+
+    # -- Strategy: PowerShell (recommended on modern Windows) -----------
+
+    @staticmethod
+    def _find_lockfile_via_powershell() -> Optional[Path]:
+        """Locate the lockfile by querying LeagueClientUx.exe via PowerShell."""
+        try:
+            # --command-line contains the full path to the lockfile in quotes
+            # but the simplest approach is to get the process executable path.
+            result = subprocess.run(
+                [
+                    "powershell", "-NoProfile", "-Command",
+                    "(Get-Process LeagueClientUx -ErrorAction SilentlyContinue"
+                    " | Select-Object -First 1).Path",
+                ],
+                capture_output=True, text=True, timeout=8,
+                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+            )
+            exe = (result.stdout or "").strip()
+            if exe:
+                return LCUConnector._lockfile_from_exe(exe, "PowerShell")
+        except Exception as e:
+            logger.debug(f"PowerShell lockfile search failed: {e}")
+        return None
+
+    # -- Strategy: PowerShell command-line (--install-directory) --------
+
+    @staticmethod
+    def _find_lockfile_via_powershell_cmdline() -> Optional[Path]:
+        """Parse --install-directory from the LeagueClientUx command line."""
+        try:
+            result = subprocess.run(
+                [
+                    "powershell", "-NoProfile", "-Command",
+                    "(Get-CimInstance Win32_Process -Filter "
+                    "\"name='LeagueClientUx.exe'\" -ErrorAction SilentlyContinue"
+                    " | Select-Object -First 1).CommandLine",
+                ],
+                capture_output=True, text=True, timeout=8,
+                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+            )
+            cmdline = (result.stdout or "").strip()
+            if cmdline:
+                # Extract --install-directory="<path>"
+                m = re.search(r'--install-directory[=\s]+"?([^"]+)"?', cmdline)
+                if m:
+                    lol_dir = Path(m.group(1).rstrip("/\\"))
                     lockfile = lol_dir / "lockfile"
                     if lockfile.exists():
-                        logger.info(f"Found lockfile via process: {lockfile}")
+                        logger.info(f"Found lockfile via cmdline: {lockfile}")
                         return lockfile
         except Exception as e:
-            logger.debug(f"Could not find via process: {e}")
-        
+            logger.debug(f"PowerShell cmdline lockfile search failed: {e}")
+        return None
+
+    # -- Strategy: wmic (legacy fallback) --------------------------------
+
+    @staticmethod
+    def _find_lockfile_via_wmic() -> Optional[Path]:
+        """Locate the lockfile using wmic (deprecated but still on many PCs)."""
+        try:
+            result = subprocess.run(
+                [
+                    "wmic", "process", "where",
+                    "name='LeagueClientUx.exe'",
+                    "get", "ExecutablePath",
+                ],
+                capture_output=True, text=True, timeout=8,
+                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+            )
+            if result.returncode == 0:
+                lines = [
+                    l.strip()
+                    for l in result.stdout.split("\n")
+                    if l.strip() and "ExecutablePath" not in l
+                ]
+                if lines:
+                    return LCUConnector._lockfile_from_exe(lines[0], "wmic")
+        except Exception as e:
+            logger.debug(f"wmic lockfile search failed: {e}")
+        return None
+
+    # -- Strategy: Windows Registry --------------------------------------
+
+    @staticmethod
+    def _find_lockfile_via_registry() -> Optional[Path]:
+        """Try to read the Riot Games install path from the Windows registry."""
+        try:
+            import winreg
+            # Riot Client stores its install path here
+            for key_path in (
+                r"SOFTWARE\WOW6432Node\Riot Games, Inc\League of Legends",
+                r"SOFTWARE\Riot Games, Inc\League of Legends",
+                r"SOFTWARE\WOW6432Node\Riot Games\Riot Client",
+                r"SOFTWARE\Riot Games\Riot Client",
+            ):
+                try:
+                    with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path) as key:
+                        for value_name in ("Path", "InstallLocation", "InstallPath"):
+                            try:
+                                val, _ = winreg.QueryValueEx(key, value_name)
+                                if val:
+                                    p = Path(val)
+                                    # It may point to the Riot Client; adjust to LoL
+                                    for candidate in (
+                                        p / "lockfile",
+                                        p / "League of Legends" / "lockfile",
+                                        p.parent / "League of Legends" / "lockfile",
+                                    ):
+                                        if candidate.exists():
+                                            logger.info(f"Found lockfile via registry: {candidate}")
+                                            return candidate
+                            except FileNotFoundError:
+                                continue
+                except FileNotFoundError:
+                    continue
+        except Exception as e:
+            logger.debug(f"Registry lockfile search failed: {e}")
+        return None
+
+    # -- Strategy: Riot Client YAML config --------------------------------
+
+    @staticmethod
+    def _find_lockfile_via_riot_yaml() -> Optional[Path]:
+        """Read the League path from the Riot Client's product-settings YAML."""
+        try:
+            riot_data = Path(os.environ.get("LOCALAPPDATA", "")) / "Riot Games" / "RiotClientInstalls.json"
+            if riot_data.exists():
+                data = json.loads(riot_data.read_text(encoding="utf-8"))
+                # The JSON contains paths to the Riot Client; we look for
+                # associated_client which maps RiotClient -> LoL directory.
+                assoc = data.get("associated_client", {})
+                for _rc_path, lol_dir_str in assoc.items():
+                    lockfile = Path(lol_dir_str) / "lockfile"
+                    if lockfile.exists():
+                        logger.info(f"Found lockfile via RiotClientInstalls.json: {lockfile}")
+                        return lockfile
+
+            # Also try ProgramData path
+            prog_data = Path(os.environ.get("ALLUSERSPROFILE", r"C:\ProgramData"))
+            settings_file = prog_data / "Riot Games" / "RiotClientInstalls.json"
+            if settings_file.exists():
+                data = json.loads(settings_file.read_text(encoding="utf-8"))
+                assoc = data.get("associated_client", {})
+                for _rc_path, lol_dir_str in assoc.items():
+                    lockfile = Path(lol_dir_str) / "lockfile"
+                    if lockfile.exists():
+                        logger.info(f"Found lockfile via RiotClientInstalls: {lockfile}")
+                        return lockfile
+        except Exception as e:
+            logger.debug(f"Riot YAML lockfile search failed: {e}")
+        return None
+
+    # -- Helper -----------------------------------------------------------
+
+    @staticmethod
+    def _lockfile_from_exe(exe_path_str: str, source: str) -> Optional[Path]:
+        """Given the path to LeagueClientUx.exe, walk up to find the lockfile."""
+        exe_path = Path(exe_path_str)
+        # The lockfile lives in the League of Legends root (2-3 levels up
+        # depending on Riot's packaging).
+        for parent in (exe_path.parent, exe_path.parent.parent, exe_path.parent.parent.parent):
+            lockfile = parent / "lockfile"
+            if lockfile.exists():
+                logger.info(f"Found lockfile via {source}: {lockfile}")
+                return lockfile
+        logger.debug(f"{source} found exe at {exe_path_str} but no lockfile in parents")
         return None
     
     def _parse_lockfile(self, lockfile: Path) -> Optional[LCUCredentials]:
@@ -250,7 +419,11 @@ class LCUConnector:
         """
         lockfile = self._find_lockfile()
         if not lockfile:
-            logger.warning("LoL client not found. Is League of Legends running?")
+            now = time.time()
+            # Only log the warning once every 30 seconds to avoid spam
+            if now - self._last_not_found_logged >= 30:
+                logger.warning("LoL client not found. Is League of Legends running?")
+                self._last_not_found_logged = now
             self._state.connected = False
             return False
         

@@ -3,6 +3,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import ChampionPoolEditor from './components/ChampionPool/ChampionPoolEditor';
 import DraftBoard from './components/DraftBoard/DraftBoard';
+import DraftHistory from './components/History/DraftHistory';
+import LCUOverlay from './components/Overlay/LCUOverlay';
 import { fetchChampions, fetchPatch } from './services/api';
 
 export default function App() {
@@ -30,15 +32,15 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-slate-950">
+      <div className="flex items-center justify-center min-h-screen bg-surface-base">
         <div className="text-center">
-          <div className="w-12 h-12 mx-auto mb-4 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/30">
-            <svg className="w-6 h-6 text-white animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="w-10 h-10 mx-auto mb-3 rounded-lg bg-amber-500 flex items-center justify-center">
+            <svg className="w-5 h-5 text-slate-900 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
           </div>
-          <div className="text-xl font-bold text-white mb-1">DALIA</div>
-          <div className="text-sm text-slate-500">Chargement des champions...</div>
+          <div className="text-sm font-semibold text-slate-200 mb-1">DALIA</div>
+          <div className="text-xs text-slate-500">Chargement…</div>
         </div>
       </div>
     );
@@ -46,11 +48,13 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      <LCUOverlay champions={champions} />
       <Routes>
         <Route element={<Layout patchInfo={patchInfo} />}>
           <Route path="/" element={<Navigate to="/draft" replace />} />
           <Route path="/pool" element={<ChampionPoolEditor champions={champions} />} />
           <Route path="/draft" element={<DraftBoard champions={champions} />} />
+          <Route path="/history" element={<DraftHistory champions={champions} />} />
         </Route>
       </Routes>
     </BrowserRouter>

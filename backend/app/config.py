@@ -12,12 +12,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 class ScoringWeights(BaseModel):
     """Weights used by the draft engine to combine sub-scores (must sum to ~1.0)."""
-    meta: float = 0.10          # ↓ reduced from 0.18 - meta matters less than mastery
-    matchup: float = 0.35       # ↓ slightly reduced - still most important
+    meta: float = 0.12          # ↑ slightly increased — meta strength matters
+    matchup: float = 0.33       # ↓ slightly reduced — still most important
     synergy: float = 0.05       # unchanged
-    composition: float = 0.15   # ↑ increased from 0.12 - comp matters more
-    mastery: float = 0.25       # ↑ greatly increased from 0.08 - tier has huge impact
-    draft_risk: float = 0.05    # ↓ decreased from 0.07
+    composition: float = 0.15   # unchanged — comp matters
+    mastery: float = 0.20       # ↓ reduced from 0.25 — less pool favoritism
+    draft_risk: float = 0.08    # ↑ increased — draft context matters more
 
 
 class Config(BaseModel):

@@ -12,6 +12,8 @@ body {
   background: #020617;
   color: #e2e8f0;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* scrollbar */
@@ -20,37 +22,40 @@ body {
 ::-webkit-scrollbar-thumb    { background: #334155; border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #475569; }
 
-/* ── Utility classes ───────────────────────────────────── */
+/* ── Focus visible (global) ────────────────────────────── */
+:focus-visible {
+  outline: 2px solid #f59e0b;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ── Tabular nums for data displays ────────────────────── */
+.tabular-nums { font-variant-numeric: tabular-nums; }
+
+/* ── Utility component classes ─────────────────────────── */
 @layer components {
   .btn-primary {
-    @apply inline-flex items-center justify-center px-5 py-2.5 rounded-lg
-           bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold text-sm
-           hover:from-amber-400 hover:to-orange-400 active:scale-[0.98] transition-all duration-150 cursor-pointer
-           shadow-lg shadow-amber-500/25;
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg
+           bg-amber-500 text-slate-900 font-semibold text-sm
+           hover:bg-amber-400 active:scale-[0.98] transition-all duration-150 cursor-pointer;
   }
   .btn-secondary {
-    @apply inline-flex items-center justify-center px-4 py-2 rounded-lg
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg
            bg-slate-800 border border-slate-700 text-slate-200 text-sm font-medium
            hover:bg-slate-700 hover:border-slate-600 transition-all duration-150 cursor-pointer;
   }
-  .card {
-    @apply bg-slate-900/80 backdrop-blur-sm border border-slate-700/50 rounded-xl;
+  .panel {
+    @apply bg-surface border border-slate-700/50 rounded-lg;
   }
-  
-  /* Score indicators */
-  .score-excellent { @apply text-emerald-400; }
-  .score-good { @apply text-amber-400; }
-  .score-average { @apply text-slate-400; }
-  .score-poor { @apply text-red-400; }
 }
 
-/* ── Animations ────────────────────────────────────────── */
+/* ── Animations (minimal — 150–200ms) ──────────────────── */
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 @keyframes slideIn {
-  from { opacity: 0; transform: translateX(-8px); }
+  from { opacity: 0; transform: translateX(-6px); }
   to   { opacity: 1; transform: translateX(0); }
 }
 @keyframes pulse-soft {
@@ -58,30 +63,17 @@ body {
   50% { opacity: 0.7; }
 }
 
-.animate-fade-in-up {
-  animation: fadeInUp 0.25s ease-out both;
-}
-.animate-slide-in {
-  animation: slideIn 0.2s ease-out both;
-}
-.animate-pulse-soft {
-  animation: pulse-soft 2s ease-in-out infinite;
-}
+.animate-fade-in-up { animation: fadeInUp 0.2s ease-out both; }
+.animate-slide-in   { animation: slideIn 0.15s ease-out both; }
+.animate-pulse-soft  { animation: pulse-soft 2s ease-in-out infinite; }
 
-/* Staggered children animation */
-.stagger-children > * {
-  animation: fadeInUp 0.25s ease-out both;
-}
+/* Staggered children */
+.stagger-children > * { animation: fadeInUp 0.2s ease-out both; }
 .stagger-children > *:nth-child(1)  { animation-delay: 0.00s; }
-.stagger-children > *:nth-child(2)  { animation-delay: 0.04s; }
-.stagger-children > *:nth-child(3)  { animation-delay: 0.08s; }
-.stagger-children > *:nth-child(4)  { animation-delay: 0.12s; }
-.stagger-children > *:nth-child(5)  { animation-delay: 0.16s; }
-.stagger-children > *:nth-child(6)  { animation-delay: 0.20s; }
-.stagger-children > *:nth-child(7)  { animation-delay: 0.24s; }
-.stagger-children > *:nth-child(8)  { animation-delay: 0.28s; }
-
-/* Selection indicator */
-.ring-highlight {
-  @apply ring-2 ring-amber-500/50 ring-offset-2 ring-offset-slate-900;
-}
+.stagger-children > *:nth-child(2)  { animation-delay: 0.03s; }
+.stagger-children > *:nth-child(3)  { animation-delay: 0.06s; }
+.stagger-children > *:nth-child(4)  { animation-delay: 0.09s; }
+.stagger-children > *:nth-child(5)  { animation-delay: 0.12s; }
+.stagger-children > *:nth-child(6)  { animation-delay: 0.15s; }
+.stagger-children > *:nth-child(7)  { animation-delay: 0.18s; }
+.stagger-children > *:nth-child(8)  { animation-delay: 0.21s; }

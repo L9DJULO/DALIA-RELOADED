@@ -1,72 +1,73 @@
 import React from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
-import { Swords, Users, Zap } from 'lucide-react';
+import { Swords, Users, Zap, Clock } from 'lucide-react';
 
 const NAV = [
-  { to: '/draft', label: 'Draft', icon: Swords, desc: 'Analyse en temps réel' },
-  { to: '/pool', label: 'Champions', icon: Users, desc: 'Gérer mon pool' },
+  { to: '/draft', label: 'Draft', icon: Swords },
+  { to: '/pool', label: 'Pool', icon: Users },
+  { to: '/history', label: 'Historique', icon: Clock },
 ];
 
 export default function Layout({ patchInfo }) {
   return (
-    <div className="min-h-screen flex flex-col bg-slate-950">
-      {/* ── Header ── */}
-      <header className="h-16 bg-slate-900/90 backdrop-blur-xl border-b border-slate-700/50 flex items-center px-6 shrink-0 relative z-30">
-        {/* Logo */}
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
-              <Zap size={18} className="text-white" />
-            </div>
-            <div>
-              <span className="text-lg font-bold text-white tracking-tight">DALIA</span>
-              <span className="text-[10px] text-slate-500 block -mt-1">Draft Assistant</span>
-            </div>
+    <div className="h-screen flex flex-col bg-surface-base">
+      {/* ── Compact header ── */}
+      <header className="h-10 bg-surface border-b border-slate-700/50 flex items-center px-4 shrink-0 z-30">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-md bg-amber-500 flex items-center justify-center">
+            <Zap size={14} className="text-slate-900" />
           </div>
+          <span className="text-sm font-bold text-slate-100 tracking-tight">DALIA</span>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex items-center gap-1 ml-10">
-          {NAV.map(({ to, label, icon: Icon, desc }) => (
-            <NavLink
-              key={to}
-              to={to}
-              className={({ isActive }) =>
-                `relative flex items-center gap-2.5 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  isActive
-                    ? 'bg-slate-800 text-white'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
-                }`
-              }
-            >
-              {({ isActive }) => (
-                <>
-                  <Icon size={16} strokeWidth={2} className={isActive ? 'text-amber-500' : ''} />
-                  <span>{label}</span>
-                </>
-              )}
-            </NavLink>
-          ))}
-        </nav>
-
-        {/* Right side info */}
-        <div className="ml-auto flex items-center gap-4">
+        <div className="ml-auto flex items-center gap-3">
           {patchInfo && (
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/50 border border-slate-700/50">
-              <div className="w-2 h-2 rounded-full bg-emerald-500" />
-              <span className="text-xs text-slate-300">Patch {patchInfo.patch}</span>
+            <div className="flex items-center gap-1.5 text-xs text-slate-400">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              Patch {patchInfo.patch}
             </div>
           )}
-          <div className="text-xs text-slate-500">
-            Données Ranked • Master+
-          </div>
+          <span className="text-[10px] text-slate-600">Ranked Master+</span>
         </div>
       </header>
 
-      {/* ── Main content ── */}
-      <main className="flex-1 overflow-auto bg-gradient-to-b from-slate-950 to-slate-900">
-        <Outlet />
-      </main>
+      {/* ── Body: sidebar + content ── */}
+      <div className="flex flex-1 min-h-0">
+        {/* Sidebar */}
+        <aside className="w-14 bg-surface border-r border-slate-700/50 flex flex-col items-center py-3 shrink-0">
+          <nav className="flex flex-col gap-1" aria-label="Navigation principale">
+            {NAV.map(({ to, label, icon: Icon }) => (
+              <NavLink
+                key={to}
+                to={to}
+                title={label}
+                aria-label={label}
+                className={({ isActive }) =>
+                  `relative w-10 h-10 flex items-center justify-center rounded-lg transition-colors duration-150 ${
+                    isActive
+                      ? 'bg-slate-800 text-amber-500'
+                      : 'text-slate-500 hover:text-slate-200 hover:bg-slate-800/50'
+                  }`
+                }
+              >
+                {({ isActive }) => (
+                  <>
+                    {isActive && (
+                      <div className="absolute left-0 top-2 bottom-2 w-0.5 rounded-r bg-amber-500" />
+                    )}
+                    <Icon size={20} strokeWidth={1.8} />
+                  </>
+                )}
+              </NavLink>
+            ))}
+          </nav>
+        </aside>
+
+        {/* Main content */}
+        <main className="flex-1 min-w-0 overflow-hidden">
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 }

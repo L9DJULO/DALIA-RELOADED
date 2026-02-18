@@ -45,5 +45,27 @@ export const connectLCU = () => api.post('/lcu/connect').then((r) => r.data);
 export const startLCUPolling = (interval = 1.0) => 
   api.post('/lcu/start-polling', null, { params: { interval } }).then((r) => r.data);
 export const stopLCUPolling = () => api.post('/lcu/stop-polling').then((r) => r.data);
+export const fetchLCUOverlay = () => api.get('/lcu/overlay').then((r) => r.data);
+
+// ── Draft History ─────────────────────────────────────
+export const fetchHistory = (username = 'default', limit = 50) =>
+  api.get('/history', { params: { username, limit } }).then((r) => r.data);
+export const saveHistoryEntry = (entry, username = 'default') =>
+  api.post('/history', entry, { params: { username } }).then((r) => r.data);
+export const updateHistoryResult = (entryId, result, notes = '', username = 'default') =>
+  api.patch(`/history/${entryId}`, { result, notes }, { params: { username } }).then((r) => r.data);
+export const deleteHistoryEntry = (entryId, username = 'default') =>
+  api.delete(`/history/${entryId}`, { params: { username } }).then((r) => r.data);
+export const fetchHistoryStats = (username = 'default') =>
+  api.get('/history/stats', { params: { username } }).then((r) => r.data);
+
+// ── Ban Recommendations ───────────────────────────────
+export const fetchBanRecommendations = (myRole, championPool, alreadyBanned = [], alreadyPicked = []) =>
+  api.post('/draft/bans', {
+    my_role: myRole,
+    champion_pool: championPool,
+    already_banned: alreadyBanned,
+    already_picked: alreadyPicked,
+  }).then((r) => r.data);
 
 export default api;

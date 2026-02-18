@@ -10,6 +10,7 @@ const useDraftStore = create((set, get) => ({
   // ── Draft setup ──
   myTeam: 'blue',         // "blue" | "red"
   myRole: 'mid',
+  autoDetected: false,    // true when team/role came from LCU
 
   // ── Bans ──
   blueBans: [null, null, null, null, null],
@@ -33,8 +34,9 @@ const useDraftStore = create((set, get) => ({
   // ═════════════════════════════════════════════════════════
   //  ACTIONS
   // ═════════════════════════════════════════════════════════
-  setMyTeam: (team) => set({ myTeam: team }),
-  setMyRole: (role) => set({ myRole: role }),
+  setMyTeam: (team) => set({ myTeam: team, autoDetected: false }),
+  setMyRole: (role) => set({ myRole: role, autoDetected: false }),
+  setFromLCU: (team, role) => set({ myTeam: team, myRole: role, autoDetected: true }),
 
   // ── Bans ──
   setBan: (team, index, champion) => {
