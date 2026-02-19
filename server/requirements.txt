@@ -22,3 +22,5 @@ bcrypt==4.1.2
 # torch is installed separately in Dockerfile (CPU-only build to keep image < 4GB)
 # For local dev: pip install torch
 # See Dockerfile for production install
+numpy>=1.26.0
+scikit-learn>=1.4.0
