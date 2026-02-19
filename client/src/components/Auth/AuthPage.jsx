@@ -10,7 +10,8 @@ export default function AuthPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [serverUrl, setServerUrlState] = useState(getServerUrl());
-  const [showServerConfig, setShowServerConfig] = useState(false);
+  const [showServerConfig, setShowServerConfig] = useState(true);
+  const isLocalhost = serverUrl.includes('localhost') || serverUrl.includes('127.0.0.1');
 
   const { login, register, loading, error, clearError } = useAuthStore();
 
@@ -185,7 +186,7 @@ export default function AuthPage() {
                   value={serverUrl}
                   onChange={(e) => setServerUrlState(e.target.value)}
                   className="flex-1 px-3 py-2 bg-surface-base border border-white/[0.08] rounded-lg text-slate-200 text-sm focus:outline-none focus:border-amber-500/50"
-                  placeholder="http://localhost:8000"
+                  placeholder="https://dalia-reloaded-production.up.railway.app"
                 />
                 <button
                   onClick={handleServerUrlSave}
@@ -194,6 +195,11 @@ export default function AuthPage() {
                   OK
                 </button>
               </div>
+              {isLocalhost && (
+                <p className="text-[11px] text-amber-400 mt-2 text-left">
+                  ⚠️ Serveur local détecté. Pour jouer en ligne, entre l'URL du serveur fournie par l'admin.
+                </p>
+              )}
             </div>
           )}
         </div>

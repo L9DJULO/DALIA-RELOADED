@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
+import ErrorBoundary from './components/ErrorBoundary';
 import AuthPage from './components/Auth/AuthPage';
 import ChampionPoolEditor from './components/ChampionPool/ChampionPoolEditor';
 import DraftBoard from './components/DraftBoard/DraftBoard';
@@ -79,14 +80,16 @@ export default function App() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   return (
-    <BrowserRouter>
-      {isAuthenticated ? (
-        <ProtectedApp />
-      ) : (
-        <Routes>
-          <Route path="*" element={<AuthPage />} />
-        </Routes>
-      )}
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        {isAuthenticated ? (
+          <ProtectedApp />
+        ) : (
+          <Routes>
+            <Route path="*" element={<AuthPage />} />
+          </Routes>
+        )}
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }

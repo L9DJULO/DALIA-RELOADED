@@ -8,7 +8,7 @@ from __future__ import annotations
 import logging
 from typing import Dict, List, Optional
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -23,19 +23,32 @@ router = APIRouter()
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────
+def _require_ready(request: Request):
+    """Raise 503 if background services haven't finished initializing."""
+    if not getattr(request.app.state, "ready", False):
+        raise HTTPException(
+            status_code=503,
+            detail="Le serveur démarre, réessaie dans quelques secondes…",
+        )
+
+
 def _get_engine(request: Request):
+    _require_ready(request)
     return request.app.state.draft_engine
 
 
 def _get_db_service(request: Request):
+    _require_ready(request)
     return request.app.state.champion_db
 
 
 def _get_fetcher(request: Request):
+    _require_ready(request)
     return request.app.state.fetcher
 
 
 def _get_ban_recommender(request: Request):
+    _require_ready(request)
     return request.app.state.ban_recommender
 
 
