@@ -6,8 +6,8 @@ LCU connector has been moved to the Tauri client.
 """
 from __future__ import annotations
 
+import asyncio
 import logging
-import sys
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -29,42 +29,63 @@ from app.ml.patch_watcher import PatchWatcher
 logger = logging.getLogger("dalia.app")
 
 
+async def _init_services(app: FastAPI) -> None:
+    """Initialize all DALIA services in the background.
+
+    Runs after the HTTP server is already up so the healthcheck can pass
+    immediately. Endpoints that depend on services check app.state.ready.
+    """
+    try:
+        # ── Create database tables ──
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        logger.info("Database tables ensured.")
+
+        # ── Initialize services ──
+        fetcher = LolalyticsFetcher()
+        champion_db = ChampionDatabase(fetcher)
+        await champion_db.initialize()
+
+        draft_engine = DraftEngine(champion_db, fetcher)
+        ban_recommender = BanRecommender(
+            champion_db, fetcher, draft_engine.matchup, draft_engine.meta
+        )
+
+        patch_watcher = PatchWatcher(fetcher, check_interval=3600.0)
+        await patch_watcher.start()
+
+        app.state.champion_db = champion_db
+        app.state.fetcher = fetcher
+        app.state.draft_engine = draft_engine
+        app.state.ban_recommender = ban_recommender
+        app.state.patch_watcher = patch_watcher
+        app.state.ready = True
+
+        logger.info("DALIA services initialized successfully.")
+
+    except Exception as exc:
+        logger.exception("Failed to initialize DALIA services: %s", exc)
+        app.state.ready = False
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Application lifespan: initialize services on startup, cleanup on shutdown."""
-    # ── Create database tables ──
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    logger.info("Database tables ensured.")
+    """Application lifespan — server starts immediately, services init in background."""
+    app.state.ready = False
 
-    # ── Initialize services ──
-    fetcher = LolalyticsFetcher()
-    champion_db = ChampionDatabase(fetcher)
-    await champion_db.initialize()
-
-    draft_engine = DraftEngine(champion_db, fetcher)
-
-    ban_recommender = BanRecommender(
-        champion_db, fetcher, draft_engine.matchup, draft_engine.meta
-    )
-
-    # Patch watcher (auto-retraining on new patches)
-    patch_watcher = PatchWatcher(fetcher, check_interval=3600.0)
-    await patch_watcher.start()
-
-    app.state.champion_db = champion_db
-    app.state.fetcher = fetcher
-    app.state.draft_engine = draft_engine
-    app.state.ban_recommender = ban_recommender
-    app.state.patch_watcher = patch_watcher
-
-    logger.info("DALIA Server started successfully.")
+    # Start immediately so Railway healthcheck passes, init services in background
+    asyncio.create_task(_init_services(app))
 
     yield
 
     # ── Shutdown ──
-    await patch_watcher.stop()
-    await fetcher.close()
+    try:
+        if getattr(app.state, "patch_watcher", None):
+            await app.state.patch_watcher.stop()
+        if getattr(app.state, "fetcher", None):
+            await app.state.fetcher.close()
+    except Exception:
+        pass
     await engine.dispose()
     logger.info("DALIA Server shut down.")
 
@@ -90,3 +111,9 @@ app.include_router(user_router, prefix="/api")
 app.include_router(history_router, prefix="/api")
 app.include_router(duo_router, prefix="/api")
 app.include_router(main_router, prefix="/api")
+
+
+@app.get("/health", tags=["health"])
+async def health():
+    """Healthcheck — always responds 200, reports service readiness."""
+    return {"status": "ok", "ready": getattr(app.state, "ready", False)}
