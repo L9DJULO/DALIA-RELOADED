@@ -1,0 +1,36 @@
+# Exclude local venv (installed at build time via pip)
+.venv/
+venv/
+ENV/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyc
+
+# Local env file (Railway uses env vars)
+.env
+.env.local
+
+# ML data (too large, not needed at runtime unless already trained)
+app/data/matches/
+app/data/models/
+*.pt
+*.pth
+*.onnx
+*.pkl
+
+# Cache (regenerated at runtime)
+app/data/cache/
+
+# Dev tools
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+coverage/
+htmlcov/
+
+# Misc
+*.log
+*.bak
+*.tmp

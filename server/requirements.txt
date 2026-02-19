@@ -19,4 +19,6 @@ passlib[bcrypt]==1.7.4
 bcrypt==4.1.2
 
 # ── ML / Training ──
-torch>=2.1.0
+# torch is installed separately in Dockerfile (CPU-only build to keep image < 4GB)
+# For local dev: pip install torch
+# See Dockerfile for production install
