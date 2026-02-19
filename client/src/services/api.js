@@ -9,9 +9,11 @@ import axios from 'axios';
 // Server URL — in dev, Vite proxy handles /api → localhost:8000
 // In Tauri production build, use the configured server URL
 const IS_TAURI = typeof window !== 'undefined' && window.__TAURI__;
-const SERVER_URL = IS_TAURI
+const _raw = IS_TAURI
   ? (localStorage.getItem('dalia_server_url') || 'http://localhost:8000')
   : '';
+// Strip trailing slash to avoid double-slash in URLs
+const SERVER_URL = _raw.replace(/\/+$/, '');
 
 const api = axios.create({
   baseURL: `${SERVER_URL}/api`,
@@ -176,8 +178,9 @@ export const fetchDuoPartnerPool = () =>
 //  SERVER CONFIG
 // ═════════════════════════════════════════════════════════════════════════
 export const setServerUrl = (url) => {
-  localStorage.setItem('dalia_server_url', url);
-  api.defaults.baseURL = `${url}/api`;
+  const clean = url.replace(/\/+$/, '');
+  localStorage.setItem('dalia_server_url', clean);
+  api.defaults.baseURL = `${clean}/api`;
 };
 
 export const getServerUrl = () =>
