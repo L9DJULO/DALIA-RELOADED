@@ -161,7 +161,7 @@ export default function DraftPrediction() {
         <WinGauge probability={winProbability} />
       ) : (
         <div className="panel p-6 text-center">
-          <Sparkles size={24} className="text-amber-400 mx-auto mb-2" />
+          <Sparkles size={24} className="text-violet-400 mx-auto mb-2" />
           <div className="text-sm text-slate-300 font-medium mb-1">
             Analyse en attente
           </div>
@@ -247,13 +247,13 @@ export default function DraftPrediction() {
 
       {/* Warnings */}
       {Array.isArray(warnings) && warnings.length > 0 && (
-        <div className="panel p-3 border-amber-500/20 bg-amber-500/5">
-          <div className="text-[10px] text-amber-400 uppercase tracking-wider font-medium mb-2">
+        <div className="panel p-3 border-violet-500/20 bg-violet-500/5">
+          <div className="text-[10px] text-violet-400 uppercase tracking-wider font-medium mb-2">
             Points d'attention
           </div>
           <div className="space-y-1">
             {warnings.map((w, i) => (
-              <div key={i} className="text-xs text-amber-400 flex items-start gap-1.5">
+              <div key={i} className="text-xs text-violet-400 flex items-start gap-1.5">
                 <span className="mt-0.5">⚠</span>
                 <span>{w}</span>
               </div>
@@ -273,10 +273,10 @@ export default function DraftPrediction() {
               <img
                 src={`${DDRAGON}/${topRec.champion_key}.png`}
                 alt={topRec.champion_name}
-                className="w-6 h-6 rounded-md border border-amber-500/30"
+                className="w-6 h-6 rounded-md border border-violet-500/30"
                 loading="lazy"
               />
-              <span className="text-sm font-semibold text-amber-400">{topRec.champion_name}</span>
+              <span className="text-sm font-semibold text-violet-400">{topRec.champion_name}</span>
               <span className="text-sm font-bold tabular-nums text-slate-200">
                 {topRec.total_score.toFixed(0)} pts
               </span>

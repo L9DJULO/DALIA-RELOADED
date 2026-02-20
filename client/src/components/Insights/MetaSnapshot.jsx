@@ -26,7 +26,7 @@ function StatBar({ value, max = 100, color = 'amber' }) {
   const pct = Math.min((value / max) * 100, 100);
   const barColors = {
     emerald: 'bg-emerald-500',
-    amber: 'bg-amber-500',
+    amber: 'bg-violet-500',
     red: 'bg-red-500',
     sky: 'bg-sky-500',
   };
@@ -50,7 +50,7 @@ function ChampionRow({ champ, rank }) {
     }`}>
       {/* Rank */}
       <div className={`w-6 text-center font-bold text-xs tabular-nums ${
-        rank === 1 ? 'text-amber-400' : rank <= 3 ? 'text-slate-300' : 'text-slate-500'
+        rank === 1 ? 'text-violet-400' : rank <= 3 ? 'text-slate-300' : 'text-slate-500'
       }`}>
         {rank}
       </div>
@@ -59,7 +59,7 @@ function ChampionRow({ champ, rank }) {
       <img
         src={`${DDRAGON}/${champ.champion_key}.png`}
         alt={champ.champion_name}
-        className={`w-9 h-9 rounded-lg border ${rank <= 3 ? 'border-amber-500/30' : 'border-slate-700'}`}
+        className={`w-9 h-9 rounded-lg border ${rank <= 3 ? 'border-violet-500/30' : 'border-slate-700'}`}
         loading="lazy"
       />
 
@@ -160,7 +160,7 @@ export default function MetaSnapshot() {
               onClick={() => setRole(r)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
                 role === r
-                  ? 'bg-amber-500/15 text-amber-400 border border-amber-500/25'
+                  ? 'bg-violet-500/15 text-violet-400 border border-violet-500/25'
                   : 'text-slate-400 hover:text-slate-200 border border-transparent'
               }`}
             >

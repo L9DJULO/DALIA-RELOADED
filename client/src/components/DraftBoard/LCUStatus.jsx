@@ -89,7 +89,7 @@ export default function LCUStatus() {
       {inChampSelect && timerRemaining > 0 && (
         <div
           className={`px-1.5 py-0.5 rounded-md text-[11px] font-mono tabular-nums ${
-            isMyTurn ? 'bg-amber-500/15 text-amber-400 font-semibold' : 'bg-surface-elevated/50 text-slate-400'
+            isMyTurn ? 'bg-violet-500/15 text-violet-400 font-semibold' : 'bg-surface-elevated/50 text-slate-400'
           }`}
           role="timer"
           aria-label={`${timerRemaining} secondes restantes`}
@@ -113,8 +113,8 @@ export default function LCUStatus() {
         aria-label={`Auto-sync ${autoSync ? 'activé' : 'désactivé'}`}
         className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium transition-colors duration-150 border ${
           autoSync
-            ? 'bg-amber-500/10 text-amber-400 border-amber-500/25 hover:bg-amber-500/15'
-            : 'bg-surface-elevated/50 text-slate-400 border-slate-700/50 hover:border-slate-600'
+            ? 'bg-violet-500/10 text-violet-400 border-violet-500/25 hover:bg-violet-500/15'
+            : 'bg-surface-elevated/50 border-slate-700/50 hover:border-violet-500/30'
         }`}
       >
         {polling ? (

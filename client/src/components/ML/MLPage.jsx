@@ -31,7 +31,7 @@ export default function MLPage() {
                   capture son style de jeu. Les champions proches dans cet espace ont des profils similaires.
                 </p>
                 <p>
-                  Le <span className="text-amber-400">re-entraînement automatique</span> se déclenche quand un
+                  Le <span className="text-violet-400">re-entraînement automatique</span> se déclenche quand un
                   nouveau patch est détecté via DDragon, pour que le modèle reste à jour.
                 </p>
               </div>

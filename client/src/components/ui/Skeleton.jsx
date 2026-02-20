@@ -4,8 +4,8 @@
 export default function Skeleton({ className = '', width, height }) {
   return (
     <div
-      className={`animate-pulse rounded-lg bg-slate-800 ${className}`}
-      style={{ width, height }}
+      className={`animate-pulse rounded-lg ${className}`}
+      style={{ width, height, background: 'var(--surface-elevated)' }}
       role="status"
       aria-label="Chargement…"
     />

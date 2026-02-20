@@ -87,7 +87,7 @@ function MLAdminPanel() {
       {/* Status badge */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Cpu size={14} className="text-amber-500" />
+          <Cpu size={14} className="text-violet-500" />
           <span className="text-xs font-semibold text-slate-200">Modèle IA</span>
         </div>
         <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md border text-[11px] font-medium ${cfg.bg} ${cfg.color}`}>
@@ -153,8 +153,8 @@ function MLAdminPanel() {
           onClick={handleRetrain}
           disabled={isTraining || retraining}
           className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-md
-                     bg-amber-500/10 text-amber-400 border border-amber-500/20
-                     hover:bg-amber-500/20 disabled:opacity-40 disabled:cursor-not-allowed
+                     bg-violet-500/10 text-violet-400 border border-violet-500/20
+                     hover:bg-violet-500/20 disabled:opacity-40 disabled:cursor-not-allowed
                      text-[11px] font-medium transition-colors"
         >
           <RefreshCw size={11} className={retraining ? 'animate-spin' : ''} />
@@ -248,7 +248,7 @@ export default function SettingsPage() {
               type="text"
               value={serverUrl}
               onChange={(e) => handleServerUrlChange(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg bg-surface-elevated border border-slate-700 text-sm text-slate-100 focus:outline-none focus:border-amber-500/50 transition-colors"
+              className="w-full px-3 py-2 rounded-lg bg-surface-elevated border border-slate-700 text-sm text-slate-100 focus:outline-none focus:border-violet-500/50 transition-colors"
               placeholder="http://localhost:8000"
             />
             <div className="text-[10px] text-slate-600 mt-1">
@@ -264,7 +264,7 @@ export default function SettingsPage() {
             className="flex items-center justify-between w-full"
           >
             <div className="flex items-center gap-2">
-              <Shield size={14} className="text-amber-500" />
+              <Shield size={14} className="text-violet-500" />
               <span className="text-sm font-medium text-slate-200">Administration</span>
             </div>
             <span className="text-[11px] text-slate-500">
@@ -277,7 +277,7 @@ export default function SettingsPage() {
               {/* ML Panel */}
               <div>
                 <div className="flex items-center gap-2 mb-3">
-                  <Brain size={14} className="text-amber-400" />
+                  <Brain size={14} className="text-violet-400" />
                   <span className="text-xs font-medium text-slate-300">Modèle IA — Entraînement</span>
                 </div>
                 <MLAdminPanel />

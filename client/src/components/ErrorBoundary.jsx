@@ -42,8 +42,8 @@ export default class ErrorBoundary extends React.Component {
             <div className="w-14 h-14 mx-auto rounded-xl bg-red-500/20 border border-red-500/30 flex items-center justify-center">
               <AlertTriangle className="w-7 h-7 text-red-400" />
             </div>
-            <h1 className="text-lg font-bold text-slate-100">Oups, DALIA a crashé</h1>
-            <p className="text-sm text-slate-400">
+            <h1 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Oups, DALIA a crashé</h1>
+            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
               Une erreur inattendue s'est produite. Ça arrive parfois quand les données locales sont corrompues.
             </p>
             {this.state.error && (
@@ -56,20 +56,20 @@ export default class ErrorBoundary extends React.Component {
             <div className="flex gap-3 justify-center pt-2">
               <button
                 onClick={this.handleReload}
-                className="flex items-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-900 font-semibold text-sm rounded-lg transition-colors"
+                className="flex items-center gap-2 px-4 py-2.5 btn-primary font-semibold text-sm rounded-lg transition-colors"
               >
                 <RefreshCw size={14} />
                 Recharger
               </button>
               <button
                 onClick={this.handleReset}
-                className="flex items-center gap-2 px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-slate-200 font-medium text-sm rounded-lg transition-colors"
+                className="flex items-center gap-2 px-4 py-2.5 btn-secondary font-medium text-sm rounded-lg transition-colors"
               >
                 <Trash2 size={14} />
                 Réinitialiser les données
               </button>
             </div>
-            <p className="text-[11px] text-slate-600">
+            <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
               « Réinitialiser » efface le cache local et te déconnecte. Ton compte serveur reste intact.
             </p>
           </div>

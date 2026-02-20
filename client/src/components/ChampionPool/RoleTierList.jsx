@@ -34,8 +34,8 @@ export default function RoleTierList({ role, champions }) {
   if (entries.length === 0) {
     return (
       <div className="text-center py-8">
-        <p className="text-slate-400 text-sm mb-1">Pool vide</p>
-        <p className="text-slate-500 text-[11px]">Cliquez sur un champion à droite pour l'ajouter</p>
+        <p className="text-sm mb-1" style={{ color: 'var(--text-secondary)' }}>Pool vide</p>
+        <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>Cliquez sur un champion à droite pour l'ajouter</p>
       </div>
     );
   }
@@ -48,13 +48,13 @@ export default function RoleTierList({ role, champions }) {
         const style = TIER_STYLES[tier];
 
         return (
-          <div key={tier} className={`rounded-lg border p-2.5 ${style.bg} ${style.border}`}>
+          <div key={tier} className={`rounded-xl border p-2.5 ${style.bg} ${style.border}`}>
             <div className={`text-[11px] font-bold mb-2 flex items-center gap-1.5 ${style.label}`}>
               <span className="w-4 h-4 rounded flex items-center justify-center bg-current/10 text-[9px]">
                 {tier}
               </span>
               <span>Tier {tier}</span>
-              <span className="text-slate-600 font-normal ml-auto tabular-nums">{items.length}</span>
+              <span className="font-normal ml-auto tabular-nums" style={{ color: 'var(--text-muted)' }}>{items.length}</span>
             </div>
             <div className="flex flex-wrap gap-1.5">
               {items.map((entry) => {
@@ -63,8 +63,8 @@ export default function RoleTierList({ role, champions }) {
                 return (
                   <div
                     key={entry.champion_id}
-                    className="group relative w-10 h-10 rounded-lg overflow-hidden border border-slate-700/50
-                               hover:border-slate-500 transition-colors duration-150"
+                    className="group relative w-10 h-10 rounded-lg overflow-hidden border hover:border-violet-500/40 transition-colors duration-150"
+                    style={{ borderColor: 'var(--border-subtle)' }}
                   >
                     <img
                       src={champ.image_url}

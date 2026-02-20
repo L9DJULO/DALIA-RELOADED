@@ -15,7 +15,7 @@ const DDRAGON = 'https://ddragon.leagueoflegends.com/cdn/14.24.1/img/champion';
 function getMatchReason(similarity) {
   if (similarity >= 0.85) return { text: 'Très similaire', color: 'text-emerald-400', bg: 'bg-emerald-500/10' };
   if (similarity >= 0.70) return { text: 'Style proche', color: 'text-sky-400', bg: 'bg-sky-500/10' };
-  if (similarity >= 0.55) return { text: 'Alternative viable', color: 'text-amber-400', bg: 'bg-amber-500/10' };
+  if (similarity >= 0.55) return { text: 'Alternative viable', color: 'text-violet-400', bg: 'bg-violet-500/10' };
   return { text: 'Profil différent', color: 'text-slate-400', bg: 'bg-slate-700/50' };
 }
 
@@ -32,7 +32,7 @@ function SimilarCard({ champ, onClick }) {
       <img
         src={champ.image_url || `${DDRAGON}/${champ.champion_key || champ.champion_name}.png`}
         alt={champ.champion_name}
-        className="w-12 h-12 rounded-lg border border-slate-700 group-hover:border-amber-500/30 transition-colors"
+        className="w-12 h-12 rounded-lg border border-slate-700 group-hover:border-violet-500/30 transition-colors"
         loading="lazy"
       />
       <div className="flex-1 min-w-0">
@@ -45,7 +45,7 @@ function SimilarCard({ champ, onClick }) {
       </div>
       <div className="flex flex-col items-end gap-1">
         <div className={`text-sm font-bold tabular-nums ${
-          champ.similarity >= 0.7 ? 'text-emerald-400' : 'text-amber-400'
+          champ.similarity >= 0.7 ? 'text-emerald-400' : 'text-violet-400'
         }`}>
           {pct}%
         </div>
@@ -64,7 +64,7 @@ function ChampionDetail({ champion, similar, loading, onSelectSimilar, onClear }
         <img
           src={champion.image_url || `${DDRAGON}/${champion.key || champion.champion_key || champion.name}.png`}
           alt={champion.name || champion.champion_name}
-          className="w-16 h-16 rounded-xl border-2 border-amber-500/30"
+          className="w-16 h-16 rounded-xl border-2 border-violet-500/30"
         />
         <div className="flex-1">
           <div className="flex items-center gap-2">
@@ -81,15 +81,15 @@ function ChampionDetail({ champion, similar, loading, onSelectSimilar, onClear }
           </div>
         </div>
         <div className="flex items-center gap-1.5">
-          <Sparkles size={16} className="text-amber-400" />
-          <span className="text-sm font-medium text-amber-400">{similar.length} suggestions</span>
+          <Sparkles size={16} className="text-violet-400" />
+          <span className="text-sm font-medium text-violet-400">{similar.length} suggestions</span>
         </div>
       </div>
 
       {/* Similar list */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 size={24} className="text-amber-500 animate-spin" />
+          <Loader2 size={24} className="text-violet-500 animate-spin" />
         </div>
       ) : similar.length > 0 ? (
         <div>
@@ -189,7 +189,7 @@ export default function SimilarChampions({ champions }) {
               onClick={() => { setRole(r); handleClear(); }}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
                 role === r
-                  ? 'bg-amber-500/15 text-amber-400 border border-amber-500/25'
+                  ? 'bg-violet-500/15 text-violet-400 border border-violet-500/25'
                   : 'text-slate-400 hover:text-slate-200 border border-transparent'
               }`}
             >
@@ -221,7 +221,7 @@ export default function SimilarChampions({ champions }) {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Chercher un champion que tu joues…"
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-surface border border-slate-700/50 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-amber-500/50 transition-colors"
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-surface border border-slate-700/50 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-violet-500/50 transition-colors"
             />
           </div>
 
@@ -241,7 +241,7 @@ export default function SimilarChampions({ champions }) {
                     onClick={() => handleSelect(c.id)}
                     className={`group relative rounded-lg overflow-hidden border transition-all hover:scale-105 hover:z-10 ${
                       isPool
-                        ? 'border-amber-500/30 ring-1 ring-amber-500/15'
+                        ? 'border-violet-500/30 ring-1 ring-violet-500/15'
                         : 'border-slate-700/50 hover:border-slate-600'
                     }`}
                     title={c.name}
@@ -258,7 +258,7 @@ export default function SimilarChampions({ champions }) {
                       </div>
                     </div>
                     {isPool && (
-                      <div className="absolute top-0 right-0 w-2 h-2 bg-amber-500 rounded-bl" />
+                      <div className="absolute top-0 right-0 w-2 h-2 bg-violet-500 rounded-bl" />
                     )}
                   </button>
                 );

@@ -15,7 +15,7 @@ function BanScore({ value }) {
   const color = value >= 70
     ? 'text-red-400 bg-red-500/15 border-red-500/25'
     : value >= 50
-      ? 'text-amber-400 bg-amber-500/15 border-amber-500/25'
+      ? 'text-violet-400 bg-violet-500/15 border-violet-500/25'
       : 'text-slate-400 bg-slate-700/50 border-slate-600/50';
   return (
     <div className={`w-9 h-9 rounded-lg border flex items-center justify-center text-xs font-bold tabular-nums ${color}`}>
@@ -37,11 +37,11 @@ function ReasonBadge({ reason }) {
 /* ── Single ban suggestion card ── */
 function BanCard({ ban, onBan, rank }) {
   return (
-    <div className={`flex items-center gap-3 py-2 px-3 rounded-lg transition-all duration-150 ${
-      rank <= 3 ? 'bg-red-500/5 border border-red-500/15' : 'bg-surface border border-slate-700/50 hover:border-slate-600'
-    }`}>
+    <div className={`flex items-center gap-3 py-2 px-3 rounded-xl border transition-all duration-150 ${
+      rank <= 3 ? 'bg-red-500/5 border-red-500/15' : 'hover:border-violet-500/30'
+    }`} style={rank > 3 ? { background: 'var(--surface-default)', borderColor: 'var(--border-subtle)' } : undefined}>
       {/* Rank */}
-      <div className="text-[11px] font-bold text-slate-500 w-4 text-center tabular-nums">{rank}</div>
+      <div className="text-[11px] font-bold w-4 text-center tabular-nums" style={{ color: 'var(--text-muted)' }}>{rank}</div>
 
       {/* Champion icon */}
       <img
@@ -54,9 +54,9 @@ function BanCard({ ban, onBan, rank }) {
       {/* Info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-slate-100 truncate">{ban.champion_name}</span>
+          <span className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>{ban.champion_name}</span>
           {ban.meta_role && (
-            <span className="text-[10px] text-slate-500 capitalize">{ban.meta_role}</span>
+            <span className="text-[10px] capitalize" style={{ color: 'var(--text-muted)' }}>{ban.meta_role}</span>
           )}
         </div>
         <div className="flex flex-wrap gap-1 mt-0.5">
@@ -124,7 +124,7 @@ export default function BanPanel() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Shield size={14} className="text-red-400" />
-          <span className="text-sm font-semibold text-slate-100">Bans suggérés</span>
+          <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Bans suggérés</span>
         </div>
         <button
           onClick={fetchBans}
@@ -147,8 +147,8 @@ export default function BanPanel() {
       {/* Empty state */}
       {!loading && bans.length === 0 && !error && (
         <div className="text-center py-6">
-          <Shield size={20} className="text-slate-600 mx-auto mb-2" />
-          <div className="text-xs text-slate-500">
+          <Shield size={20} className="mx-auto mb-2" style={{ color: 'var(--text-muted)' }} />
+          <div className="text-xs" style={{ color: 'var(--text-muted)' }}>
             Cliquez sur <span className="text-red-400 font-medium">Analyser bans</span> pour obtenir des suggestions basées sur votre pool et la méta.
           </div>
         </div>
@@ -158,7 +158,7 @@ export default function BanPanel() {
       {loading && (
         <div className="flex items-center justify-center py-6">
           <Loader2 size={16} className="text-red-400 animate-spin mr-2" />
-          <span className="text-xs text-slate-400">Analyse des counters et de la méta…</span>
+          <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>Analyse des counters et de la méta…</span>
         </div>
       )}
 

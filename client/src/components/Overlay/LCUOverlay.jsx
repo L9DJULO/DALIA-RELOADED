@@ -5,7 +5,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import {
   Wifi, WifiOff, Gamepad2, Clock, Shield, Swords,
-  ChevronDown, ChevronUp, Minimize2, Maximize2, X, Zap,
+  ChevronDown, ChevronUp, Minimize2, Maximize2, X, Sparkles,
 } from 'lucide-react';
 import useLCUStore from '../../stores/lcuStore';
 import useDraftStore from '../../stores/draftStore';
@@ -31,7 +31,7 @@ function ChampImg({ champKey, size = 28, className = '' }) {
 /* ── Timer display ── */
 function Timer({ seconds, isMyTurn }) {
   const color = isMyTurn
-    ? seconds <= 5 ? 'text-red-400 animate-pulse' : 'text-amber-400'
+    ? seconds <= 5 ? 'text-red-400 animate-pulse' : 'text-violet-400'
     : 'text-slate-400';
   return (
     <div className={`flex items-center gap-1 text-xs font-bold tabular-nums ${color}`}>
@@ -168,7 +168,7 @@ export default function LCUOverlay({ champions }) {
                 <span className="text-[11px] text-red-400">LCU déconnecté</span>
               </>
             )}
-            <div className="w-1.5 h-1.5 rounded-full bg-amber-500 ml-1" />
+            <div className="w-1.5 h-1.5 rounded-full bg-violet-500 ml-1" />
             <span className="text-[9px] text-slate-600 font-medium">DALIA</span>
           </div>
         </div>
@@ -184,7 +184,7 @@ export default function LCUOverlay({ champions }) {
       ref={dragRef}
     >
       <div className={`bg-surface/95 backdrop-blur-sm border rounded-xl shadow-2xl transition-all duration-200 ${
-        isMyTurn ? 'border-amber-500/50 shadow-amber-500/10' : 'border-slate-700/50'
+        isMyTurn ? 'border-violet-500/50 shadow-violet-500/10' : 'border-slate-700/50'
       }`} style={{ width: minimized ? 220 : 340 }}>
 
         {/* ── Header ── */}
@@ -260,7 +260,7 @@ export default function LCUOverlay({ champions }) {
             {topRecs.length > 0 && (
               <div className="px-3 py-2">
                 <div className="flex items-center gap-1.5 mb-1.5">
-                  <Zap size={11} className="text-amber-500" />
+                  <Sparkles size={11} className="text-violet-500" />
                   <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">Top picks</span>
                 </div>
                 <div className="space-y-0.5">
@@ -274,8 +274,8 @@ export default function LCUOverlay({ champions }) {
             {/* ── My Turn CTA ── */}
             {isMyTurn && currentActionType === 'pick' && topRecs.length > 0 && (
               <div className="px-3 pb-2">
-                <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/25 text-center">
-                  <span className="text-xs font-semibold text-amber-400">
+                <div className="p-2 rounded-lg bg-violet-500/10 border border-violet-500/25 text-center">
+                  <span className="text-xs font-semibold text-violet-400">
                     Pick recommandé : {topRecs[0].champion_name}
                   </span>
                 </div>

@@ -11,13 +11,14 @@ export default function ChampionCard({ champion, inPool, onAdd, compact = false,
       <button
         onClick={handleClick}
         aria-label={`${champion.name}${inPool ? ' (dans le pool)' : ''}`}
-        className={`relative group rounded-lg overflow-hidden border-2 transition-colors duration-150 ${
+        className={`relative group rounded-xl overflow-hidden border-2 transition-colors duration-150 ${
           selected
-            ? 'border-amber-500 ring-1 ring-amber-500/30'
+            ? 'border-violet-500 ring-1 ring-violet-500/30'
             : inPool
                 ? 'border-emerald-500/40'
-                : 'border-slate-700 hover:border-slate-500'
+                : 'hover:border-violet-500/40'
         }`}
+        style={!selected && !inPool ? { borderColor: 'var(--border-subtle)' } : undefined}
       >
         <img
           src={champion.image_url}
@@ -30,7 +31,7 @@ export default function ChampionCard({ champion, inPool, onAdd, compact = false,
           inPool ? 'opacity-50 hover:opacity-100' : 'opacity-0 group-hover:opacity-100'
         }`}>
           {inPool ? (
-            <ArrowUpDown size={16} className="text-amber-400" aria-hidden="true" />
+            <ArrowUpDown size={16} className="text-violet-400" aria-hidden="true" />
           ) : (
             <Plus size={18} className="text-white" aria-hidden="true" />
           )}
@@ -55,19 +56,21 @@ export default function ChampionCard({ champion, inPool, onAdd, compact = false,
     <button
       onClick={handleClick}
       aria-label={champion.name}
-      className={`rounded-lg border flex items-center gap-2.5 p-2 bg-surface-elevated/50 hover:bg-surface-elevated transition-colors duration-150 w-full text-left ${
-        selected ? 'border-amber-500 ring-1 ring-amber-500/30' : 'border-slate-700 hover:border-slate-600'
+      className={`rounded-xl border flex items-center gap-2.5 p-2 transition-colors duration-150 w-full text-left ${
+        selected ? 'border-violet-500 ring-1 ring-violet-500/30' : 'hover:border-violet-500/30'
       }`}
+      style={{ background: 'var(--surface-elevated)', borderColor: selected ? undefined : 'var(--border-subtle)' }}
     >
       <img
         src={champion.image_url}
         alt={champion.name}
-        className="w-10 h-10 rounded-lg object-cover border border-slate-700"
+        className="w-10 h-10 rounded-lg object-cover border"
+        style={{ borderColor: 'var(--border-subtle)' }}
         loading="lazy"
       />
       <div className="flex-1 min-w-0">
-        <div className="text-sm font-medium text-slate-100 truncate">{champion.name}</div>
-        <div className="text-[11px] text-slate-400">
+        <div className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>{champion.name}</div>
+        <div className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>
           {champion.roles?.join(', ')}
         </div>
       </div>

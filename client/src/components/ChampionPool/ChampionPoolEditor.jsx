@@ -34,14 +34,14 @@ function TierPicker({ champion, position, onSelect, onClose, isUpdate = false })
   return (
     <div
       ref={ref}
-      className="fixed z-50 bg-surface-elevated border border-slate-700/50 rounded-lg shadow-2xl p-2.5"
-      style={{ left: Math.min(position.x, window.innerWidth - 240), top: Math.max(8, top) }}
+      className="fixed z-50 border rounded-xl shadow-2xl p-2.5"
+      style={{ ...{ left: Math.min(position.x, window.innerWidth - 240), top: Math.max(8, top) }, background: 'var(--surface-elevated)', borderColor: 'var(--border-subtle)' }}
       role="dialog"
       aria-label="Sélectionner un tier"
     >
-      <div className="text-[11px] text-slate-400 mb-2 px-0.5">
+      <div className="text-[11px] mb-2 px-0.5" style={{ color: 'var(--text-secondary)' }}>
         {isUpdate ? 'Changer tier de' : 'Ajouter'}{' '}
-        <span className="text-slate-200 font-medium">{champion.name}</span>
+        <span className="font-medium" style={{ color: 'var(--text-primary)' }}>{champion.name}</span>
       </div>
       <div className="flex gap-1">
         {TIERS.map((tier) => (
@@ -121,9 +121,9 @@ export default function ChampionPoolEditor({ champions }) {
   return (
     <div className="flex h-[calc(100vh-2.5rem)]">
       {/* ── Left: Tier list per role ── */}
-      <div className="w-72 border-r border-slate-700/50 flex flex-col bg-surface">
+      <div className="w-72 border-r flex flex-col" style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-default)' }}>
         {/* Role tabs */}
-        <div className="flex border-b border-slate-700/50">
+        <div className="flex border-b" style={{ borderColor: 'var(--border-subtle)' }}>
           {ROLES.map((role) => (
             <button
               key={role}
@@ -132,11 +132,12 @@ export default function ChampionPoolEditor({ champions }) {
               aria-label={ROLE_LABELS[role]}
               className={`flex-1 py-2.5 text-[11px] font-medium transition-colors duration-150 ${
                 activeRole === role
-                  ? 'bg-surface-elevated text-slate-100 border-b-2 border-amber-500'
-                  : 'text-slate-500 hover:text-slate-200 hover:bg-surface-elevated/50'
+                  ? 'border-b-2 border-violet-500'
+                  : ''
               }`}
+              style={{ color: activeRole === role ? 'var(--text-primary)' : 'var(--text-muted)', background: activeRole === role ? 'var(--surface-elevated)' : 'transparent' }}
             >
-              <RoleIcon role={role} size={16} className={`mx-auto mb-0.5 ${activeRole === role ? 'text-amber-500' : 'text-slate-500'}`} />
+              <RoleIcon role={role} size={16} className={`mx-auto mb-0.5 ${activeRole === role ? 'text-violet-500' : ''}`} style={activeRole !== role ? { color: 'var(--text-muted)' } : undefined} />
               {ROLE_LABELS[role]}
             </button>
           ))}
@@ -147,14 +148,14 @@ export default function ChampionPoolEditor({ champions }) {
           <RoleTierList role={activeRole} champions={champions} />
         </div>
 
-        <div className="p-3 border-t border-slate-700/50">
+        <div className="p-3 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
           <button
             onClick={handleSave}
             aria-label={saved ? 'Sauvegardé' : `Sauvegarder ${ROLE_LABELS[activeRole]}`}
-            className={`w-full py-2 rounded-lg text-sm font-medium transition-colors duration-150 flex items-center justify-center gap-2 ${
+            className={`w-full py-2 rounded-xl text-sm font-medium transition-colors duration-150 flex items-center justify-center gap-2 ${
               saved
                 ? 'bg-emerald-500 text-white'
-                : 'bg-amber-500 hover:bg-amber-400 text-slate-900'
+                : 'btn-primary'
             }`}
           >
             {saved ? <Check size={15} /> : <Save size={15} />}
@@ -164,37 +165,37 @@ export default function ChampionPoolEditor({ champions }) {
       </div>
 
       {/* ── Right: Champion browser ── */}
-      <div className="flex-1 flex flex-col bg-surface-base">
-        <div className="p-3 border-b border-slate-700/50 flex items-center gap-3">
+      <div className="flex-1 flex flex-col" style={{ background: 'var(--surface-base)' }}>
+        <div className="p-3 border-b flex items-center gap-3" style={{ borderColor: 'var(--border-subtle)' }}>
           <div className="relative flex-1 max-w-sm">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Rechercher…"
               aria-label="Rechercher un champion"
-              className="w-full bg-surface-elevated border border-slate-700 rounded-lg pl-9 pr-3 py-2 text-sm
-                         text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 transition-colors"
+              className="input-field w-full pl-9 pr-3 py-2 text-sm"
             />
           </div>
 
           <button
             onClick={() => setFilterByRole(!filterByRole)}
             aria-pressed={filterByRole}
-            className={`text-[11px] px-2.5 py-1.5 rounded-lg border font-medium transition-colors duration-150 ${
+            className={`text-[11px] px-2.5 py-1.5 rounded-xl border font-medium transition-colors duration-150 ${
               filterByRole
-                ? 'border-amber-500/30 bg-amber-500/10 text-amber-400'
-                : 'border-slate-700 text-slate-400 hover:text-white hover:border-slate-600'
+                ? 'border-violet-500/30 bg-violet-500/10 text-violet-400'
+                : ''
             }`}
+            style={!filterByRole ? { borderColor: 'var(--border-default)', color: 'var(--text-secondary)' } : undefined}
           >
             {filterByRole ? `${ROLE_LABELS[activeRole]} uniquement` : 'Tous les rôles'}
           </button>
 
-          <div className="text-[11px] text-slate-500">
-            <span className="text-slate-300 tabular-nums font-medium">{filteredChampions.length}</span> champions
+          <div className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
+            <span className="tabular-nums font-medium" style={{ color: 'var(--text-primary)' }}>{filteredChampions.length}</span> champions
             <span className="mx-1">·</span>
-            <span className="text-amber-400 tabular-nums font-medium">{(championPool[activeRole] || []).length}</span> dans le pool
+            <span className="text-violet-400 tabular-nums font-medium">{(championPool[activeRole] || []).length}</span> dans le pool
           </div>
         </div>
 

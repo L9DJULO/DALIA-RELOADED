@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { LogIn, UserPlus, Zap, AlertCircle, Server } from 'lucide-react';
+import { LogIn, UserPlus, AlertCircle, Server } from 'lucide-react';
 import useAuthStore from '../../stores/authStore';
 import { getServerUrl, setServerUrl } from '../../services/api';
+import DaliaLogo from '../DaliaLogo';
+import ThemeToggle from '../ui/ThemeToggle';
 
 export default function AuthPage() {
   const [mode, setMode] = useState('login'); // 'login' | 'register'
@@ -40,39 +42,62 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen bg-surface-base flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden" style={{ background: 'var(--surface-base)' }}>
+      {/* Background decoration */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full opacity-20"
+             style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.3) 0%, transparent 70%)' }} />
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 rounded-full opacity-15"
+             style={{ background: 'radial-gradient(circle, rgba(109,40,217,0.3) 0%, transparent 70%)' }} />
+      </div>
+
+      {/* Theme toggle top-right */}
+      <div className="absolute top-4 right-4 z-10">
+        <ThemeToggle />
+      </div>
+
+      <div className="w-full max-w-md relative z-10">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="w-14 h-14 mx-auto mb-4 rounded-xl bg-amber-500 flex items-center justify-center shadow-lg">
-            <Zap className="w-7 h-7 text-slate-900" />
+          <div className="w-16 h-16 mx-auto mb-4 animate-float">
+            <DaliaLogo size={64} />
           </div>
-          <h1 className="text-2xl font-bold text-slate-100">DALIA</h1>
-          <p className="text-sm text-slate-400 mt-1">Draft Analysis League Intelligence Assistant</p>
+          <h1 className="text-2xl font-bold font-display text-gradient">DALIA</h1>
+          <p className="text-sm mt-1.5" style={{ color: 'var(--text-muted)' }}>Draft Analysis League Intelligence Assistant</p>
         </div>
 
         {/* Auth Card */}
-        <div className="bg-surface-card border border-white/[0.06] rounded-xl p-6 shadow-xl">
+        <div className="panel p-6 shadow-glow-lg">
           {/* Tab switcher */}
-          <div className="flex mb-6 bg-surface-base rounded-lg p-1">
+          <div className="flex mb-6 rounded-xl p-1" style={{ background: 'var(--surface-elevated)' }}>
             <button
               onClick={() => { setMode('login'); clearError(); }}
-              className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all ${
+              className={`flex-1 py-2.5 px-3 rounded-lg text-sm font-medium transition-all duration-200 ${
                 mode === 'login'
-                  ? 'bg-amber-500/20 text-amber-400'
-                  : 'text-slate-400 hover:text-slate-300'
+                  ? 'text-white shadow-glow'
+                  : ''
               }`}
+              style={mode === 'login' ? {
+                background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)',
+              } : {
+                color: 'var(--text-muted)',
+              }}
             >
               <LogIn className="w-4 h-4 inline mr-2" />
               Connexion
             </button>
             <button
               onClick={() => { setMode('register'); clearError(); }}
-              className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all ${
+              className={`flex-1 py-2.5 px-3 rounded-lg text-sm font-medium transition-all duration-200 ${
                 mode === 'register'
-                  ? 'bg-amber-500/20 text-amber-400'
-                  : 'text-slate-400 hover:text-slate-300'
+                  ? 'text-white shadow-glow'
+                  : ''
               }`}
+              style={mode === 'register' ? {
+                background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)',
+              } : {
+                color: 'var(--text-muted)',
+              }}
             >
               <UserPlus className="w-4 h-4 inline mr-2" />
               Inscription
@@ -81,7 +106,7 @@ export default function AuthPage() {
 
           {/* Error message */}
           {error && (
-            <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg flex items-start gap-2">
+            <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl flex items-start gap-2">
               <AlertCircle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
               <p className="text-sm text-red-400">{error}</p>
             </div>
@@ -90,14 +115,14 @@ export default function AuthPage() {
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-slate-400 mb-1.5">
+              <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>
                 Nom d'utilisateur
               </label>
               <input
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full px-3 py-2.5 bg-surface-base border border-white/[0.08] rounded-lg text-slate-200 text-sm placeholder:text-slate-500 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20 transition-all"
+                className="input-field"
                 placeholder="ton_pseudo"
                 required
                 autoFocus
@@ -106,14 +131,14 @@ export default function AuthPage() {
 
             {mode === 'register' && (
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1.5">
+                <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>
                   Email
                 </label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-surface-base border border-white/[0.08] rounded-lg text-slate-200 text-sm placeholder:text-slate-500 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20 transition-all"
+                  className="input-field"
                   placeholder="ton@email.com"
                   required
                 />
@@ -121,14 +146,14 @@ export default function AuthPage() {
             )}
 
             <div>
-              <label className="block text-xs font-medium text-slate-400 mb-1.5">
+              <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>
                 Mot de passe
               </label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-3 py-2.5 bg-surface-base border border-white/[0.08] rounded-lg text-slate-200 text-sm placeholder:text-slate-500 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20 transition-all"
+                className="input-field"
                 placeholder="••••••••"
                 required
                 minLength={6}
@@ -137,14 +162,14 @@ export default function AuthPage() {
 
             {mode === 'register' && (
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1.5">
+                <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>
                   Confirmer le mot de passe
                 </label>
                 <input
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-surface-base border border-white/[0.08] rounded-lg text-slate-200 text-sm placeholder:text-slate-500 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20 transition-all"
+                  className="input-field"
                   placeholder="••••••••"
                   required
                 />
@@ -154,7 +179,7 @@ export default function AuthPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-900 font-semibold text-sm rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn-primary w-full py-3 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading
                 ? 'Chargement…'
@@ -169,15 +194,16 @@ export default function AuthPage() {
         <div className="mt-4 text-center">
           <button
             onClick={() => setShowServerConfig(!showServerConfig)}
-            className="text-xs text-slate-500 hover:text-slate-400 transition-colors inline-flex items-center gap-1"
+            className="text-xs transition-colors inline-flex items-center gap-1 hover:text-[var(--accent)]"
+            style={{ color: 'var(--text-muted)' }}
           >
             <Server className="w-3 h-3" />
             Configurer le serveur
           </button>
 
           {showServerConfig && (
-            <div className="mt-2 p-3 bg-surface-card border border-white/[0.06] rounded-lg">
-              <label className="block text-xs text-slate-400 mb-1.5 text-left">
+            <div className="mt-2 p-3 panel">
+              <label className="block text-xs mb-1.5 text-left" style={{ color: 'var(--text-secondary)' }}>
                 URL du serveur DALIA
               </label>
               <div className="flex gap-2">
@@ -185,18 +211,19 @@ export default function AuthPage() {
                   type="url"
                   value={serverUrl}
                   onChange={(e) => setServerUrlState(e.target.value)}
-                  className="flex-1 px-3 py-2 bg-surface-base border border-white/[0.08] rounded-lg text-slate-200 text-sm focus:outline-none focus:border-amber-500/50"
+                  className="input-field flex-1"
                   placeholder="https://dalia-reloaded-production.up.railway.app"
                 />
                 <button
                   onClick={handleServerUrlSave}
-                  className="px-3 py-2 bg-amber-500/20 text-amber-400 text-sm rounded-lg hover:bg-amber-500/30 transition-colors"
+                  className="px-3 py-2 text-sm rounded-xl transition-all duration-200"
+                  style={{ background: 'var(--accent-muted)', color: 'var(--accent)' }}
                 >
                   OK
                 </button>
               </div>
               {isLocalhost && (
-                <p className="text-[11px] text-amber-400 mt-2 text-left">
+                <p className="text-[11px] text-violet-400 mt-2 text-left">
                   ⚠️ Serveur local détecté. Pour jouer en ligne, entre l'URL du serveur fournie par l'admin.
                 </p>
               )}
@@ -204,7 +231,7 @@ export default function AuthPage() {
           )}
         </div>
 
-        <p className="text-center text-xs text-slate-600 mt-6">
+        <p className="text-center text-xs mt-6" style={{ color: 'var(--text-muted)' }}>
           DALIA v2.0 — Client/Server Architecture
         </p>
       </div>

@@ -67,7 +67,7 @@ export default function MLStatusPanel() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Cpu size={14} className="text-amber-500" />
+          <Cpu size={14} className="text-violet-500" />
           <span className="text-xs font-semibold text-slate-200">Modèle IA</span>
         </div>
         <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md border text-[11px] font-medium ${cfg.bg} ${cfg.color}`}>
@@ -133,8 +133,8 @@ export default function MLStatusPanel() {
           onClick={handleRetrain}
           disabled={isTraining || retraining}
           className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-md
-                     bg-amber-500/10 text-amber-400 border border-amber-500/20
-                     hover:bg-amber-500/20 disabled:opacity-40 disabled:cursor-not-allowed
+                     bg-violet-500/10 text-violet-400 border border-violet-500/20
+                     hover:bg-violet-500/20 disabled:opacity-40 disabled:cursor-not-allowed
                      text-[11px] font-medium transition-colors"
         >
           <RefreshCw size={11} className={retraining ? 'animate-spin' : ''} />

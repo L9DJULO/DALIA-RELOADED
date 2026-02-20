@@ -1,9 +1,11 @@
 import React from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
-import { Swords, Users, Zap, Clock, Brain, Cpu, Settings, LogOut, User, Wifi, WifiOff, Gamepad2 } from 'lucide-react';
+import { Swords, Users, Clock, Brain, Cpu, Settings, LogOut, User, Wifi, WifiOff, Gamepad2 } from 'lucide-react';
 import useAuthStore from '../stores/authStore';
 import useUserStore from '../stores/userStore';
 import useLCUStore from '../stores/lcuStore';
+import DaliaLogo from './DaliaLogo';
+import ThemeToggle from './ui/ThemeToggle';
 
 const NAV = [
   { to: '/draft', label: 'Draft', icon: Swords },
@@ -34,19 +36,23 @@ export default function Layout({ patchInfo }) {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-surface-base">
+    <div className="h-screen flex flex-col" style={{ background: 'var(--surface-base)' }}>
       {/* ── Compact header ── */}
-      <header className="h-10 bg-surface border-b border-slate-700/50 flex items-center px-4 shrink-0 z-30">
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-md bg-amber-500 flex items-center justify-center">
-            <Zap size={14} className="text-slate-900" />
-          </div>
-          <span className="text-sm font-bold text-slate-100 tracking-tight">DALIA</span>
+      <header
+        className="h-11 flex items-center px-4 shrink-0 z-30"
+        style={{
+          background: 'var(--surface-default)',
+          borderBottom: '1px solid var(--border-subtle)',
+        }}
+      >
+        <div className="flex items-center gap-2.5">
+          <DaliaLogo size={24} />
+          <span className="text-sm font-bold tracking-tight font-display text-gradient">DALIA</span>
         </div>
 
         <div className="ml-auto flex items-center gap-3">
           {patchInfo && (
-            <div className="flex items-center gap-1.5 text-xs text-slate-400">
+            <div className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--text-muted)' }}>
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
               Patch {patchInfo.patch}
             </div>
@@ -54,12 +60,12 @@ export default function Layout({ patchInfo }) {
 
           {/* LCU connection status */}
           <div
-            className={`flex items-center gap-1.5 text-[11px] font-medium px-2 py-0.5 rounded-md border transition-colors ${
+            className={`flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-lg border transition-all duration-200 ${
               lcuConnected
                 ? lcuInChampSelect
                   ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/25'
-                  : 'text-slate-400 bg-surface-elevated/30 border-slate-700/50'
-                : 'text-slate-500 bg-transparent border-slate-700/30'
+                  : 'text-[var(--text-muted)] bg-[var(--surface-elevated)] border-[var(--border-subtle)]'
+                : 'text-[var(--text-muted)] bg-transparent border-[var(--border-subtle)]'
             }`}
             title={
               lcuConnected
@@ -81,19 +87,25 @@ export default function Layout({ patchInfo }) {
             <span>{lcuConnected ? (lcuInChampSelect ? 'Champ Select' : 'LoL') : 'LoL'}</span>
           </div>
 
-          <span className="text-[10px] text-slate-600">Ranked Master+</span>
+          <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Ranked Master+</span>
+
+          {/* Theme toggle */}
+          <ThemeToggle compact />
 
           {/* User info + logout */}
           {user && (
-            <div className="flex items-center gap-2 ml-2 pl-2 border-l border-slate-700/50">
+            <div className="flex items-center gap-2 ml-1 pl-2" style={{ borderLeft: '1px solid var(--border-subtle)' }}>
               <div className="flex items-center gap-1.5">
-                <User size={12} className="text-slate-400" />
-                <span className="text-xs text-slate-300 font-medium">{user.username}</span>
+                <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: 'var(--accent-muted)' }}>
+                  <User size={12} style={{ color: 'var(--accent)' }} />
+                </div>
+                <span className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>{user.username}</span>
               </div>
               <button
                 onClick={handleLogout}
                 title="Se déconnecter"
-                className="w-6 h-6 flex items-center justify-center rounded text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                className="w-7 h-7 flex items-center justify-center rounded-lg transition-all duration-200 hover:bg-red-500/10 hover:text-red-400"
+                style={{ color: 'var(--text-muted)' }}
               >
                 <LogOut size={13} />
               </button>
@@ -105,7 +117,13 @@ export default function Layout({ patchInfo }) {
       {/* ── Body: sidebar + content ── */}
       <div className="flex flex-1 min-h-0">
         {/* Sidebar */}
-        <aside className="w-14 bg-surface border-r border-slate-700/50 flex flex-col items-center py-3 shrink-0">
+        <aside
+          className="w-14 flex flex-col items-center py-3 shrink-0"
+          style={{
+            background: 'var(--surface-default)',
+            borderRight: '1px solid var(--border-subtle)',
+          }}
+        >
           <nav className="flex flex-col gap-1 flex-1" aria-label="Navigation principale">
             {NAV.map(({ to, label, icon: Icon }) => (
               <NavLink
@@ -114,19 +132,24 @@ export default function Layout({ patchInfo }) {
                 title={label}
                 aria-label={label}
                 className={({ isActive }) =>
-                  `relative w-10 h-10 flex items-center justify-center rounded-lg transition-colors duration-150 ${
+                  `relative w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200 ${
                     isActive
-                      ? 'bg-slate-800 text-amber-500'
-                      : 'text-slate-500 hover:text-slate-200 hover:bg-slate-800/50'
+                      ? 'text-white shadow-glow'
+                      : 'hover:bg-[var(--accent-muted)]'
                   }`
                 }
+                style={({ isActive }) => isActive ? {
+                  background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)',
+                } : {
+                  color: 'var(--text-muted)',
+                }}
               >
                 {({ isActive }) => (
                   <>
                     {isActive && (
-                      <div className="absolute left-0 top-2 bottom-2 w-0.5 rounded-r bg-amber-500" />
+                      <div className="absolute left-0 top-2 bottom-2 w-0.5 rounded-r" style={{ background: 'var(--accent)' }} />
                     )}
-                    <Icon size={20} strokeWidth={1.8} />
+                    <Icon size={20} strokeWidth={isActive ? 2.2 : 1.8} />
                   </>
                 )}
               </NavLink>
@@ -140,19 +163,24 @@ export default function Layout({ patchInfo }) {
                 title={label}
                 aria-label={label}
                 className={({ isActive }) =>
-                  `relative w-10 h-10 flex items-center justify-center rounded-lg transition-colors duration-150 ${
+                  `relative w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200 ${
                     isActive
-                      ? 'bg-slate-800 text-amber-500'
-                      : 'text-slate-500 hover:text-slate-200 hover:bg-slate-800/50'
+                      ? 'text-white shadow-glow'
+                      : 'hover:bg-[var(--accent-muted)]'
                   }`
                 }
+                style={({ isActive }) => isActive ? {
+                  background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)',
+                } : {
+                  color: 'var(--text-muted)',
+                }}
               >
                 {({ isActive }) => (
                   <>
                     {isActive && (
-                      <div className="absolute left-0 top-2 bottom-2 w-0.5 rounded-r bg-amber-500" />
+                      <div className="absolute left-0 top-2 bottom-2 w-0.5 rounded-r" style={{ background: 'var(--accent)' }} />
                     )}
-                    <Icon size={20} strokeWidth={1.8} />
+                    <Icon size={20} strokeWidth={isActive ? 2.2 : 1.8} />
                   </>
                 )}
               </NavLink>
@@ -168,19 +196,24 @@ export default function Layout({ patchInfo }) {
                 title={label}
                 aria-label={label}
                 className={({ isActive }) =>
-                  `relative w-10 h-10 flex items-center justify-center rounded-lg transition-colors duration-150 ${
+                  `relative w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200 ${
                     isActive
-                      ? 'bg-slate-800 text-amber-500'
-                      : 'text-slate-500 hover:text-slate-200 hover:bg-slate-800/50'
+                      ? 'text-white shadow-glow'
+                      : 'hover:bg-[var(--accent-muted)]'
                   }`
                 }
+                style={({ isActive }) => isActive ? {
+                  background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)',
+                } : {
+                  color: 'var(--text-muted)',
+                }}
               >
                 {({ isActive }) => (
                   <>
                     {isActive && (
-                      <div className="absolute left-0 top-2 bottom-2 w-0.5 rounded-r bg-amber-500" />
+                      <div className="absolute left-0 top-2 bottom-2 w-0.5 rounded-r" style={{ background: 'var(--accent)' }} />
                     )}
-                    <Icon size={18} strokeWidth={1.8} />
+                    <Icon size={18} strokeWidth={isActive ? 2.2 : 1.8} />
                   </>
                 )}
               </NavLink>

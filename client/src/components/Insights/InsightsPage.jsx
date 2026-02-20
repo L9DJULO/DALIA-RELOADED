@@ -23,8 +23,8 @@ export default function InsightsPage() {
       <div className="max-w-5xl mx-auto p-6 space-y-5">
         {/* Header */}
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-amber-500/15 border border-amber-500/25 flex items-center justify-center">
-            <Brain size={18} className="text-amber-400" />
+          <div className="w-9 h-9 rounded-lg bg-violet-500/15 border border-violet-500/25 flex items-center justify-center">
+            <Brain size={18} className="text-violet-400" />
           </div>
           <div>
             <h1 className="text-lg font-bold text-slate-100">Insights</h1>
@@ -42,7 +42,7 @@ export default function InsightsPage() {
               onClick={() => setActiveTab(id)}
               className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                 activeTab === id
-                  ? 'bg-amber-500/15 text-amber-400 border border-amber-500/25 shadow-sm'
+                  ? 'bg-violet-500/15 text-violet-400 border border-violet-500/25 shadow-sm'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-surface-elevated/50 border border-transparent'
               }`}
               title={desc}

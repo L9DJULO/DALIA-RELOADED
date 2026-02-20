@@ -17,7 +17,7 @@ import {
   RefreshCw,
   ChevronDown,
   ChevronUp,
-  Zap,
+  Sparkles,
   Shield,
 } from 'lucide-react';
 import useDuoStore from '../../stores/duoStore';
@@ -69,18 +69,18 @@ export default function DuoPanel() {
     <div className="bg-surface rounded-xl border border-slate-700/50 overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-700/30">
-        <Users size={18} className="text-amber-500" />
+        <Users size={18} className="text-violet-500" />
         <h3 className="text-sm font-semibold text-slate-200">DuoQ</h3>
         {linked && (
           <button
             onClick={toggleDuoActive}
             className={`ml-auto flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all
               ${duoActive
-                ? 'bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/40'
+                ? 'bg-violet-500/20 text-violet-400 ring-1 ring-violet-500/40'
                 : 'bg-slate-700/50 text-slate-400 hover:text-slate-300'
               }`}
           >
-            <Zap size={12} />
+            <Sparkles size={12} />
             {duoActive ? 'Actif' : 'Inactif'}
           </button>
         )}
@@ -93,7 +93,7 @@ export default function DuoPanel() {
             Mon code duo
           </label>
           <div className="flex items-center gap-2 mt-1">
-            <div className="flex-1 bg-slate-800/60 rounded-lg px-3 py-2 font-mono text-lg tracking-[0.3em] text-amber-400 text-center select-all">
+            <div className="flex-1 bg-slate-800/60 rounded-lg px-3 py-2 font-mono text-lg tracking-[0.3em] text-violet-400 text-center select-all">
               {myCode || '------'}
             </div>
             <button
@@ -129,13 +129,13 @@ export default function DuoPanel() {
                 onChange={(e) => setFriendCode(e.target.value.toUpperCase())}
                 placeholder="ABC123"
                 maxLength={8}
-                className="flex-1 bg-slate-800/60 border border-slate-700/50 rounded-lg px-3 py-2 text-sm text-slate-200 font-mono tracking-widest text-center placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-amber-500/50"
+                className="flex-1 bg-slate-800/60 border border-slate-700/50 rounded-lg px-3 py-2 text-sm text-slate-200 font-mono tracking-widest text-center placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-violet-500/50"
                 onKeyDown={(e) => e.key === 'Enter' && handleLink()}
               />
               <button
                 onClick={handleLink}
                 disabled={!friendCode.trim() || loading}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium transition-colors"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-violet-500/20 text-violet-400 hover:bg-violet-500/30 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium transition-colors"
               >
                 <Link2 size={14} />
                 Lier
@@ -151,8 +151,8 @@ export default function DuoPanel() {
             <div className="bg-slate-800/40 rounded-lg p-3 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center">
-                    <Shield size={16} className="text-amber-400" />
+                  <div className="w-8 h-8 rounded-full bg-violet-500/20 flex items-center justify-center">
+                    <Shield size={16} className="text-violet-400" />
                   </div>
                   <div>
                     <p className="text-sm font-medium text-slate-200">{partner?.username}</p>
@@ -185,7 +185,7 @@ export default function DuoPanel() {
                       onClick={() => setPartnerRole(role)}
                       className={`flex-1 py-1.5 rounded-md text-xs font-medium transition-all
                         ${partnerRole === role
-                          ? 'bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/30'
+                          ? 'bg-violet-500/20 text-violet-400 ring-1 ring-violet-500/30'
                           : 'bg-slate-700/30 text-slate-500 hover:text-slate-300 hover:bg-slate-700/50'
                         }`}
                     >
@@ -244,9 +244,9 @@ export default function DuoPanel() {
 
             {/* DuoQ Mode Info */}
             {duoActive && (
-              <div className="bg-amber-500/5 border border-amber-500/20 rounded-lg p-2.5">
-                <p className="text-[11px] text-amber-400/80 leading-relaxed">
-                  <Zap size={11} className="inline mr-1" />
+              <div className="bg-violet-500/5 border border-violet-500/20 rounded-lg p-2.5">
+                <p className="text-[11px] text-violet-400/80 leading-relaxed">
+                  <Sparkles size={11} className="inline mr-1" />
                   Mode DuoQ actif — la synergie avec <strong>{partner?.username}</strong> ({ROLE_LABELS[partnerRole] || '?'}) est fortement priorisée dans les recommandations.
                 </p>
               </div>

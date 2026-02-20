@@ -13,6 +13,7 @@ import LCUOverlay from './components/Overlay/LCUOverlay';
 import { fetchChampions, fetchPatch } from './services/api';
 import useAuthStore from './stores/authStore';
 import useUserStore from './stores/userStore';
+import DaliaLogo from './components/DaliaLogo';
 
 function ProtectedApp() {
   const [champions, setChampions] = useState([]);
@@ -44,15 +45,13 @@ function ProtectedApp() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-surface-base">
+      <div className="flex items-center justify-center min-h-screen" style={{ background: 'var(--surface-base)' }}>
         <div className="text-center">
-          <div className="w-10 h-10 mx-auto mb-3 rounded-lg bg-amber-500 flex items-center justify-center">
-            <svg className="w-5 h-5 text-slate-900 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
+          <div className="w-12 h-12 mx-auto mb-4 animate-float">
+            <DaliaLogo size={48} />
           </div>
-          <div className="text-sm font-semibold text-slate-200 mb-1">DALIA</div>
-          <div className="text-xs text-slate-500">Chargement…</div>
+          <div className="text-sm font-bold font-display text-gradient mb-1">DALIA</div>
+          <div className="text-xs" style={{ color: 'var(--text-muted)' }}>Chargement…</div>
         </div>
       </div>
     );

@@ -104,7 +104,7 @@ function RolePerformance({ byRole }) {
               </div>
               <div className="flex-1 h-2 bg-surface-elevated rounded-full overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-amber-500/60 transition-all duration-500"
+                  className="h-full rounded-full bg-violet-500/60 transition-all duration-500"
                   style={{ width: `${barPct}%` }}
                 />
               </div>
@@ -183,7 +183,7 @@ export default function MyStats() {
     return (
       <div className="flex items-center justify-center py-20">
         <div className="text-center">
-          <Loader2 size={24} className="text-amber-500 animate-spin mx-auto mb-3" />
+          <Loader2 size={24} className="text-violet-500 animate-spin mx-auto mb-3" />
           <div className="text-sm text-slate-400">Chargement de tes stats…</div>
         </div>
       </div>
@@ -212,7 +212,7 @@ export default function MyStats() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard
           icon={Trophy}
-          iconColor="bg-amber-500/15 text-amber-400"
+          iconColor="bg-violet-500/15 text-violet-400"
           label="Win Rate"
           value={`${stats.win_rate.toFixed(1)}%`}
           valueColor={wrColor}
@@ -305,7 +305,7 @@ export default function MyStats() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="flex items-center gap-3">
-              <Flame size={18} className="text-amber-400" />
+              <Flame size={18} className="text-violet-400" />
               <div>
                 <div className="text-sm font-medium text-slate-200">
                   Probabilité de victoire moyenne
@@ -360,7 +360,7 @@ export default function MyStats() {
           </div>
         ) : personalLoading ? (
           <div className="text-center py-6">
-            <Loader2 size={18} className="text-amber-500 animate-spin mx-auto mb-2" />
+            <Loader2 size={18} className="text-violet-500 animate-spin mx-auto mb-2" />
             <div className="text-xs text-slate-400">Chargement des stats ranked…</div>
           </div>
         ) : personalStats && personalStats.games_analyzed > 0 ? (
@@ -376,7 +376,7 @@ export default function MyStats() {
               <div className="text-center">
                 <div className={`text-lg font-bold tabular-nums ${
                   personalStats.overall.win_rate >= 55 ? 'text-emerald-400' :
-                  personalStats.overall.win_rate >= 50 ? 'text-amber-400' : 'text-red-400'
+                  personalStats.overall.win_rate >= 50 ? 'text-violet-400' : 'text-red-400'
                 }`}>
                   {personalStats.overall.win_rate}%
                 </div>

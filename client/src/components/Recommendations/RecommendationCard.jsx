@@ -103,9 +103,9 @@ export default function RecommendationCard({ rec, rank, champData, isWildcard = 
 
   const getCardStyle = () => {
     if (rank === 1 && !isWildcard) {
-      return 'bg-amber-500/5 border-amber-500/25';
+      return 'bg-violet-500/5 border-violet-500/25';
     }
-    return 'bg-surface border-slate-700/50 hover:border-slate-600';
+    return 'bg-surface hover:border-[var(--border-default)]';
   };
 
   const matchupScore = rec.breakdown?.matchup ?? 50;
@@ -118,18 +118,22 @@ export default function RecommendationCard({ rec, rank, champData, isWildcard = 
           {/* Rank */}
           <div className={`w-6 h-6 rounded-md flex items-center justify-center font-bold text-xs tabular-nums ${
             rank === 1
-              ? 'bg-amber-500/15 text-amber-400'
+              ? 'bg-violet-500/15 text-violet-400'
               : rank <= 3
-                ? 'bg-slate-700/50 text-slate-300'
-                : 'bg-slate-800/50 text-slate-500'
-          }`}>
+                ? 'text-slate-300'
+                : 'text-slate-500'
+          }`}
+          style={rank > 1 ? { background: 'var(--surface-elevated)' } : undefined}
+          >
             {rank}
           </div>
 
           {/* Champion portrait */}
           <div className={`w-10 h-10 rounded-lg overflow-hidden border ${
-            rank === 1 && !isWildcard ? 'border-amber-500/30' : 'border-slate-700'
-          }`}>
+            rank === 1 && !isWildcard ? 'border-violet-500/30' : ''
+          }`}
+          style={!(rank === 1 && !isWildcard) ? { borderColor: 'var(--border-subtle)' } : undefined}
+          >
             <img
               src={champData?.image_url || ''}
               alt={rec.champion_name}
@@ -209,7 +213,7 @@ export default function RecommendationCard({ rec, rank, champData, isWildcard = 
                         d.is_lane_opponent ? 'bg-surface-elevated/60' : 'bg-surface-elevated/30'
                       }`}
                     >
-                      <span className={`shrink-0 flex justify-center ${d.is_lane_opponent ? 'text-amber-500' : 'text-slate-600'}`}>
+                      <span className={`shrink-0 flex justify-center ${d.is_lane_opponent ? 'text-violet-500' : 'text-slate-600'}`}>
                         {d.is_lane_opponent ? <Swords size={10} aria-label="Adversaire de lane" /> : '·'}
                       </span>
                       <span className="text-slate-300 truncate">{d.opponent_name}</span>

@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { RotateCcw, Zap, Shield, Users } from 'lucide-react';
+import { RotateCcw, Sparkles, Shield, Users } from 'lucide-react';
 import useDraftStore from '../../stores/draftStore';
 import useUserStore, { ROLES } from '../../stores/userStore';
 import useHistoryStore from '../../stores/historyStore';
@@ -112,25 +112,26 @@ export default function DraftBoard({ champions }) {
   return (
     <div className="flex h-[calc(100vh-2.5rem)]">
       {/* ── Left: Draft board ── */}
-      <div className="w-[520px] border-r border-slate-700/50 flex flex-col bg-surface shrink-0">
+      <div className="w-[520px] flex flex-col shrink-0" style={{ background: 'var(--surface-default)', borderRight: '1px solid var(--border-subtle)' }}>
         {/* Setup bar */}
-        <div className="p-3 border-b border-slate-700/50">
+        <div className="p-3" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {/* Team selector */}
               <div className="flex items-center gap-2">
                 <span className="text-[11px] text-slate-500 font-medium">Équipe</span>
-                <div className="flex gap-0.5 bg-surface-elevated rounded-lg p-0.5">
+                <div className="flex gap-0.5 rounded-xl p-0.5" style={{ background: 'var(--surface-elevated)' }}>
                   {['blue', 'red'].map((t) => (
                     <button
                       key={t}
                       onClick={() => setMyTeam(t)}
                       aria-pressed={myTeam === t}
-                      className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors duration-150 ${
+                      className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all duration-200 ${
                         myTeam === t
-                          ? t === 'blue' ? 'bg-blue-500 text-white' : 'bg-red-500 text-white'
-                          : 'text-slate-400 hover:text-white'
+                          ? t === 'blue' ? 'bg-blue-500 text-white shadow-sm' : 'bg-red-500 text-white shadow-sm'
+                          : ''
                       }`}
+                      style={myTeam !== t ? { color: 'var(--text-muted)' } : undefined}
                     >
                       {t === 'blue' ? 'Blue' : 'Red'}
                     </button>
@@ -145,7 +146,7 @@ export default function DraftBoard({ champions }) {
                   value={myRole}
                   onChange={(e) => setMyRole(e.target.value)}
                   aria-label="Rôle"
-                  className="bg-surface-elevated border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-white font-medium focus:outline-none focus:border-amber-500 transition-colors"
+                  className="input-field px-2.5 py-1 text-xs font-medium"
                 >
                   {ROLES.map((r) => (
                     <option key={r} value={r}>{ROLE_LABELS[r]}</option>
@@ -157,9 +158,9 @@ export default function DraftBoard({ champions }) {
             {/* LCU Status + DuoQ indicator */}
             <div className="flex items-center gap-2">
               {duoActive && duoLinked && duoPartner && (
-                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30">
-                  <Users size={11} className="text-amber-400" />
-                  <span className="text-[10px] text-amber-400 font-medium">
+                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full" style={{ background: 'var(--accent-muted)', border: '1px solid var(--border-default)' }}>
+                  <Users size={11} style={{ color: 'var(--accent)' }} />
+                  <span className="text-[10px] font-medium" style={{ color: 'var(--accent)' }}>
                     Duo: {duoPartner.username}
                   </span>
                 </div>
@@ -170,8 +171,8 @@ export default function DraftBoard({ champions }) {
         </div>
 
         {/* Bans */}
-        <div className="px-3 py-2.5 border-b border-slate-700/50">
-          <div className="text-[10px] uppercase tracking-wider text-slate-500 font-medium mb-2">Bans</div>
+        <div className="px-3 py-2.5" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+          <div className="text-[10px] uppercase tracking-wider font-medium mb-2" style={{ color: 'var(--text-muted)' }}>Bans</div>
           <div className="flex gap-4 justify-between">
             <div className="flex-1">
               <div className="text-[10px] text-blue-400/80 font-medium mb-1.5">Blue</div>
@@ -210,7 +211,7 @@ export default function DraftBoard({ champions }) {
               <div className="text-[10px] uppercase tracking-wider font-medium mb-1.5">
                 <span className="text-blue-400/80">Blue</span>
                 {isAllyBlue && (
-                  <span className="ml-1.5 text-amber-400/70 normal-case text-[9px]">← mon équipe</span>
+                  <span className="ml-1.5 normal-case text-[9px]" style={{ color: 'var(--accent)', opacity: 0.7 }}>← mon équipe</span>
                 )}
               </div>
               {isAllyBlue ? (
@@ -247,16 +248,16 @@ export default function DraftBoard({ champions }) {
 
             {/* VS divider */}
             <div className="flex flex-col items-center justify-center py-2">
-              <div className="w-px flex-1 bg-slate-700/50" />
-              <div className="my-2 text-[10px] text-slate-600 font-medium">VS</div>
-              <div className="w-px flex-1 bg-slate-700/50" />
+              <div className="w-px flex-1" style={{ background: 'var(--border-subtle)' }} />
+              <div className="my-2 text-[10px] font-bold text-gradient">VS</div>
+              <div className="w-px flex-1" style={{ background: 'var(--border-subtle)' }} />
             </div>
 
             {/* ── Right column (red) ── */}
             <div className="flex-1 space-y-1.5">
               <div className="text-[10px] uppercase tracking-wider font-medium mb-1.5 text-right">
                 {!isAllyBlue && (
-                  <span className="mr-1.5 text-amber-400/70 normal-case text-[9px]">mon équipe →</span>
+                  <span className="mr-1.5 normal-case text-[9px]" style={{ color: 'var(--accent)', opacity: 0.7 }}>mon équipe →</span>
                 )}
                 <span className="text-red-400/80">Red</span>
               </div>
@@ -295,20 +296,20 @@ export default function DraftBoard({ champions }) {
         </div>
 
         {/* Action buttons */}
-        <div className="p-3 border-t border-slate-700/50 flex gap-2">
+        <div className="p-3 flex gap-2" style={{ borderTop: '1px solid var(--border-subtle)' }}>
           <button onClick={handleAnalyze} disabled={loading} className="btn-primary flex-1" aria-label="Analyser le draft">
-            <Zap size={15} />
+            <Sparkles size={15} />
             {loading ? 'Analyse…' : 'Analyser'}
           </button>
           <button
             onClick={() => { setShowDuoPanel(!showDuoPanel); if (!showDuoPanel) setShowBanPanel(false); }}
-            className={`btn-secondary px-2.5 relative ${showDuoPanel ? 'border-amber-500/40 text-amber-400' : ''}`}
+            className={`btn-secondary px-2.5 relative ${showDuoPanel ? '!border-[var(--accent)] !text-[var(--accent)]' : ''}`}
             title="DuoQ"
             aria-label="DuoQ"
           >
             <Users size={15} />
             {duoActive && duoLinked && (
-              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-amber-500 ring-2 ring-surface" />
+              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full ring-2" style={{ background: 'var(--accent)', ringColor: 'var(--surface-default)' }} />
             )}
           </button>
           <button
@@ -326,7 +327,7 @@ export default function DraftBoard({ champions }) {
       </div>
 
       {/* ── Right: Recommendations, Ban Panel, or DuoQ Panel ── */}
-      <div className="flex-1 overflow-y-auto bg-surface-base">
+      <div className="flex-1 overflow-y-auto" style={{ background: 'var(--surface-base)' }}>
         {showDuoPanel ? (
           <div className="p-4 max-w-lg mx-auto">
             <DuoPanel />

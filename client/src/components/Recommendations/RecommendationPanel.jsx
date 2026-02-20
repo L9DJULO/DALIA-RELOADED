@@ -19,11 +19,11 @@ export default function RecommendationPanel({ champions }) {
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
           <div className="relative w-10 h-10 mx-auto mb-3">
-            <div className="absolute inset-0 border-2 border-slate-700 rounded-full" />
-            <div className="absolute inset-0 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+            <div className="absolute inset-0 border-2 rounded-full" style={{ borderColor: 'var(--border-subtle)' }} />
+            <div className="absolute inset-0 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
           </div>
-          <div className="text-sm text-slate-300 font-medium">Analyse en cours</div>
-          <div className="text-[11px] text-slate-500 mt-1">Calcul des matchups et synergies…</div>
+          <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Analyse en cours</div>
+          <div className="text-[11px] mt-1" style={{ color: 'var(--text-muted)' }}>Calcul des matchups et synergies…</div>
         </div>
       </div>
     );
@@ -36,8 +36,8 @@ export default function RecommendationPanel({ champions }) {
         <div className="rounded-lg border border-red-500/20 bg-red-500/5 p-5 max-w-xs text-center">
           <AlertTriangle size={24} className="text-red-400 mx-auto mb-2" aria-hidden="true" />
           <div className="text-sm text-red-400 font-medium mb-1">Erreur d'analyse</div>
-          <div className="text-[11px] text-slate-500">{error}</div>
-          <div className="text-[11px] text-slate-600 mt-2">
+          <div className="text-[11px]" style={{ color: 'var(--text-muted)' }}>{error}</div>
+          <div className="text-[11px] mt-2" style={{ color: 'var(--text-muted)' }}>
             Vérifiez que le backend est démarré sur le port 8000.
           </div>
         </div>
@@ -50,12 +50,12 @@ export default function RecommendationPanel({ champions }) {
     return (
       <div className="flex items-center justify-center h-full p-4">
         <div className="text-center max-w-xs">
-          <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-surface-elevated border border-slate-700/50 flex items-center justify-center">
-            <TrendingUp size={22} className="text-amber-500" aria-hidden="true" />
+          <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-surface-elevated flex items-center justify-center" style={{ border: '1px solid var(--border-subtle)' }}>
+            <TrendingUp size={22} className="text-violet-500" aria-hidden="true" />
           </div>
-          <div className="text-base font-semibold text-slate-100 mb-1">Prêt à analyser</div>
-          <div className="text-sm text-slate-400 leading-relaxed">
-            Remplissez le draft puis cliquez sur <span className="text-amber-500 font-medium">Analyser</span>.
+          <div className="text-base font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>Prêt à analyser</div>
+          <div className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+            Remplissez le draft puis cliquez sur <span className="text-violet-500 font-medium">Analyser</span>.
           </div>
         </div>
       </div>
@@ -146,7 +146,7 @@ export default function RecommendationPanel({ champions }) {
                     <span className="text-slate-500 w-20 truncate capitalize">{label}</span>
                     <div className="w-16 h-1 bg-surface-elevated rounded-full overflow-hidden">
                       <div
-                        className="h-full rounded-full bg-amber-500/60 transition-all"
+                        className="h-full rounded-full bg-violet-500/60 transition-all"
                         style={{ width: `${Math.min(pct, 100)}%` }}
                       />
                     </div>
@@ -164,7 +164,7 @@ export default function RecommendationPanel({ champions }) {
       {allRecs.length > 0 && (
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <span className="text-sm font-semibold text-slate-100">Recommandations</span>
+            <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Recommandations</span>
             <span className="text-[11px] text-slate-500">
               {allRecs.length} champion{allRecs.length > 1 ? 's' : ''}
             </span>

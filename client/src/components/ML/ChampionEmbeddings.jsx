@@ -176,7 +176,7 @@ function SimilarList({ similar, onSelect }) {
           <div className="flex-1 min-w-0">
             <div className="text-[12px] text-slate-200 font-medium truncate">{s.champion_name}</div>
           </div>
-          <div className="text-[11px] text-amber-400 font-medium tabular-nums">
+          <div className="text-[11px] text-violet-400 font-medium tabular-nums">
             {(s.similarity * 100).toFixed(0)}%
           </div>
         </button>
@@ -234,7 +234,7 @@ export default function ChampionEmbeddings() {
         <div className="text-center">
           <div className="relative w-8 h-8 mx-auto mb-2">
             <div className="absolute inset-0 border-2 border-slate-700 rounded-full" />
-            <div className="absolute inset-0 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+            <div className="absolute inset-0 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
           </div>
           <div className="text-[11px] text-slate-500">Chargement des embeddings…</div>
         </div>
@@ -266,7 +266,7 @@ export default function ChampionEmbeddings() {
               onClick={() => setRole(r)}
               className={`flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium transition-colors ${
                 role === r
-                  ? 'bg-amber-500/15 text-amber-400'
+                  ? 'bg-violet-500/15 text-violet-400'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >

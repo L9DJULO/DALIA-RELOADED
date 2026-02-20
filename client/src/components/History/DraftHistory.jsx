@@ -41,7 +41,7 @@ function StatsOverview({ stats }) {
       {/* Win rate */}
       <div className="panel p-3">
         <div className="flex items-center gap-2 mb-2">
-          <Trophy size={14} className="text-amber-500" />
+          <Trophy size={14} className="text-violet-500" />
           <span className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">Win Rate</span>
         </div>
         <div className={`text-2xl font-bold tabular-nums ${stats.win_rate >= 50 ? 'text-emerald-400' : 'text-red-400'}`}>
@@ -201,7 +201,7 @@ function HistoryCard({ entry, onUpdateResult, onDelete }) {
             ) : (
               <button
                 onClick={() => setShowResultPicker(!showResultPicker)}
-                className="flex items-center gap-1 px-2 py-1 rounded-md border border-amber-500/30 bg-amber-500/10 text-amber-400 text-xs font-medium cursor-pointer hover:bg-amber-500/20 transition"
+                className="flex items-center gap-1 px-2 py-1 rounded-md border border-violet-500/30 bg-violet-500/10 text-violet-400 text-xs font-medium cursor-pointer hover:bg-violet-500/20 transition"
               >
                 Résultat ?
               </button>
@@ -361,7 +361,7 @@ export default function DraftHistory({ champions }) {
             <select
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value)}
-              className="bg-surface-elevated border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-white focus:outline-none focus:border-amber-500 transition-colors"
+              className="bg-surface-elevated border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-white focus:outline-none focus:border-violet-500 transition-colors"
             >
               <option value="all">Tous rôles</option>
               <option value="top">Top</option>
@@ -373,7 +373,7 @@ export default function DraftHistory({ champions }) {
             <select
               value={resultFilter}
               onChange={(e) => setResultFilter(e.target.value)}
-              className="bg-surface-elevated border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-white focus:outline-none focus:border-amber-500 transition-colors"
+              className="bg-surface-elevated border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-white focus:outline-none focus:border-violet-500 transition-colors"
             >
               <option value="all">Tous résultats</option>
               <option value="win">Victoires</option>
