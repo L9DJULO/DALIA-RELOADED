@@ -175,7 +175,13 @@ const useDraftStore = create((set, get) => ({
       });
     } catch (e) {
       console.error('Draft recommendation failed:', e);
-      set({ error: e.message || 'Erreur de recommandation', loading: false });
+      const msg =
+        e.response?.data?.detail ||
+        (e.message === 'Network Error'
+          ? 'Serveur inaccessible — vérifiez que le backend est démarré.'
+          : e.message) ||
+        'Erreur de recommandation';
+      set({ error: msg, loading: false });
     }
   },
 }));

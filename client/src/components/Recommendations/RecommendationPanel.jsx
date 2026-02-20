@@ -37,9 +37,6 @@ export default function RecommendationPanel({ champions }) {
           <AlertTriangle size={24} className="text-red-400 mx-auto mb-2" aria-hidden="true" />
           <div className="text-sm text-red-400 font-medium mb-1">Erreur d'analyse</div>
           <div className="text-[11px]" style={{ color: 'var(--text-muted)' }}>{error}</div>
-          <div className="text-[11px] mt-2" style={{ color: 'var(--text-muted)' }}>
-            Vérifiez que le backend est démarré sur le port 8000.
-          </div>
         </div>
       </div>
     );

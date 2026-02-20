@@ -3,7 +3,7 @@
  * Shows the ML model's analysis of the ongoing draft with breakdown.
  */
 import { useState, useEffect, useMemo } from 'react';
-import { Sparkles, Trophy, Shield, Swords, Users, BarChart3, Loader2 } from 'lucide-react';
+import { Sparkles, Trophy, Shield, Swords, Users, BarChart3, Loader2, TrendingUp } from 'lucide-react';
 import useDraftStore from '../../stores/draftStore';
 import RoleIcon from '../RoleIcon';
 
