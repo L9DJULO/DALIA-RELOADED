@@ -7,7 +7,6 @@ import ChampionPoolEditor from './components/ChampionPool/ChampionPoolEditor';
 import DraftBoard from './components/DraftBoard/DraftBoard';
 import DraftHistory from './components/History/DraftHistory';
 import InsightsPage from './components/Insights/InsightsPage';
-import MLPage from './components/ML/MLPage';
 import SettingsPage from './components/Settings/SettingsPage';
 import LCUOverlay from './components/Overlay/LCUOverlay';
 import { fetchChampions, fetchPatch } from './services/api';
@@ -47,10 +46,10 @@ function ProtectedApp() {
     return (
       <div className="flex items-center justify-center min-h-screen" style={{ background: 'var(--surface-base)' }}>
         <div className="text-center">
-          <div className="w-12 h-12 mx-auto mb-4 animate-float">
+          <div className="w-12 h-12 mx-auto mb-4">
             <DaliaLogo size={48} />
           </div>
-          <div className="text-sm font-bold font-display text-gradient mb-1">DALIA</div>
+          <div className="text-sm font-semibold mb-1" style={{ color: 'var(--accent)' }}>DALIA</div>
           <div className="text-xs" style={{ color: 'var(--text-muted)' }}>Chargement…</div>
         </div>
       </div>
@@ -67,7 +66,6 @@ function ProtectedApp() {
           <Route path="/draft" element={<DraftBoard champions={champions} />} />
           <Route path="/history" element={<DraftHistory champions={champions} />} />
           <Route path="/insights" element={<InsightsPage />} />
-          <Route path="/ml" element={<MLPage />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Route>
       </Routes>

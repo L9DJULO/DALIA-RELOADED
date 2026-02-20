@@ -7,6 +7,13 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
 
+#[cfg(target_os = "windows")]
+use std::os::windows::process::CommandExt;
+
+/// Windows flag to prevent CMD windows from appearing.
+#[cfg(target_os = "windows")]
+const CREATE_NO_WINDOW: u32 = 0x08000000;
+
 /// LCU connection credentials parsed from the lockfile.
 #[derive(Debug, Clone)]
 pub struct LcuCredentials {
@@ -145,10 +152,11 @@ fn find_lockfile_from_riot_installs() -> Option<PathBuf> {
 /// Find lockfile by looking at running LeagueClientUx.exe process.
 fn find_lockfile_from_process() -> Option<PathBuf> {
     // Use WMIC to find LeagueClientUx.exe path
-    let output = std::process::Command::new("wmic")
-        .args(["process", "where", "name='LeagueClientUx.exe'", "get", "ExecutablePath"])
-        .output()
-        .ok()?;
+    let mut cmd = std::process::Command::new("wmic");
+    cmd.args(["process", "where", "name='LeagueClientUx.exe'", "get", "ExecutablePath"]);
+    #[cfg(target_os = "windows")]
+    cmd.creation_flags(CREATE_NO_WINDOW);
+    let output = cmd.output().ok()?;
 
     let stdout = String::from_utf8_lossy(&output.stdout);
     for line in stdout.lines() {
@@ -167,10 +175,11 @@ fn find_lockfile_from_process() -> Option<PathBuf> {
     }
 
     // Also try tasklist + wmic for League processes via cmd
-    let output2 = std::process::Command::new("cmd")
-        .args(["/c", "wmic process where \"name like '%LeagueClient%'\" get ExecutablePath 2>nul"])
-        .output()
-        .ok()?;
+    let mut cmd2 = std::process::Command::new("cmd");
+    cmd2.args(["/c", "wmic process where \"name like '%LeagueClient%'\" get ExecutablePath 2>nul"]);
+    #[cfg(target_os = "windows")]
+    cmd2.creation_flags(CREATE_NO_WINDOW);
+    let output2 = cmd2.output().ok()?;
 
     let stdout2 = String::from_utf8_lossy(&output2.stdout);
     for line in stdout2.lines() {

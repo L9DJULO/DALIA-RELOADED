@@ -249,7 +249,7 @@ export default function DraftBoard({ champions }) {
             {/* VS divider */}
             <div className="flex flex-col items-center justify-center py-2">
               <div className="w-px flex-1" style={{ background: 'var(--border-subtle)' }} />
-              <div className="my-2 text-[10px] font-bold text-gradient">VS</div>
+              <div className="my-2 text-[10px] font-bold" style={{ color: 'var(--text-muted)' }}>VS</div>
               <div className="w-px flex-1" style={{ background: 'var(--border-subtle)' }} />
             </div>
 

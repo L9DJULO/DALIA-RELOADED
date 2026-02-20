@@ -14,7 +14,7 @@ import RoleIcon from '../RoleIcon';
 const RESULT_OPTIONS = [
   { value: 'win', label: 'Victoire', icon: CheckCircle, color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/25' },
   { value: 'loss', label: 'Défaite', icon: XCircle, color: 'text-red-400', bg: 'bg-red-500/10 border-red-500/25' },
-  { value: 'remake', label: 'Remake', icon: RotateCcw, color: 'text-slate-400', bg: 'bg-slate-700/50 border-slate-600/50' },
+  { value: 'remake', label: 'Remake', icon: RotateCcw, color: 'text-slate-400', bg: 'bg-[var(--surface-elevated)] border-[var(--border-subtle)]' },
 ];
 
 const DDRAGON = 'https://ddragon.leagueoflegends.com/cdn/14.24.1/img/champion';
@@ -42,12 +42,12 @@ function StatsOverview({ stats }) {
       <div className="panel p-3">
         <div className="flex items-center gap-2 mb-2">
           <Trophy size={14} className="text-violet-500" />
-          <span className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">Win Rate</span>
+          <span className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wider font-medium">Win Rate</span>
         </div>
         <div className={`text-2xl font-bold tabular-nums ${stats.win_rate >= 50 ? 'text-emerald-400' : 'text-red-400'}`}>
           {stats.win_rate}%
         </div>
-        <div className="text-[11px] text-slate-500 mt-1">
+        <div className="text-[11px] text-[var(--text-muted)] mt-1">
           {stats.wins}W {stats.losses}L {stats.remakes > 0 && `${stats.remakes}R`}
         </div>
       </div>
@@ -56,10 +56,10 @@ function StatsOverview({ stats }) {
       <div className="panel p-3">
         <div className="flex items-center gap-2 mb-2">
           <BarChart3 size={14} className="text-sky-500" />
-          <span className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">Parties</span>
+          <span className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wider font-medium">Parties</span>
         </div>
-        <div className="text-2xl font-bold text-slate-100 tabular-nums">{stats.total_games}</div>
-        <div className="text-[11px] text-slate-500 mt-1">
+        <div className="text-2xl font-bold text-[var(--text-primary)] tabular-nums">{stats.total_games}</div>
+        <div className="text-[11px] text-[var(--text-muted)] mt-1">
           {stats.unrecorded > 0 && `${stats.unrecorded} sans résultat`}
         </div>
       </div>
@@ -68,26 +68,26 @@ function StatsOverview({ stats }) {
       <div className="panel p-3">
         <div className="flex items-center gap-2 mb-2">
           <Target size={14} className="text-purple-400" />
-          <span className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">Score moyen</span>
+          <span className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wider font-medium">Score moyen</span>
         </div>
-        <div className="text-2xl font-bold text-slate-100 tabular-nums">
+        <div className="text-2xl font-bold text-[var(--text-primary)] tabular-nums">
           {stats.avg_recommendation_score > 0 ? stats.avg_recommendation_score.toFixed(0) : '—'}
         </div>
-        <div className="text-[11px] text-slate-500 mt-1">Score recommandation</div>
+        <div className="text-[11px] text-[var(--text-muted)] mt-1">Score recommandation</div>
       </div>
 
       {/* Follow rate */}
       <div className="panel p-3">
         <div className="flex items-center gap-2 mb-2">
           <CheckCircle size={14} className="text-emerald-400" />
-          <span className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">Suivi reco</span>
+          <span className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wider font-medium">Suivi reco</span>
         </div>
-        <div className="text-2xl font-bold text-slate-100 tabular-nums">
+        <div className="text-2xl font-bold text-[var(--text-primary)] tabular-nums">
           {stats.followed_recommendation > 0
             ? `${stats.followed_recommendation}`
             : '—'}
         </div>
-        <div className="text-[11px] text-slate-500 mt-1">
+        <div className="text-[11px] text-[var(--text-muted)] mt-1">
           {stats.followed_recommendation > 0
             ? `${stats.followed_recommendation_wins}W / ${stats.followed_recommendation}G`
             : 'Pas encore de données'}
@@ -102,7 +102,7 @@ function MostPicked({ champions }) {
   if (!champions || champions.length === 0) return null;
   return (
     <div className="panel p-3 mb-4">
-      <div className="text-[11px] text-slate-400 uppercase tracking-wider font-medium mb-3">
+      <div className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wider font-medium mb-3">
         Champions les plus joués
       </div>
       <div className="flex flex-wrap gap-2">
@@ -110,8 +110,8 @@ function MostPicked({ champions }) {
           <div key={c.champion_id} className="flex items-center gap-2 bg-surface-elevated rounded-lg px-2.5 py-1.5">
             <ChampImg champKey={c.champion_key} size={24} />
             <div>
-              <div className="text-xs font-medium text-slate-200">{c.champion_name}</div>
-              <div className="text-[10px] text-slate-500">
+              <div className="text-xs font-medium text-[var(--text-primary)]">{c.champion_name}</div>
+              <div className="text-[10px] text-[var(--text-muted)]">
                 {c.count}G · <span className={c.win_rate >= 50 ? 'text-emerald-400' : 'text-red-400'}>{c.win_rate}%</span>
               </div>
             </div>
@@ -127,16 +127,16 @@ function RoleStats({ byRole }) {
   if (!byRole || Object.keys(byRole).length === 0) return null;
   return (
     <div className="panel p-3 mb-6">
-      <div className="text-[11px] text-slate-400 uppercase tracking-wider font-medium mb-3">
+      <div className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wider font-medium mb-3">
         Par rôle
       </div>
       <div className="flex flex-wrap gap-3">
         {Object.entries(byRole).map(([role, data]) => (
           <div key={role} className="flex items-center gap-2 bg-surface-elevated rounded-lg px-3 py-2">
-            <RoleIcon role={role} size={14} className="text-slate-400" />
+            <RoleIcon role={role} size={14} className="text-[var(--text-secondary)]" />
             <div>
-              <div className="text-xs font-medium text-slate-200 capitalize">{role}</div>
-              <div className="text-[10px] text-slate-500">
+              <div className="text-xs font-medium text-[var(--text-primary)] capitalize">{role}</div>
+              <div className="text-[10px] text-[var(--text-muted)]">
                 {data.games}G · <span className={data.win_rate >= 50 ? 'text-emerald-400' : 'text-red-400'}>{data.win_rate}%</span>
               </div>
             </div>
@@ -157,8 +157,8 @@ function HistoryCard({ entry, onUpdateResult, onDelete }) {
   const timeStr = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 
   const resultOpt = RESULT_OPTIONS.find((r) => r.value === entry.result);
-  const resultColor = resultOpt ? resultOpt.color : 'text-slate-500';
-  const resultBg = resultOpt ? resultOpt.bg : 'bg-slate-800/50 border-slate-700/50';
+  const resultColor = resultOpt ? resultOpt.color : 'text-[var(--text-muted)]';
+  const resultBg = resultOpt ? resultOpt.bg : 'bg-[var(--surface-elevated)] border-[var(--border-subtle)]';
 
   return (
     <div className={`panel border transition-all duration-150 animate-fade-in-up ${resultBg}`}>
@@ -169,15 +169,15 @@ function HistoryCard({ entry, onUpdateResult, onDelete }) {
             <ChampImg champKey={entry.my_champion_key} size={36} />
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-sm font-semibold text-slate-100">{entry.my_champion_name || 'Inconnu'}</span>
-                <RoleIcon role={entry.my_role} size={14} className="text-slate-400" />
+                <span className="text-sm font-semibold text-[var(--text-primary)]">{entry.my_champion_name || 'Inconnu'}</span>
+                <RoleIcon role={entry.my_role} size={14} className="text-[var(--text-secondary)]" />
                 {entry.recommendation_score && (
                   <span className={`text-[11px] font-medium tabular-nums ${getScoreClasses(entry.recommendation_score).text}`}>
                     {entry.recommendation_score.toFixed(0)} pts
                   </span>
                 )}
               </div>
-              <div className="text-[11px] text-slate-500">{dateStr} · {timeStr}</div>
+              <div className="text-[11px] text-[var(--text-muted)]">{dateStr} · {timeStr}</div>
             </div>
           </div>
 
@@ -209,14 +209,14 @@ function HistoryCard({ entry, onUpdateResult, onDelete }) {
 
             <button
               onClick={() => setExpanded(!expanded)}
-              className="p-1 rounded text-slate-500 hover:text-slate-300 transition"
+              className="p-1 rounded text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition"
             >
               {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
             </button>
 
             <button
               onClick={() => onDelete(entry.id)}
-              className="p-1 rounded text-slate-600 hover:text-red-400 transition"
+              className="p-1 rounded text-[var(--text-muted)] hover:text-red-400 transition"
               title="Supprimer"
             >
               <Trash2 size={13} />
@@ -246,36 +246,36 @@ function HistoryCard({ entry, onUpdateResult, onDelete }) {
 
       {/* Expanded details */}
       {expanded && (
-        <div className="px-3 pb-3 border-t border-slate-700/30 mt-1 pt-3 space-y-3 animate-fade-in-up">
+        <div className="px-3 pb-3 border-t border-[var(--border-subtle)] mt-1 pt-3 space-y-3 animate-fade-in-up">
           {/* Team composition */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <div className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5">Alliés</div>
+              <div className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider mb-1.5">Alliés</div>
               <div className="space-y-1">
                 {entry.ally_picks?.map((p, i) => (
                   <div key={i} className="flex items-center gap-2">
                     <ChampImg champKey={p.champion_key} size={22} />
-                    <span className="text-xs text-slate-300">{p.champion_name}</span>
-                    <span className="text-[10px] text-slate-500 capitalize">{p.role}</span>
+                    <span className="text-xs text-[var(--text-secondary)]">{p.champion_name}</span>
+                    <span className="text-[10px] text-[var(--text-muted)] capitalize">{p.role}</span>
                   </div>
                 ))}
                 {(!entry.ally_picks || entry.ally_picks.length === 0) && (
-                  <div className="text-[11px] text-slate-600">Aucun allié enregistré</div>
+                  <div className="text-[11px] text-[var(--text-muted)]">Aucun allié enregistré</div>
                 )}
               </div>
             </div>
             <div>
-              <div className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5">Ennemis</div>
+              <div className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider mb-1.5">Ennemis</div>
               <div className="space-y-1">
                 {entry.enemy_picks?.map((p, i) => (
                   <div key={i} className="flex items-center gap-2">
                     <ChampImg champKey={p.champion_key} size={22} />
-                    <span className="text-xs text-slate-300">{p.champion_name}</span>
-                    <span className="text-[10px] text-slate-500 capitalize">{p.role}</span>
+                    <span className="text-xs text-[var(--text-secondary)]">{p.champion_name}</span>
+                    <span className="text-[10px] text-[var(--text-muted)] capitalize">{p.role}</span>
                   </div>
                 ))}
                 {(!entry.enemy_picks || entry.enemy_picks.length === 0) && (
-                  <div className="text-[11px] text-slate-600">Aucun ennemi enregistré</div>
+                  <div className="text-[11px] text-[var(--text-muted)]">Aucun ennemi enregistré</div>
                 )}
               </div>
             </div>
@@ -284,12 +284,12 @@ function HistoryCard({ entry, onUpdateResult, onDelete }) {
           {/* Bans */}
           {((entry.ally_bans && entry.ally_bans.length > 0) || (entry.enemy_bans && entry.enemy_bans.length > 0)) && (
             <div>
-              <div className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5">Bans</div>
+              <div className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider mb-1.5">Bans</div>
               <div className="flex gap-1.5 flex-wrap">
                 {[...(entry.ally_bans || []), ...(entry.enemy_bans || [])].map((b, i) => (
                   <div key={i} className="flex items-center gap-1 bg-surface-elevated rounded px-1.5 py-0.5">
                     <ChampImg champKey={b.champion_key} size={18} />
-                    <span className="text-[10px] text-slate-400">{b.champion_name}</span>
+                    <span className="text-[10px] text-[var(--text-secondary)]">{b.champion_name}</span>
                   </div>
                 ))}
               </div>
@@ -307,14 +307,14 @@ function HistoryCard({ entry, onUpdateResult, onDelete }) {
 
           {/* Notes */}
           {entry.notes && (
-            <div className="text-[11px] text-slate-400 italic">
+            <div className="text-[11px] text-[var(--text-secondary)] italic">
               "{entry.notes}"
             </div>
           )}
 
           {/* Patch */}
           {entry.patch && (
-            <div className="text-[10px] text-slate-600">Patch {entry.patch}</div>
+            <div className="text-[10px] text-[var(--text-muted)]">Patch {entry.patch}</div>
           )}
         </div>
       )}
@@ -351,8 +351,8 @@ export default function DraftHistory({ champions }) {
               <Clock size={18} className="text-purple-400" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-slate-100">Historique</h1>
-              <p className="text-xs text-slate-500">Vos sessions de draft passées et statistiques</p>
+              <h1 className="text-lg font-bold text-[var(--text-primary)]">Historique</h1>
+              <p className="text-xs text-[var(--text-muted)]">Vos sessions de draft passées et statistiques</p>
             </div>
           </div>
 
@@ -361,7 +361,7 @@ export default function DraftHistory({ champions }) {
             <select
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value)}
-              className="bg-surface-elevated border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-white focus:outline-none focus:border-violet-500 transition-colors"
+              className="bg-surface-elevated border border-[var(--border-subtle)] rounded-lg px-2.5 py-1 text-xs text-white focus:outline-none focus:border-violet-500 transition-colors"
             >
               <option value="all">Tous rôles</option>
               <option value="top">Top</option>
@@ -373,7 +373,7 @@ export default function DraftHistory({ champions }) {
             <select
               value={resultFilter}
               onChange={(e) => setResultFilter(e.target.value)}
-              className="bg-surface-elevated border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-white focus:outline-none focus:border-violet-500 transition-colors"
+              className="bg-surface-elevated border border-[var(--border-subtle)] rounded-lg px-2.5 py-1 text-xs text-white focus:outline-none focus:border-violet-500 transition-colors"
             >
               <option value="all">Tous résultats</option>
               <option value="win">Victoires</option>
@@ -398,7 +398,7 @@ export default function DraftHistory({ champions }) {
         {/* Loading / Error */}
         {loading && (
           <div className="flex items-center justify-center py-12">
-            <div className="text-sm text-slate-400">Chargement…</div>
+            <div className="text-sm text-[var(--text-secondary)]">Chargement…</div>
           </div>
         )}
 
@@ -411,11 +411,11 @@ export default function DraftHistory({ champions }) {
         {/* Empty state */}
         {!loading && entries.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16">
-            <div className="w-14 h-14 rounded-lg bg-surface-elevated border border-slate-700/50 flex items-center justify-center mb-4">
-              <Clock size={24} className="text-slate-500" />
+            <div className="w-14 h-14 rounded-lg bg-surface-elevated border border-[var(--border-subtle)] flex items-center justify-center mb-4">
+              <Clock size={24} className="text-[var(--text-muted)]" />
             </div>
-            <div className="text-sm font-medium text-slate-300 mb-1">Pas encore d'historique</div>
-            <div className="text-xs text-slate-500 text-center max-w-xs">
+            <div className="text-sm font-medium text-[var(--text-secondary)] mb-1">Pas encore d'historique</div>
+            <div className="text-xs text-[var(--text-muted)] text-center max-w-xs">
               Vos sessions de draft seront automatiquement enregistrées quand vous utilisez l'analyseur.
               Vous pourrez ensuite noter victoire ou défaite.
             </div>
@@ -425,7 +425,7 @@ export default function DraftHistory({ champions }) {
         {/* Entries */}
         {filtered.length > 0 && (
           <div className="space-y-2">
-            <div className="text-[11px] text-slate-500 mb-2">
+            <div className="text-[11px] text-[var(--text-muted)] mb-2">
               {filtered.length} session{filtered.length > 1 ? 's' : ''}
               {(roleFilter !== 'all' || resultFilter !== 'all') && ' (filtré)'}
             </div>

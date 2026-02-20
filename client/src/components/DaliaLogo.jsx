@@ -47,7 +47,7 @@ export default function DaliaLogo({ size = 24, className = '' }) {
         textAnchor="middle"
         dominantBaseline="central"
         fill="white"
-        fontFamily="Space Grotesk, Inter, sans-serif"
+        fontFamily="Inter, system-ui, sans-serif"
         fontWeight="700"
         fontSize="10"
         letterSpacing="-0.5"

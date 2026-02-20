@@ -18,7 +18,7 @@ function WinGauge({ probability }) {
 
   return (
     <div className="panel p-6 text-center">
-      <div className="text-[11px] text-slate-400 uppercase tracking-wider font-medium mb-4">
+      <div className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wider font-medium mb-4">
         Probabilité de victoire
       </div>
 
@@ -37,7 +37,7 @@ function WinGauge({ probability }) {
         {/* Center marker */}
         <div className="absolute inset-y-0 left-1/2 w-0.5 bg-slate-400/30" />
       </div>
-      <div className="flex justify-between text-[10px] text-slate-500">
+      <div className="flex justify-between text-[10px] text-[var(--text-muted)]">
         <span>0%</span>
         <span>50%</span>
         <span>100%</span>
@@ -71,10 +71,10 @@ function TeamDisplay({ picks, label, color, borderColor }) {
                 />
               ) : (
                 <div className={`w-10 h-10 rounded-lg border-2 border-dashed ${borderColor} bg-surface-elevated/30 flex items-center justify-center`}>
-                  <RoleIcon role={role} size={14} className="text-slate-600" />
+                  <RoleIcon role={role} size={14} className="text-[var(--text-muted)]" />
                 </div>
               )}
-              <span className="text-[9px] text-slate-500 capitalize">{role}</span>
+              <span className="text-[9px] text-[var(--text-muted)] capitalize">{role}</span>
             </div>
           );
         })}
@@ -91,8 +91,8 @@ function FactorRow({ icon: Icon, label, value, maxValue = 100 }) {
 
   return (
     <div className="flex items-center gap-3">
-      <Icon size={14} className="text-slate-400 shrink-0" />
-      <span className="text-xs text-slate-400 w-24">{label}</span>
+      <Icon size={14} className="text-[var(--text-secondary)] shrink-0" />
+      <span className="text-xs text-[var(--text-secondary)] w-24">{label}</span>
       <div className="flex-1 h-1.5 bg-surface-elevated rounded-full overflow-hidden">
         <div
           className={`h-full rounded-full ${barColor} transition-all duration-500`}
@@ -142,11 +142,11 @@ export default function DraftPrediction() {
   if (totalPicks === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16">
-        <div className="w-16 h-16 rounded-xl bg-surface border border-slate-700/50 flex items-center justify-center mb-4">
-          <Sparkles size={28} className="text-slate-500" />
+        <div className="w-16 h-16 rounded-xl bg-[var(--surface-default)] border border-[var(--border-subtle)] flex items-center justify-center mb-4">
+          <Sparkles size={28} className="text-[var(--text-muted)]" />
         </div>
-        <div className="text-sm font-medium text-slate-300 mb-1">Aucun draft en cours</div>
-        <div className="text-xs text-slate-500 text-center max-w-xs">
+        <div className="text-sm font-medium text-[var(--text-secondary)] mb-1">Aucun draft en cours</div>
+        <div className="text-xs text-[var(--text-muted)] text-center max-w-xs">
           Commencez un draft dans l'onglet Draft, puis revenez ici pour voir
           l'analyse IA en temps réel.
         </div>
@@ -162,10 +162,10 @@ export default function DraftPrediction() {
       ) : (
         <div className="panel p-6 text-center">
           <Sparkles size={24} className="text-violet-400 mx-auto mb-2" />
-          <div className="text-sm text-slate-300 font-medium mb-1">
+          <div className="text-sm text-[var(--text-secondary)] font-medium mb-1">
             Analyse en attente
           </div>
-          <div className="text-xs text-slate-500">
+          <div className="text-xs text-[var(--text-muted)]">
             Cliquez sur "Analyser" dans le draft pour obtenir la prédiction IA.
           </div>
         </div>
@@ -190,7 +190,7 @@ export default function DraftPrediction() {
       {/* Composition summary */}
       {compSummary && typeof compSummary === 'object' && Object.keys(compSummary).length > 0 && (
         <div className="panel p-4 space-y-3">
-          <div className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">
+          <div className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wider font-medium">
             Analyse de la composition
           </div>
 
@@ -202,11 +202,11 @@ export default function DraftPrediction() {
             const total = phys + mag + trueDmg || 1;
             return (
               <div>
-                <div className="text-[10px] text-slate-500 mb-1">Répartition des dégâts</div>
+                <div className="text-[10px] text-[var(--text-muted)] mb-1">Répartition des dégâts</div>
                 <div className="h-3 rounded-lg overflow-hidden flex">
                   <div className="bg-red-500 transition-all" style={{ width: `${(phys / total) * 100}%` }} />
                   <div className="bg-blue-500 transition-all" style={{ width: `${(mag / total) * 100}%` }} />
-                  <div className="bg-slate-300 transition-all" style={{ width: `${(trueDmg / total) * 100}%` }} />
+                  <div className="bg-[var(--text-secondary)] transition-all" style={{ width: `${(trueDmg / total) * 100}%` }} />
                 </div>
                 <div className="flex gap-3 mt-1 text-[10px]">
                   <span className="flex items-center gap-1 text-red-400">
@@ -215,8 +215,8 @@ export default function DraftPrediction() {
                   <span className="flex items-center gap-1 text-blue-400">
                     <span className="w-1.5 h-1.5 rounded-sm bg-blue-500" /> AP {((mag / total) * 100).toFixed(0)}%
                   </span>
-                  <span className="flex items-center gap-1 text-slate-400">
-                    <span className="w-1.5 h-1.5 rounded-sm bg-slate-300" /> Brut {((trueDmg / total) * 100).toFixed(0)}%
+                  <span className="flex items-center gap-1 text-[var(--text-secondary)]">
+                    <span className="w-1.5 h-1.5 rounded-sm bg-[var(--text-secondary)]" /> Brut {((trueDmg / total) * 100).toFixed(0)}%
                   </span>
                 </div>
               </div>
@@ -266,7 +266,7 @@ export default function DraftPrediction() {
       {topRec?.breakdown && (
         <div className="panel p-4 space-y-3">
           <div className="flex items-center gap-2">
-            <div className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">
+            <div className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wider font-medium">
               Meilleure recommandation
             </div>
             <div className="flex items-center gap-1.5 ml-auto">
@@ -277,7 +277,7 @@ export default function DraftPrediction() {
                 loading="lazy"
               />
               <span className="text-sm font-semibold text-violet-400">{topRec.champion_name}</span>
-              <span className="text-sm font-bold tabular-nums text-slate-200">
+              <span className="text-sm font-bold tabular-nums text-[var(--text-primary)]">
                 {topRec.total_score.toFixed(0)} pts
               </span>
             </div>

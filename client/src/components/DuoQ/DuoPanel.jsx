@@ -66,18 +66,18 @@ export default function DuoPanel() {
   }, [unlink]);
 
   return (
-    <div className="bg-surface rounded-xl border border-slate-700/50 overflow-hidden">
+    <div className="bg-surface rounded-xl border border-[var(--border-subtle)] overflow-hidden">
       {/* Header */}
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-700/30">
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-[var(--border-subtle)]">
         <Users size={18} className="text-violet-500" />
-        <h3 className="text-sm font-semibold text-slate-200">DuoQ</h3>
+        <h3 className="text-sm font-semibold text-[var(--text-primary)]">DuoQ</h3>
         {linked && (
           <button
             onClick={toggleDuoActive}
             className={`ml-auto flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all
               ${duoActive
                 ? 'bg-violet-500/20 text-violet-400 ring-1 ring-violet-500/40'
-                : 'bg-slate-700/50 text-slate-400 hover:text-slate-300'
+                : 'bg-[var(--surface-elevated)] text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'
               }`}
           >
             <Sparkles size={12} />
@@ -89,29 +89,29 @@ export default function DuoPanel() {
       <div className="p-4 space-y-4">
         {/* My Code */}
         <div>
-          <label className="text-[11px] uppercase tracking-wider text-slate-500 font-medium">
+          <label className="text-[11px] uppercase tracking-wider text-[var(--text-muted)] font-medium">
             Mon code duo
           </label>
           <div className="flex items-center gap-2 mt-1">
-            <div className="flex-1 bg-slate-800/60 rounded-lg px-3 py-2 font-mono text-lg tracking-[0.3em] text-violet-400 text-center select-all">
+            <div className="flex-1 bg-[var(--surface-elevated)] rounded-lg px-3 py-2 font-mono text-lg tracking-[0.3em] text-violet-400 text-center select-all">
               {myCode || '------'}
             </div>
             <button
               onClick={handleCopy}
-              className="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-700/50 hover:bg-slate-700 text-slate-400 hover:text-slate-200 transition-colors"
+              className="w-9 h-9 flex items-center justify-center rounded-lg bg-[var(--surface-elevated)] hover:bg-[var(--surface-overlay)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
               title="Copier"
             >
               {copied ? <Check size={16} className="text-green-400" /> : <Copy size={16} />}
             </button>
             <button
               onClick={regenerateCode}
-              className="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-700/50 hover:bg-slate-700 text-slate-400 hover:text-slate-200 transition-colors"
+              className="w-9 h-9 flex items-center justify-center rounded-lg bg-[var(--surface-elevated)] hover:bg-[var(--surface-overlay)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
               title="Régénérer"
             >
               <RefreshCw size={16} />
             </button>
           </div>
-          <p className="text-[10px] text-slate-500 mt-1">
+          <p className="text-[10px] text-[var(--text-muted)] mt-1">
             Partage ce code à ton ami pour vous lier en duo.
           </p>
         </div>
@@ -119,7 +119,7 @@ export default function DuoPanel() {
         {/* Link Section */}
         {!linked ? (
           <div>
-            <label className="text-[11px] uppercase tracking-wider text-slate-500 font-medium">
+            <label className="text-[11px] uppercase tracking-wider text-[var(--text-muted)] font-medium">
               Code d'un ami
             </label>
             <div className="flex items-center gap-2 mt-1">
@@ -129,7 +129,7 @@ export default function DuoPanel() {
                 onChange={(e) => setFriendCode(e.target.value.toUpperCase())}
                 placeholder="ABC123"
                 maxLength={8}
-                className="flex-1 bg-slate-800/60 border border-slate-700/50 rounded-lg px-3 py-2 text-sm text-slate-200 font-mono tracking-widest text-center placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-violet-500/50"
+                className="flex-1 bg-[var(--surface-elevated)] border border-[var(--border-subtle)] rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] font-mono tracking-widest text-center placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-violet-500/50"
                 onKeyDown={(e) => e.key === 'Enter' && handleLink()}
               />
               <button
@@ -148,15 +148,15 @@ export default function DuoPanel() {
         ) : (
           <>
             {/* Partner Info */}
-            <div className="bg-slate-800/40 rounded-lg p-3 space-y-3">
+            <div className="bg-[var(--surface-elevated)] rounded-lg p-3 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-full bg-violet-500/20 flex items-center justify-center">
                     <Shield size={16} className="text-violet-400" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-slate-200">{partner?.username}</p>
-                    <p className="text-[10px] text-slate-500">
+                    <p className="text-sm font-medium text-[var(--text-primary)]">{partner?.username}</p>
+                    <p className="text-[10px] text-[var(--text-muted)]">
                       Lié depuis {partner?.linked_since
                         ? new Date(partner.linked_since).toLocaleDateString('fr-FR')
                         : '...'}
@@ -175,7 +175,7 @@ export default function DuoPanel() {
 
               {/* Partner Role Selector */}
               <div>
-                <label className="text-[10px] uppercase tracking-wider text-slate-500 font-medium">
+                <label className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] font-medium">
                   Rôle du partenaire
                 </label>
                 <div className="flex gap-1 mt-1">
@@ -186,7 +186,7 @@ export default function DuoPanel() {
                       className={`flex-1 py-1.5 rounded-md text-xs font-medium transition-all
                         ${partnerRole === role
                           ? 'bg-violet-500/20 text-violet-400 ring-1 ring-violet-500/30'
-                          : 'bg-slate-700/30 text-slate-500 hover:text-slate-300 hover:bg-slate-700/50'
+                          : 'bg-[var(--surface-elevated)] text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--surface-elevated)]'
                         }`}
                     >
                       <span className="block text-sm">{ROLE_EMOJI[role]}</span>
@@ -201,7 +201,7 @@ export default function DuoPanel() {
                 <div>
                   <button
                     onClick={() => setShowPool(!showPool)}
-                    className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-slate-500 hover:text-slate-400 transition-colors"
+                    className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors"
                   >
                     Pool du partenaire
                     {showPool ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
@@ -209,14 +209,14 @@ export default function DuoPanel() {
                   {showPool && partnerRole && (
                     <div className="mt-2 flex flex-wrap gap-1">
                       {(partnerPool[partnerRole] || []).length === 0 ? (
-                        <p className="text-[10px] text-slate-600 italic">
+                        <p className="text-[10px] text-[var(--text-muted)] italic">
                           Aucun champion pour ce rôle
                         </p>
                       ) : (
                         (partnerPool[partnerRole] || []).map((entry) => (
                           <div
                             key={entry.champion_id}
-                            className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-700/40 text-xs"
+                            className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-[var(--surface-elevated)] text-xs"
                           >
                             <img
                               src={`https://ddragon.leagueoflegends.com/cdn/14.10.1/img/champion/${entry.champion_key}.png`}
@@ -224,7 +224,7 @@ export default function DuoPanel() {
                               className="w-5 h-5 rounded-sm"
                               onError={(e) => { e.target.style.display = 'none'; }}
                             />
-                            <span className="text-slate-300">{entry.champion_key}</span>
+                            <span className="text-[var(--text-secondary)]">{entry.champion_key}</span>
                             <span className={`text-[9px] font-bold ${
                               entry.tier === 'S' ? 'text-amber-400' :
                               entry.tier === 'A' ? 'text-emerald-400' :

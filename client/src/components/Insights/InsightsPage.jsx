@@ -27,15 +27,15 @@ export default function InsightsPage() {
             <Brain size={18} className="text-violet-400" />
           </div>
           <div>
-            <h1 className="text-lg font-bold text-slate-100">Insights</h1>
-            <p className="text-xs text-slate-500">
+            <h1 className="text-lg font-bold text-[var(--text-primary)]">Insights</h1>
+            <p className="text-xs text-[var(--text-muted)]">
               Tes statistiques personnelles et analyse IA du draft
             </p>
           </div>
         </div>
 
         {/* Tab bar */}
-        <div className="flex gap-1 bg-surface rounded-xl p-1 border border-slate-700/50">
+        <div className="flex gap-1 bg-[var(--surface-default)] rounded-xl p-1 border border-[var(--border-subtle)]">
           {TABS.map(({ id, label, icon: Icon, desc }) => (
             <button
               key={id}
@@ -43,7 +43,7 @@ export default function InsightsPage() {
               className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                 activeTab === id
                   ? 'bg-violet-500/15 text-violet-400 border border-violet-500/25 shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-surface-elevated/50 border border-transparent'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-surface-elevated/50 border border-transparent'
               }`}
               title={desc}
             >

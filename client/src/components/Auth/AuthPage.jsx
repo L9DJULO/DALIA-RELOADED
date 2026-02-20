@@ -3,7 +3,6 @@ import { LogIn, UserPlus, AlertCircle, Server } from 'lucide-react';
 import useAuthStore from '../../stores/authStore';
 import { getServerUrl, setServerUrl } from '../../services/api';
 import DaliaLogo from '../DaliaLogo';
-import ThemeToggle from '../ui/ThemeToggle';
 
 export default function AuthPage() {
   const [mode, setMode] = useState('login'); // 'login' | 'register'
@@ -42,43 +41,28 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden" style={{ background: 'var(--surface-base)' }}>
-      {/* Background decoration */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full opacity-20"
-             style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.3) 0%, transparent 70%)' }} />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 rounded-full opacity-15"
-             style={{ background: 'radial-gradient(circle, rgba(109,40,217,0.3) 0%, transparent 70%)' }} />
-      </div>
-
-      {/* Theme toggle top-right */}
-      <div className="absolute top-4 right-4 z-10">
-        <ThemeToggle />
-      </div>
-
-      <div className="w-full max-w-md relative z-10">
+    <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'var(--surface-base)' }}>
+      <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 mx-auto mb-4 animate-float">
-            <DaliaLogo size={64} />
+          <div className="w-14 h-14 mx-auto mb-4">
+            <DaliaLogo size={56} />
           </div>
-          <h1 className="text-2xl font-bold font-display text-gradient">DALIA</h1>
+          <h1 className="text-2xl font-semibold" style={{ color: 'var(--accent)' }}>DALIA</h1>
           <p className="text-sm mt-1.5" style={{ color: 'var(--text-muted)' }}>Draft Analysis League Intelligence Assistant</p>
         </div>
 
         {/* Auth Card */}
-        <div className="panel p-6 shadow-glow-lg">
+        <div className="panel p-6">
           {/* Tab switcher */}
           <div className="flex mb-6 rounded-xl p-1" style={{ background: 'var(--surface-elevated)' }}>
             <button
               onClick={() => { setMode('login'); clearError(); }}
-              className={`flex-1 py-2.5 px-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                mode === 'login'
-                  ? 'text-white shadow-glow'
-                  : ''
+              className={`flex-1 py-2.5 px-3 rounded-lg text-sm font-medium transition-colors duration-150 ${
+                mode === 'login' ? 'text-white' : ''
               }`}
               style={mode === 'login' ? {
-                background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)',
+                background: 'var(--accent)',
               } : {
                 color: 'var(--text-muted)',
               }}
@@ -88,13 +72,11 @@ export default function AuthPage() {
             </button>
             <button
               onClick={() => { setMode('register'); clearError(); }}
-              className={`flex-1 py-2.5 px-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                mode === 'register'
-                  ? 'text-white shadow-glow'
-                  : ''
+              className={`flex-1 py-2.5 px-3 rounded-lg text-sm font-medium transition-colors duration-150 ${
+                mode === 'register' ? 'text-white' : ''
               }`}
               style={mode === 'register' ? {
-                background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)',
+                background: 'var(--accent)',
               } : {
                 color: 'var(--text-muted)',
               }}
@@ -223,7 +205,7 @@ export default function AuthPage() {
                 </button>
               </div>
               {isLocalhost && (
-                <p className="text-[11px] text-violet-400 mt-2 text-left">
+                <p className="text-[11px] mt-2 text-left" style={{ color: 'var(--accent)' }}>
                   ⚠️ Serveur local détecté. Pour jouer en ligne, entre l'URL du serveur fournie par l'admin.
                 </p>
               )}

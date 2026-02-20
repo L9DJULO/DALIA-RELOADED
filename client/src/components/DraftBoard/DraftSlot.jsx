@@ -19,7 +19,7 @@ export default function DraftSlot({ role, label, champion, isMySlot, team, onCli
       aria-label={ariaLabel}
       onKeyDown={(e) => { if (e.key === 'Enter' && !champion) onClick?.(); }}
       className={`relative flex items-center gap-2.5 rounded-xl p-2 transition-all duration-200 cursor-pointer group
-        ${isMySlot ? 'ring-1 ring-violet-500/40 shadow-glow' : ''}
+        ${isMySlot ? 'ring-1 ring-violet-500/30' : ''}
       `}
       style={{
         background: champion ? 'var(--surface-elevated)' : 'transparent',
@@ -54,7 +54,7 @@ export default function DraftSlot({ role, label, champion, isMySlot, team, onCli
             <span style={{ color: 'var(--text-muted)' }}>{displayLabel}</span>
           )}
           {isMySlot && (
-            <span className="px-1.5 py-px rounded-md text-[9px] font-bold text-white ml-1" style={{ background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)' }}>
+            <span className="px-1.5 py-px rounded-md text-[9px] font-bold text-white ml-1" style={{ background: 'var(--accent)' }}>
               MOI
             </span>
           )}
