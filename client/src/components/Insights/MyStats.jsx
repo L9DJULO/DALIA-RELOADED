@@ -1,13 +1,14 @@
 /**
- * My Stats — Personal performance dashboard from draft history.
- * Shows win rates, role breakdown, champion mastery, progression.
+ * My Stats — Personal performance dashboard.
+ * Shows DALIA draft history + live ranked stats from Riot API (via LCU link).
  */
 import { useState, useEffect, useMemo } from 'react';
 import {
   Trophy, TrendingUp, TrendingDown, BarChart3, Target, Crown,
-  Flame, Loader2, MessageSquare,
+  Flame, Loader2, MessageSquare, Link2, Unlink,
 } from 'lucide-react';
-import { fetchHistoryStats, fetchHistory } from '../../services/api';
+import { fetchHistoryStats, fetchHistory, fetchPersonalStats, fetchChampions } from '../../services/api';
+import useLCUStore from '../../stores/lcuStore';
 import RoleIcon from '../RoleIcon';
 
 const DDRAGON = 'https://ddragon.leagueoflegends.com/cdn/14.24.1/img/champion';
@@ -125,17 +126,26 @@ export default function MyStats() {
   const [stats, setStats] = useState(null);
   const [recentGames, setRecentGames] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [personalStats, setPersonalStats] = useState(null);
+  const [personalLoading, setPersonalLoading] = useState(false);
+  const [champMap, setChampMap] = useState({});
+  const summoner = useLCUStore((s) => s.summoner);
 
   useEffect(() => {
     const load = async () => {
       setLoading(true);
       try {
-        const [statsData, history] = await Promise.all([
+        const [statsData, history, champs] = await Promise.all([
           fetchHistoryStats(),
           fetchHistory(20),
+          fetchChampions().catch(() => []),
         ]);
         setStats(statsData);
         setRecentGames(history || []);
+        // Build champion id→key/name map
+        const map = {};
+        (champs || []).forEach((c) => { map[c.id] = { key: c.key, name: c.name }; });
+        setChampMap(map);
       } catch (err) {
         console.error('Failed to load stats:', err);
       } finally {
@@ -144,6 +154,23 @@ export default function MyStats() {
     };
     load();
   }, []);
+
+  // Fetch personal ranked stats when summoner is linked
+  useEffect(() => {
+    if (!summoner?.puuid) return;
+    const loadPersonal = async () => {
+      setPersonalLoading(true);
+      try {
+        const data = await fetchPersonalStats(summoner.puuid, summoner.region || 'EUW1');
+        setPersonalStats(data);
+      } catch (err) {
+        console.error('Failed to load personal stats:', err);
+      } finally {
+        setPersonalLoading(false);
+      }
+    };
+    loadPersonal();
+  }, [summoner?.puuid]);
 
   // Recent form (last 10 games with results)
   const recentForm = useMemo(() => {
@@ -306,6 +333,127 @@ export default function MyStats() {
           </div>
         </div>
       )}
+
+      {/* ═══ Personal Ranked Stats (from LCU / Riot API) ═══ */}
+      <div className="panel p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <Link2 size={14} className={summoner?.puuid ? 'text-emerald-400' : 'text-slate-500'} />
+          <span className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">
+            Stats Ranked — Riot API
+          </span>
+          {summoner?.puuid && (
+            <span className="text-[10px] text-emerald-400/70 ml-auto">
+              {summoner.gameName}#{summoner.tagLine}
+            </span>
+          )}
+        </div>
+
+        {!summoner?.puuid ? (
+          <div className="text-center py-6">
+            <Unlink size={24} className="text-slate-600 mx-auto mb-2" />
+            <div className="text-xs text-slate-500">
+              Connecte-toi au client League (LCU) pour voir tes stats ranked personnelles.
+            </div>
+            <div className="text-[10px] text-slate-600 mt-1">
+              Les recommandations utiliseront tes performances réelles pour mieux te conseiller.
+            </div>
+          </div>
+        ) : personalLoading ? (
+          <div className="text-center py-6">
+            <Loader2 size={18} className="text-amber-500 animate-spin mx-auto mb-2" />
+            <div className="text-xs text-slate-400">Chargement des stats ranked…</div>
+          </div>
+        ) : personalStats && personalStats.games_analyzed > 0 ? (
+          <div className="space-y-3">
+            {/* Overall */}
+            <div className="grid grid-cols-3 gap-3">
+              <div className="text-center">
+                <div className="text-lg font-bold text-slate-100 tabular-nums">
+                  {personalStats.overall.games}
+                </div>
+                <div className="text-[10px] text-slate-500">Parties</div>
+              </div>
+              <div className="text-center">
+                <div className={`text-lg font-bold tabular-nums ${
+                  personalStats.overall.win_rate >= 55 ? 'text-emerald-400' :
+                  personalStats.overall.win_rate >= 50 ? 'text-amber-400' : 'text-red-400'
+                }`}>
+                  {personalStats.overall.win_rate}%
+                </div>
+                <div className="text-[10px] text-slate-500">Win Rate</div>
+              </div>
+              <div className="text-center">
+                <div className="text-lg font-bold text-sky-400 tabular-nums">
+                  {Object.keys(personalStats.champions).length}
+                </div>
+                <div className="text-[10px] text-slate-500">Champions</div>
+              </div>
+            </div>
+
+            {/* Role distribution */}
+            {personalStats.role_distribution && (
+              <div className="flex gap-2">
+                {Object.entries(personalStats.role_distribution)
+                  .filter(([_, n]) => n > 0)
+                  .sort((a, b) => b[1] - a[1])
+                  .map(([role, count]) => (
+                    <div key={role} className="flex items-center gap-1 text-[11px] text-slate-400">
+                      <RoleIcon role={role} size={14} className="text-slate-500" />
+                      <span className="capitalize">{role}</span>
+                      <span className="text-slate-600">{count}</span>
+                    </div>
+                  ))}
+              </div>
+            )}
+
+            {/* Top champions from ranked */}
+            <div className="space-y-0.5 max-h-[250px] overflow-y-auto">
+              {Object.entries(personalStats.champions)
+                .sort((a, b) => b[1].games - a[1].games)
+                .slice(0, 10)
+                .map(([key, stats]) => {
+                  const [champId, role] = key.split('_');
+                  const champInfo = champMap[parseInt(champId)];
+                  if (!champInfo) return null;
+                  const wrColor = stats.win_rate >= 55 ? 'text-emerald-400' :
+                    stats.win_rate >= 50 ? 'text-amber-400' : 'text-red-400';
+
+                  return (
+                    <div key={key} className="flex items-center gap-3 py-1.5 px-2 rounded hover:bg-surface-elevated/50">
+                      <img
+                        src={`${DDRAGON}/${champInfo.key}.png`}
+                        alt={champInfo.name}
+                        className="w-7 h-7 rounded border border-slate-700"
+                        loading="lazy"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs font-medium text-slate-200 truncate">
+                          {champInfo.name}
+                          <span className="text-slate-600 ml-1 capitalize">{role}</span>
+                        </div>
+                      </div>
+                      <div className="text-[11px] text-slate-500 tabular-nums">
+                        {stats.games}G
+                      </div>
+                      <div className="text-[11px] text-slate-400 tabular-nums w-12 text-right">
+                        {stats.kda} KDA
+                      </div>
+                      <div className={`text-xs font-bold tabular-nums w-12 text-right ${wrColor}`}>
+                        {stats.win_rate}%
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          </div>
+        ) : (
+          <div className="text-center py-4">
+            <div className="text-xs text-slate-500">
+              Aucune partie ranked récente trouvée.
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

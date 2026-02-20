@@ -160,6 +160,9 @@ class DraftRequest(BaseModel):
     duo_active: bool = False
     duo_partner_role: Optional[str] = None  # partner's role ("top", "jungle", etc.)
     duo_partner_pool: Optional[Dict[str, List[PoolEntry]]] = None  # partner's champion pool
+    # ── Personal stats (from LCU link) ──
+    puuid: Optional[str] = None       # player's Riot PUUID (from LCU)
+    region: Optional[str] = None      # platform region (e.g. "EUW1")
 
 
 class DraftResponse(BaseModel):

@@ -3,6 +3,7 @@
  */
 import { create } from 'zustand';
 import { fetchRecommendations } from '../services/api';
+import useLCUStore from './lcuStore';
 
 const EMPTY_ALLY_PICKS = () => ({ top: null, jungle: null, mid: null, bot: null, support: null });
 const EMPTY_ENEMY_PICKS = () => [null, null, null, null, null];
@@ -141,7 +142,12 @@ const useDraftStore = create((set, get) => ({
     set({ loading: true, error: null });
     try {
       const draftState = get().buildDraftState();
-      const data = await fetchRecommendations(draftState, championPool, weightOverrides, duoOptions);
+      // Get summoner identity from LCU store for personal stats
+      const summoner = useLCUStore.getState().summoner;
+      const personalIdentity = summoner?.puuid
+        ? { puuid: summoner.puuid, region: summoner.region }
+        : null;
+      const data = await fetchRecommendations(draftState, championPool, weightOverrides, duoOptions, personalIdentity);
       set({
         recommendations: data.recommendations || [],
         compSummary: data.team_composition_summary || {},

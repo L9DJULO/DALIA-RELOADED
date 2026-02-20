@@ -32,6 +32,20 @@ pub struct LiveDraftState {
     pub timer_remaining: f64,
 }
 
+/// Summoner identity from LCU (linked Riot account).
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct SummonerInfo {
+    pub available: bool,
+    pub puuid: String,
+    pub game_name: String,
+    pub tag_line: String,
+    pub summoner_id: i64,
+    pub account_id: i64,
+    pub summoner_level: i64,
+    pub profile_icon_id: i64,
+    pub region: String,
+}
+
 // Role mapping from cell ID to role
 fn cell_to_role(cell_id: i64) -> &'static str {
     match cell_id % 5 {
@@ -49,41 +63,126 @@ fn cell_to_team(cell_id: i64) -> &'static str {
 }
 
 /// Find the League of Legends lockfile.
+/// Searches common paths on all available drives, RiotClientInstalls.json,
+/// and falls back to process detection.
 pub fn find_lockfile() -> Option<PathBuf> {
-    let candidates = vec![
-        // Common Windows install locations
-        r"C:\Riot Games\League of Legends\lockfile",
-        r"D:\Riot Games\League of Legends\lockfile",
-        r"C:\Program Files\Riot Games\League of Legends\lockfile",
-        r"C:\Program Files (x86)\Riot Games\League of Legends\lockfile",
-        r"D:\Program Files\Riot Games\League of Legends\lockfile",
-        r"D:\Program Files (x86)\Riot Games\League of Legends\lockfile",
+    // 1. Scan all drive letters with common install sub-paths
+    let sub_paths = vec![
+        r"Riot Games\League of Legends\lockfile",
+        r"Program Files\Riot Games\League of Legends\lockfile",
+        r"Program Files (x86)\Riot Games\League of Legends\lockfile",
+        r"Games\League of Legends\lockfile",
+        r"League of Legends\lockfile",
     ];
 
-    for path in candidates {
-        let p = PathBuf::from(path);
-        if p.exists() {
-            return Some(p);
+    for drive in b'C'..=b'Z' {
+        let drive_letter = drive as char;
+        for sub in &sub_paths {
+            let p = PathBuf::from(format!("{}:\\{}", drive_letter, sub));
+            if p.exists() {
+                return Some(p);
+            }
         }
     }
 
-    // Try RiotClientInstalls.json
+    // 2. Try RiotClientInstalls.json (created by Riot Client on all installs)
+    if let Some(lockfile) = find_lockfile_from_riot_installs() {
+        return Some(lockfile);
+    }
+
+    // 3. Fallback: find LeagueClientUx.exe process and derive lockfile path
+    if let Some(lockfile) = find_lockfile_from_process() {
+        return Some(lockfile);
+    }
+
+    None
+}
+
+/// Parse RiotClientInstalls.json to find League installation path.
+fn find_lockfile_from_riot_installs() -> Option<PathBuf> {
     if let Some(app_data) = dirs_next::data_local_dir() {
         let riot_installs = app_data.join("Riot Games").join("RiotClientInstalls.json");
         if riot_installs.exists() {
             if let Ok(content) = std::fs::read_to_string(&riot_installs) {
                 if let Ok(json) = serde_json::from_str::<serde_json::Value>(&content) {
-                    if let Some(path) = json.get("associated_client") {
-                        if let Some(obj) = path.as_object() {
-                            for (install_path, _) in obj {
-                                let lockfile = PathBuf::from(install_path).join("lockfile");
-                                if lockfile.exists() {
-                                    return Some(lockfile);
-                                }
+                    // associated_client maps League install paths to their Riot Client paths
+                    if let Some(obj) = json.get("associated_client").and_then(|v| v.as_object()) {
+                        for (install_path, _) in obj {
+                            // The keys are League installation paths (may use / or \)
+                            let normalized = install_path.replace('/', "\\");
+                            let league_dir = PathBuf::from(&normalized);
+                            let lockfile = league_dir.join("lockfile");
+                            if lockfile.exists() {
+                                return Some(lockfile);
+                            }
+                            // Sometimes the path points to the root, lockfile is inside
+                            // the League of Legends subfolder
+                            let alt_lockfile = league_dir.join("League of Legends").join("lockfile");
+                            if alt_lockfile.exists() {
+                                return Some(alt_lockfile);
+                            }
+                        }
+                    }
+                    // Also check rc_default path
+                    if let Some(default_path) = json.get("rc_default").and_then(|v| v.as_str()) {
+                        let normalized = default_path.replace('/', "\\");
+                        let rc_dir = PathBuf::from(&normalized);
+                        // Riot Client is usually next to League of Legends
+                        if let Some(parent) = rc_dir.parent() {
+                            let lockfile = parent.join("League of Legends").join("lockfile");
+                            if lockfile.exists() {
+                                return Some(lockfile);
                             }
                         }
                     }
                 }
+            }
+        }
+    }
+    None
+}
+
+/// Find lockfile by looking at running LeagueClientUx.exe process.
+fn find_lockfile_from_process() -> Option<PathBuf> {
+    // Use WMIC to find LeagueClientUx.exe path
+    let output = std::process::Command::new("wmic")
+        .args(["process", "where", "name='LeagueClientUx.exe'", "get", "ExecutablePath"])
+        .output()
+        .ok()?;
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    for line in stdout.lines() {
+        let trimmed = line.trim();
+        if trimmed.is_empty() || trimmed.starts_with("ExecutablePath") {
+            continue;
+        }
+        // Path looks like: D:\Riot Games\League of Legends\LeagueClientUx.exe
+        let exe_path = PathBuf::from(trimmed);
+        if let Some(parent) = exe_path.parent() {
+            let lockfile = parent.join("lockfile");
+            if lockfile.exists() {
+                return Some(lockfile);
+            }
+        }
+    }
+
+    // Also try tasklist + wmic for League processes via cmd
+    let output2 = std::process::Command::new("cmd")
+        .args(["/c", "wmic process where \"name like '%LeagueClient%'\" get ExecutablePath 2>nul"])
+        .output()
+        .ok()?;
+
+    let stdout2 = String::from_utf8_lossy(&output2.stdout);
+    for line in stdout2.lines() {
+        let trimmed = line.trim();
+        if trimmed.is_empty() || trimmed.starts_with("ExecutablePath") {
+            continue;
+        }
+        let exe_path = PathBuf::from(trimmed);
+        if let Some(parent) = exe_path.parent() {
+            let lockfile = parent.join("lockfile");
+            if lockfile.exists() {
+                return Some(lockfile);
             }
         }
     }
@@ -260,4 +359,52 @@ pub async fn poll_draft_state(creds: &LcuCredentials) -> LiveDraftState {
     }
 
     state
+}
+
+/// Fetch the current summoner's identity from LCU.
+pub async fn fetch_summoner_info(creds: &LcuCredentials) -> SummonerInfo {
+    let client = create_lcu_client();
+    let auth = STANDARD.encode(format!("riot:{}", creds.password));
+    let base = format!("https://127.0.0.1:{}", creds.port);
+
+    let mut info = SummonerInfo::default();
+
+    // Get current summoner
+    let url = format!("{}/lol-summoner/v1/current-summoner", base);
+    let summoner: serde_json::Value = match client
+        .get(&url)
+        .header("Authorization", format!("Basic {}", auth))
+        .send()
+        .await
+    {
+        Ok(resp) if resp.status().is_success() => match resp.json().await {
+            Ok(v) => v,
+            Err(_) => return info,
+        },
+        _ => return info,
+    };
+
+    info.available = true;
+    info.puuid = summoner["puuid"].as_str().unwrap_or("").to_string();
+    info.game_name = summoner["gameName"].as_str().unwrap_or("").to_string();
+    info.tag_line = summoner["tagLine"].as_str().unwrap_or("").to_string();
+    info.summoner_id = summoner["summonerId"].as_i64().unwrap_or(0);
+    info.account_id = summoner["accountId"].as_i64().unwrap_or(0);
+    info.summoner_level = summoner["summonerLevel"].as_i64().unwrap_or(0);
+    info.profile_icon_id = summoner["profileIconId"].as_i64().unwrap_or(0);
+
+    // Detect region from LCU environment
+    let region_url = format!("{}/riotclient/region-locale", base);
+    if let Ok(resp) = client
+        .get(&region_url)
+        .header("Authorization", format!("Basic {}", auth))
+        .send()
+        .await
+    {
+        if let Ok(region_data) = resp.json::<serde_json::Value>().await {
+            info.region = region_data["region"].as_str().unwrap_or("EUW1").to_string();
+        }
+    }
+
+    info
 }

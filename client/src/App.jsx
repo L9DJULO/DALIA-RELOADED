@@ -67,7 +67,7 @@ function ProtectedApp() {
           <Route path="/pool" element={<ChampionPoolEditor champions={champions} />} />
           <Route path="/draft" element={<DraftBoard champions={champions} />} />
           <Route path="/history" element={<DraftHistory champions={champions} />} />
-          <Route path="/insights" element={<InsightsPage champions={champions} />} />
+          <Route path="/insights" element={<InsightsPage />} />
           <Route path="/ml" element={<MLPage />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Route>

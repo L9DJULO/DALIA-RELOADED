@@ -1,8 +1,9 @@
 import React from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
-import { Swords, Users, Zap, Clock, Brain, Cpu, Settings, LogOut, User } from 'lucide-react';
+import { Swords, Users, Zap, Clock, Brain, Cpu, Settings, LogOut, User, Wifi, WifiOff, Gamepad2 } from 'lucide-react';
 import useAuthStore from '../stores/authStore';
 import useUserStore from '../stores/userStore';
+import useLCUStore from '../stores/lcuStore';
 
 const NAV = [
   { to: '/draft', label: 'Draft', icon: Swords },
@@ -23,6 +24,9 @@ export default function Layout({ patchInfo }) {
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const resetPool = useUserStore((s) => s.resetPool);
+  const lcuConnected = useLCUStore((s) => s.connected);
+  const lcuInChampSelect = useLCUStore((s) => s.inChampSelect);
+  const lcuGamePhase = useLCUStore((s) => s.gamePhase);
 
   const handleLogout = () => {
     resetPool();
@@ -47,6 +51,36 @@ export default function Layout({ patchInfo }) {
               Patch {patchInfo.patch}
             </div>
           )}
+
+          {/* LCU connection status */}
+          <div
+            className={`flex items-center gap-1.5 text-[11px] font-medium px-2 py-0.5 rounded-md border transition-colors ${
+              lcuConnected
+                ? lcuInChampSelect
+                  ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/25'
+                  : 'text-slate-400 bg-surface-elevated/30 border-slate-700/50'
+                : 'text-slate-500 bg-transparent border-slate-700/30'
+            }`}
+            title={
+              lcuConnected
+                ? lcuInChampSelect
+                  ? 'Connecté au client LoL — Champ Select en cours'
+                  : `Connecté au client LoL${lcuGamePhase ? ` — ${lcuGamePhase}` : ''}`
+                : 'Client LoL non détecté — Lancez League of Legends'
+            }
+          >
+            {lcuConnected ? (
+              lcuInChampSelect ? (
+                <Gamepad2 size={11} className="animate-pulse" />
+              ) : (
+                <Wifi size={11} />
+              )
+            ) : (
+              <WifiOff size={11} />
+            )}
+            <span>{lcuConnected ? (lcuInChampSelect ? 'Champ Select' : 'LoL') : 'LoL'}</span>
+          </div>
+
           <span className="text-[10px] text-slate-600">Ranked Master+</span>
 
           {/* User info + logout */}

@@ -49,7 +49,8 @@ function WinGauge({ probability }) {
 /* Team picks display */
 function TeamDisplay({ picks, label, color, borderColor }) {
   const roles = ['top', 'jungle', 'mid', 'bot', 'support'];
-  const pickedCount = roles.filter((r) => picks[r]).length;
+  const safePicks = picks || {};
+  const pickedCount = roles.filter((r) => safePicks[r]).length;
 
   return (
     <div className="panel p-3">
@@ -58,7 +59,7 @@ function TeamDisplay({ picks, label, color, borderColor }) {
       </div>
       <div className="flex gap-1.5">
         {roles.map((role) => {
-          const champ = picks[role];
+          const champ = safePicks[role];
           return (
             <div key={role} className="flex flex-col items-center gap-1">
               {champ ? (
@@ -106,22 +107,33 @@ function FactorRow({ icon: Icon, label, value, maxValue = 100 }) {
 }
 
 export default function DraftPrediction() {
-  const {
-    bluePicks, redPicks, myTeam, myRole,
-    recommendations, compSummary, winProbability,
-    warnings,
-  } = useDraftStore();
+  const rawState = useDraftStore();
+  const allyPicks = rawState.allyPicks || {};
+  const enemyPicks = rawState.enemyPicks || [];
+  const myTeam = rawState.myTeam || 'blue';
+  const myRole = rawState.myRole || 'mid';
+  const recommendations = rawState.recommendations || [];
+  const compSummary = rawState.compSummary || {};
+  const winProbability = rawState.winProbability;
+  const warnings = rawState.warnings || [];
 
   // Count total picks
   const totalPicks = useMemo(() => {
     let count = 0;
-    for (const c of Object.values(bluePicks)) if (c) count++;
-    for (const c of Object.values(redPicks)) if (c) count++;
+    for (const c of Object.values(allyPicks || {})) if (c) count++;
+    for (const c of (enemyPicks || [])) if (c) count++;
     return count;
-  }, [bluePicks, redPicks]);
+  }, [allyPicks, enemyPicks]);
 
-  const allyPicks = myTeam === 'blue' ? bluePicks : redPicks;
-  const enemyPicks = myTeam === 'blue' ? redPicks : bluePicks;
+  // Convert enemyPicks (ordered array) to a role-keyed object for display
+  const enemyPicksDisplay = useMemo(() => {
+    const roles = ['top', 'jungle', 'mid', 'bot', 'support'];
+    const result = { top: null, jungle: null, mid: null, bot: null, support: null };
+    (enemyPicks || []).forEach((pick, i) => {
+      if (pick && i < 5) result[roles[i]] = pick;
+    });
+    return result;
+  }, [enemyPicks]);
 
   // Get top recommendation data for breakdown
   const topRec = recommendations.length > 0 ? recommendations[0] : null;
@@ -162,13 +174,13 @@ export default function DraftPrediction() {
       {/* Team compositions */}
       <div className="grid grid-cols-2 gap-3">
         <TeamDisplay
-          picks={allyPicks}
+          picks={allyPicks || {}}
           label="Ton équipe"
           color="text-sky-400"
           borderColor="border-sky-500/30"
         />
         <TeamDisplay
-          picks={enemyPicks}
+          picks={enemyPicksDisplay}
           label="Équipe adverse"
           color="text-red-400"
           borderColor="border-red-500/30"
@@ -176,7 +188,7 @@ export default function DraftPrediction() {
       </div>
 
       {/* Composition summary */}
-      {Object.keys(compSummary).length > 0 && (
+      {compSummary && typeof compSummary === 'object' && Object.keys(compSummary).length > 0 && (
         <div className="panel p-4 space-y-3">
           <div className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">
             Analyse de la composition
@@ -234,7 +246,7 @@ export default function DraftPrediction() {
       )}
 
       {/* Warnings */}
-      {warnings.length > 0 && (
+      {Array.isArray(warnings) && warnings.length > 0 && (
         <div className="panel p-3 border-amber-500/20 bg-amber-500/5">
           <div className="text-[10px] text-amber-400 uppercase tracking-wider font-medium mb-2">
             Points d'attention

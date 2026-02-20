@@ -200,7 +200,8 @@ async def draft_recommend(
         if partner_pool:
             body.duo_partner_pool = partner_pool
 
-    return await engine.recommend(body)
+    personal_svc = getattr(request.app.state, "personal_stats", None)
+    return await engine.recommend(body, personal_svc=personal_svc)
 
 
 # ═════════════════════════════════════════════════════════════════════════
@@ -308,3 +309,31 @@ async def ml_similar(champion_id: int, request: Request, role: str = "mid", n: i
         "similar": similar,
         "available": True,
     }
+
+
+# ═════════════════════════════════════════════════════════════════════════
+#  PERSONAL STATS (auth required — uses Riot API via LCU identity)
+# ═════════════════════════════════════════════════════════════════════════
+class PersonalStatsRequest(BaseModel):
+    puuid: str
+    region: str = "EUW1"
+    queue: str = "ranked"
+    count: int = 50
+
+
+@router.post("/personal/stats")
+async def personal_stats(
+    body: PersonalStatsRequest,
+    request: Request,
+    current_user: UserDB = Depends(get_current_user),
+):
+    """Fetch personal ranked stats for a player via Riot API."""
+    _require_ready(request)
+    personal_svc = request.app.state.personal_stats
+    data = await personal_svc.get_personal_stats(
+        puuid=body.puuid,
+        region=body.region,
+        queue=body.queue,
+        count=body.count,
+    )
+    return data

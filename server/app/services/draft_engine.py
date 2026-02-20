@@ -79,11 +79,22 @@ class DraftEngine:
                 self.ml = None
 
     # ── Public API ───────────────────────────────────────────────────────
-    async def recommend(self, request: DraftRequest) -> DraftResponse:
+    async def recommend(self, request: DraftRequest, personal_svc=None) -> DraftResponse:
         """Compute draft recommendations for the given state + user pool."""
         draft = request.draft_state
         pool = request.champion_pool
         role = draft.my_role
+
+        # ── Pre-load personal stats if puuid available ──
+        personal_boost_fn = None
+        if personal_svc and request.puuid:
+            await personal_svc.get_personal_stats(
+                puuid=request.puuid,
+                region=request.region or "EUW1",
+            )
+            personal_boost_fn = lambda cid, r: personal_svc.get_champion_score_boost(
+                request.puuid, cid, r
+            )
 
         # Merge weight overrides
         weights = config.weights.model_copy()
@@ -156,7 +167,7 @@ class DraftEngine:
             if not champ:
                 continue
 
-            rec = await self._score_candidate(champ, entry, draft, role, weights)
+            rec = await self._score_candidate(champ, entry, draft, role, weights, personal_boost_fn)
             scored.append(rec)
 
         # 4. Wild-card suggestions (off-pool)
@@ -209,6 +220,7 @@ class DraftEngine:
         draft: DraftState,
         role: str,
         weights,
+        personal_boost_fn=None,
     ) -> Recommendation:
         # Sub-scores
         meta_s   = self.meta.score(champ.id, role)
@@ -242,6 +254,13 @@ class DraftEngine:
             conf = ml_expl.confidence if ml_expl else "low"
             ml_weight = {"high": 0.25, "medium": 0.18, "low": 0.10}.get(conf, 0.10)
             base = base * (1.0 - ml_weight) + ml_s * ml_weight
+
+        # ── Personal stats boost ──
+        # Adjusts score ±15% based on the player's actual ranked
+        # performance on this champion (win rate, games played)
+        if personal_boost_fn is not None:
+            personal_mult = personal_boost_fn(champ.id, role)
+            base *= personal_mult
 
         # ── 2. Multiplicative penalties for critical weaknesses ──
         has_enemies = len([e for e in draft.enemy_picks if e.champion_id]) > 0

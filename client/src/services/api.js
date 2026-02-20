@@ -80,6 +80,7 @@ export const fetchRecommendations = (
   championPool,
   weightOverrides = null,
   duoOptions = null,
+  personalIdentity = null,
 ) =>
   api
     .post('/draft/recommend', {
@@ -90,6 +91,12 @@ export const fetchRecommendations = (
         ? {
             duo_active: true,
             duo_partner_role: duoOptions.partnerRole,
+          }
+        : {}),
+      ...(personalIdentity?.puuid
+        ? {
+            puuid: personalIdentity.puuid,
+            region: personalIdentity.region || 'EUW1',
           }
         : {}),
     })
@@ -154,6 +161,12 @@ export const fetchEmbeddings = (role = 'mid') =>
   api.get('/ml/embeddings', { params: { role } }).then((r) => r.data);
 export const fetchSimilarChampions = (championId, role = 'mid', n = 8) =>
   api.get(`/ml/similar/${championId}`, { params: { role, n } }).then((r) => r.data);
+
+// ═════════════════════════════════════════════════════════════════════════
+//  PERSONAL STATS (via LCU identity)
+// ═════════════════════════════════════════════════════════════════════════
+export const fetchPersonalStats = (puuid, region = 'EUW1', queue = 'ranked', count = 50) =>
+  api.post('/personal/stats', { puuid, region, queue, count }).then((r) => r.data);
 // ═══════════════════════════════════════════════════════
 //  DUOQ
 // ═══════════════════════════════════════════════════════

@@ -76,3 +76,30 @@ export const lcuDisconnect = async () => {
     console.warn('LCU disconnect failed:', e);
   }
 };
+
+/**
+ * Fetch the summoner identity of the connected Riot account.
+ * @returns {Promise<object>} SummonerInfo
+ */
+export const lcuSummonerInfo = async () => {
+  const inv = await getInvoke();
+  if (!inv) {
+    return {
+      available: false,
+      puuid: '',
+      game_name: '',
+      tag_line: '',
+      summoner_id: 0,
+      account_id: 0,
+      summoner_level: 0,
+      profile_icon_id: 0,
+      region: '',
+    };
+  }
+  try {
+    return await inv('lcu_summoner');
+  } catch (e) {
+    console.warn('LCU summoner info failed:', e);
+    return { available: false };
+  }
+};

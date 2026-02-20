@@ -1,28 +1,22 @@
 /**
- * Insights Page — Replaces the old ML/AI page with user-friendly content.
+ * Insights Page — Personal stats & live draft analysis.
  *
  * Tabs:
- *   1. Meta Snapshot — Top picks per role, patch trends
- *   2. Champions Similaires — "You play X? Try Y" with intuitive cards
- *   3. Tes Stats — Personal win rates, progression, champion mastery
- *   4. Prédictions — Live draft win probability + breakdown
+ *   1. Tes Stats — Personal win rates, progression, champion mastery
+ *   2. Prédictions — Live draft win probability + breakdown
  */
 import { useState } from 'react';
-import { Brain, TrendingUp, Users, BarChart3, Sparkles } from 'lucide-react';
-import MetaSnapshot from './MetaSnapshot';
-import SimilarChampions from './SimilarChampions';
+import { Brain, BarChart3, Sparkles } from 'lucide-react';
 import MyStats from './MyStats';
 import DraftPrediction from './DraftPrediction';
 
 const TABS = [
-  { id: 'meta',       label: 'Meta',        icon: TrendingUp,  desc: 'Top picks du patch' },
-  { id: 'similar',    label: 'Similaires',   icon: Users,       desc: 'Champions qui te correspondent' },
   { id: 'stats',      label: 'Tes Stats',    icon: BarChart3,   desc: 'Performance et progression' },
   { id: 'prediction', label: 'Prédictions',  icon: Sparkles,    desc: 'Analyse IA du draft' },
 ];
 
-export default function InsightsPage({ champions }) {
-  const [activeTab, setActiveTab] = useState('meta');
+export default function InsightsPage() {
+  const [activeTab, setActiveTab] = useState('stats');
 
   return (
     <div className="h-[calc(100vh-2.5rem)] overflow-y-auto">
@@ -35,7 +29,7 @@ export default function InsightsPage({ champions }) {
           <div>
             <h1 className="text-lg font-bold text-slate-100">Insights</h1>
             <p className="text-xs text-slate-500">
-              Analyse du méta, suggestions intelligentes et statistiques
+              Tes statistiques personnelles et analyse IA du draft
             </p>
           </div>
         </div>
@@ -61,8 +55,6 @@ export default function InsightsPage({ champions }) {
 
         {/* Tab content */}
         <div className="min-h-[500px]">
-          {activeTab === 'meta' && <MetaSnapshot />}
-          {activeTab === 'similar' && <SimilarChampions champions={champions} />}
           {activeTab === 'stats' && <MyStats />}
           {activeTab === 'prediction' && <DraftPrediction />}
         </div>

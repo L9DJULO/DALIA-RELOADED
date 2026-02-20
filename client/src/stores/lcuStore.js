@@ -5,7 +5,7 @@
  * Falls back gracefully when not running inside Tauri.
  */
 import { create } from 'zustand';
-import { lcuConnect, lcuStatus, lcuDisconnect } from '../services/lcu';
+import { lcuConnect, lcuStatus, lcuDisconnect, lcuSummonerInfo } from '../services/lcu';
 
 const useLCUStore = create((set, get) => ({
   // ── Connection state ──
@@ -16,6 +16,9 @@ const useLCUStore = create((set, get) => ({
   // ── My info ──
   myTeam: '',
   myRole: '',
+  
+  // ── Summoner identity (linked Riot account) ──
+  summoner: null,  // { puuid, gameName, tagLine, summonerId, region, ... }
   
   // ── Live draft data ──
   allyBans: [],
@@ -80,12 +83,40 @@ const useLCUStore = create((set, get) => ({
       const connected = await lcuConnect();
       if (connected) {
         await get().fetchStatus();
+        await get().fetchSummonerInfo();
         return { status: 'connected', message: 'Connecté au client League' };
       }
       return { status: 'disconnected', message: 'Client League non trouvé' };
     } catch (e) {
       set({ error: e.message || 'Failed to connect to LCU' });
       return { status: 'error', message: e.message };
+    }
+  },
+  
+  /**
+   * Fetch summoner identity from LCU (linked Riot account)
+   */
+  fetchSummonerInfo: async () => {
+    try {
+      const data = await lcuSummonerInfo();
+      if (data.available) {
+        set({
+          summoner: {
+            puuid: data.puuid,
+            gameName: data.game_name,
+            tagLine: data.tag_line,
+            summonerId: data.summoner_id,
+            accountId: data.account_id,
+            summonerLevel: data.summoner_level,
+            profileIconId: data.profile_icon_id,
+            region: data.region,
+          },
+        });
+      }
+      return data;
+    } catch (e) {
+      console.warn('Failed to fetch summoner info:', e);
+      return null;
     }
   },
   

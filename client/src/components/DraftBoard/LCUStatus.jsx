@@ -85,30 +85,6 @@ export default function LCUStatus() {
 
   return (
     <div className="flex items-center gap-2">
-      {/* Connection status */}
-      <div
-        className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-[11px] font-medium transition-colors duration-150 border ${
-          connected
-            ? inChampSelect
-              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25'
-              : 'bg-surface-elevated/50 text-slate-300 border-slate-700/50'
-            : 'bg-red-500/10 text-red-400 border-red-500/25'
-        }`}
-        role="status"
-        aria-label={`LCU: ${getPhaseDisplay()}`}
-      >
-        {connected ? (
-          inChampSelect ? (
-            <Gamepad2 size={12} className="animate-pulse-soft" aria-hidden="true" />
-          ) : (
-            <Wifi size={12} aria-hidden="true" />
-          )
-        ) : (
-          <WifiOff size={12} aria-hidden="true" />
-        )}
-        <span>{getPhaseDisplay()}</span>
-      </div>
-
       {/* Timer when in champ select */}
       {inChampSelect && timerRemaining > 0 && (
         <div

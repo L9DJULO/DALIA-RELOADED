@@ -24,6 +24,7 @@ from app.services.champion_data import ChampionDatabase
 from app.services.data_fetcher import LolalyticsFetcher
 from app.services.draft_engine import DraftEngine
 from app.services.ban_recommender import BanRecommender
+from app.services.personal_stats import PersonalStatsService
 from app.ml.patch_watcher import PatchWatcher
 
 logger = logging.getLogger("dalia.app")
@@ -54,11 +55,14 @@ async def _init_services(app: FastAPI) -> None:
         patch_watcher = PatchWatcher(fetcher, check_interval=3600.0)
         await patch_watcher.start()
 
+        personal_stats = PersonalStatsService()
+
         app.state.champion_db = champion_db
         app.state.fetcher = fetcher
         app.state.draft_engine = draft_engine
         app.state.ban_recommender = ban_recommender
         app.state.patch_watcher = patch_watcher
+        app.state.personal_stats = personal_stats
         app.state.ready = True
 
         logger.info("DALIA services initialized successfully.")
