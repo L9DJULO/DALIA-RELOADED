@@ -27,7 +27,7 @@ export default function RoleTierList({ role, champions }) {
 
   const champMap = useMemo(() => {
     const m = {};
-    for (const c of champions) m[c.id] = c;
+    for (const c of (Array.isArray(champions) ? champions : [])) m[c.id] = c;
     return m;
   }, [champions]);
 

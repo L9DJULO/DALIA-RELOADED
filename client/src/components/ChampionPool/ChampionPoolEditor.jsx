@@ -74,7 +74,7 @@ export default function ChampionPoolEditor({ champions }) {
   }, [championPool, activeRole]);
 
   const filteredChampions = useMemo(() => {
-    let list = champions;
+    let list = Array.isArray(champions) ? [...champions] : [];
     if (filterByRole) {
       list = list.filter((c) => c.roles.includes(activeRole));
     }

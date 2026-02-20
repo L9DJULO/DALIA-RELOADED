@@ -27,7 +27,7 @@ function ProtectedApp() {
           fetchChampions(),
           fetchPatch(),
         ]);
-        setChampions(champs);
+        setChampions(Array.isArray(champs) ? champs : []);
         setPatchInfo(patch);
         // Load the user's pool from the server
         await loadProfile();
