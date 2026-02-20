@@ -6,7 +6,6 @@ import AuthPage from './components/Auth/AuthPage';
 import ChampionPoolEditor from './components/ChampionPool/ChampionPoolEditor';
 import DraftBoard from './components/DraftBoard/DraftBoard';
 import DraftHistory from './components/History/DraftHistory';
-import InsightsPage from './components/Insights/InsightsPage';
 import SettingsPage from './components/Settings/SettingsPage';
 import LCUOverlay from './components/Overlay/LCUOverlay';
 import { fetchChampions, fetchPatch } from './services/api';
@@ -65,7 +64,6 @@ function ProtectedApp() {
           <Route path="/pool" element={<ChampionPoolEditor champions={champions} />} />
           <Route path="/draft" element={<DraftBoard champions={champions} />} />
           <Route path="/history" element={<DraftHistory champions={champions} />} />
-          <Route path="/insights" element={<InsightsPage />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Route>
       </Routes>

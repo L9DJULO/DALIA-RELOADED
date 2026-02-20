@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
-import { Swords, Users, Clock, Brain, Settings, LogOut, User, Wifi, WifiOff, Gamepad2 } from 'lucide-react';
+import { Swords, Users, Clock, Settings, LogOut, User, Wifi, WifiOff, Gamepad2 } from 'lucide-react';
 import useAuthStore from '../stores/authStore';
 import useUserStore from '../stores/userStore';
 import useLCUStore from '../stores/lcuStore';
@@ -10,7 +10,6 @@ const NAV = [
   { to: '/draft', label: 'Draft', icon: Swords },
   { to: '/pool', label: 'Pool', icon: Users },
   { to: '/history', label: 'Historique', icon: Clock },
-  { to: '/insights', label: 'Insights', icon: Brain },
 ];
 
 const BOTTOM_NAV = [
