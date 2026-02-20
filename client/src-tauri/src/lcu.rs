@@ -291,25 +291,43 @@ pub async fn poll_draft_state(creds: &LcuCredentials) -> LiveDraftState {
 
     // Find local player cell ID
     let local_cell = session["localPlayerCellId"].as_i64().unwrap_or(-1);
-    if local_cell >= 0 {
-        state.my_team = cell_to_team(local_cell).to_string();
-        // Try to find assigned position from myTeam array
-        if let Some(my_team) = session["myTeam"].as_array() {
-            for member in my_team {
-                if member["cellId"].as_i64() == Some(local_cell) {
-                    if let Some(pos) = member["assignedPosition"].as_str() {
-                        state.my_role = match pos {
-                            "top" => "top",
-                            "jungle" => "jungle",
-                            "middle" => "mid",
-                            "bottom" => "bot",
-                            "utility" => "support",
-                            other => other,
-                        }
-                        .to_string();
+
+    // Helper: normalise LCU assignedPosition → internal role key
+    let normalise_pos = |pos: &str| -> &'static str {
+        match pos {
+            "top"     => "top",
+            "jungle"  => "jungle",
+            "middle"  => "mid",
+            "bottom"  => "bot",
+            "utility" => "support",
+            _         => "",
+        }
+    };
+
+    // Build cellId → role map from BOTH myTeam and theirTeam arrays.
+    // This is the only reliable way to know each player's assigned role;
+    // the old cell_to_role(cell_id % 5) was pure position-index guesswork.
+    let mut cell_role_map: HashMap<i64, String> = HashMap::new();
+    for team_key in &["myTeam", "theirTeam"] {
+        if let Some(team) = session[*team_key].as_array() {
+            for member in team {
+                if let (Some(cid), Some(pos)) = (
+                    member["cellId"].as_i64(),
+                    member["assignedPosition"].as_str(),
+                ) {
+                    let role = normalise_pos(pos);
+                    if !role.is_empty() {
+                        cell_role_map.insert(cid, role.to_string());
                     }
                 }
             }
+        }
+    }
+
+    if local_cell >= 0 {
+        state.my_team = cell_to_team(local_cell).to_string();
+        if let Some(role) = cell_role_map.get(&local_cell) {
+            state.my_role = role.clone();
         }
     }
 
@@ -345,7 +363,13 @@ pub async fn poll_draft_state(creds: &LcuCredentials) -> LiveDraftState {
                             }
                         }
                         "pick" if completed => {
-                            let role = cell_to_role(cell_id).to_string();
+                            // Use the assignedPosition from the team arrays (reliable).
+                            // Falls back to positional index only when position is unassigned
+                            // (e.g. custom games or very early in draft before roles are set).
+                            let role = cell_role_map
+                                .get(&cell_id)
+                                .cloned()
+                                .unwrap_or_else(|| cell_to_role(cell_id).to_string());
                             if is_ally {
                                 state.ally_picks.insert(role, champion_id);
                             } else {

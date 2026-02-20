@@ -85,11 +85,18 @@ const useDraftStore = create((set, get) => ({
       picks[role] = champion;
       set({ allyPicks: picks });
     } else {
-      // Enemy pick → index-based (map role to slot index)
-      const roleToIndex = { top: 0, jungle: 1, mid: 2, bot: 3, support: 4 };
-      const idx = roleToIndex[role] ?? 0;
+      // Enemy pick → ordered slots (preserve draft pick order, keep role if known)
       const picks = [...get().enemyPicks];
-      picks[idx] = champion;
+      // If this role is already stored (update in place to avoid duplicates)
+      const existingIdx = role ? picks.findIndex((p) => p && p.role === role) : -1;
+      const enriched = role ? { ...champion, role } : champion;
+      if (existingIdx >= 0) {
+        picks[existingIdx] = enriched;
+      } else {
+        // Fill next empty slot to maintain actual draft pick order
+        const emptyIdx = picks.findIndex((p) => !p);
+        if (emptyIdx >= 0) picks[emptyIdx] = enriched;
+      }
       set({ enemyPicks: picks });
     }
   },
@@ -140,10 +147,10 @@ const useDraftStore = create((set, get) => ({
       .filter(([_, c]) => c !== null)
       .map(([role, c]) => ({ champion_id: c.id, champion_key: c.key, role }));
 
-    // Enemy picks: role is unknown (only pick order is visible in draft)
+    // Enemy picks: role may be known from LCU, pass it through when available
     const enemyPicks = s.enemyPicks
       .filter(Boolean)
-      .map((c) => ({ champion_id: c.id, champion_key: c.key, role: null }));
+      .map((c) => ({ champion_id: c.id, champion_key: c.key, role: c.role || null }));
 
     return {
       my_team: s.myTeam,

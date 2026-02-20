@@ -2,19 +2,14 @@
  * LCU Status indicator — Shows connection to LoL client and allows auto-sync.
  */
 import React, { useEffect, useRef, useMemo } from 'react';
-import { Wifi, WifiOff, RefreshCw, Loader2, Gamepad2, Radio } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import useLCUStore from '../../stores/lcuStore';
 import useDraftStore from '../../stores/draftStore';
 
 export default function LCUStatus({ champions = [] }) {
-  const connected = useLCUStore((s) => s.connected);
   const inChampSelect = useLCUStore((s) => s.inChampSelect);
-  const gamePhase = useLCUStore((s) => s.gamePhase);
-  const lcuTeam = useLCUStore((s) => s.myTeam);
-  const lcuRole = useLCUStore((s) => s.myRole);
   const isMyTurn = useLCUStore((s) => s.isMyTurn);
   const timerRemaining = useLCUStore((s) => s.timerRemaining);
-  const polling = useLCUStore((s) => s.polling);
   const autoSync = useLCUStore((s) => s.autoSync);
   const lastUpdate = useLCUStore((s) => s.lastUpdate);
   const startPolling = useLCUStore((s) => s.startPolling);
@@ -25,7 +20,6 @@ export default function LCUStatus({ champions = [] }) {
   const setFromLCU = useDraftStore((s) => s.setFromLCU);
   const setBan = useDraftStore((s) => s.setBan);
   const setPick = useDraftStore((s) => s.setPick);
-  const autoDetected = useDraftStore((s) => s.autoDetected);
 
   // Build champion lookup map (id → {id, key, name})
   const champMap = useMemo(() => {
@@ -78,18 +72,6 @@ export default function LCUStatus({ champions = [] }) {
     }
   }, [autoSync, inChampSelect, lastUpdate, champMap]);
 
-  const getPhaseDisplay = () => {
-    switch (gamePhase) {
-      case 'ChampSelect': return 'Champ Select';
-      case 'InProgress': return 'En partie';
-      case 'Lobby': return 'Lobby';
-      case 'Matchmaking': return 'Recherche…';
-      case 'ReadyCheck': return 'Ready Check';
-      case 'None': return 'Menu';
-      default: return gamePhase || 'LCU non détecté';
-    }
-  };
-
   return (
     <div className="flex items-center gap-2">
       {/* Timer when in champ select */}
@@ -105,15 +87,7 @@ export default function LCUStatus({ champions = [] }) {
         </div>
       )}
 
-      {/* Auto-detected indicator */}
-      {autoDetected && inChampSelect && (
-        <div className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/25">
-          <Radio size={9} aria-hidden="true" />
-          <span>Détecté</span>
-        </div>
-      )}
-
-      {/* Auto-sync toggle */}
+      {/* Auto-sync toggle — no spinner, no connected/disconnected pill */}
       <button
         onClick={() => setAutoSync(!autoSync)}
         aria-pressed={autoSync}
@@ -124,11 +98,7 @@ export default function LCUStatus({ champions = [] }) {
             : 'bg-surface-elevated/50 border-slate-700/50 hover:border-violet-500/30'
         }`}
       >
-        {polling ? (
-          <Loader2 size={10} className="animate-spin" aria-hidden="true" />
-        ) : (
-          <RefreshCw size={10} aria-hidden="true" />
-        )}
+        <RefreshCw size={10} aria-hidden="true" />
         <span>Sync {autoSync ? 'ON' : 'OFF'}</span>
       </button>
     </div>
