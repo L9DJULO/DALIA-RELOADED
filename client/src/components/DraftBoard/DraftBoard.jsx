@@ -165,7 +165,7 @@ export default function DraftBoard({ champions }) {
                   </span>
                 </div>
               )}
-              <LCUStatus />
+              <LCUStatus champions={champions} />
             </div>
           </div>
         </div>

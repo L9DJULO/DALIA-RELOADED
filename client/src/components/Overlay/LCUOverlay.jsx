@@ -115,6 +115,13 @@ export default function LCUOverlay({ champions }) {
 
   const { recommendations } = useDraftStore();
 
+  // Build champion lookup map for resolving raw IDs from LCU
+  const champMap = React.useMemo(() => {
+    const m = {};
+    for (const c of champions) m[c.id] = c;
+    return m;
+  }, [champions]);
+
   const topRecs = recommendations.slice(0, 5);
 
   // Drag handlers
@@ -223,12 +230,12 @@ export default function LCUOverlay({ champions }) {
               <div className="px-3 py-1.5 border-b border-slate-700/20">
                 <div className="text-[9px] text-[var(--text-muted)] uppercase tracking-wider font-medium mb-1">Bans</div>
                 <div className="flex gap-1">
-                  {allyBans.map((b, i) => (
-                    <ChampImg key={`ab${i}`} champKey={b?.key} size={22} className="opacity-50 grayscale" />
+                  {allyBans.map((banId, i) => (
+                    <ChampImg key={`ab${i}`} champKey={champMap[banId]?.key} size={22} className="opacity-50 grayscale" />
                   ))}
                   <div className="w-px bg-[var(--surface-elevated)] mx-0.5" />
-                  {enemyBans.map((b, i) => (
-                    <ChampImg key={`eb${i}`} champKey={b?.key} size={22} className="opacity-50 grayscale" />
+                  {enemyBans.map((banId, i) => (
+                    <ChampImg key={`eb${i}`} champKey={champMap[banId]?.key} size={22} className="opacity-50 grayscale" />
                   ))}
                 </div>
               </div>
@@ -241,16 +248,16 @@ export default function LCUOverlay({ champions }) {
                   <div className="text-[9px] text-blue-400/60 uppercase tracking-wider font-medium mb-0.5">
                     {myTeam === 'blue' ? 'Alliés' : 'Ennemis'}
                   </div>
-                  {Object.entries(myTeam === 'blue' ? allyPicks : enemyPicks).map(([role, champ]) => (
-                    <PickRow key={role} role={role} champion={champ} team={myTeam === 'blue' ? 'ally' : 'enemy'} />
+                  {Object.entries(myTeam === 'blue' ? allyPicks : enemyPicks).map(([role, champId]) => (
+                    <PickRow key={role} role={role} champion={champMap[champId] || null} team={myTeam === 'blue' ? 'ally' : 'enemy'} />
                   ))}
                 </div>
                 <div>
                   <div className="text-[9px] text-red-400/60 uppercase tracking-wider font-medium mb-0.5">
                     {myTeam === 'blue' ? 'Ennemis' : 'Alliés'}
                   </div>
-                  {Object.entries(myTeam === 'blue' ? enemyPicks : allyPicks).map(([role, champ]) => (
-                    <PickRow key={role} role={role} champion={champ} team={myTeam === 'blue' ? 'enemy' : 'ally'} />
+                  {Object.entries(myTeam === 'blue' ? enemyPicks : allyPicks).map(([role, champId]) => (
+                    <PickRow key={role} role={role} champion={champMap[champId] || null} team={myTeam === 'blue' ? 'enemy' : 'ally'} />
                   ))}
                 </div>
               </div>

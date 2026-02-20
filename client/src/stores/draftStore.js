@@ -76,6 +76,24 @@ const useDraftStore = create((set, get) => ({
     set({ enemyPicks: picks });
   },
 
+  // ── Team-aware pick (used by LCU auto-sync) ──
+  setPick: (team, role, champion) => {
+    const myTeam = get().myTeam;
+    if (team === myTeam) {
+      // Ally pick → role-keyed
+      const picks = { ...get().allyPicks };
+      picks[role] = champion;
+      set({ allyPicks: picks });
+    } else {
+      // Enemy pick → index-based (map role to slot index)
+      const roleToIndex = { top: 0, jungle: 1, mid: 2, bot: 3, support: 4 };
+      const idx = roleToIndex[role] ?? 0;
+      const picks = [...get().enemyPicks];
+      picks[idx] = champion;
+      set({ enemyPicks: picks });
+    }
+  },
+
   // ── Reset ──
   resetDraft: () =>
     set({

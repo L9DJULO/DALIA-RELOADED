@@ -151,37 +151,47 @@ const useLCUStore = create((set, get) => ({
   },
   
   /**
-   * Get draft state formatted for syncing with draftStore
+   * Get draft state formatted for syncing with draftStore.
+   * @param {Object} champMap - champion lookup {id: {id, key, name}} to resolve raw IDs from LCU
    */
-  getDraftSyncData: () => {
+  getDraftSyncData: (champMap = {}) => {
     const s = get();
     if (!s.inChampSelect) return null;
-    
+
+    // Resolve a raw champion ID (number) into {id, key, name}
+    const resolveChamp = (id) => {
+      if (!id) return null;
+      const c = champMap[id];
+      if (c) return { id: c.id, key: c.key, name: c.name };
+      // Fallback when champion list is unavailable
+      return { id, key: String(id), name: `Champion ${id}` };
+    };
+
     // Format bans for draftStore (array of 5 slots)
     const formatBans = (bans) => {
       const result = [null, null, null, null, null];
-      bans.forEach((ban, i) => {
-        if (i < 5 && ban) {
-          result[i] = { id: ban.id, key: ban.key, name: ban.name };
+      bans.forEach((banId, i) => {
+        if (i < 5 && banId) {
+          result[i] = resolveChamp(banId);
         }
       });
       return result;
     };
-    
+
     // Format picks for draftStore (object by role)
     const formatPicks = (picks) => {
       const result = { top: null, jungle: null, mid: null, bot: null, support: null };
-      for (const [role, champ] of Object.entries(picks)) {
-        if (champ && result.hasOwnProperty(role)) {
-          result[role] = { id: champ.id, key: champ.key, name: champ.name };
+      for (const [role, champId] of Object.entries(picks)) {
+        if (champId && result.hasOwnProperty(role)) {
+          result[role] = resolveChamp(champId);
         }
       }
       return result;
     };
-    
+
     // Determine which team is blue/red based on myTeam
     const isBlue = s.myTeam === 'blue';
-    
+
     return {
       myTeam: s.myTeam,
       myRole: s.myRole,

@@ -1,12 +1,12 @@
 /**
  * LCU Status indicator — Shows connection to LoL client and allows auto-sync.
  */
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import { Wifi, WifiOff, RefreshCw, Loader2, Gamepad2, Radio } from 'lucide-react';
 import useLCUStore from '../../stores/lcuStore';
 import useDraftStore from '../../stores/draftStore';
 
-export default function LCUStatus() {
+export default function LCUStatus({ champions = [] }) {
   const connected = useLCUStore((s) => s.connected);
   const inChampSelect = useLCUStore((s) => s.inChampSelect);
   const gamePhase = useLCUStore((s) => s.gamePhase);
@@ -27,6 +27,13 @@ export default function LCUStatus() {
   const setPick = useDraftStore((s) => s.setPick);
   const autoDetected = useDraftStore((s) => s.autoDetected);
 
+  // Build champion lookup map (id → {id, key, name})
+  const champMap = useMemo(() => {
+    const m = {};
+    for (const c of champions) m[c.id] = c;
+    return m;
+  }, [champions]);
+
   // Track previous LCU snapshot so we only push real changes
   const prevSync = useRef(null);
 
@@ -43,7 +50,7 @@ export default function LCUStatus() {
       return;
     }
 
-    const syncData = getDraftSyncData();
+    const syncData = getDraftSyncData(champMap);
     if (!syncData) return;
 
     // Quick deep-equal check to avoid unnecessary re-renders
@@ -69,7 +76,7 @@ export default function LCUStatus() {
     for (const [role, champ] of Object.entries(syncData.redPicks)) {
       if (champ) setPick('red', role, champ);
     }
-  }, [autoSync, inChampSelect, lastUpdate]);
+  }, [autoSync, inChampSelect, lastUpdate, champMap]);
 
   const getPhaseDisplay = () => {
     switch (gamePhase) {
