@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Search, X } from 'lucide-react';
+import RoleIcon from '../RoleIcon';
 
 const ROLE_FILTER = ['all', 'top', 'jungle', 'mid', 'bot', 'support'];
 const ROLE_LABELS = { all: 'Tous', top: 'Top', jungle: 'Jungle', mid: 'Mid', bot: 'Bot', support: 'Support' };
@@ -9,7 +10,6 @@ export default function ChampionSelector({ champions, unavailableIds, onSelect, 
   const [roleFilter, setRoleFilter] = useState('all');
   const panelRef = useRef(null);
 
-  // Close on Escape
   useEffect(() => {
     const handler = (e) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('keydown', handler);
@@ -40,55 +40,59 @@ export default function ChampionSelector({ champions, unavailableIds, onSelect, 
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
       role="dialog"
       aria-modal="true"
-      aria-label="Sélection de champion"
+      aria-label="Selection de champion"
     >
-      <div ref={panelRef} className="border rounded-xl w-[620px] max-h-[80vh] flex flex-col shadow-2xl" style={{ background: 'var(--surface-default)', borderColor: 'var(--border-subtle)' }}>
+      <div
+        ref={panelRef}
+        className="glass-panel w-[640px] max-h-[80vh] flex flex-col animate-scale-in"
+      >
         {/* Header */}
-        <div className="flex items-center justify-between p-3 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
+        <div className="flex items-center justify-between p-4 border-b border-border-subtle">
           <div>
-            <div className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{titleText}</div>
-            <div className="text-[11px]" style={{ color: 'var(--text-muted)' }}>Sélectionner un champion</div>
+            <div className="text-sm font-semibold text-txt-primary">{titleText}</div>
+            <div className="text-[11px] text-txt-muted">Selectionner un champion</div>
           </div>
           <button
             onClick={onClose}
             aria-label="Fermer"
-            className="p-1.5 rounded-lg transition-colors" style={{ color: 'var(--text-secondary)' }}
+            className="w-8 h-8 flex items-center justify-center rounded-lg text-txt-secondary hover:text-txt-primary hover:bg-surface-elevated transition-colors"
           >
             <X size={18} />
           </button>
         </div>
 
         {/* Search + filters */}
-        <div className="p-3 space-y-2 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
+        <div className="p-4 space-y-3 border-b border-border-subtle">
           <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
+            <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-txt-muted" />
             <input
               autoFocus
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Rechercher…"
+              placeholder="Rechercher..."
               aria-label="Rechercher un champion"
-              className="input-field w-full pl-9 pr-3 py-2 text-sm"
+              className="input-field w-full pl-10 pr-3 py-2.5 text-sm"
             />
           </div>
-          <div className="flex gap-1">
+          <div className="flex gap-1.5">
             {ROLE_FILTER.map((r) => (
               <button
                 key={r}
                 onClick={() => setRoleFilter(r)}
                 aria-pressed={roleFilter === r}
-                className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors duration-150 border ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 border ${
                   roleFilter === r
-                    ? 'bg-violet-500/15 text-violet-400 border-violet-500/25'
-                    : 'hover:bg-surface-elevated border-transparent'
+                    ? 'bg-accent-muted text-accent border-accent/25'
+                    : 'text-txt-secondary hover:text-txt-primary hover:bg-surface-elevated border-transparent'
                 }`}
-                style={roleFilter !== r ? { color: 'var(--text-secondary)' } : undefined}
               >
+                {r !== 'all' && <RoleIcon role={r} size={13} />}
                 {ROLE_LABELS[r]}
               </button>
             ))}
@@ -96,8 +100,8 @@ export default function ChampionSelector({ champions, unavailableIds, onSelect, 
         </div>
 
         {/* Champion grid */}
-        <div className="flex-1 overflow-y-auto p-3">
-          <div className="grid grid-cols-8 gap-1.5">
+        <div className="flex-1 overflow-y-auto p-4">
+          <div className="grid grid-cols-8 gap-2">
             {filtered.map((champ) => {
               const disabled = unavailableIds.has(champ.id);
               return (
@@ -106,12 +110,11 @@ export default function ChampionSelector({ champions, unavailableIds, onSelect, 
                   disabled={disabled}
                   onClick={() => onSelect(champ)}
                   aria-label={`${champ.name}${disabled ? ' (indisponible)' : ''}`}
-                  className={`relative rounded-lg overflow-hidden border transition-colors duration-150 ${
+                  className={`relative rounded-xl overflow-hidden border transition-all duration-200 ${
                     disabled
-                      ? 'opacity-25 cursor-not-allowed grayscale'
-                      : 'hover:border-violet-500 cursor-pointer'
+                      ? 'opacity-20 cursor-not-allowed grayscale border-border-subtle'
+                      : 'border-border-subtle hover:border-accent hover:scale-105 hover:shadow-glow cursor-pointer'
                   }`}
-                  style={{ borderColor: disabled ? 'var(--border-subtle)' : 'var(--border-default)' }}
                 >
                   <img
                     src={champ.image_url}
@@ -119,8 +122,8 @@ export default function ChampionSelector({ champions, unavailableIds, onSelect, 
                     className="w-full aspect-square object-cover"
                     loading="lazy"
                   />
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent
-                                  px-1 py-0.5 text-[9px] text-center truncate text-white font-medium">
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/85 to-transparent
+                                  px-1 py-1 text-[9px] text-center truncate text-white font-medium">
                     {champ.name}
                   </div>
                 </button>

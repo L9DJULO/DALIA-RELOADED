@@ -3,34 +3,43 @@
 @tailwind utilities;
 
 /* ══════════════════════════════════════════════════════════
-   DALIA — Professional Dark Theme
-   Clean B2B/SaaS dashboard palette
+   DALIA — Premium Dark Theme v3
+   Glass-morphism, deep surfaces, violet accent
    ══════════════════════════════════════════════════════════ */
 
 @layer base {
   .dark {
-    --surface-base:     #0f1117;
-    --surface-default:  #161820;
-    --surface-elevated: #1c1e28;
-    --surface-card:     #1a1c26;
-    --surface-overlay:  #22242e;
+    /* ── Surfaces ── */
+    --surface-base:     #08090e;
+    --surface-default:  #0e1018;
+    --surface-elevated: #141620;
+    --surface-card:     #12141e;
+    --surface-overlay:  #1a1c28;
+    --surface-glass:    rgba(14, 16, 24, 0.75);
 
+    /* ── Accent (Violet) ── */
     --accent:           #7c5cfc;
     --accent-hover:     #9179ff;
     --accent-muted:     rgba(124, 92, 252, 0.12);
     --accent-subtle:    rgba(124, 92, 252, 0.06);
+    --accent-glow:      rgba(124, 92, 252, 0.25);
 
-    --text-primary:     #e8e9ed;
-    --text-secondary:   #9496a1;
-    --text-muted:       #5c5e6a;
-    --text-inverse:     #0f1117;
+    /* ── Text ── */
+    --text-primary:     #ecedf2;
+    --text-secondary:   #8e91a4;
+    --text-muted:       #4e5064;
+    --text-inverse:     #08090e;
 
-    --border-default:   rgba(255, 255, 255, 0.08);
-    --border-subtle:    rgba(255, 255, 255, 0.05);
+    /* ── Borders ── */
+    --border-default:   rgba(255, 255, 255, 0.07);
+    --border-subtle:    rgba(255, 255, 255, 0.04);
+    --border-accent:    rgba(124, 92, 252, 0.25);
 
-    --scrollbar-thumb:  #2a2c38;
-    --scrollbar-hover:  #383a48;
+    /* ── Misc ── */
+    --scrollbar-thumb:  #1e2030;
+    --scrollbar-hover:  #2a2d42;
     --focus-ring:       rgba(124, 92, 252, 0.5);
+    --radius:           12px;
 
     color-scheme: dark;
   }
@@ -52,53 +61,101 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* scrollbar */
-::-webkit-scrollbar          { width: 6px; height: 6px; }
+/* ── Selection ── */
+::selection {
+  background: var(--accent-muted);
+  color: var(--text-primary);
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar          { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track    { background: transparent; }
 ::-webkit-scrollbar-thumb    { background: var(--scrollbar-thumb); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-hover); }
 
-/* ── Focus visible (global) ────────────────────────────── */
+/* ── Focus visible ── */
 :focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
-  border-radius: 6px;
+  border-radius: 8px;
 }
 
-/* ── Tabular nums for data displays ────────────────────── */
+/* ── Tabular nums ── */
 .tabular-nums { font-variant-numeric: tabular-nums; }
 
-/* ── Utility component classes ─────────────────────────── */
+/* ══════════════════════════════════════════════════════════
+   COMPONENT CLASSES
+   ══════════════════════════════════════════════════════════ */
+
 @layer components {
+  /* ── Buttons ── */
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl
+    @apply inline-flex items-center justify-center px-5 py-2.5 rounded-xl
            font-semibold text-sm
            active:scale-[0.97] transition-all duration-150 cursor-pointer;
     background: var(--accent);
     color: white;
+    box-shadow: 0 0 20px var(--accent-glow), inset 0 1px 0 rgba(255,255,255,0.1);
   }
   .btn-primary:hover {
     background: var(--accent-hover);
+    box-shadow: 0 0 30px var(--accent-glow), inset 0 1px 0 rgba(255,255,255,0.15);
+  }
+  .btn-primary:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    box-shadow: none;
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl
+    @apply inline-flex items-center justify-center px-4 py-2 rounded-xl
            text-sm font-medium transition-all duration-150 cursor-pointer;
     background: var(--surface-elevated);
     border: 1px solid var(--border-default);
     color: var(--text-secondary);
+    backdrop-filter: blur(8px);
   }
   .btn-secondary:hover {
     border-color: var(--accent);
     color: var(--text-primary);
+    background: var(--accent-subtle);
   }
 
+  .btn-ghost {
+    @apply inline-flex items-center justify-center px-3 py-1.5 rounded-lg
+           text-sm font-medium transition-all duration-150 cursor-pointer;
+    background: transparent;
+    color: var(--text-secondary);
+  }
+  .btn-ghost:hover {
+    background: var(--surface-elevated);
+    color: var(--text-primary);
+  }
+
+  /* ── Panel / Card ── */
   .panel {
     background: var(--surface-default);
     border: 1px solid var(--border-subtle);
-    border-radius: 12px;
+    border-radius: var(--radius);
   }
 
+  .glass-panel {
+    background: var(--surface-glass);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius);
+    backdrop-filter: blur(16px) saturate(1.2);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255,255,255,0.04);
+  }
+
+  .glass-card {
+    background: rgba(14, 16, 24, 0.6);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+  }
+
+  /* ── Input ── */
   .input-field {
     @apply w-full px-3.5 py-2.5 rounded-xl text-sm transition-all duration-150;
     background: var(--surface-elevated);
@@ -109,41 +166,95 @@ body {
   .input-field:focus {
     outline: none;
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--accent-muted);
+    box-shadow: 0 0 0 3px var(--accent-muted), 0 0 20px var(--accent-glow);
+  }
+
+  /* ── Divider ── */
+  .divider {
+    height: 1px;
+    background: var(--border-subtle);
+  }
+
+  /* ── Pill / Status ── */
+  .pill {
+    @apply inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium;
+    border: 1px solid var(--border-default);
+  }
+
+  /* ── Section label ── */
+  .section-label {
+    @apply text-[10px] uppercase tracking-[0.08em] font-semibold;
+    color: var(--text-muted);
   }
 }
 
-/* ── Animations ──────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════
+   ANIMATIONS
+   ══════════════════════════════════════════════════════════ */
+
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(6px); }
+  from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(12px); }
+  to   { opacity: 1; transform: translateX(0); }
 }
 @keyframes slideIn {
   from { opacity: 0; transform: translateX(-6px); }
   to   { opacity: 1; transform: translateX(0); }
 }
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
 @keyframes pulse-soft {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
+  50% { opacity: 0.5; }
+}
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 12px var(--accent-glow); }
+  50% { box-shadow: 0 0 24px var(--accent-glow); }
+}
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
-.animate-fade-in-up { animation: fadeInUp 0.2s ease-out both; }
-.animate-slide-in   { animation: slideIn 0.15s ease-out both; }
-.animate-pulse-soft  { animation: pulse-soft 2s ease-in-out infinite; }
+.animate-fade-in-up   { animation: fadeInUp 0.25s ease-out both; }
+.animate-fade-in      { animation: fadeIn 0.2s ease-out both; }
+.animate-slide-in     { animation: slideIn 0.2s ease-out both; }
+.animate-slide-in-r   { animation: slideInRight 0.25s ease-out both; }
+.animate-scale-in     { animation: scaleIn 0.2s ease-out both; }
+.animate-pulse-soft   { animation: pulse-soft 2s ease-in-out infinite; }
+.animate-glow-pulse   { animation: glow-pulse 2s ease-in-out infinite; }
 
 /* Staggered children */
-.stagger-children > * { animation: fadeInUp 0.2s ease-out both; }
+.stagger-children > * { animation: fadeInUp 0.25s ease-out both; }
 .stagger-children > *:nth-child(1)  { animation-delay: 0.00s; }
-.stagger-children > *:nth-child(2)  { animation-delay: 0.03s; }
-.stagger-children > *:nth-child(3)  { animation-delay: 0.06s; }
-.stagger-children > *:nth-child(4)  { animation-delay: 0.09s; }
-.stagger-children > *:nth-child(5)  { animation-delay: 0.12s; }
-.stagger-children > *:nth-child(6)  { animation-delay: 0.15s; }
-.stagger-children > *:nth-child(7)  { animation-delay: 0.18s; }
-.stagger-children > *:nth-child(8)  { animation-delay: 0.21s; }
+.stagger-children > *:nth-child(2)  { animation-delay: 0.04s; }
+.stagger-children > *:nth-child(3)  { animation-delay: 0.08s; }
+.stagger-children > *:nth-child(4)  { animation-delay: 0.12s; }
+.stagger-children > *:nth-child(5)  { animation-delay: 0.16s; }
+.stagger-children > *:nth-child(6)  { animation-delay: 0.20s; }
+.stagger-children > *:nth-child(7)  { animation-delay: 0.24s; }
+.stagger-children > *:nth-child(8)  { animation-delay: 0.28s; }
 
-/* ── Brand text accent ── */
-.text-accent {
-  color: var(--accent);
+/* Skeleton shimmer */
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--surface-elevated) 25%,
+    var(--surface-overlay) 50%,
+    var(--surface-elevated) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
 }
 
+/* ── Accent text ── */
+.text-accent { color: var(--accent); }

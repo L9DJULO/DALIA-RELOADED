@@ -1,28 +1,134 @@
-import React from 'react';
-import { Outlet, NavLink } from 'react-router-dom';
-import { Swords, Users, Clock, Settings, LogOut, User, Wifi, WifiOff, Gamepad2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { Outlet, NavLink, useLocation } from 'react-router-dom';
+import {
+  Swords, Users, Clock, Settings, LogOut, User,
+  Wifi, WifiOff, Gamepad2, Brain, ChevronRight,
+} from 'lucide-react';
 import useAuthStore from '../stores/authStore';
 import useUserStore from '../stores/userStore';
 import useLCUStore from '../stores/lcuStore';
 import DaliaLogo from './DaliaLogo';
 
 const NAV = [
-  { to: '/draft', label: 'Draft', icon: Swords },
-  { to: '/pool', label: 'Pool', icon: Users },
-  { to: '/history', label: 'Historique', icon: Clock },
+  { to: '/draft', label: 'Draft', icon: Swords, desc: 'Draft Board' },
+  { to: '/pool', label: 'Pool', icon: Users, desc: 'Champion Pool' },
+  { to: '/insights', label: 'Insights', icon: Brain, desc: 'Stats & IA' },
+  { to: '/history', label: 'Historique', icon: Clock, desc: 'Historique' },
 ];
 
 const BOTTOM_NAV = [
-  { to: '/settings', label: 'Paramètres', icon: Settings },
+  { to: '/settings', label: 'Paramètres', icon: Settings, desc: 'Settings' },
 ];
 
+/* ── Sidebar Navigation Item ── */
+function SidebarItem({ to, label, icon: Icon, desc }) {
+  return (
+    <NavLink
+      to={to}
+      aria-label={label}
+      className={({ isActive }) =>
+        `group relative flex items-center justify-center w-11 h-11 rounded-xl transition-all duration-200 ${
+          isActive
+            ? 'bg-accent text-white shadow-glow'
+            : 'text-txt-muted hover:text-txt-secondary hover:bg-surface-elevated'
+        }`
+      }
+    >
+      {({ isActive }) => (
+        <>
+          <Icon size={20} strokeWidth={isActive ? 2.2 : 1.7} />
+          {/* Tooltip */}
+          <div className="pointer-events-none absolute left-full ml-3 px-2.5 py-1.5 rounded-lg
+                          bg-surface-overlay border border-border text-txt-primary text-xs font-medium
+                          opacity-0 group-hover:opacity-100 transition-opacity duration-150 whitespace-nowrap z-50
+                          shadow-lg">
+            {desc || label}
+            <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-surface-overlay" />
+          </div>
+        </>
+      )}
+    </NavLink>
+  );
+}
+
+/* ── LCU Status Badge ── */
+function LCUBadge() {
+  const lcuConnected = useLCUStore((s) => s.connected);
+  const lcuInChampSelect = useLCUStore((s) => s.inChampSelect);
+  const lcuGamePhase = useLCUStore((s) => s.gamePhase);
+
+  const statusConfig = lcuConnected
+    ? lcuInChampSelect
+      ? { icon: Gamepad2, text: 'Champ Select', color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20', pulse: true }
+      : { icon: Wifi, text: 'LoL', color: 'text-txt-muted bg-surface-elevated border-border-subtle', pulse: false }
+    : { icon: WifiOff, text: 'LoL', color: 'text-txt-muted bg-transparent border-border-subtle', pulse: false };
+
+  const { icon: StatusIcon, text, color, pulse } = statusConfig;
+
+  return (
+    <div
+      className={`pill gap-1.5 ${color}`}
+      title={
+        lcuConnected
+          ? lcuInChampSelect
+            ? 'Connecte au client LoL -- Champ Select en cours'
+            : `Connecte au client LoL${lcuGamePhase ? ` -- ${lcuGamePhase}` : ''}`
+          : 'Client LoL non detecte'
+      }
+    >
+      <StatusIcon size={11} className={pulse ? 'animate-pulse' : ''} />
+      <span>{text}</span>
+    </div>
+  );
+}
+
+/* ── User Menu ── */
+function UserMenu({ user, onLogout }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-2 px-2 py-1.5 rounded-xl hover:bg-surface-elevated transition-colors duration-150"
+      >
+        <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-accent-muted">
+          <User size={13} className="text-accent" />
+        </div>
+        <span className="text-xs font-medium text-txt-primary max-w-[100px] truncate">{user.username}</span>
+        <ChevronRight size={12} className={`text-txt-muted transition-transform duration-200 ${open ? 'rotate-90' : ''}`} />
+      </button>
+
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 top-full mt-2 w-44 glass-panel p-1.5 z-50 animate-scale-in">
+            <div className="px-3 py-2 mb-1">
+              <div className="text-xs font-medium text-txt-primary">{user.username}</div>
+              <div className="text-[10px] text-txt-muted truncate">{user.email || 'DALIA User'}</div>
+            </div>
+            <div className="divider" />
+            <button
+              onClick={() => { setOpen(false); onLogout(); }}
+              className="w-full flex items-center gap-2 px-3 py-2 mt-1 rounded-lg text-xs text-red-400 hover:bg-red-500/10 transition-colors"
+            >
+              <LogOut size={13} />
+              Se deconnecter
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════
+   LAYOUT — AppShell
+   ══════════════════════════════════════════════════════════ */
 export default function Layout({ patchInfo }) {
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const resetPool = useUserStore((s) => s.resetPool);
-  const lcuConnected = useLCUStore((s) => s.connected);
-  const lcuInChampSelect = useLCUStore((s) => s.inChampSelect);
-  const lcuGamePhase = useLCUStore((s) => s.gamePhase);
 
   const handleLogout = () => {
     resetPool();
@@ -30,153 +136,69 @@ export default function Layout({ patchInfo }) {
   };
 
   return (
-    <div className="h-screen flex flex-col" style={{ background: 'var(--surface-base)' }}>
-      {/* ── Header ── */}
+    <div className="h-screen flex flex-col bg-surface-base">
+      {/* ── Topbar ── */}
       <header
-        className="h-12 flex items-center px-5 shrink-0 z-30"
+        className="h-12 flex items-center px-4 shrink-0 z-30 border-b"
         style={{
-          background: 'var(--surface-default)',
-          borderBottom: '1px solid var(--border-subtle)',
+          background: 'var(--surface-glass)',
+          backdropFilter: 'blur(16px) saturate(1.2)',
+          borderColor: 'var(--border-subtle)',
         }}
       >
+        {/* Left: Brand */}
         <div className="flex items-center gap-2.5">
           <DaliaLogo size={22} />
-          <span className="text-sm font-semibold tracking-tight" style={{ color: 'var(--accent)' }}>DALIA</span>
+          <span className="text-sm font-bold tracking-tight text-accent">DALIA</span>
+          <span className="text-[10px] font-medium text-txt-muted hidden sm:block">Draft Assistant</span>
         </div>
 
-        <div className="ml-auto flex items-center gap-3">
+        {/* Right: Status + User */}
+        <div className="ml-auto flex items-center gap-2.5">
+          {/* Patch info */}
           {patchInfo && (
-            <div className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--text-muted)' }}>
+            <div className="pill gap-1.5 bg-surface-elevated text-txt-muted border-border-subtle">
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              Patch {patchInfo.patch}
+              <span>Patch {patchInfo.patch}</span>
             </div>
           )}
 
-          {/* LCU connection status */}
-          <div
-            className={`flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-lg border transition-colors duration-150 ${
-              lcuConnected
-                ? lcuInChampSelect
-                  ? 'text-emerald-400 bg-emerald-500/8 border-emerald-500/20'
-                  : 'text-[var(--text-muted)] bg-[var(--surface-elevated)] border-[var(--border-subtle)]'
-                : 'text-[var(--text-muted)] bg-transparent border-[var(--border-subtle)]'
-            }`}
-            title={
-              lcuConnected
-                ? lcuInChampSelect
-                  ? 'Connecté au client LoL — Champ Select en cours'
-                  : `Connecté au client LoL${lcuGamePhase ? ` — ${lcuGamePhase}` : ''}`
-                : 'Client LoL non détecté — Lancez League of Legends'
-            }
-          >
-            {lcuConnected ? (
-              lcuInChampSelect ? (
-                <Gamepad2 size={11} className="animate-pulse" />
-              ) : (
-                <Wifi size={11} />
-              )
-            ) : (
-              <WifiOff size={11} />
-            )}
-            <span>{lcuConnected ? (lcuInChampSelect ? 'Champ Select' : 'LoL') : 'LoL'}</span>
+          {/* LCU */}
+          <LCUBadge />
+
+          {/* Rank badge (placeholder) */}
+          <div className="pill bg-amber-500/10 text-amber-400 border-amber-500/20 gap-1">
+            <span>Master+</span>
           </div>
 
-          <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Ranked Master+</span>
+          {/* Separator */}
+          <div className="w-px h-5 bg-border-subtle" />
 
-          {/* User info + logout */}
-          {user && (
-            <div className="flex items-center gap-2 ml-1 pl-3" style={{ borderLeft: '1px solid var(--border-subtle)' }}>
-              <div className="flex items-center gap-1.5">
-                <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: 'var(--accent-muted)' }}>
-                  <User size={12} style={{ color: 'var(--accent)' }} />
-                </div>
-                <span className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>{user.username}</span>
-              </div>
-              <button
-                onClick={handleLogout}
-                title="Se déconnecter"
-                className="w-7 h-7 flex items-center justify-center rounded-lg transition-colors duration-150 hover:bg-red-500/10 hover:text-red-400"
-                style={{ color: 'var(--text-muted)' }}
-              >
-                <LogOut size={13} />
-              </button>
-            </div>
-          )}
+          {/* User */}
+          {user && <UserMenu user={user} onLogout={handleLogout} />}
         </div>
       </header>
 
-      {/* ── Body: sidebar + content ── */}
+      {/* ── Body: Sidebar + Content ── */}
       <div className="flex flex-1 min-h-0">
         {/* Sidebar */}
         <aside
-          className="w-14 flex flex-col items-center py-3 shrink-0"
+          className="w-[60px] flex flex-col items-center py-3 shrink-0 border-r"
           style={{
             background: 'var(--surface-default)',
-            borderRight: '1px solid var(--border-subtle)',
+            borderColor: 'var(--border-subtle)',
           }}
         >
-          <nav className="flex flex-col gap-1 flex-1" aria-label="Navigation principale">
-            {NAV.map(({ to, label, icon: Icon }) => (
-              <NavLink
-                key={to}
-                to={to}
-                title={label}
-                aria-label={label}
-                className={({ isActive }) =>
-                  `relative w-10 h-10 flex items-center justify-center rounded-xl transition-colors duration-150 ${
-                    isActive
-                      ? 'text-white'
-                      : 'hover:bg-[var(--accent-muted)]'
-                  }`
-                }
-                style={({ isActive }) => isActive ? {
-                  background: 'var(--accent)',
-                } : {
-                  color: 'var(--text-muted)',
-                }}
-              >
-                {({ isActive }) => (
-                  <>
-                    {isActive && (
-                      <div className="absolute left-0 top-2 bottom-2 w-0.5 rounded-r" style={{ background: 'var(--accent)' }} />
-                    )}
-                    <Icon size={20} strokeWidth={isActive ? 2 : 1.8} />
-                  </>
-                )}
-              </NavLink>
+          <nav className="flex flex-col gap-1.5 flex-1" aria-label="Navigation principale">
+            {NAV.map((item) => (
+              <SidebarItem key={item.to} {...item} />
             ))}
           </nav>
 
-          {/* Bottom nav — Settings */}
-          <nav className="flex flex-col gap-1 mt-auto" aria-label="Navigation secondaire">
-            {BOTTOM_NAV.map(({ to, label, icon: Icon }) => (
-              <NavLink
-                key={to}
-                to={to}
-                title={label}
-                aria-label={label}
-                className={({ isActive }) =>
-                  `relative w-10 h-10 flex items-center justify-center rounded-xl transition-colors duration-150 ${
-                    isActive
-                      ? 'text-white'
-                      : 'hover:bg-[var(--accent-muted)]'
-                  }`
-                }
-                style={({ isActive }) => isActive ? {
-                  background: 'var(--accent)',
-                } : {
-                  color: 'var(--text-muted)',
-                }}
-              >
-                {({ isActive }) => (
-                  <>
-                    {isActive && (
-                      <div className="absolute left-0 top-2 bottom-2 w-0.5 rounded-r" style={{ background: 'var(--accent)' }} />
-                    )}
-                    <Icon size={18} strokeWidth={isActive ? 2 : 1.8} />
-                  </>
-                )}
-              </NavLink>
+          {/* Bottom nav */}
+          <nav className="flex flex-col gap-1.5 mt-auto" aria-label="Navigation secondaire">
+            {BOTTOM_NAV.map((item) => (
+              <SidebarItem key={item.to} {...item} />
             ))}
           </nav>
         </aside>

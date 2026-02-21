@@ -1,13 +1,13 @@
 /**
- * Skeleton loader — animated placeholder for loading content.
+ * Skeleton loader — animated shimmer placeholder.
  */
 export default function Skeleton({ className = '', width, height }) {
   return (
     <div
-      className={`animate-pulse rounded-lg ${className}`}
-      style={{ width, height, background: 'var(--surface-elevated)' }}
+      className={`skeleton-shimmer rounded-lg ${className}`}
+      style={{ width, height }}
       role="status"
-      aria-label="Chargement…"
+      aria-label="Chargement..."
     />
   );
 }
