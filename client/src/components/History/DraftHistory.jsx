@@ -11,6 +11,7 @@ import useHistoryStore from '../../stores/historyStore';
 import { getScoreClasses, getWinProbColor } from '../../lib/scores';
 import Badge from '../ui/Badge';
 import RoleIcon from '../RoleIcon';
+import { getDDragonChampBase } from '../../lib/constants';
 
 const RESULT_OPTIONS = [
   { value: 'win', label: 'Victoire', icon: CheckCircle, color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/25' },
@@ -18,13 +19,11 @@ const RESULT_OPTIONS = [
   { value: 'remake', label: 'Remake', icon: RotateCcw, color: 'text-txt-muted', bg: 'bg-surface-elevated border-border-subtle' },
 ];
 
-const DDRAGON = 'https://ddragon.leagueoflegends.com/cdn/14.24.1/img/champion';
-
 function ChampImg({ champKey, size = 28 }) {
   if (!champKey) return null;
   return (
     <img
-      src={`${DDRAGON}/${champKey}.png`}
+      src={`${getDDragonChampBase()}/${champKey}.png`}
       alt={champKey}
       className="rounded-lg"
       style={{ width: size, height: size }}

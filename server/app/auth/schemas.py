@@ -40,5 +40,12 @@ class TokenResponse(BaseModel):
     user: UserResponse
 
 
+class UpdateMeRequest(BaseModel):
+    preferred_roles: list[str] | None = None
+    enable_wildcard: bool | None = None
+    enable_off_meta: bool | None = None
+    weight_overrides: dict | None = None
+
+
 class MessageResponse(BaseModel):
     message: str

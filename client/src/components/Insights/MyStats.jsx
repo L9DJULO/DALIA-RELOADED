@@ -9,8 +9,7 @@ import {
 import { fetchHistoryStats, fetchHistory, fetchPersonalStats, fetchChampions } from '../../services/api';
 import useLCUStore from '../../stores/lcuStore';
 import RoleIcon from '../RoleIcon';
-
-const DDRAGON = 'https://ddragon.leagueoflegends.com/cdn/14.24.1/img/champion';
+import { getDDragonChampBase } from '../../lib/constants';
 
 function StatCard({ icon: Icon, iconColor, label, value, sub, valueColor = 'text-txt-primary' }) {
   return (
@@ -58,7 +57,7 @@ function ChampionMastery({ champ }) {
   return (
     <div className="flex items-center gap-3 py-2 px-3 rounded-xl hover:bg-surface-elevated/50 transition-colors">
       <img
-        src={`${DDRAGON}/${champ.champion_key}.png`}
+        src={`${getDDragonChampBase()}/${champ.champion_key}.png`}
         alt={champ.champion_name}
         className="w-10 h-10 rounded-xl border border-border-subtle"
         loading="lazy"
@@ -241,7 +240,7 @@ export default function MyStats() {
               <div key={g.id || i} className="flex flex-col items-center gap-1">
                 {g.my_champion_key && (
                   <img
-                    src={`${DDRAGON}/${g.my_champion_key}.png`}
+                    src={`${getDDragonChampBase()}/${g.my_champion_key}.png`}
                     alt={g.my_champion_name}
                     className={`w-9 h-9 rounded-xl border-2 ${
                       g.result === 'win' ? 'border-emerald-500/40' : 'border-red-500/40'
@@ -387,7 +386,7 @@ export default function MyStats() {
                   return (
                     <div key={key} className="flex items-center gap-3 py-1.5 px-2 rounded-xl hover:bg-surface-elevated/50 transition-colors">
                       <img
-                        src={`${DDRAGON}/${champInfo.key}.png`}
+                        src={`${getDDragonChampBase()}/${champInfo.key}.png`}
                         alt={champInfo.name}
                         className="w-8 h-8 rounded-xl border border-border-subtle"
                         loading="lazy"

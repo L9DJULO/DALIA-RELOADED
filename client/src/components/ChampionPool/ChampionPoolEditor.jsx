@@ -1,11 +1,10 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { Search, Save, Check } from 'lucide-react';
-import useUserStore, { ROLES, TIERS } from '../../stores/userStore';
+import useUserStore from '../../stores/userStore';
+import { ROLES, TIERS, ROLE_LABELS } from '../../lib/constants';
 import RoleTierList from './RoleTierList';
 import ChampionCard from './ChampionCard';
 import RoleIcon from '../RoleIcon';
-
-const ROLE_LABELS = { top: 'Top', jungle: 'Jungle', mid: 'Mid', bot: 'Bot', support: 'Support' };
 
 const TIER_COLORS = {
   S: 'bg-red-500 hover:bg-red-400',

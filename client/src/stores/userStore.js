@@ -8,9 +8,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { fetchProfile, updatePool } from '../services/api';
-
-const TIERS = ['S', 'A', 'B', 'C', 'D'];
-const ROLES = ['top', 'jungle', 'mid', 'bot', 'support'];
+import { TIERS, ROLES } from '../lib/constants';
 
 // Debounce timers per role for auto-save
 const _saveTimers = {};

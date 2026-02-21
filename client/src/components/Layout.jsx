@@ -166,11 +166,6 @@ export default function Layout({ patchInfo }) {
           {/* LCU */}
           <LCUBadge />
 
-          {/* Rank badge (placeholder) */}
-          <div className="pill bg-amber-500/10 text-amber-400 border-amber-500/20 gap-1">
-            <span>Master+</span>
-          </div>
-
           {/* Separator */}
           <div className="w-px h-5 bg-border-subtle" />
 

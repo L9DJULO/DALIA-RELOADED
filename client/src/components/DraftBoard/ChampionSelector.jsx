@@ -1,9 +1,10 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Search, X } from 'lucide-react';
 import RoleIcon from '../RoleIcon';
+import { ROLE_LABELS } from '../../lib/constants';
 
 const ROLE_FILTER = ['all', 'top', 'jungle', 'mid', 'bot', 'support'];
-const ROLE_LABELS = { all: 'Tous', top: 'Top', jungle: 'Jungle', mid: 'Mid', bot: 'Bot', support: 'Support' };
+const SELECTOR_LABELS = { all: 'Tous', ...ROLE_LABELS };
 
 export default function ChampionSelector({ champions, unavailableIds, onSelect, onClose, target }) {
   const [search, setSearch] = useState('');
@@ -93,7 +94,7 @@ export default function ChampionSelector({ champions, unavailableIds, onSelect, 
                 }`}
               >
                 {r !== 'all' && <RoleIcon role={r} size={13} />}
-                {ROLE_LABELS[r]}
+                {SELECTOR_LABELS[r]}
               </button>
             ))}
           </div>

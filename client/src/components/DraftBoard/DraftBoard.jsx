@@ -1,9 +1,10 @@
 import React, { useState, useCallback } from 'react';
 import { RotateCcw, Sparkles, Shield, Users } from 'lucide-react';
 import useDraftStore from '../../stores/draftStore';
-import useUserStore, { ROLES } from '../../stores/userStore';
+import useUserStore from '../../stores/userStore';
 import useHistoryStore from '../../stores/historyStore';
 import useDuoStore from '../../stores/duoStore';
+import { ROLES, ROLE_LABELS } from '../../lib/constants';
 import DraftSlot from './DraftSlot';
 import BanSlot from './BanSlot';
 import ChampionSelector from './ChampionSelector';
@@ -11,8 +12,6 @@ import RecommendationPanel from '../Recommendations/RecommendationPanel';
 import BanPanel from './BanPanel';
 import LCUStatus from './LCUStatus';
 import DuoPanel from '../DuoQ/DuoPanel';
-
-const ROLE_LABELS = { top: 'Top', jungle: 'Jungle', mid: 'Mid', bot: 'Bot', support: 'Support' };
 
 export default function DraftBoard({ champions }) {
   const {

@@ -12,14 +12,13 @@ import useDraftStore from '../../stores/draftStore';
 import useUserStore from '../../stores/userStore';
 import RoleIcon from '../RoleIcon';
 import { getScoreClasses } from '../../lib/scores';
-
-const DDRAGON = 'https://ddragon.leagueoflegends.com/cdn/14.24.1/img/champion';
+import { getDDragonChampBase } from '../../lib/constants';
 
 function ChampImg({ champKey, size = 28, className = '' }) {
   if (!champKey) return <div style={{ width: size, height: size }} className={`rounded bg-[var(--surface-elevated)] ${className}`} />;
   return (
     <img
-      src={`${DDRAGON}/${champKey}.png`}
+      src={`${getDDragonChampBase()}/${champKey}.png`}
       alt={champKey}
       className={`rounded ${className}`}
       style={{ width: size, height: size }}

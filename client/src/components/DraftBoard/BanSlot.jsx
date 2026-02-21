@@ -1,5 +1,6 @@
 import React from 'react';
 import { X, Ban } from 'lucide-react';
+import { getDDragonChampUrl } from '../../lib/constants';
 
 export default function BanSlot({ champion, onClick, onClear }) {
   return (
@@ -15,7 +16,7 @@ export default function BanSlot({ champion, onClick, onClear }) {
       {champion ? (
         <>
           <img
-            src={`https://ddragon.leagueoflegends.com/cdn/14.24.1/img/champion/${champion.key}.png`}
+            src={getDDragonChampUrl(champion.key)}
             alt={champion.name}
             className="w-full h-full object-cover opacity-30 grayscale"
           />
@@ -24,7 +25,9 @@ export default function BanSlot({ champion, onClick, onClear }) {
           </div>
           <div
             onClick={(e) => { e.stopPropagation(); onClear(); }}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); onClear(); } }}
             role="button"
+            tabIndex={0}
             aria-label={`Retirer le ban ${champion.name}`}
             className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center
                        opacity-0 group-hover:opacity-100 bg-surface-overlay border border-border

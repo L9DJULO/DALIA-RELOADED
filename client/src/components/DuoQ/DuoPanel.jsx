@@ -9,9 +9,7 @@ import {
 } from 'lucide-react';
 import useDuoStore from '../../stores/duoStore';
 import RoleIcon from '../RoleIcon';
-
-const ROLES = ['top', 'jungle', 'mid', 'bot', 'support'];
-const ROLE_LABELS = { top: 'Top', jungle: 'Jungle', mid: 'Mid', bot: 'Bot', support: 'Support' };
+import { ROLES, ROLE_LABELS, getDDragonChampUrl } from '../../lib/constants';
 
 export default function DuoPanel() {
   const {
@@ -207,7 +205,7 @@ export default function DuoPanel() {
                             className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-surface-elevated border border-border-subtle text-xs"
                           >
                             <img
-                              src={`https://ddragon.leagueoflegends.com/cdn/14.10.1/img/champion/${entry.champion_key}.png`}
+                              src={getDDragonChampUrl(entry.champion_key)}
                               alt={entry.champion_key}
                               className="w-6 h-6 rounded-lg"
                               onError={(e) => { e.target.style.display = 'none'; }}

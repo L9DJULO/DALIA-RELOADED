@@ -15,6 +15,7 @@ from app.auth.schemas import (
     MessageResponse,
     RegisterRequest,
     TokenResponse,
+    UpdateMeRequest,
     UserResponse,
 )
 from app.db.models import UserDB
@@ -49,7 +50,7 @@ async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
     await db.refresh(user)
 
     token = create_access_token({"sub": str(user.id)})
-    logger.info(f"New user registered: {user.username}")
+    logger.info("New user registered: %s", user.username)
     return TokenResponse(
         access_token=token,
         user=UserResponse.model_validate(user),
@@ -77,7 +78,7 @@ async def login(body: LoginRequest, db: AsyncSession = Depends(get_db)):
         )
 
     token = create_access_token({"sub": str(user.id)})
-    logger.info(f"User logged in: {user.username}")
+    logger.info("User logged in: %s", user.username)
     return TokenResponse(
         access_token=token,
         user=UserResponse.model_validate(user),
@@ -92,22 +93,19 @@ async def get_me(current_user: UserDB = Depends(get_current_user)):
 
 @router.put("/me", response_model=UserResponse)
 async def update_me(
-    preferred_roles: list[str] | None = None,
-    enable_wildcard: bool | None = None,
-    enable_off_meta: bool | None = None,
-    weight_overrides: dict | None = None,
+    body: UpdateMeRequest,
     current_user: UserDB = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Update user settings."""
-    if preferred_roles is not None:
-        current_user.preferred_roles = preferred_roles
-    if enable_wildcard is not None:
-        current_user.enable_wildcard = enable_wildcard
-    if enable_off_meta is not None:
-        current_user.enable_off_meta = enable_off_meta
-    if weight_overrides is not None:
-        current_user.weight_overrides = weight_overrides
+    if body.preferred_roles is not None:
+        current_user.preferred_roles = body.preferred_roles
+    if body.enable_wildcard is not None:
+        current_user.enable_wildcard = body.enable_wildcard
+    if body.enable_off_meta is not None:
+        current_user.enable_off_meta = body.enable_off_meta
+    if body.weight_overrides is not None:
+        current_user.weight_overrides = body.weight_overrides
 
     await db.commit()
     await db.refresh(current_user)

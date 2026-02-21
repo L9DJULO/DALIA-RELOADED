@@ -7,8 +7,7 @@ import { fetchBanRecommendations } from '../../services/api';
 import useDraftStore from '../../stores/draftStore';
 import useUserStore from '../../stores/userStore';
 import Badge from '../ui/Badge';
-
-const DDRAGON = 'https://ddragon.leagueoflegends.com/cdn/14.24.1/img/champion';
+import { getDDragonChampBase } from '../../lib/constants';
 
 function BanScore({ value }) {
   const color = value >= 70
@@ -39,7 +38,7 @@ function BanCard({ ban, onBan, rank }) {
     }`}>
       <div className="text-[11px] font-bold w-4 text-center tabular-nums text-txt-muted">{rank}</div>
       <img
-        src={`${DDRAGON}/${ban.champion_key}.png`}
+        src={`${getDDragonChampBase()}/${ban.champion_key}.png`}
         alt={ban.champion_name}
         className="w-9 h-9 rounded-xl border border-border-subtle"
         loading="lazy"

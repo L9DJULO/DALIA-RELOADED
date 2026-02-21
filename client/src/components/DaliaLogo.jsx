@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useId } from 'react';
 
 /**
  * DALIA Logo — Premium crystal/diamond monogram.
  */
 export default function DaliaLogo({ size = 24, className = '' }) {
-  const id = `dalia-${Math.random().toString(36).slice(2, 6)}`;
+  const id = useId();
   return (
     <svg
       width={size}

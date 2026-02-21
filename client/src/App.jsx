@@ -13,6 +13,7 @@ import { fetchChampions, fetchPatch } from './services/api';
 import useAuthStore from './stores/authStore';
 import useUserStore from './stores/userStore';
 import DaliaLogo from './components/DaliaLogo';
+import { setDDragonVersion } from './lib/constants';
 
 function ProtectedApp() {
   const [champions, setChampions] = useState([]);
@@ -29,6 +30,7 @@ function ProtectedApp() {
         ]);
         setChampions(Array.isArray(champs) ? champs : []);
         setPatchInfo(patch);
+        setDDragonVersion(patch?.version);
         // Load the user's pool from the server
         await loadProfile();
       } catch (e) {

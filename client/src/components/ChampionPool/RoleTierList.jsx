@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { X, ChevronUp, ChevronDown } from 'lucide-react';
-import useUserStore, { TIERS } from '../../stores/userStore';
+import useUserStore from '../../stores/userStore';
+import { TIERS } from '../../lib/constants';
 
 const TIER_STYLES = {
   S: { bg: 'bg-red-500/10', border: 'border-red-500/25', label: 'text-red-400' },

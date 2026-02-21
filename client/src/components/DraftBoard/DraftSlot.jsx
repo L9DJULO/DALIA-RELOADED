@@ -1,11 +1,13 @@
 import React from 'react';
 import { X, User } from 'lucide-react';
 import RoleIcon from '../RoleIcon';
-
-const ROLE_LABELS = { top: 'Top', jungle: 'Jungle', mid: 'Mid', bot: 'Bot', support: 'Support' };
+import { ROLE_LABELS } from '../../lib/constants';
 
 export default function DraftSlot({ role, label, champion, isMySlot, team, onClick, onClear, champions }) {
-  const champData = champion ? champions?.find((c) => c.id === champion.id) : null;
+  const champData = React.useMemo(
+    () => (champion ? champions?.find((c) => c.id === champion.id) : null),
+    [champion, champions]
+  );
   const displayLabel = label ?? (role ? ROLE_LABELS[role] : '?');
   const ariaLabel = champion
     ? `${displayLabel}: ${champion.name}`

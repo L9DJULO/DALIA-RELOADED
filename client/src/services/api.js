@@ -8,7 +8,7 @@ import axios from 'axios';
 
 // Server URL — in dev, Vite proxy handles /api → localhost:8000
 // In Tauri production build, use the configured server URL
-const IS_TAURI = typeof window !== 'undefined' && window.__TAURI__;
+const IS_TAURI = typeof window !== 'undefined' && (window.__TAURI_INTERNALS__ || window.__TAURI__);
 const _raw = IS_TAURI
   ? (localStorage.getItem('dalia_server_url') || 'http://localhost:8000')
   : '';
@@ -55,7 +55,7 @@ export const fetchMe = () =>
   api.get('/auth/me').then((r) => r.data);
 
 export const updateMe = (settings) =>
-  api.put('/auth/me', null, { params: settings }).then((r) => r.data);
+  api.put('/auth/me', settings).then((r) => r.data);
 
 // ═════════════════════════════════════════════════════════════════════════
 //  CHAMPIONS

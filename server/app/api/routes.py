@@ -140,10 +140,11 @@ async def list_champions(request: Request, role: Optional[str] = None):
 
 @router.get("/champions/{champion_id}")
 async def get_champion(champion_id: int, request: Request):
+    """Return a single champion by ID."""
     db = _get_db_service(request)
     c = db.get_by_id(champion_id)
     if not c:
-        return {"error": "Champion not found"}
+        raise HTTPException(status_code=404, detail="Champion introuvable.")
     return c.model_dump()
 
 

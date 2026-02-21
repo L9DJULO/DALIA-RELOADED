@@ -5,8 +5,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Sparkles, Trophy, Shield, Swords, Users, BarChart3, Loader2, TrendingUp } from 'lucide-react';
 import useDraftStore from '../../stores/draftStore';
 import RoleIcon from '../RoleIcon';
-
-const DDRAGON = 'https://ddragon.leagueoflegends.com/cdn/14.24.1/img/champion';
+import { getDDragonChampBase } from '../../lib/constants';
 
 function WinGauge({ probability }) {
   const pct = probability || 50;
@@ -54,7 +53,7 @@ function TeamDisplay({ picks, label, color, borderColor }) {
             <div key={role} className="flex flex-col items-center gap-1">
               {champ ? (
                 <img
-                  src={`${DDRAGON}/${champ.key}.png`}
+                  src={`${getDDragonChampBase()}/${champ.key}.png`}
                   alt={champ.name}
                   className={`w-11 h-11 rounded-xl border-2 ${borderColor}`}
                   loading="lazy"
@@ -232,7 +231,7 @@ export default function DraftPrediction() {
             <div className="section-label">Meilleure recommandation</div>
             <div className="flex items-center gap-1.5 ml-auto">
               <img
-                src={`${DDRAGON}/${topRec.champion_key}.png`}
+                src={`${getDDragonChampBase()}/${topRec.champion_key}.png`}
                 alt={topRec.champion_name}
                 className="w-7 h-7 rounded-xl border border-accent/25"
                 loading="lazy"
