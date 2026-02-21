@@ -2,8 +2,7 @@ import React from 'react';
 import { AlertTriangle, RefreshCw, Trash2 } from 'lucide-react';
 
 /**
- * Error Boundary — Catches React render crashes and shows a recovery UI
- * instead of a blank/black screen.
+ * Error Boundary -- Catches React render crashes and shows a recovery UI.
  */
 export default class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -25,7 +24,6 @@ export default class ErrorBoundary extends React.Component {
   };
 
   handleReset = () => {
-    // Clear all persisted state that could cause crash loops
     localStorage.removeItem('dalia-user-store');
     localStorage.removeItem('dalia-draft-store');
     localStorage.removeItem('dalia_token');
@@ -38,16 +36,16 @@ export default class ErrorBoundary extends React.Component {
     if (this.state.hasError) {
       return (
         <div className="min-h-screen bg-surface-base flex items-center justify-center p-6">
-          <div className="max-w-md text-center space-y-4">
-            <div className="w-14 h-14 mx-auto rounded-xl bg-red-500/20 border border-red-500/30 flex items-center justify-center">
-              <AlertTriangle className="w-7 h-7 text-red-400" />
+          <div className="max-w-md text-center space-y-5">
+            <div className="w-16 h-16 mx-auto rounded-xl bg-red-500/15 border border-red-500/25 flex items-center justify-center">
+              <AlertTriangle className="w-8 h-8 text-red-400" />
             </div>
-            <h1 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Oups, DALIA a crashé</h1>
-            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-              Une erreur inattendue s'est produite. Ça arrive parfois quand les données locales sont corrompues.
+            <h1 className="text-lg font-bold text-txt-primary">Oups, DALIA a crashe</h1>
+            <p className="text-sm text-txt-secondary leading-relaxed">
+              {"Une erreur inattendue s'est produite. Ca arrive parfois quand les donnees locales sont corrompues."}
             </p>
             {this.state.error && (
-              <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-left">
+              <div className="p-3.5 bg-red-500/10 border border-red-500/20 rounded-xl text-left">
                 <p className="text-xs text-red-400 font-mono break-all">
                   {this.state.error.toString()}
                 </p>
@@ -56,21 +54,21 @@ export default class ErrorBoundary extends React.Component {
             <div className="flex gap-3 justify-center pt-2">
               <button
                 onClick={this.handleReload}
-                className="flex items-center gap-2 px-4 py-2.5 btn-primary font-semibold text-sm rounded-lg transition-colors"
+                className="btn-primary flex items-center gap-2"
               >
                 <RefreshCw size={14} />
                 Recharger
               </button>
               <button
                 onClick={this.handleReset}
-                className="flex items-center gap-2 px-4 py-2.5 btn-secondary font-medium text-sm rounded-lg transition-colors"
+                className="btn-secondary flex items-center gap-2"
               >
                 <Trash2 size={14} />
-                Réinitialiser les données
+                Reinitialiser les donnees
               </button>
             </div>
-            <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
-              « Réinitialiser » efface le cache local et te déconnecte. Ton compte serveur reste intact.
+            <p className="text-[11px] text-txt-muted leading-relaxed">
+              {"Reinitialiser efface le cache local et te deconnecte. Ton compte serveur reste intact."}
             </p>
           </div>
         </div>

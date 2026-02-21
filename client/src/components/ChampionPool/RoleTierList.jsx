@@ -7,7 +7,7 @@ const TIER_STYLES = {
   A: { bg: 'bg-orange-400/10', border: 'border-orange-400/25', label: 'text-orange-400' },
   B: { bg: 'bg-amber-500/10', border: 'border-amber-500/25', label: 'text-amber-400' },
   C: { bg: 'bg-blue-400/10', border: 'border-blue-400/25', label: 'text-blue-400' },
-  D: { bg: 'bg-slate-500/10', border: 'border-slate-500/25', label: 'text-slate-400' },
+  D: { bg: 'bg-surface-elevated', border: 'border-border-subtle', label: 'text-txt-muted' },
 };
 
 export default function RoleTierList({ role, champions }) {
@@ -34,14 +34,14 @@ export default function RoleTierList({ role, champions }) {
   if (entries.length === 0) {
     return (
       <div className="text-center py-8">
-        <p className="text-sm mb-1" style={{ color: 'var(--text-secondary)' }}>Pool vide</p>
-        <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>Cliquez sur un champion à droite pour l'ajouter</p>
+        <p className="text-sm text-txt-secondary mb-1">Pool vide</p>
+        <p className="text-[11px] text-txt-muted">{"Cliquez sur un champion a droite pour l'ajouter"}</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2.5">
       {TIERS.map((tier) => {
         const items = grouped[tier];
         if (!items || items.length === 0) return null;
@@ -50,11 +50,11 @@ export default function RoleTierList({ role, champions }) {
         return (
           <div key={tier} className={`rounded-xl border p-2.5 ${style.bg} ${style.border}`}>
             <div className={`text-[11px] font-bold mb-2 flex items-center gap-1.5 ${style.label}`}>
-              <span className="w-4 h-4 rounded flex items-center justify-center bg-current/10 text-[9px]">
+              <span className="w-5 h-5 rounded-lg flex items-center justify-center bg-current/10 text-[10px] font-bold">
                 {tier}
               </span>
               <span>Tier {tier}</span>
-              <span className="font-normal ml-auto tabular-nums" style={{ color: 'var(--text-muted)' }}>{items.length}</span>
+              <span className="font-normal ml-auto tabular-nums text-txt-muted">{items.length}</span>
             </div>
             <div className="flex flex-wrap gap-1.5">
               {items.map((entry) => {
@@ -63,8 +63,7 @@ export default function RoleTierList({ role, champions }) {
                 return (
                   <div
                     key={entry.champion_id}
-                    className="group relative w-10 h-10 rounded-lg overflow-hidden border hover:border-violet-500/40 transition-colors duration-150"
-                    style={{ borderColor: 'var(--border-subtle)' }}
+                    className="group relative w-10 h-10 rounded-xl overflow-hidden border border-border-subtle hover:border-accent/40 transition-all duration-200"
                   >
                     <img
                       src={champ.image_url}
@@ -73,7 +72,7 @@ export default function RoleTierList({ role, champions }) {
                       loading="lazy"
                     />
                     {/* Hover controls */}
-                    <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity duration-150
+                    <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity duration-200
                                     flex flex-col items-center justify-center gap-px">
                       <button
                         onClick={() => {
