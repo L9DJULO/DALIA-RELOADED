@@ -1,30 +1,17 @@
 /**
- * DuoQ Panel — Link with a friend, toggle duo mode, see partner info.
- *
- * Shown in the sidebar/settings area. Features:
- * - Show/copy your duo code
- * - Enter a friend's code to link
- * - When linked: show partner, their pool preview, toggle DuoQ mode
- * - Select partner's role
+ * DuoQ Panel -- Link with a friend, toggle duo mode, see partner info.
+ * Premium glass UI with violet accent.
  */
 import { useEffect, useState, useCallback } from 'react';
 import {
-  Users,
-  Link2,
-  Unlink,
-  Copy,
-  Check,
-  RefreshCw,
-  ChevronDown,
-  ChevronUp,
-  Sparkles,
-  Shield,
+  Users, Link2, Unlink, Copy, Check, RefreshCw,
+  ChevronDown, ChevronUp, Sparkles, Shield,
 } from 'lucide-react';
 import useDuoStore from '../../stores/duoStore';
+import RoleIcon from '../RoleIcon';
 
 const ROLES = ['top', 'jungle', 'mid', 'bot', 'support'];
 const ROLE_LABELS = { top: 'Top', jungle: 'Jungle', mid: 'Mid', bot: 'Bot', support: 'Support' };
-const ROLE_EMOJI = { top: '🛡️', jungle: '🌿', mid: '⚔️', bot: '🏹', support: '💛' };
 
 export default function DuoPanel() {
   const {
@@ -66,98 +53,101 @@ export default function DuoPanel() {
   }, [unlink]);
 
   return (
-    <div className="bg-surface rounded-xl border border-[var(--border-subtle)] overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-[var(--border-subtle)]">
-        <Users size={18} className="text-violet-500" />
-        <h3 className="text-sm font-semibold text-[var(--text-primary)]">DuoQ</h3>
-        {linked && (
-          <button
-            onClick={toggleDuoActive}
-            className={`ml-auto flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all
-              ${duoActive
-                ? 'bg-violet-500/20 text-violet-400 ring-1 ring-violet-500/40'
-                : 'bg-[var(--surface-elevated)] text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'
+    <div className="h-[calc(100vh-3rem)] overflow-y-auto">
+      <div className="max-w-2xl mx-auto p-6 space-y-5">
+        {/* Header */}
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-accent-muted border border-accent/20 flex items-center justify-center">
+            <Users size={20} className="text-accent" />
+          </div>
+          <div>
+            <h1 className="text-lg font-bold text-txt-primary">DuoQ</h1>
+            <p className="text-xs text-txt-muted">
+              Lie-toi avec un partenaire pour booster vos recommandations de synergie
+            </p>
+          </div>
+          {linked && (
+            <button
+              onClick={toggleDuoActive}
+              className={`ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
+                duoActive
+                  ? 'bg-accent text-white shadow-glow'
+                  : 'bg-surface-elevated text-txt-secondary border border-border-subtle hover:border-accent/30'
               }`}
-          >
-            <Sparkles size={12} />
-            {duoActive ? 'Actif' : 'Inactif'}
-          </button>
-        )}
-      </div>
+            >
+              <Sparkles size={13} />
+              {duoActive ? 'Duo Actif' : 'Duo Inactif'}
+            </button>
+          )}
+        </div>
 
-      <div className="p-4 space-y-4">
         {/* My Code */}
-        <div>
-          <label className="text-[11px] uppercase tracking-wider text-[var(--text-muted)] font-medium">
-            Mon code duo
-          </label>
-          <div className="flex items-center gap-2 mt-1">
-            <div className="flex-1 bg-[var(--surface-elevated)] rounded-lg px-3 py-2 font-mono text-lg tracking-[0.3em] text-violet-400 text-center select-all">
+        <div className="glass-card p-5 space-y-4">
+          <div className="section-label">Mon code duo</div>
+          <div className="flex items-center gap-2.5">
+            <div className="flex-1 bg-surface-elevated rounded-xl px-4 py-3 font-mono text-xl tracking-[0.35em] text-accent text-center select-all border border-border-subtle">
               {myCode || '------'}
             </div>
             <button
               onClick={handleCopy}
-              className="w-9 h-9 flex items-center justify-center rounded-lg bg-[var(--surface-elevated)] hover:bg-[var(--surface-overlay)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+              className="btn-secondary w-10 h-10 !p-0"
               title="Copier"
             >
-              {copied ? <Check size={16} className="text-green-400" /> : <Copy size={16} />}
+              {copied ? <Check size={16} className="text-emerald-400" /> : <Copy size={16} />}
             </button>
             <button
               onClick={regenerateCode}
-              className="w-9 h-9 flex items-center justify-center rounded-lg bg-[var(--surface-elevated)] hover:bg-[var(--surface-overlay)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
-              title="Régénérer"
+              className="btn-secondary w-10 h-10 !p-0"
+              title="Regenerer"
             >
               <RefreshCw size={16} />
             </button>
           </div>
-          <p className="text-[10px] text-[var(--text-muted)] mt-1">
-            Partage ce code à ton ami pour vous lier en duo.
+          <p className="text-[11px] text-txt-muted leading-relaxed">
+            Partage ce code a ton ami pour vous lier en duo. Les recommandations prendront en compte vos champion pools respectifs.
           </p>
         </div>
 
         {/* Link Section */}
         {!linked ? (
-          <div>
-            <label className="text-[11px] uppercase tracking-wider text-[var(--text-muted)] font-medium">
-              Code d'un ami
-            </label>
-            <div className="flex items-center gap-2 mt-1">
+          <div className="glass-card p-5 space-y-3">
+            <div className="section-label">{"Code d'un ami"}</div>
+            <div className="flex items-center gap-2.5">
               <input
                 type="text"
                 value={friendCode}
                 onChange={(e) => setFriendCode(e.target.value.toUpperCase())}
                 placeholder="ABC123"
                 maxLength={8}
-                className="flex-1 bg-[var(--surface-elevated)] border border-[var(--border-subtle)] rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] font-mono tracking-widest text-center placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-violet-500/50"
+                className="input-field flex-1 font-mono tracking-[0.25em] text-center text-lg"
                 onKeyDown={(e) => e.key === 'Enter' && handleLink()}
               />
               <button
                 onClick={handleLink}
                 disabled={!friendCode.trim() || loading}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-violet-500/20 text-violet-400 hover:bg-violet-500/30 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium transition-colors"
+                className="btn-primary flex items-center gap-2"
               >
-                <Link2 size={14} />
+                <Link2 size={15} />
                 Lier
               </button>
             </div>
             {(linkError || error) && (
-              <p className="text-xs text-red-400 mt-1">{linkError || error}</p>
+              <p className="text-xs text-red-400">{linkError || error}</p>
             )}
           </div>
         ) : (
           <>
             {/* Partner Info */}
-            <div className="bg-[var(--surface-elevated)] rounded-lg p-3 space-y-3">
+            <div className="glass-card p-5 space-y-4">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-violet-500/20 flex items-center justify-center">
-                    <Shield size={16} className="text-violet-400" />
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-accent-muted flex items-center justify-center">
+                    <Shield size={18} className="text-accent" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-[var(--text-primary)]">{partner?.username}</p>
-                    <p className="text-[10px] text-[var(--text-muted)]">
-                      Lié depuis {partner?.linked_since
+                    <p className="text-sm font-semibold text-txt-primary">{partner?.username}</p>
+                    <p className="text-[11px] text-txt-muted">
+                      Lie depuis {partner?.linked_since
                         ? new Date(partner.linked_since).toLocaleDateString('fr-FR')
                         : '...'}
                     </p>
@@ -165,32 +155,30 @@ export default function DuoPanel() {
                 </div>
                 <button
                   onClick={handleUnlink}
-                  className="flex items-center gap-1 px-2 py-1 rounded-md text-xs text-red-400 hover:bg-red-500/10 transition-colors"
-                  title="Se délier"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs text-red-400 border border-red-500/20 hover:bg-red-500/10 transition-colors"
+                  title="Se delier"
                 >
-                  <Unlink size={12} />
-                  Délier
+                  <Unlink size={13} />
+                  Delier
                 </button>
               </div>
 
               {/* Partner Role Selector */}
               <div>
-                <label className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] font-medium">
-                  Rôle du partenaire
-                </label>
-                <div className="flex gap-1 mt-1">
+                <div className="section-label mb-2">Role du partenaire</div>
+                <div className="flex gap-1.5">
                   {ROLES.map((role) => (
                     <button
                       key={role}
                       onClick={() => setPartnerRole(role)}
-                      className={`flex-1 py-1.5 rounded-md text-xs font-medium transition-all
-                        ${partnerRole === role
-                          ? 'bg-violet-500/20 text-violet-400 ring-1 ring-violet-500/30'
-                          : 'bg-[var(--surface-elevated)] text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--surface-elevated)]'
-                        }`}
+                      className={`flex-1 flex flex-col items-center gap-1 py-2.5 rounded-xl text-xs font-medium transition-all duration-200 ${
+                        partnerRole === role
+                          ? 'bg-accent text-white shadow-glow'
+                          : 'bg-surface-elevated text-txt-muted hover:text-txt-secondary border border-border-subtle hover:border-accent/30'
+                      }`}
                     >
-                      <span className="block text-sm">{ROLE_EMOJI[role]}</span>
-                      <span className="block text-[9px] mt-0.5">{ROLE_LABELS[role]}</span>
+                      <RoleIcon role={role} size={16} className={partnerRole === role ? 'text-white' : ''} />
+                      <span className="text-[10px]">{ROLE_LABELS[role]}</span>
                     </button>
                   ))}
                 </div>
@@ -201,35 +189,36 @@ export default function DuoPanel() {
                 <div>
                   <button
                     onClick={() => setShowPool(!showPool)}
-                    className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors"
+                    className="flex items-center gap-1.5 section-label hover:text-txt-secondary transition-colors cursor-pointer"
                   >
                     Pool du partenaire
                     {showPool ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                   </button>
                   {showPool && partnerRole && (
-                    <div className="mt-2 flex flex-wrap gap-1">
+                    <div className="mt-2.5 flex flex-wrap gap-1.5 animate-fade-in-up">
                       {(partnerPool[partnerRole] || []).length === 0 ? (
-                        <p className="text-[10px] text-[var(--text-muted)] italic">
-                          Aucun champion pour ce rôle
+                        <p className="text-[11px] text-txt-muted italic">
+                          Aucun champion pour ce role
                         </p>
                       ) : (
                         (partnerPool[partnerRole] || []).map((entry) => (
                           <div
                             key={entry.champion_id}
-                            className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-[var(--surface-elevated)] text-xs"
+                            className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-surface-elevated border border-border-subtle text-xs"
                           >
                             <img
                               src={`https://ddragon.leagueoflegends.com/cdn/14.10.1/img/champion/${entry.champion_key}.png`}
                               alt={entry.champion_key}
-                              className="w-5 h-5 rounded-sm"
+                              className="w-6 h-6 rounded-lg"
                               onError={(e) => { e.target.style.display = 'none'; }}
                             />
-                            <span className="text-[var(--text-secondary)]">{entry.champion_key}</span>
-                            <span className={`text-[9px] font-bold ${
-                              entry.tier === 'S' ? 'text-amber-400' :
-                              entry.tier === 'A' ? 'text-emerald-400' :
-                              entry.tier === 'B' ? 'text-blue-400' :
-                              'text-slate-500'
+                            <span className="text-txt-secondary font-medium">{entry.champion_key}</span>
+                            <span className={`text-[10px] font-bold ${
+                              entry.tier === 'S' ? 'text-red-400' :
+                              entry.tier === 'A' ? 'text-orange-400' :
+                              entry.tier === 'B' ? 'text-amber-400' :
+                              entry.tier === 'C' ? 'text-blue-400' :
+                              'text-txt-muted'
                             }`}>
                               {entry.tier}
                             </span>
@@ -244,15 +233,40 @@ export default function DuoPanel() {
 
             {/* DuoQ Mode Info */}
             {duoActive && (
-              <div className="bg-violet-500/5 border border-violet-500/20 rounded-lg p-2.5">
-                <p className="text-[11px] text-violet-400/80 leading-relaxed">
-                  <Sparkles size={11} className="inline mr-1" />
-                  Mode DuoQ actif — la synergie avec <strong>{partner?.username}</strong> ({ROLE_LABELS[partnerRole] || '?'}) est fortement priorisée dans les recommandations.
+              <div className="glass-card p-4 border-accent/15 bg-accent/[0.03] animate-fade-in-up">
+                <p className="text-[12px] text-accent/80 leading-relaxed">
+                  <Sparkles size={12} className="inline mr-1.5 text-accent" />
+                  Mode DuoQ actif -- la synergie avec <strong className="text-accent">{partner?.username}</strong> ({ROLE_LABELS[partnerRole] || '?'}) est fortement priorisee dans les recommandations.
                 </p>
               </div>
             )}
           </>
         )}
+
+        {/* How it works */}
+        <div className="glass-card p-5">
+          <div className="section-label mb-3">Comment ca marche</div>
+          <div className="space-y-2.5 text-[12px] text-txt-secondary leading-relaxed">
+            <div className="flex items-start gap-2.5">
+              <div className="w-5 h-5 rounded-lg bg-accent-muted flex items-center justify-center shrink-0 mt-0.5">
+                <span className="text-[10px] text-accent font-bold">1</span>
+              </div>
+              <span>Partage ton code duo avec ton partenaire, ou entre le sien.</span>
+            </div>
+            <div className="flex items-start gap-2.5">
+              <div className="w-5 h-5 rounded-lg bg-accent-muted flex items-center justify-center shrink-0 mt-0.5">
+                <span className="text-[10px] text-accent font-bold">2</span>
+              </div>
+              <span>Une fois lies, selectionnez vos roles respectifs.</span>
+            </div>
+            <div className="flex items-start gap-2.5">
+              <div className="w-5 h-5 rounded-lg bg-accent-muted flex items-center justify-center shrink-0 mt-0.5">
+                <span className="text-[10px] text-accent font-bold">3</span>
+              </div>
+              <span>Activez le mode DuoQ pour que DALIA priorise la synergie entre vos champion pools dans les recommandations.</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

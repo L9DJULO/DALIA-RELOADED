@@ -12,10 +12,10 @@ const TIER_COLORS = {
   A: 'bg-orange-500 hover:bg-orange-400',
   B: 'bg-amber-500 hover:bg-amber-400',
   C: 'bg-blue-500 hover:bg-blue-400',
-  D: 'bg-slate-500 hover:bg-slate-400',
+  D: 'bg-surface-overlay hover:bg-surface-elevated',
 };
 
-/* ── Tier picker popover ── */
+/* -- Tier picker popover -- */
 function TierPicker({ champion, position, onSelect, onClose, isUpdate = false }) {
   const ref = useRef(null);
 
@@ -27,29 +27,29 @@ function TierPicker({ champion, position, onSelect, onClose, isUpdate = false })
     return () => document.removeEventListener('mousedown', handler);
   }, [onClose]);
 
-  const popoverHeight = 72;
+  const popoverHeight = 80;
   const openUpward = position.y + popoverHeight > window.innerHeight;
   const top = openUpward ? position.y - popoverHeight - 8 : position.y;
 
   return (
     <div
       ref={ref}
-      className="fixed z-50 border rounded-xl shadow-2xl p-2.5"
-      style={{ ...{ left: Math.min(position.x, window.innerWidth - 240), top: Math.max(8, top) }, background: 'var(--surface-elevated)', borderColor: 'var(--border-subtle)' }}
+      className="fixed z-50 glass-panel p-3 animate-scale-in"
+      style={{ left: Math.min(position.x, window.innerWidth - 240), top: Math.max(8, top) }}
       role="dialog"
-      aria-label="Sélectionner un tier"
+      aria-label="Selectionner un tier"
     >
-      <div className="text-[11px] mb-2 px-0.5" style={{ color: 'var(--text-secondary)' }}>
+      <div className="text-[11px] mb-2.5 px-0.5 text-txt-secondary">
         {isUpdate ? 'Changer tier de' : 'Ajouter'}{' '}
-        <span className="font-medium" style={{ color: 'var(--text-primary)' }}>{champion.name}</span>
+        <span className="font-semibold text-txt-primary">{champion.name}</span>
       </div>
-      <div className="flex gap-1">
+      <div className="flex gap-1.5">
         {TIERS.map((tier) => (
           <button
             key={tier}
             onClick={() => onSelect(tier)}
             aria-label={`Tier ${tier}`}
-            className={`w-8 h-8 rounded-lg text-xs font-bold text-white transition-colors duration-150 ${TIER_COLORS[tier]}`}
+            className={`w-9 h-9 rounded-xl text-xs font-bold text-white transition-all duration-150 hover:scale-105 ${TIER_COLORS[tier]}`}
           >
             {tier}
           </button>
@@ -119,25 +119,24 @@ export default function ChampionPoolEditor({ champions }) {
   };
 
   return (
-    <div className="flex h-[calc(100vh-2.5rem)]">
-      {/* ── Left: Tier list per role ── */}
-      <div className="w-72 border-r flex flex-col" style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-default)' }}>
+    <div className="flex h-[calc(100vh-3rem)]">
+      {/* -- Left: Tier list per role -- */}
+      <div className="w-72 border-r border-border-subtle flex flex-col bg-surface-default">
         {/* Role tabs */}
-        <div className="flex border-b" style={{ borderColor: 'var(--border-subtle)' }}>
+        <div className="flex border-b border-border-subtle">
           {ROLES.map((role) => (
             <button
               key={role}
               onClick={() => { setActiveRole(role); setTierPicker(null); }}
               aria-pressed={activeRole === role}
               aria-label={ROLE_LABELS[role]}
-              className={`flex-1 py-2.5 text-[11px] font-medium transition-colors duration-150 ${
+              className={`flex-1 py-2.5 text-[11px] font-medium transition-all duration-200 ${
                 activeRole === role
-                  ? 'border-b-2 border-violet-500'
-                  : ''
+                  ? 'border-b-2 border-accent bg-surface-elevated text-txt-primary'
+                  : 'text-txt-muted hover:text-txt-secondary'
               }`}
-              style={{ color: activeRole === role ? 'var(--text-primary)' : 'var(--text-muted)', background: activeRole === role ? 'var(--surface-elevated)' : 'transparent' }}
             >
-              <RoleIcon role={role} size={16} className={`mx-auto mb-0.5 ${activeRole === role ? 'text-violet-500' : ''}`} style={activeRole !== role ? { color: 'var(--text-muted)' } : undefined} />
+              <RoleIcon role={role} size={16} className={`mx-auto mb-0.5 ${activeRole === role ? 'text-accent' : 'text-txt-muted'}`} />
               {ROLE_LABELS[role]}
             </button>
           ))}
@@ -148,32 +147,32 @@ export default function ChampionPoolEditor({ champions }) {
           <RoleTierList role={activeRole} champions={champions} />
         </div>
 
-        <div className="p-3 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
+        <div className="p-3 border-t border-border-subtle">
           <button
             onClick={handleSave}
-            aria-label={saved ? 'Sauvegardé' : `Sauvegarder ${ROLE_LABELS[activeRole]}`}
-            className={`w-full py-2 rounded-xl text-sm font-medium transition-colors duration-150 flex items-center justify-center gap-2 ${
+            aria-label={saved ? 'Sauvegarde' : `Sauvegarder ${ROLE_LABELS[activeRole]}`}
+            className={`w-full py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-200 ${
               saved
                 ? 'bg-emerald-500 text-white'
                 : 'btn-primary'
             }`}
           >
             {saved ? <Check size={15} /> : <Save size={15} />}
-            {saved ? 'Sauvegardé' : `Sauvegarder ${ROLE_LABELS[activeRole]}`}
+            {saved ? 'Sauvegarde' : `Sauvegarder ${ROLE_LABELS[activeRole]}`}
           </button>
         </div>
       </div>
 
-      {/* ── Right: Champion browser ── */}
-      <div className="flex-1 flex flex-col" style={{ background: 'var(--surface-base)' }}>
-        <div className="p-3 border-b flex items-center gap-3" style={{ borderColor: 'var(--border-subtle)' }}>
+      {/* -- Right: Champion browser -- */}
+      <div className="flex-1 flex flex-col bg-surface-base">
+        <div className="p-3 border-b border-border-subtle flex items-center gap-3">
           <div className="relative flex-1 max-w-sm">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-txt-muted" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Rechercher…"
+              placeholder="Rechercher..."
               aria-label="Rechercher un champion"
               className="input-field w-full pl-9 pr-3 py-2 text-sm"
             />
@@ -182,20 +181,19 @@ export default function ChampionPoolEditor({ champions }) {
           <button
             onClick={() => setFilterByRole(!filterByRole)}
             aria-pressed={filterByRole}
-            className={`text-[11px] px-2.5 py-1.5 rounded-xl border font-medium transition-colors duration-150 ${
+            className={`text-[11px] px-3 py-1.5 rounded-xl border font-medium transition-all duration-200 ${
               filterByRole
-                ? 'border-violet-500/30 bg-violet-500/10 text-violet-400'
-                : ''
+                ? 'border-accent/30 bg-accent-muted text-accent'
+                : 'border-border-subtle text-txt-secondary hover:border-accent/20'
             }`}
-            style={!filterByRole ? { borderColor: 'var(--border-default)', color: 'var(--text-secondary)' } : undefined}
           >
-            {filterByRole ? `${ROLE_LABELS[activeRole]} uniquement` : 'Tous les rôles'}
+            {filterByRole ? `${ROLE_LABELS[activeRole]} uniquement` : 'Tous les roles'}
           </button>
 
-          <div className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
-            <span className="tabular-nums font-medium" style={{ color: 'var(--text-primary)' }}>{filteredChampions.length}</span> champions
+          <div className="text-[11px] text-txt-muted">
+            <span className="tabular-nums font-medium text-txt-primary">{filteredChampions.length}</span> champions
             <span className="mx-1">·</span>
-            <span className="text-violet-400 tabular-nums font-medium">{(championPool[activeRole] || []).length}</span> dans le pool
+            <span className="text-accent tabular-nums font-medium">{(championPool[activeRole] || []).length}</span> dans le pool
           </div>
         </div>
 

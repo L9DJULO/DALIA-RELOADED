@@ -32,9 +32,8 @@ export default function DraftBoard({ champions }) {
   const { championPool, weightOverrides } = useUserStore();
   const { saveEntry } = useHistoryStore();
 
-  // Panel state
   const [selectorOpen, setSelectorOpen] = useState(false);
-  const [selectorTarget, setSelectorTarget] = useState(null); // {type:'ban'|'ally'|'enemy', ...}
+  const [selectorTarget, setSelectorTarget] = useState(null);
   const [showBanPanel, setShowBanPanel] = useState(false);
   const [showDuoPanel, setShowDuoPanel] = useState(false);
 
@@ -68,7 +67,6 @@ export default function DraftBoard({ champions }) {
     const duoOptions = getDuoOptions();
     await getRecommendations(championPool, weightOverrides, duoOptions);
 
-    // Auto-save draft entry to history
     const state = useDraftStore.getState();
     const allyP = Object.entries(state.allyPicks)
       .filter(([_, c]) => c)
@@ -104,34 +102,32 @@ export default function DraftBoard({ champions }) {
     });
   }, [championPool, weightOverrides, getRecommendations, getDuoOptions, myTeam, myRole, saveEntry]);
 
-  // Visual layout: blue always left, red always right.
-  // My team's column gets role-keyed slots; enemy column gets ordered slots (Pick 1-5).
   const isAllyBlue = myTeam === 'blue';
-  const enemyTeam = isAllyBlue ? 'red' : 'blue';
 
   return (
-    <div className="flex h-[calc(100vh-2.5rem)]">
-      {/* ── Left: Draft board ── */}
-      <div className="w-[520px] flex flex-col shrink-0" style={{ background: 'var(--surface-default)', borderRight: '1px solid var(--border-subtle)' }}>
+    <div className="flex h-[calc(100vh-3rem)]">
+      {/* ── Left: Draft Board ── */}
+      <div className="w-[540px] flex flex-col shrink-0 bg-surface-default border-r border-border-subtle">
         {/* Setup bar */}
-        <div className="p-3" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+        <div className="p-3.5 border-b border-border-subtle">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {/* Team selector */}
               <div className="flex items-center gap-2">
-                <span className="text-[11px] text-slate-500 font-medium">Équipe</span>
-                <div className="flex gap-0.5 rounded-xl p-0.5" style={{ background: 'var(--surface-elevated)' }}>
+                <span className="section-label">Equipe</span>
+                <div className="flex gap-0.5 rounded-xl p-0.5 bg-surface-elevated">
                   {['blue', 'red'].map((t) => (
                     <button
                       key={t}
                       onClick={() => setMyTeam(t)}
                       aria-pressed={myTeam === t}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all duration-200 ${
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 ${
                         myTeam === t
-                          ? t === 'blue' ? 'bg-blue-500 text-white shadow-sm' : 'bg-red-500 text-white shadow-sm'
-                          : ''
+                          ? t === 'blue'
+                            ? 'bg-blue-500 text-white shadow-sm'
+                            : 'bg-red-500 text-white shadow-sm'
+                          : 'text-txt-muted hover:text-txt-secondary'
                       }`}
-                      style={myTeam !== t ? { color: 'var(--text-muted)' } : undefined}
                     >
                       {t === 'blue' ? 'Blue' : 'Red'}
                     </button>
@@ -141,12 +137,12 @@ export default function DraftBoard({ champions }) {
 
               {/* Role selector */}
               <div className="flex items-center gap-2">
-                <span className="text-[11px] text-slate-500 font-medium">Rôle</span>
+                <span className="section-label">Role</span>
                 <select
                   value={myRole}
                   onChange={(e) => setMyRole(e.target.value)}
-                  aria-label="Rôle"
-                  className="input-field px-2.5 py-1 text-xs font-medium"
+                  aria-label="Role"
+                  className="input-field px-3 py-1.5 text-xs font-medium w-auto"
                 >
                   {ROLES.map((r) => (
                     <option key={r} value={r}>{ROLE_LABELS[r]}</option>
@@ -155,14 +151,12 @@ export default function DraftBoard({ champions }) {
               </div>
             </div>
 
-            {/* LCU Status + DuoQ indicator */}
+            {/* LCU Status + DuoQ */}
             <div className="flex items-center gap-2">
               {duoActive && duoLinked && duoPartner && (
-                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full" style={{ background: 'var(--accent-muted)', border: '1px solid var(--border-default)' }}>
-                  <Users size={11} style={{ color: 'var(--accent)' }} />
-                  <span className="text-[10px] font-medium" style={{ color: 'var(--accent)' }}>
-                    Duo: {duoPartner.username}
-                  </span>
+                <div className="pill gap-1.5 bg-accent-muted text-accent border-accent/20">
+                  <Users size={11} />
+                  <span>Duo: {duoPartner.username}</span>
                 </div>
               )}
               <LCUStatus champions={champions} />
@@ -171,12 +165,12 @@ export default function DraftBoard({ champions }) {
         </div>
 
         {/* Bans */}
-        <div className="px-3 py-2.5" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-          <div className="text-[10px] uppercase tracking-wider font-medium mb-2" style={{ color: 'var(--text-muted)' }}>Bans</div>
-          <div className="flex gap-4 justify-between">
+        <div className="px-3.5 py-3 border-b border-border-subtle">
+          <div className="section-label mb-2">Bans</div>
+          <div className="flex gap-5 justify-between">
             <div className="flex-1">
-              <div className="text-[10px] text-blue-400/80 font-medium mb-1.5">Blue</div>
-              <div className="flex gap-1">
+              <div className="text-[10px] text-blue-400/70 font-medium mb-1.5">Blue</div>
+              <div className="flex gap-1.5">
                 {blueBans.map((ban, i) => (
                   <BanSlot
                     key={`bb${i}`}
@@ -188,8 +182,8 @@ export default function DraftBoard({ champions }) {
               </div>
             </div>
             <div className="flex-1">
-              <div className="text-[10px] text-red-400/80 font-medium mb-1.5 text-right">Red</div>
-              <div className="flex gap-1 justify-end">
+              <div className="text-[10px] text-red-400/70 font-medium mb-1.5 text-right">Red</div>
+              <div className="flex gap-1.5 justify-end">
                 {redBans.map((ban, i) => (
                   <BanSlot
                     key={`rb${i}`}
@@ -204,18 +198,17 @@ export default function DraftBoard({ champions }) {
         </div>
 
         {/* Picks */}
-        <div className="flex-1 px-3 py-2.5 overflow-y-auto">
+        <div className="flex-1 px-3.5 py-3 overflow-y-auto">
           <div className="flex gap-4">
-            {/* ── Left column (blue) ── */}
+            {/* Left column (Blue) */}
             <div className="flex-1 space-y-1.5">
-              <div className="text-[10px] uppercase tracking-wider font-medium mb-1.5">
-                <span className="text-blue-400/80">Blue</span>
+              <div className="text-[10px] uppercase tracking-wider font-semibold mb-2">
+                <span className="text-blue-400/70">Blue</span>
                 {isAllyBlue && (
-                  <span className="ml-1.5 normal-case text-[9px]" style={{ color: 'var(--accent)', opacity: 0.7 }}>← mon équipe</span>
+                  <span className="ml-1.5 normal-case text-[9px] text-accent/60">{'<-'} mon equipe</span>
                 )}
               </div>
               {isAllyBlue ? (
-                // Ally side: role-keyed slots
                 ROLES.map((role) => (
                   <DraftSlot
                     key={`ally-${role}`}
@@ -229,7 +222,6 @@ export default function DraftBoard({ champions }) {
                   />
                 ))
               ) : (
-                // Enemy side: ordered slots (Pick 1-5, roles unknown)
                 enemyPicks.map((pick, i) => (
                   <DraftSlot
                     key={`enemy-blue-${i}`}
@@ -247,22 +239,21 @@ export default function DraftBoard({ champions }) {
             </div>
 
             {/* VS divider */}
-            <div className="flex flex-col items-center justify-center py-2">
-              <div className="w-px flex-1" style={{ background: 'var(--border-subtle)' }} />
-              <div className="my-2 text-[10px] font-bold" style={{ color: 'var(--text-muted)' }}>VS</div>
-              <div className="w-px flex-1" style={{ background: 'var(--border-subtle)' }} />
+            <div className="flex flex-col items-center justify-center py-2 gap-2">
+              <div className="w-px flex-1 bg-border-subtle" />
+              <div className="text-[10px] font-bold text-txt-muted px-1">VS</div>
+              <div className="w-px flex-1 bg-border-subtle" />
             </div>
 
-            {/* ── Right column (red) ── */}
+            {/* Right column (Red) */}
             <div className="flex-1 space-y-1.5">
-              <div className="text-[10px] uppercase tracking-wider font-medium mb-1.5 text-right">
+              <div className="text-[10px] uppercase tracking-wider font-semibold mb-2 text-right">
                 {!isAllyBlue && (
-                  <span className="mr-1.5 normal-case text-[9px]" style={{ color: 'var(--accent)', opacity: 0.7 }}>mon équipe →</span>
+                  <span className="mr-1.5 normal-case text-[9px] text-accent/60">mon equipe {'->'}</span>
                 )}
-                <span className="text-red-400/80">Red</span>
+                <span className="text-red-400/70">Red</span>
               </div>
               {!isAllyBlue ? (
-                // Ally side: role-keyed slots
                 ROLES.map((role) => (
                   <DraftSlot
                     key={`ally-${role}`}
@@ -276,7 +267,6 @@ export default function DraftBoard({ champions }) {
                   />
                 ))
               ) : (
-                // Enemy side: ordered slots (Pick 1-5, roles unknown)
                 enemyPicks.map((pick, i) => (
                   <DraftSlot
                     key={`enemy-red-${i}`}
@@ -296,44 +286,54 @@ export default function DraftBoard({ champions }) {
         </div>
 
         {/* Action buttons */}
-        <div className="p-3 flex gap-2" style={{ borderTop: '1px solid var(--border-subtle)' }}>
-          <button onClick={handleAnalyze} disabled={loading} className="btn-primary flex-1" aria-label="Analyser le draft">
+        <div className="p-3.5 flex gap-2 border-t border-border-subtle">
+          <button
+            onClick={handleAnalyze}
+            disabled={loading}
+            className="btn-primary flex-1 gap-2"
+            aria-label="Analyser le draft"
+          >
             <Sparkles size={15} />
-            {loading ? 'Analyse…' : 'Analyser'}
+            {loading ? 'Analyse...' : 'Analyser'}
           </button>
           <button
             onClick={() => { setShowDuoPanel(!showDuoPanel); if (!showDuoPanel) setShowBanPanel(false); }}
-            className={`btn-secondary px-2.5 relative ${showDuoPanel ? '!border-[var(--accent)] !text-[var(--accent)]' : ''}`}
+            className={`btn-secondary px-3 relative ${showDuoPanel ? '!border-accent !text-accent' : ''}`}
             title="DuoQ"
             aria-label="DuoQ"
           >
             <Users size={15} />
             {duoActive && duoLinked && (
-              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full ring-2" style={{ background: 'var(--accent)', ringColor: 'var(--surface-default)' }} />
+              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-accent ring-2 ring-surface-default" />
             )}
           </button>
           <button
             onClick={() => { setShowBanPanel(!showBanPanel); if (!showBanPanel) setShowDuoPanel(false); }}
-            className={`btn-secondary px-2.5 ${showBanPanel ? 'border-red-500/40 text-red-400' : ''}`}
+            className={`btn-secondary px-3 ${showBanPanel ? 'border-red-500/40 text-red-400' : ''}`}
             title="Suggestions de bans"
             aria-label="Suggestions de bans"
           >
             <Shield size={15} />
           </button>
-          <button onClick={resetDraft} className="btn-secondary px-2.5" title="Réinitialiser" aria-label="Réinitialiser le draft">
+          <button
+            onClick={resetDraft}
+            className="btn-secondary px-3"
+            title="Reinitialiser"
+            aria-label="Reinitialiser le draft"
+          >
             <RotateCcw size={15} />
           </button>
         </div>
       </div>
 
-      {/* ── Right: Recommendations, Ban Panel, or DuoQ Panel ── */}
-      <div className="flex-1 overflow-y-auto" style={{ background: 'var(--surface-base)' }}>
+      {/* ── Right: Recommendations / Ban Panel / DuoQ ── */}
+      <div className="flex-1 overflow-y-auto bg-surface-base">
         {showDuoPanel ? (
-          <div className="p-4 max-w-lg mx-auto">
+          <div className="p-5 max-w-lg mx-auto">
             <DuoPanel />
           </div>
         ) : showBanPanel ? (
-          <div className="p-4">
+          <div className="p-5">
             <BanPanel />
           </div>
         ) : (
@@ -354,4 +354,3 @@ export default function DraftBoard({ champions }) {
     </div>
   );
 }
-

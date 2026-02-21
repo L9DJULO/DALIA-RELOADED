@@ -11,14 +11,13 @@ export default function ChampionCard({ champion, inPool, onAdd, compact = false,
       <button
         onClick={handleClick}
         aria-label={`${champion.name}${inPool ? ' (dans le pool)' : ''}`}
-        className={`relative group rounded-xl overflow-hidden border-2 transition-colors duration-150 ${
+        className={`relative group rounded-xl overflow-hidden border-2 transition-all duration-200 ${
           selected
-            ? 'border-violet-500 ring-1 ring-violet-500/30'
+            ? 'border-accent ring-1 ring-accent/30'
             : inPool
                 ? 'border-emerald-500/40'
-                : 'hover:border-violet-500/40'
+                : 'border-border-subtle hover:border-accent/40'
         }`}
-        style={!selected && !inPool ? { borderColor: 'var(--border-subtle)' } : undefined}
       >
         <img
           src={champion.image_url}
@@ -27,18 +26,18 @@ export default function ChampionCard({ champion, inPool, onAdd, compact = false,
           loading="lazy"
         />
         {/* Overlay on hover */}
-        <div className={`absolute inset-0 bg-black/60 flex items-center justify-center transition-opacity duration-150 ${
+        <div className={`absolute inset-0 bg-black/60 flex items-center justify-center transition-opacity duration-200 ${
           inPool ? 'opacity-50 hover:opacity-100' : 'opacity-0 group-hover:opacity-100'
         }`}>
           {inPool ? (
-            <ArrowUpDown size={16} className="text-violet-400" aria-hidden="true" />
+            <ArrowUpDown size={16} className="text-accent" aria-hidden="true" />
           ) : (
             <Plus size={18} className="text-white" aria-hidden="true" />
           )}
         </div>
         {/* In-pool indicator */}
         {inPool && (
-          <div className="absolute top-0.5 right-0.5 w-3 h-3 rounded-full bg-emerald-500 flex items-center justify-center">
+          <div className="absolute top-0.5 right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-500 flex items-center justify-center shadow-sm">
             <Check size={8} className="text-white" aria-hidden="true" />
           </div>
         )}
@@ -56,21 +55,21 @@ export default function ChampionCard({ champion, inPool, onAdd, compact = false,
     <button
       onClick={handleClick}
       aria-label={champion.name}
-      className={`rounded-xl border flex items-center gap-2.5 p-2 transition-colors duration-150 w-full text-left ${
-        selected ? 'border-violet-500 ring-1 ring-violet-500/30' : 'hover:border-violet-500/30'
+      className={`rounded-xl border flex items-center gap-2.5 p-2.5 transition-all duration-200 w-full text-left ${
+        selected
+          ? 'border-accent ring-1 ring-accent/30 bg-accent-subtle'
+          : 'bg-surface-elevated border-border-subtle hover:border-accent/30'
       }`}
-      style={{ background: 'var(--surface-elevated)', borderColor: selected ? undefined : 'var(--border-subtle)' }}
     >
       <img
         src={champion.image_url}
         alt={champion.name}
-        className="w-10 h-10 rounded-lg object-cover border"
-        style={{ borderColor: 'var(--border-subtle)' }}
+        className="w-10 h-10 rounded-xl object-cover border border-border-subtle"
         loading="lazy"
       />
       <div className="flex-1 min-w-0">
-        <div className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>{champion.name}</div>
-        <div className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>
+        <div className="text-sm font-medium truncate text-txt-primary">{champion.name}</div>
+        <div className="text-[11px] text-txt-secondary">
           {champion.roles?.join(', ')}
         </div>
       </div>

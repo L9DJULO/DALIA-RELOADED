@@ -1,8 +1,6 @@
 /**
- * Settings Page — User preferences + Admin ML controls.
- *
- * The ML training/status panel is hidden here for admin use only,
- * keeping the main UI clean for regular users.
+ * Settings Page -- User preferences + Admin ML controls.
+ * Premium dark theme with consistent design tokens.
  */
 import { useState, useEffect, useCallback } from 'react';
 import {
@@ -13,12 +11,12 @@ import { fetchMLStatus, triggerRetrain, reloadModel, getServerUrl, setServerUrl 
 import useAuthStore from '../../stores/authStore';
 import useUserStore from '../../stores/userStore';
 
-/* ── ML Admin Panel (hidden in settings) ── */
+/* -- ML Admin Panel -- */
 const STATUS_CONFIG = {
-  idle:      { label: 'Inactif',       icon: Clock,         color: 'text-slate-400',   bg: 'bg-slate-500/10 border-slate-500/20' },
-  checking:  { label: 'Vérification…', icon: Loader2,       color: 'text-sky-400',     bg: 'bg-sky-500/10 border-sky-500/20' },
-  training:  { label: 'Entraînement…', icon: Loader2,       color: 'text-amber-400',   bg: 'bg-amber-500/10 border-amber-500/20' },
-  trained:   { label: 'Entraîné',      icon: CheckCircle,   color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
+  idle:      { label: 'Inactif',       icon: Clock,         color: 'text-txt-muted',   bg: 'bg-surface-elevated border-border-subtle' },
+  checking:  { label: 'Verification...', icon: Loader2,     color: 'text-sky-400',     bg: 'bg-sky-500/10 border-sky-500/20' },
+  training:  { label: 'Entrainement...', icon: Loader2,     color: 'text-amber-400',   bg: 'bg-amber-500/10 border-amber-500/20' },
+  trained:   { label: 'Entraine',      icon: CheckCircle,   color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
   error:     { label: 'Erreur',        icon: AlertTriangle, color: 'text-red-400',     bg: 'bg-red-500/10 border-red-500/20' },
 };
 
@@ -63,16 +61,16 @@ function MLAdminPanel() {
 
   if (loading) {
     return (
-      <div className="animate-pulse space-y-2">
-        <div className="h-4 bg-[var(--surface-elevated)] rounded w-1/3" />
-        <div className="h-3 bg-[var(--surface-elevated)] rounded w-2/3" />
+      <div className="animate-pulse space-y-2.5">
+        <div className="h-4 bg-surface-elevated rounded-lg w-1/3" />
+        <div className="h-3 bg-surface-elevated rounded-lg w-2/3" />
       </div>
     );
   }
 
   if (!status) {
     return (
-      <div className="text-sm text-[var(--text-muted)]">
+      <div className="text-sm text-txt-muted">
         Impossible de contacter le serveur ML.
       </div>
     );
@@ -83,36 +81,36 @@ function MLAdminPanel() {
   const isTraining = status.status === 'training';
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3.5">
       {/* Status badge */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Cpu size={14} className="text-violet-500" />
-          <span className="text-xs font-semibold text-[var(--text-primary)]">Modèle IA</span>
+          <Cpu size={14} className="text-accent" />
+          <span className="text-xs font-semibold text-txt-primary">Modele IA</span>
         </div>
-        <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md border text-[11px] font-medium ${cfg.bg} ${cfg.color}`}>
+        <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl border text-[11px] font-medium ${cfg.bg} ${cfg.color}`}>
           <StatusIcon size={11} className={isTraining ? 'animate-spin' : ''} />
           {cfg.label}
         </div>
       </div>
 
       {/* Info rows */}
-      <div className="space-y-1">
+      <div className="space-y-1.5">
         {status.current_patch && (
           <div className="flex justify-between text-[11px]">
-            <span className="text-[var(--text-muted)]">Patch actuel</span>
-            <span className="text-[var(--text-secondary)] font-medium">{status.current_patch}</span>
+            <span className="text-txt-muted">Patch actuel</span>
+            <span className="text-txt-secondary font-medium">{status.current_patch}</span>
           </div>
         )}
         {status.last_trained_patch && (
           <div className="flex justify-between text-[11px]">
-            <span className="text-[var(--text-muted)]">Dernier entraînement</span>
-            <span className="text-[var(--text-secondary)] font-medium">{status.last_trained_patch}</span>
+            <span className="text-txt-muted">Dernier entrainement</span>
+            <span className="text-txt-secondary font-medium">{status.last_trained_patch}</span>
           </div>
         )}
         {status.last_val_accuracy != null && (
           <div className="flex justify-between text-[11px]">
-            <span className="text-[var(--text-muted)]">Précision (val)</span>
+            <span className="text-txt-muted">Precision (val)</span>
             <span className="text-emerald-400 font-medium tabular-nums">
               {(status.last_val_accuracy * 100).toFixed(1)}%
             </span>
@@ -120,8 +118,8 @@ function MLAdminPanel() {
         )}
         {status.last_trained_at && (
           <div className="flex justify-between text-[11px]">
-            <span className="text-[var(--text-muted)]">Date</span>
-            <span className="text-[var(--text-secondary)] tabular-nums">
+            <span className="text-txt-muted">Date</span>
+            <span className="text-txt-secondary tabular-nums">
               {new Date(status.last_trained_at).toLocaleDateString('fr-FR', {
                 day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
               })}
@@ -130,58 +128,51 @@ function MLAdminPanel() {
         )}
         {isTraining && status.training_elapsed != null && (
           <div className="flex justify-between text-[11px]">
-            <span className="text-[var(--text-muted)]">Temps écoulé</span>
+            <span className="text-txt-muted">Temps ecoule</span>
             <span className="text-amber-400 tabular-nums">{status.training_elapsed.toFixed(0)}s</span>
           </div>
         )}
         {status.needs_retrain && !isTraining && (
           <div className="text-[11px] text-amber-400 flex items-center gap-1 mt-1">
             <AlertTriangle size={11} />
-            Nouveau patch détecté — re-entraînement nécessaire
+            Nouveau patch detecte -- re-entrainement necessaire
           </div>
         )}
         {status.last_error && (
           <div className="text-[10px] text-red-400 mt-1 truncate" title={status.last_error}>
-            ⚠ {status.last_error}
+            {status.last_error}
           </div>
         )}
       </div>
 
       {/* Actions */}
-      <div className="flex gap-1.5 pt-1">
+      <div className="flex gap-2 pt-1">
         <button
           onClick={handleRetrain}
           disabled={isTraining || retraining}
-          className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-md
-                     bg-violet-500/10 text-violet-400 border border-violet-500/20
-                     hover:bg-violet-500/20 disabled:opacity-40 disabled:cursor-not-allowed
-                     text-[11px] font-medium transition-colors"
+          className="btn-primary flex-1 !text-xs !py-2"
         >
-          <RefreshCw size={11} className={retraining ? 'animate-spin' : ''} />
-          {isTraining ? 'En cours…' : 'Re-entraîner'}
+          <RefreshCw size={12} className={retraining ? 'animate-spin mr-1.5' : 'mr-1.5'} />
+          {isTraining ? 'En cours...' : 'Re-entrainer'}
         </button>
         {status.status === 'trained' && (
           <button
             onClick={handleReload}
-            className="flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-md
-                       bg-emerald-500/10 text-emerald-400 border border-emerald-500/20
-                       hover:bg-emerald-500/20 text-[11px] font-medium transition-colors"
+            className="btn-secondary !text-xs !py-2"
           >
             Recharger
           </button>
         )}
       </div>
 
-      {/* Info */}
-      <div className="text-[10px] text-[var(--text-muted)] leading-relaxed">
-        Le modèle IA utilise un réseau de neurones entraîné sur des parties D2+.
-        Le re-entraînement automatique se déclenche à chaque nouveau patch.
+      <div className="text-[10px] text-txt-muted leading-relaxed">
+        {"Le modele IA utilise un reseau de neurones entraine sur des parties D2+. Le re-entrainement automatique se declenche a chaque nouveau patch."}
       </div>
     </div>
   );
 }
 
-/* ── Main Settings Page ── */
+/* -- Main Settings Page -- */
 export default function SettingsPage() {
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
@@ -200,85 +191,84 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="h-[calc(100vh-2.5rem)] overflow-y-auto">
-      <div className="max-w-2xl mx-auto p-6 space-y-6">
+    <div className="h-[calc(100vh-3rem)] overflow-y-auto">
+      <div className="max-w-2xl mx-auto p-6 space-y-5">
         {/* Header */}
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-[var(--surface-elevated)] border border-[var(--border-subtle)] flex items-center justify-center">
-            <Settings size={18} className="text-[var(--text-secondary)]" />
+          <div className="w-10 h-10 rounded-xl bg-surface-elevated border border-border-subtle flex items-center justify-center">
+            <Settings size={20} className="text-txt-secondary" />
           </div>
           <div>
-            <h1 className="text-lg font-bold text-[var(--text-primary)]">Paramètres</h1>
-            <p className="text-xs text-[var(--text-muted)]">Configuration de l'application</p>
+            <h1 className="text-lg font-bold text-txt-primary">Parametres</h1>
+            <p className="text-xs text-txt-muted">{"Configuration de l'application"}</p>
           </div>
         </div>
 
         {/* Account */}
-        <div className="panel p-4 space-y-3">
-          <div className="flex items-center gap-2 mb-1">
-            <User size={14} className="text-[var(--text-secondary)]" />
-            <span className="text-sm font-medium text-[var(--text-primary)]">Compte</span>
+        <div className="glass-card p-5 space-y-3">
+          <div className="flex items-center gap-2">
+            <User size={15} className="text-txt-secondary" />
+            <span className="text-sm font-semibold text-txt-primary">Compte</span>
           </div>
           {user && (
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm text-[var(--text-primary)] font-medium">{user.username}</div>
-                <div className="text-xs text-[var(--text-muted)]">{user.email}</div>
+                <div className="text-sm text-txt-primary font-medium">{user.username}</div>
+                <div className="text-xs text-txt-muted">{user.email}</div>
               </div>
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 text-xs font-medium transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 text-xs font-medium transition-colors"
               >
-                <LogOut size={12} />
-                Déconnexion
+                <LogOut size={13} />
+                Deconnexion
               </button>
             </div>
           )}
         </div>
 
         {/* Server connection */}
-        <div className="panel p-4 space-y-3">
-          <div className="flex items-center gap-2 mb-1">
-            <Server size={14} className="text-[var(--text-secondary)]" />
-            <span className="text-sm font-medium text-[var(--text-primary)]">Serveur</span>
+        <div className="glass-card p-5 space-y-3">
+          <div className="flex items-center gap-2">
+            <Server size={15} className="text-txt-secondary" />
+            <span className="text-sm font-semibold text-txt-primary">Serveur</span>
           </div>
           <div>
-            <label className="text-[11px] text-[var(--text-muted)] mb-1 block">URL du serveur DALIA</label>
+            <label className="section-label mb-1.5 block">URL du serveur DALIA</label>
             <input
               type="text"
               value={serverUrl}
               onChange={(e) => handleServerUrlChange(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg bg-surface-elevated border border-[var(--border-subtle)] text-sm text-[var(--text-primary)] focus:outline-none focus:border-violet-500/50 transition-colors"
+              className="input-field"
               placeholder="http://localhost:8000"
             />
-            <div className="text-[10px] text-[var(--text-muted)] mt-1">
-              Adresse du serveur backend. En développement : http://localhost:8000
+            <div className="text-[10px] text-txt-muted mt-1.5 leading-relaxed">
+              {"Adresse du serveur backend. En developpement : http://localhost:8000"}
             </div>
           </div>
         </div>
 
-        {/* Admin section — ML controls */}
-        <div className="panel p-4 space-y-3">
+        {/* Admin section -- ML controls */}
+        <div className="glass-card p-5 space-y-3">
           <button
             onClick={() => setShowAdmin(!showAdmin)}
             className="flex items-center justify-between w-full"
           >
             <div className="flex items-center gap-2">
-              <Shield size={14} className="text-violet-500" />
-              <span className="text-sm font-medium text-[var(--text-primary)]">Administration</span>
+              <Shield size={15} className="text-accent" />
+              <span className="text-sm font-semibold text-txt-primary">Administration</span>
             </div>
-            <span className="text-[11px] text-[var(--text-muted)]">
-              {showAdmin ? '▲ Masquer' : '▼ Afficher'}
+            <span className="text-[11px] text-txt-muted">
+              {showAdmin ? 'Masquer' : 'Afficher'}
             </span>
           </button>
 
           {showAdmin && (
-            <div className="pt-2 border-t border-[var(--border-subtle)] space-y-4">
-              {/* ML Panel */}
+            <div className="pt-3 border-t border-border-subtle space-y-4 animate-fade-in-up">
               <div>
                 <div className="flex items-center gap-2 mb-3">
-                  <Brain size={14} className="text-violet-400" />
-                  <span className="text-xs font-medium text-[var(--text-secondary)]">Modèle IA — Entraînement</span>
+                  <Brain size={15} className="text-accent" />
+                  <span className="text-xs font-medium text-txt-secondary">{"Modele IA -- Entrainement"}</span>
                 </div>
                 <MLAdminPanel />
               </div>
@@ -287,7 +277,7 @@ export default function SettingsPage() {
         </div>
 
         {/* App info */}
-        <div className="text-center text-[11px] text-[var(--text-muted)] pt-4">
+        <div className="text-center text-[11px] text-txt-muted pt-4">
           DALIA v2.0 · Draft Assistant for League Intelligence Analysis
         </div>
       </div>
