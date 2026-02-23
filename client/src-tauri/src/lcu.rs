@@ -34,6 +34,10 @@ pub struct LiveDraftState {
     pub enemy_bans: Vec<i64>,
     pub ally_picks: HashMap<String, i64>,
     pub enemy_picks: HashMap<String, i64>,
+    /// Ordered list of enemy champion IDs (no role info — server predicts roles)
+    pub enemy_picks_order: Vec<i64>,
+    /// Ally hover/intent picks: role → champion_id (not yet locked in)
+    pub ally_prepicks: HashMap<String, i64>,
     pub current_action_type: String,
     pub is_my_turn: bool,
     pub timer_remaining: f64,
@@ -308,16 +312,35 @@ pub async fn poll_draft_state(creds: &LcuCredentials) -> LiveDraftState {
     // This is the only reliable way to know each player's assigned role;
     // the old cell_to_role(cell_id % 5) was pure position-index guesswork.
     let mut cell_role_map: HashMap<i64, String> = HashMap::new();
+    // Track which cells belong to which team for role resolution
+    let mut ally_cells: Vec<i64> = Vec::new();
+    let mut enemy_cells: Vec<i64> = Vec::new();
+    // Collect ally championPickIntent for pre-picks
+    let mut ally_intents: HashMap<i64, i64> = HashMap::new(); // cellId → champId
     for team_key in &["myTeam", "theirTeam"] {
         if let Some(team) = session[*team_key].as_array() {
             for member in team {
-                if let (Some(cid), Some(pos)) = (
-                    member["cellId"].as_i64(),
-                    member["assignedPosition"].as_str(),
-                ) {
-                    let role = normalise_pos(pos);
-                    if !role.is_empty() {
-                        cell_role_map.insert(cid, role.to_string());
+                if let Some(cid) = member["cellId"].as_i64() {
+                    let is_my_team = *team_key == "myTeam";
+                    if is_my_team {
+                        ally_cells.push(cid);
+                    } else {
+                        enemy_cells.push(cid);
+                    }
+
+                    if let Some(pos) = member["assignedPosition"].as_str() {
+                        let role = normalise_pos(pos);
+                        if !role.is_empty() {
+                            cell_role_map.insert(cid, role.to_string());
+                        }
+                    }
+
+                    // Collect ally champion pick intent (hover before their turn)
+                    if is_my_team && cid != local_cell {
+                        let intent = member["championPickIntent"].as_i64().unwrap_or(0);
+                        if intent > 0 {
+                            ally_intents.insert(cid, intent);
+                        }
                     }
                 }
             }
@@ -363,17 +386,34 @@ pub async fn poll_draft_state(creds: &LcuCredentials) -> LiveDraftState {
                             }
                         }
                         "pick" if completed => {
-                            // Use the assignedPosition from the team arrays (reliable).
-                            // Falls back to positional index only when position is unassigned
-                            // (e.g. custom games or very early in draft before roles are set).
-                            let role = cell_role_map
-                                .get(&cell_id)
-                                .cloned()
-                                .unwrap_or_else(|| cell_to_role(cell_id).to_string());
                             if is_ally {
+                                // Ally picks: use assigned role (reliable from LCU)
+                                let role = cell_role_map
+                                    .get(&cell_id)
+                                    .cloned()
+                                    .unwrap_or_else(|| cell_to_role(cell_id).to_string());
                                 state.ally_picks.insert(role, champion_id);
+                                // Remove from prepicks once locked
+                                // (the role is known, no need for intent anymore)
                             } else {
-                                state.enemy_picks.insert(role, champion_id);
+                                // Enemy picks: DON'T assign fake roles!
+                                // The server will predict the correct role based on
+                                // champion data (e.g. Tristana → bot, not top).
+                                // Only use the role if the LCU actually provides it
+                                // (theirTeam assignedPosition — usually empty in ranked).
+                                if let Some(role) = cell_role_map.get(&cell_id) {
+                                    // Rare: LCU provided a real role for this enemy
+                                    state.enemy_picks.insert(role.clone(), champion_id);
+                                }
+                                // Always add to ordered list (server uses this)
+                                state.enemy_picks_order.push(champion_id);
+                            }
+                        }
+                        "pick" if !completed && champion_id > 0 && is_ally && !is_me => {
+                            // Ally is hovering a champion during their pick phase
+                            // (in-progress pick action with a champion selected)
+                            if let Some(role) = cell_role_map.get(&cell_id) {
+                                state.ally_prepicks.insert(role.clone(), champion_id);
                             }
                         }
                         _ => {}
@@ -384,6 +424,35 @@ pub async fn poll_draft_state(creds: &LcuCredentials) -> LiveDraftState {
     }
 
     // Timer
+    // ── Merge ally pick intents into prepicks ──
+    // championPickIntent from myTeam members shows what allies plan to play.
+    // Only include intents for allies who haven't locked a pick yet
+    // and whose intent champion isn't already picked/banned.
+    let picked_ids: std::collections::HashSet<i64> = state.ally_picks.values()
+        .chain(state.enemy_picks.values())
+        .chain(state.enemy_picks_order.iter())
+        .chain(state.ally_bans.iter())
+        .chain(state.enemy_bans.iter())
+        .copied()
+        .collect();
+
+    for (cell_id, intent_champ) in &ally_intents {
+        if let Some(role) = cell_role_map.get(cell_id) {
+            // Skip if this ally already has a locked pick in this role
+            if state.ally_picks.contains_key(role) {
+                continue;
+            }
+            // Skip if the intent champion is already picked or banned
+            if picked_ids.contains(intent_champ) {
+                continue;
+            }
+            // Only add if not already in prepicks (action-based hover takes priority)
+            if !state.ally_prepicks.contains_key(role) {
+                state.ally_prepicks.insert(role.clone(), *intent_champ);
+            }
+        }
+    }
+
     if let Some(timer) = session["timer"].as_object() {
         let total = timer.get("adjustedTimeLeftInPhase")
             .and_then(|v| v.as_f64())

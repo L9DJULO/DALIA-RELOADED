@@ -21,8 +21,10 @@ const useDraftStore = create((set, get) => ({
   // ── Picks ──
   // allyPicks: role-keyed { top, jungle, mid, bot, support } — I know my team's roles
   // enemyPicks: ordered array [P1..P5] — roles unknown, we only see pick order
+  // allyPrepicks: role-keyed { top, ... } — what allies are hovering (intent)
   allyPicks: EMPTY_ALLY_PICKS(),
   enemyPicks: EMPTY_ENEMY_PICKS(),
+  allyPrepicks: EMPTY_ALLY_PICKS(),
 
   // ── Recommendations ──
   recommendations: [],
@@ -63,6 +65,12 @@ const useDraftStore = create((set, get) => ({
     set({ allyPicks: picks });
   },
 
+  // ── Ally pre-picks (hover/intent from LCU) ──
+  setAllyPrepicks: (prepicks) => {
+    // prepicks = { top: {id,key,name} | null, jungle: ..., ... }
+    set({ allyPrepicks: { ...EMPTY_ALLY_PICKS(), ...prepicks } });
+  },
+
   // ── Enemy picks (ordered array — roles unknown) ──
   setEnemyPick: (index, champion) => {
     const picks = [...get().enemyPicks];
@@ -73,6 +81,18 @@ const useDraftStore = create((set, get) => ({
   clearEnemyPick: (index) => {
     const picks = [...get().enemyPicks];
     picks[index] = null;
+    set({ enemyPicks: picks });
+  },
+
+  // ── Set all enemy picks at once from LCU (no roles — server predicts) ──
+  setEnemyPicksFromLCU: (champions) => {
+    // champions = array of {id, key, name} objects (NO roles attached)
+    const picks = [null, null, null, null, null];
+    if (champions) {
+      champions.forEach((champ, i) => {
+        if (i < 5 && champ) picks[i] = champ; // no .role property
+      });
+    }
     set({ enemyPicks: picks });
   },
 
@@ -108,6 +128,7 @@ const useDraftStore = create((set, get) => ({
       redBans:  [null, null, null, null, null],
       allyPicks: EMPTY_ALLY_PICKS(),
       enemyPicks: EMPTY_ENEMY_PICKS(),
+      allyPrepicks: EMPTY_ALLY_PICKS(),
       recommendations: [],
       compSummary: {},
       warnings: [],
@@ -147,10 +168,16 @@ const useDraftStore = create((set, get) => ({
       .filter(([_, c]) => c !== null)
       .map(([role, c]) => ({ champion_id: c.id, champion_key: c.key, role }));
 
-    // Enemy picks: role may be known from LCU, pass it through when available
+    // Enemy picks: role is intentionally NOT set (server predicts)
+    // If a pick has a .role from old LCU sync, pass it; otherwise null
     const enemyPicks = s.enemyPicks
       .filter(Boolean)
       .map((c) => ({ champion_id: c.id, champion_key: c.key, role: c.role || null }));
+
+    // Ally pre-picks: champions allies are hovering (intent)
+    const allyPrepicks = Object.entries(s.allyPrepicks)
+      .filter(([_, c]) => c !== null)
+      .map(([role, c]) => ({ champion_id: c.id, champion_key: c.key, role }));
 
     return {
       my_team: s.myTeam,
@@ -158,6 +185,7 @@ const useDraftStore = create((set, get) => ({
       bans,
       ally_picks: allyPicks,
       enemy_picks: enemyPicks,
+      ally_prepicks: allyPrepicks,
       current_action: s.currentAction,
     };
   },
@@ -182,12 +210,20 @@ const useDraftStore = create((set, get) => ({
       });
     } catch (e) {
       console.error('Draft recommendation failed:', e);
-      const msg =
-        e.response?.data?.detail ||
-        (e.message === 'Network Error'
-          ? 'Serveur inaccessible — vérifiez que le backend est démarré.'
-          : e.message) ||
-        'Erreur de recommandation';
+      // Build a useful error message from the Axios error
+      let msg = 'Erreur de recommandation';
+      if (e.response?.data?.detail) {
+        const detail = e.response.data.detail;
+        msg = typeof detail === 'string' ? detail : JSON.stringify(detail);
+      } else if (e.response?.status) {
+        msg = `Erreur serveur (${e.response.status}) — ${e.response.statusText || 'vérifiez les logs'}`;
+      } else if (e.code === 'ECONNABORTED') {
+        msg = 'Temps de réponse dépassé — le serveur met trop de temps.';
+      } else if (e.message === 'Network Error') {
+        msg = 'Serveur inaccessible — vérifiez que le backend est démarré.';
+      } else if (e.message) {
+        msg = e.message;
+      }
       set({ error: msg, loading: false });
     }
   },

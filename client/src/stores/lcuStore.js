@@ -25,6 +25,8 @@ const useLCUStore = create((set, get) => ({
   enemyBans: [],
   allyPicks: {},
   enemyPicks: {},
+  enemyPicksOrder: [],  // ordered list of enemy champion IDs (no roles)
+  allyPrepicks: {},     // role → champId (ally hover/intent picks)
   
   // ── Current action ──
   currentActionType: '',
@@ -52,6 +54,7 @@ const useLCUStore = create((set, get) => ({
   fetchStatus: async () => {
     try {
       const data = await lcuStatus();
+      const wasConnected = get().connected;
       set({
         connected: data.connected,
         inChampSelect: data.in_champ_select,
@@ -62,12 +65,22 @@ const useLCUStore = create((set, get) => ({
         enemyBans: data.enemy_bans || [],
         allyPicks: data.ally_picks || {},
         enemyPicks: data.enemy_picks || {},
+        enemyPicksOrder: data.enemy_picks_order || [],
+        allyPrepicks: data.ally_prepicks || {},
         currentActionType: data.current_action_type,
         isMyTurn: data.is_my_turn,
         timerRemaining: data.timer_remaining,
         lastUpdate: new Date(),
         error: null,
       });
+      // Auto-fetch summoner info when LCU becomes connected
+      if (data.connected && !wasConnected) {
+        get().fetchSummonerInfo();
+      }
+      // Also fetch if connected but summoner not yet loaded
+      if (data.connected && !get().summoner) {
+        get().fetchSummonerInfo();
+      }
       return data;
     } catch (e) {
       set({ error: e.message || 'Failed to fetch LCU status' });
@@ -189,16 +202,46 @@ const useLCUStore = create((set, get) => ({
       return result;
     };
 
+    // Format enemy picks from ordered list (no roles — server will predict)
+    const formatEnemyPicksOrder = (orderedIds) => {
+      return orderedIds
+        .filter((id) => id > 0)
+        .map((id) => resolveChamp(id))
+        .filter(Boolean);
+    };
+
+    // Format ally pre-picks (hover/intent) by role
+    const formatPrepicks = (prepicks) => {
+      const result = { top: null, jungle: null, mid: null, bot: null, support: null };
+      for (const [role, champId] of Object.entries(prepicks)) {
+        if (champId && result.hasOwnProperty(role)) {
+          result[role] = resolveChamp(champId);
+        }
+      }
+      return result;
+    };
+
     // Determine which team is blue/red based on myTeam
     const isBlue = s.myTeam === 'blue';
+
+    // Use enemy_picks_order (no roles) when available,
+    // fall back to role-keyed enemy_picks (may have real LCU roles)
+    const hasEnemyOrder = s.enemyPicksOrder && s.enemyPicksOrder.length > 0;
 
     return {
       myTeam: s.myTeam,
       myRole: s.myRole,
       blueBans: formatBans(isBlue ? s.allyBans : s.enemyBans),
       redBans: formatBans(isBlue ? s.enemyBans : s.allyBans),
+      // Ally picks: always role-keyed (we know our team's roles)
+      allyPicks: formatPicks(s.allyPicks),
+      // Enemy picks: prefer ordered list (no fake roles)
+      enemyPicksOrder: hasEnemyOrder ? formatEnemyPicksOrder(s.enemyPicksOrder) : null,
+      // Fallback: role-keyed enemy picks (only if LCU provided real roles)
       bluePicks: formatPicks(isBlue ? s.allyPicks : s.enemyPicks),
       redPicks: formatPicks(isBlue ? s.enemyPicks : s.allyPicks),
+      // Ally pre-picks (hover/intent)
+      allyPrepicks: formatPrepicks(s.allyPrepicks),
     };
   },
 }));

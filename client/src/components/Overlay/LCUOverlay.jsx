@@ -152,34 +152,7 @@ export default function LCUOverlay({ champions }) {
 
   // Don't show overlay when not in champ select
   if (!connected || !inChampSelect) {
-    return (
-      <div
-        style={{ left: position.x, top: position.y }}
-        className="fixed z-50 select-none"
-        onMouseDown={handleMouseDown}
-        ref={dragRef}
-      >
-        <div className="bg-[var(--surface-default)] backdrop-blur-sm border border-[var(--border-subtle)] rounded-xl shadow-2xl p-3 cursor-move">
-          <div className="flex items-center gap-2">
-            {connected ? (
-              <>
-                <Wifi size={12} className="text-[var(--text-secondary)]" />
-                <span className="text-[11px] text-[var(--text-secondary)]">
-                  {gamePhase === 'Lobby' ? 'En lobby' : gamePhase === 'Matchmaking' ? 'Recherche…' : 'Connecté'}
-                </span>
-              </>
-            ) : (
-              <>
-                <WifiOff size={12} className="text-red-400" />
-                <span className="text-[11px] text-red-400">LCU déconnecté</span>
-              </>
-            )}
-            <div className="w-1.5 h-1.5 rounded-full bg-violet-500 ml-1" />
-            <span className="text-[9px] text-[var(--text-muted)] font-medium">DALIA</span>
-          </div>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   return (

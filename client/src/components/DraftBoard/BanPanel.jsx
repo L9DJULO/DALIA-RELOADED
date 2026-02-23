@@ -6,7 +6,7 @@ import { Shield, Loader2, AlertTriangle } from 'lucide-react';
 import { fetchBanRecommendations } from '../../services/api';
 import useDraftStore from '../../stores/draftStore';
 import useUserStore from '../../stores/userStore';
-import Badge from '../ui/Badge';
+
 import { getDDragonChampBase } from '../../lib/constants';
 
 function BanScore({ value }) {
@@ -22,13 +22,11 @@ function BanScore({ value }) {
   );
 }
 
-function ReasonBadge({ reason }) {
-  let variant = 'default';
-  if (reason.includes('Contre fort') || reason.includes('dangereux')) variant = 'danger';
-  else if (reason.includes('Meta S') || reason.includes('Meta forte')) variant = 'accent';
-  else if (reason.includes('frequemment')) variant = 'warning';
-  else if (reason.includes('Contre modere')) variant = 'warning';
-  return <Badge variant={variant}>{reason}</Badge>;
+// Simplified: show at most 1 reason as inline text (no badge clutter)
+function ReasonText({ reasons }) {
+  if (!reasons || reasons.length === 0) return null;
+  // Pick the most important reason (first one)
+  return <span className="text-[10px] text-txt-muted truncate">{reasons[0]}</span>;
 }
 
 function BanCard({ ban, onBan, rank }) {
@@ -50,11 +48,7 @@ function BanCard({ ban, onBan, rank }) {
             <span className="text-[10px] capitalize text-txt-muted">{ban.meta_role}</span>
           )}
         </div>
-        <div className="flex flex-wrap gap-1 mt-0.5">
-          {ban.reasons.map((r, i) => (
-            <ReasonBadge key={i} reason={r} />
-          ))}
-        </div>
+        <ReasonText reasons={ban.reasons} />
       </div>
       <BanScore value={ban.ban_score} />
       <button

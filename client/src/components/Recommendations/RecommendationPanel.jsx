@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { AlertTriangle, TrendingUp, Trophy } from 'lucide-react';
 import useDraftStore from '../../stores/draftStore';
 import RecommendationCard from './RecommendationCard';
@@ -6,6 +6,7 @@ import { getWinProbColor } from '../../lib/scores';
 
 export default function RecommendationPanel({ champions }) {
   const { recommendations, compSummary, warnings, winProbability, loading, error } = useDraftStore();
+  const unavailableIds = useDraftStore((s) => s.getAllUnavailableIds());
 
   const champMap = React.useMemo(() => {
     const m = {};
@@ -59,7 +60,11 @@ export default function RecommendationPanel({ champions }) {
     );
   }
 
-  const allRecs = recommendations;
+  // Filter out champions that have been picked/banned since last analysis
+  const allRecs = useMemo(
+    () => recommendations.filter((r) => !unavailableIds.has(r.champion_id)),
+    [recommendations, unavailableIds],
+  );
 
   return (
     <div className="p-5 space-y-4">

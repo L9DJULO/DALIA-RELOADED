@@ -5,10 +5,10 @@ import ErrorBoundary from './components/ErrorBoundary';
 import AuthPage from './components/Auth/AuthPage';
 import ChampionPoolEditor from './components/ChampionPool/ChampionPoolEditor';
 import DraftBoard from './components/DraftBoard/DraftBoard';
-import DraftHistory from './components/History/DraftHistory';
+// DraftHistory merged into InsightsPage
 import InsightsPage from './components/Insights/InsightsPage';
 import SettingsPage from './components/Settings/SettingsPage';
-import LCUOverlay from './components/Overlay/LCUOverlay';
+// LCU Overlay removed — info is shown in TopBar and DraftBoard instead
 import { fetchChampions, fetchPatch } from './services/api';
 import useAuthStore from './stores/authStore';
 import useUserStore from './stores/userStore';
@@ -59,19 +59,16 @@ function ProtectedApp() {
   }
 
   return (
-    <>
-      <LCUOverlay champions={champions} />
-      <Routes>
-        <Route element={<Layout patchInfo={patchInfo} />}>
-          <Route path="/" element={<Navigate to="/draft" replace />} />
-          <Route path="/pool" element={<ChampionPoolEditor champions={champions} />} />
-          <Route path="/draft" element={<DraftBoard champions={champions} />} />
-          <Route path="/history" element={<DraftHistory champions={champions} />} />
-          <Route path="/insights" element={<InsightsPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
-        </Route>
-      </Routes>
-    </>
+    <Routes>
+      <Route element={<Layout patchInfo={patchInfo} />}>
+        <Route path="/" element={<Navigate to="/draft" replace />} />
+        <Route path="/pool" element={<ChampionPoolEditor champions={champions} />} />
+        <Route path="/draft" element={<DraftBoard champions={champions} />} />
+        <Route path="/insights" element={<InsightsPage champions={champions} />} />
+        <Route path="/history" element={<Navigate to="/insights" replace />} />
+        <Route path="/settings" element={<SettingsPage />} />
+      </Route>
+    </Routes>
   );
 }
 

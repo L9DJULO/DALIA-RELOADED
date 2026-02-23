@@ -33,8 +33,7 @@ export default function DraftBoard({ champions }) {
 
   const [selectorOpen, setSelectorOpen] = useState(false);
   const [selectorTarget, setSelectorTarget] = useState(null);
-  const [showBanPanel, setShowBanPanel] = useState(false);
-  const [showDuoPanel, setShowDuoPanel] = useState(false);
+  const [rightTab, setRightTab] = useState('reco');
 
   const duoActive = useDuoStore((s) => s.duoActive);
   const duoLinked = useDuoStore((s) => s.linked);
@@ -296,25 +295,6 @@ export default function DraftBoard({ champions }) {
             {loading ? 'Analyse...' : 'Analyser'}
           </button>
           <button
-            onClick={() => { setShowDuoPanel(!showDuoPanel); if (!showDuoPanel) setShowBanPanel(false); }}
-            className={`btn-secondary px-3 relative ${showDuoPanel ? '!border-accent !text-accent' : ''}`}
-            title="DuoQ"
-            aria-label="DuoQ"
-          >
-            <Users size={15} />
-            {duoActive && duoLinked && (
-              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-accent ring-2 ring-surface-default" />
-            )}
-          </button>
-          <button
-            onClick={() => { setShowBanPanel(!showBanPanel); if (!showBanPanel) setShowDuoPanel(false); }}
-            className={`btn-secondary px-3 ${showBanPanel ? 'border-red-500/40 text-red-400' : ''}`}
-            title="Suggestions de bans"
-            aria-label="Suggestions de bans"
-          >
-            <Shield size={15} />
-          </button>
-          <button
             onClick={resetDraft}
             className="btn-secondary px-3"
             title="Reinitialiser"
@@ -325,19 +305,43 @@ export default function DraftBoard({ champions }) {
         </div>
       </div>
 
-      {/* ── Right: Recommendations / Ban Panel / DuoQ ── */}
-      <div className="flex-1 overflow-y-auto bg-surface-base">
-        {showDuoPanel ? (
-          <div className="p-5 max-w-lg mx-auto">
-            <DuoPanel />
+      {/* ── Right: Tab bar + Panel ── */}
+      <div className="flex-1 flex flex-col bg-surface-base">
+        {/* Tab bar */}
+        <div className="px-4 pt-3 pb-0 shrink-0">
+          <div className="flex gap-1 bg-surface-default rounded-xl p-1 border border-border-subtle">
+            {[
+              { id: 'reco', label: 'Recommandations', icon: Sparkles },
+              { id: 'bans', label: 'Bans', icon: Shield },
+              { id: 'duo',  label: 'DuoQ', icon: Users, badge: duoActive && duoLinked },
+            ].map(({ id, label, icon: Icon, badge }) => (
+              <button
+                key={id}
+                onClick={() => setRightTab(id)}
+                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 relative ${
+                  rightTab === id
+                    ? id === 'bans'
+                      ? 'bg-red-500 text-white shadow-sm'
+                      : 'bg-accent text-white shadow-glow'
+                    : 'text-txt-secondary hover:text-txt-primary hover:bg-surface-elevated'
+                }`}
+              >
+                <Icon size={14} />
+                <span>{label}</span>
+                {badge && rightTab !== id && (
+                  <span className="absolute top-1 right-2 w-2 h-2 rounded-full bg-accent ring-2 ring-surface-default" />
+                )}
+              </button>
+            ))}
           </div>
-        ) : showBanPanel ? (
-          <div className="p-5">
-            <BanPanel />
-          </div>
-        ) : (
-          <RecommendationPanel champions={champions} />
-        )}
+        </div>
+
+        {/* Panel content */}
+        <div className="flex-1 overflow-y-auto" key={rightTab}>
+          {rightTab === 'reco' && <RecommendationPanel champions={champions} />}
+          {rightTab === 'bans' && <div className="p-5"><BanPanel /></div>}
+          {rightTab === 'duo'  && <DuoPanel embedded />}
+        </div>
       </div>
 
       {/* ── Champion selector overlay ── */}

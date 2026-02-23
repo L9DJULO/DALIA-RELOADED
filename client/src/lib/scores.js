@@ -62,3 +62,26 @@ export function getWinProbColor(wp) {
   if (wp >= 48) return 'text-amber-400';
   return 'text-red-400';
 }
+
+/**
+ * Format a win rate as WPA (Win Rate Added = WR − 50%).
+ * Shows a +/− prefix for immediate readability.
+ * @param {number} winRate  0–100 scale (e.g. 53.2)
+ * @returns {string} e.g. "+3.2%", "−1.8%", "0.0%"
+ */
+export function formatWPA(winRate) {
+  const wpa = winRate - 50;
+  const sign = wpa > 0 ? '+' : '';
+  return `${sign}${wpa.toFixed(1)}%`;
+}
+
+/**
+ * Tailwind text color class for a WPA value (accepts raw 0–100 WR).
+ * ≥ +5 WPA (55% WR) → emerald, ≥ 0 (50%) → amber, < 0 → red
+ */
+export function getWPAColor(winRate) {
+  const wpa = winRate - 50;
+  if (wpa >= 5) return 'text-emerald-400';
+  if (wpa >= 0) return 'text-amber-400';
+  return 'text-red-400';
+}

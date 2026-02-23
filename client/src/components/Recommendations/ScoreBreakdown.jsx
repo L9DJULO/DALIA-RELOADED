@@ -2,9 +2,9 @@ import { BarChart3, Swords, Users, LayoutGrid, Star, Dice6, Brain, HelpCircle } 
 import { getScoreClasses } from '../../lib/scores';
 
 const SCORE_LABELS = {
-  meta:        { label: 'Meta',        Icon: BarChart3, tip: 'Force dans le patch actuel (winrate, pickrate, banrate Master+)' },
+  meta:        { label: 'Meta',        Icon: BarChart3, tip: 'Force dans le patch actuel (WPA, pickrate, banrate Master+)' },
   matchup:     { label: 'Matchups',    Icon: Swords, tip: "Perf vs ennemis reveles -- x3 pour l'adversaire direct" },
-  synergy:     { label: 'Synergies',   Icon: Users, tip: 'Winrate en duo avec les allies selectionnes' },
+  synergy:     { label: 'Synergies',   Icon: Users, tip: 'Synergie avec les allies selectionnes' },
   composition: { label: 'Composition', Icon: LayoutGrid, tip: 'Equilibre compo : AD/AP, tank, CC, engage, peel' },
   mastery:     { label: 'Maitrise',    Icon: Star, tip: 'Votre tier sur ce champion dans votre pool' },
   draft_risk:  { label: 'Risque draft',Icon: Dice6, tip: 'Securite du pick : counters disponibles, risque de blind' },

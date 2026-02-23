@@ -10,6 +10,7 @@ import { fetchHistoryStats, fetchHistory, fetchPersonalStats, fetchChampions } f
 import useLCUStore from '../../stores/lcuStore';
 import RoleIcon from '../RoleIcon';
 import { getDDragonChampBase } from '../../lib/constants';
+import { formatWPA, getWPAColor } from '../../lib/scores';
 
 function StatCard({ icon: Icon, iconColor, label, value, sub, valueColor = 'text-txt-primary' }) {
   return (
@@ -30,7 +31,8 @@ function WinRateRing({ percentage, size = 60 }) {
   const radius = (size - 6) / 2;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (percentage / 100) * circumference;
-  const color = percentage >= 55 ? '#34d399' : percentage >= 50 ? '#fbbf24' : '#f87171';
+  const wpa = percentage - 50;
+  const color = wpa >= 5 ? '#34d399' : wpa >= 0 ? '#fbbf24' : '#f87171';
 
   return (
     <div className="relative" style={{ width: size, height: size }}>
@@ -46,14 +48,14 @@ function WinRateRing({ percentage, size = 60 }) {
         />
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
-        <span className="text-xs font-bold tabular-nums" style={{ color }}>{percentage.toFixed(0)}%</span>
+        <span className="text-[9px] font-bold tabular-nums" style={{ color }}>{wpa >= 0 ? '+' : ''}{wpa.toFixed(0)}%</span>
       </div>
     </div>
   );
 }
 
 function ChampionMastery({ champ }) {
-  const wrColor = champ.win_rate >= 55 ? 'text-emerald-400' : champ.win_rate >= 50 ? 'text-amber-400' : 'text-red-400';
+  const wrColor = getWPAColor(champ.win_rate);
   return (
     <div className="flex items-center gap-3 py-2 px-3 rounded-xl hover:bg-surface-elevated/50 transition-colors">
       <img
@@ -69,7 +71,7 @@ function ChampionMastery({ champ }) {
       <div className="flex items-center gap-3">
         <WinRateRing percentage={champ.win_rate} size={40} />
         <span className={`text-sm font-bold tabular-nums w-14 text-right ${wrColor}`}>
-          {champ.win_rate.toFixed(1)}%
+          {formatWPA(champ.win_rate)}
         </span>
       </div>
     </div>
@@ -85,7 +87,7 @@ function RolePerformance({ byRole }) {
       <div className="section-label mb-3">Performance par role</div>
       <div className="space-y-3">
         {sorted.map(([role, data]) => {
-          const wrColor = data.win_rate >= 55 ? 'text-emerald-400' : data.win_rate >= 50 ? 'text-amber-400' : 'text-red-400';
+          const wrColor = getWPAColor(data.win_rate);
           const barPct = Math.min((data.games / sorted[0][1].games) * 100, 100);
           return (
             <div key={role} className="flex items-center gap-3">
@@ -102,7 +104,7 @@ function RolePerformance({ byRole }) {
               <div className="flex items-center gap-2 w-28 justify-end">
                 <span className="text-[11px] text-txt-muted tabular-nums">{data.games}G</span>
                 <span className={`text-xs font-bold tabular-nums ${wrColor}`}>
-                  {data.win_rate.toFixed(1)}%
+                  {formatWPA(data.win_rate)}
                 </span>
               </div>
             </div>
@@ -192,7 +194,7 @@ export default function MyStats() {
     );
   }
 
-  const wrColor = stats.win_rate >= 55 ? 'text-emerald-400' : stats.win_rate >= 50 ? 'text-amber-400' : 'text-red-400';
+  const wrColor = getWPAColor(stats.win_rate);
 
   return (
     <div className="space-y-4">
@@ -201,8 +203,8 @@ export default function MyStats() {
         <StatCard
           icon={Trophy}
           iconColor="bg-accent-muted text-accent"
-          label="Win Rate"
-          value={`${stats.win_rate.toFixed(1)}%`}
+          label="WPA"
+          value={formatWPA(stats.win_rate)}
           valueColor={wrColor}
           sub={`${stats.wins}V ${stats.losses}D${stats.remakes > 0 ? ` ${stats.remakes}R` : ''}`}
         />
@@ -341,13 +343,10 @@ export default function MyStats() {
                 <div className="text-[10px] text-txt-muted">Parties</div>
               </div>
               <div className="text-center">
-                <div className={`text-lg font-bold tabular-nums ${
-                  personalStats.overall.win_rate >= 55 ? 'text-emerald-400' :
-                  personalStats.overall.win_rate >= 50 ? 'text-accent' : 'text-red-400'
-                }`}>
-                  {personalStats.overall.win_rate}%
+                <div className={`text-lg font-bold tabular-nums ${getWPAColor(personalStats.overall.win_rate)}`}>
+                  {formatWPA(personalStats.overall.win_rate)}
                 </div>
-                <div className="text-[10px] text-txt-muted">Win Rate</div>
+                <div className="text-[10px] text-txt-muted">WPA</div>
               </div>
               <div className="text-center">
                 <div className="text-lg font-bold text-sky-400 tabular-nums">
@@ -380,8 +379,7 @@ export default function MyStats() {
                   const [champId, role] = key.split('_');
                   const champInfo = champMap[parseInt(champId)];
                   if (!champInfo) return null;
-                  const wrColor = stats.win_rate >= 55 ? 'text-emerald-400' :
-                    stats.win_rate >= 50 ? 'text-amber-400' : 'text-red-400';
+                  const wrColor = getWPAColor(stats.win_rate);
 
                   return (
                     <div key={key} className="flex items-center gap-3 py-1.5 px-2 rounded-xl hover:bg-surface-elevated/50 transition-colors">
@@ -399,7 +397,7 @@ export default function MyStats() {
                       </div>
                       <div className="text-[11px] text-txt-muted tabular-nums">{stats.games}G</div>
                       <div className="text-[11px] text-txt-secondary tabular-nums w-12 text-right">{stats.kda} KDA</div>
-                      <div className={`text-xs font-bold tabular-nums w-12 text-right ${wrColor}`}>{stats.win_rate}%</div>
+                      <div className={`text-xs font-bold tabular-nums w-14 text-right ${wrColor}`}>{formatWPA(stats.win_rate)}</div>
                     </div>
                   );
                 })}

@@ -3,7 +3,7 @@ import { ChevronDown, ChevronUp, TrendingUp, TrendingDown, Minus, Users, Crossha
 import ScoreBreakdown from './ScoreBreakdown';
 import Badge from '../ui/Badge';
 import RoleIcon from '../RoleIcon';
-import { getScoreClasses, formatGames } from '../../lib/scores';
+import { getScoreClasses, formatGames, formatWPA, getWPAColor } from '../../lib/scores';
 
 /* ── Score display ── */
 function ScoreDisplay({ value, scoreRange, size = 'md' }) {
@@ -205,8 +205,8 @@ export default function RecommendationCard({ rec, rank, champData, isWildcard = 
                       <span className="ml-auto shrink-0">
                         <WinrateIndicator delta={d.delta} />
                       </span>
-                      <span className="text-txt-muted text-[10px] shrink-0 w-10 text-right tabular-nums">
-                        {d.win_rate.toFixed(1)}%
+                      <span className={`text-txt-muted text-[10px] shrink-0 w-12 text-right tabular-nums ${getWPAColor(d.win_rate)}`}>
+                        {formatWPA(d.win_rate)}
                       </span>
                     </div>
                   ))}

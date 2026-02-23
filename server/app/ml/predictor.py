@@ -239,19 +239,20 @@ class MLPredictor:
 
         reasons: List[str] = []
 
-        # ── 1. Win probability (use calibrated value for user-facing text) ──
-        pct_cal = f"{prob_cal:.0%}"
+        # ── 1. Win probability (use calibrated value for user-facing text as WPA) ──
+        wpa_cal = (prob_cal - 0.5) * 100
+        wpa_str = f"{wpa_cal:+.1f}% WPA"
         pct_raw = f"{prob_raw:.0%}"
         if prob_cal >= 0.56:
-            reasons.append(f"Le modèle prédit un avantage ({pct_cal} winrate ajusté) avec {name}")
+            reasons.append(f"Le modèle prédit un avantage ({wpa_str}) avec {name}")
         elif prob_cal >= 0.52:
-            reasons.append(f"Le modèle prédit un léger avantage ({pct_cal} winrate ajusté) avec {name}")
+            reasons.append(f"Le modèle prédit un léger avantage ({wpa_str}) avec {name}")
         elif prob_cal <= 0.44:
-            reasons.append(f"Le modèle prédit un désavantage ({pct_cal} winrate ajusté) avec {name}")
+            reasons.append(f"Le modèle prédit un désavantage ({wpa_str}) avec {name}")
         elif prob_cal <= 0.48:
-            reasons.append(f"Le modèle prédit un léger désavantage ({pct_cal} winrate ajusté) avec {name}")
+            reasons.append(f"Le modèle prédit un léger désavantage ({wpa_str}) avec {name}")
         else:
-            reasons.append(f"Le modèle prédit un match équilibré ({pct_cal} winrate ajusté) avec {name}")
+            reasons.append(f"Le modèle prédit un match équilibré ({wpa_str}) avec {name}")
 
         # Show raw value for transparency
         if abs(prob_raw - prob_cal) > 0.05:

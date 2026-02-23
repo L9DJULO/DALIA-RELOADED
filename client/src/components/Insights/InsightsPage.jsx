@@ -1,18 +1,18 @@
 /**
- * Insights Page -- Personal stats & live draft analysis.
+ * Insights Page -- Unified hub: Stats, Predictions, and Draft History.
  */
 import { useState } from 'react';
-import { Brain, BarChart3, Sparkles } from 'lucide-react';
-import MyStats from './MyStats';
+import { Brain, Sparkles, Clock } from 'lucide-react';
 import DraftPrediction from './DraftPrediction';
+import DraftHistory from '../History/DraftHistory';
 
 const TABS = [
-  { id: 'stats',      label: 'Tes Stats',   icon: BarChart3,  desc: 'Performance et progression' },
-  { id: 'prediction', label: 'Predictions',  icon: Sparkles,   desc: 'Analyse IA du draft' },
+  { id: 'history',    label: 'Historique',  icon: Clock,     desc: 'Drafts passes' },
+  { id: 'prediction', label: 'Predictions', icon: Sparkles,  desc: 'Analyse IA du draft' },
 ];
 
-export default function InsightsPage() {
-  const [activeTab, setActiveTab] = useState('stats');
+export default function InsightsPage({ champions }) {
+  const [activeTab, setActiveTab] = useState('history');
 
   return (
     <div className="h-[calc(100vh-3rem)] overflow-y-auto">
@@ -25,7 +25,7 @@ export default function InsightsPage() {
           <div>
             <h1 className="text-lg font-bold text-txt-primary">Insights</h1>
             <p className="text-xs text-txt-muted">
-              Tes statistiques personnelles et analyse IA du draft
+              Statistiques, analyse IA et historique de tes drafts
             </p>
           </div>
         </div>
@@ -51,8 +51,8 @@ export default function InsightsPage() {
 
         {/* Tab content */}
         <div className="min-h-[500px] animate-fade-in-up" key={activeTab}>
-          {activeTab === 'stats' && <MyStats />}
           {activeTab === 'prediction' && <DraftPrediction />}
+          {activeTab === 'history' && <DraftHistory champions={champions || []} embedded />}
         </div>
       </div>
     </div>

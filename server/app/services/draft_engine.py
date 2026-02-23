@@ -40,6 +40,7 @@ from app.services.composition import CompositionAnalyzer
 from app.services.data_fetcher import LolalyticsFetcher
 from app.services.matchup import MatchupAnalyzer
 from app.services.meta_analyzer import MetaAnalyzer
+from app.services.role_predictor import predict_enemy_roles
 from app.services.synergy import SynergyAnalyzer
 
 # ML predictor — optional, loads silently if model not available
@@ -85,6 +86,49 @@ class DraftEngine:
         pool = request.champion_pool
         role = draft.my_role
 
+        # ── Predict enemy roles if not assigned ──
+        # When LCU doesn't reveal enemy positions (ranked),
+        # intelligently assign roles based on champion data
+        unassigned = [p for p in draft.enemy_picks if p.champion_id and not p.role]
+        if unassigned:
+            logger.info(
+                "Predicting roles for %d enemy champions: %s",
+                len(unassigned),
+                [p.champion_key or p.champion_id for p in unassigned],
+            )
+            draft.enemy_picks = predict_enemy_roles(
+                draft.enemy_picks, self.db, self.meta
+            )
+
+        # ── Inject ally pre-picks for synergy/composition ──
+        # When allies are hovering champions (pre-pick intent),
+        # use those as virtual ally picks so synergy & comp analysis
+        # accounts for the likely team composition
+        prepick_injected = []
+        if draft.ally_prepicks:
+            filled_roles = draft.ally_roles_filled
+            for pp in draft.ally_prepicks:
+                if (
+                    pp.champion_id
+                    and pp.role
+                    and pp.role not in filled_roles
+                    and pp.champion_id not in draft.all_unavailable_ids
+                ):
+                    from app.models.draft import DraftPick
+                    draft.ally_picks.append(DraftPick(
+                        champion_id=pp.champion_id,
+                        champion_key=pp.champion_key,
+                        role=pp.role,
+                    ))
+                    prepick_injected.append(pp)
+                    filled_roles.add(pp.role)
+                    champ = self.db.get_by_id(pp.champion_id)
+                    champ_name = champ.name if champ else str(pp.champion_id)
+                    logger.info(
+                        "Injected ally pre-pick: %s (%s)",
+                        champ_name, pp.role,
+                    )
+
         # ── Pre-load personal stats if puuid available ──
         personal_boost_fn = None
         if personal_svc and request.puuid:
@@ -123,29 +167,33 @@ class DraftEngine:
             # If the partner's role slot is empty in ally picks,
             # inject the partner's top champion as a virtual ally pick
             # so synergy is calculated against their likely pick
-            partner_role_filled = any(
-                p.role == duo_partner_role and p.champion_id
-                for p in draft.ally_picks
-            )
-            if not partner_role_filled and duo_partner_role in duo_partner_pool:
-                partner_entries = duo_partner_pool[duo_partner_role]
-                if partner_entries:
-                    # Use the highest-tier champion from partner's pool
-                    tier_order = {"S": 0, "A": 1, "B": 2, "C": 3, "D": 4}
-                    best = min(partner_entries, key=lambda e: tier_order.get(e.tier, 5))
-                    # Only inject if not already banned/picked
-                    if best.champion_id not in draft.all_unavailable_ids:
-                        from app.models.draft import DraftPick
-                        draft.ally_picks.append(DraftPick(
-                            champion_id=best.champion_id,
-                            champion_key=best.champion_key,
-                            role=duo_partner_role,
-                        ))
-                        duo_injected = True
-                        logger.info(
-                            f"DuoQ: injected partner's {best.champion_key} "
-                            f"({duo_partner_role}) as virtual ally"
-                        )
+            try:
+                partner_role_filled = any(
+                    p.role == duo_partner_role and p.champion_id
+                    for p in draft.ally_picks
+                )
+                if not partner_role_filled and duo_partner_role in duo_partner_pool:
+                    partner_entries = duo_partner_pool[duo_partner_role]
+                    if partner_entries:
+                        # Use the highest-tier champion from partner's pool
+                        tier_order = {"S": 0, "A": 1, "B": 2, "C": 3, "D": 4}
+                        best = min(partner_entries, key=lambda e: tier_order.get(e.tier, 5))
+                        # Only inject if not already banned/picked
+                        if best.champion_id not in draft.all_unavailable_ids:
+                            from app.models.draft import DraftPick
+                            draft.ally_picks.append(DraftPick(
+                                champion_id=best.champion_id,
+                                champion_key=best.champion_key,
+                                role=duo_partner_role,
+                            ))
+                            duo_injected = True
+                            logger.info(
+                                f"DuoQ: injected partner's {best.champion_key} "
+                                f"({duo_partner_role}) as virtual ally"
+                            )
+            except Exception as exc:
+                logger.warning("DuoQ partner injection failed: %s", exc)
+                # Continue without injection — don't crash recommendations
 
         # 1. Pre-load meta for the relevant role
         await self.meta.load_tierlist(role)
@@ -496,11 +544,13 @@ class DraftEngine:
             tags.append("low-data")
 
         # Safe blind: high safety + not a vulnerable archetype + decent matchups
-        # NOT relevant if the lane opponent is already revealed (it's not blind anymore)
+        # NOT relevant if lane opponent is already revealed OR majority of enemies visible
         is_vulnerable_carry = ("Marksman" in champ.tags or "Assassin" in champ.tags) and champ.ratings.tankiness <= 2
-        enemies_exist = len([e for e in draft.enemy_picks if e.champion_id]) > 0
-        matchup_ok = match_s >= 50 or not enemies_exist
-        if risk_s >= 72 and not is_vulnerable_carry and comp_s >= 55 and matchup_ok and not draft.my_lane_opponent_revealed:
+        enemies_revealed_count = len([e for e in draft.enemy_picks if e.champion_id])
+        # "Safe blind" only makes sense when picking blind (few or no enemies visible)
+        is_truly_blind = enemies_revealed_count <= 1 and not draft.my_lane_opponent_revealed
+        matchup_ok = match_s >= 50 or enemies_revealed_count == 0
+        if risk_s >= 72 and not is_vulnerable_carry and comp_s >= 55 and matchup_ok and is_truly_blind:
             tags.append("safe-blind")
 
         # Counter-pick: only if we have meaningful enemy data and score is high

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
 import {
-  Swords, Users, Clock, Settings, LogOut, User,
+  Swords, Users, Settings, LogOut, User,
   Wifi, WifiOff, Gamepad2, Brain, ChevronRight,
 } from 'lucide-react';
 import useAuthStore from '../stores/authStore';
@@ -12,8 +12,7 @@ import DaliaLogo from './DaliaLogo';
 const NAV = [
   { to: '/draft', label: 'Draft', icon: Swords, desc: 'Draft Board' },
   { to: '/pool', label: 'Pool', icon: Users, desc: 'Champion Pool' },
-  { to: '/insights', label: 'Insights', icon: Brain, desc: 'Stats & IA' },
-  { to: '/history', label: 'Historique', icon: Clock, desc: 'Historique' },
+  { to: '/insights', label: 'Insights', icon: Brain, desc: 'Stats & Historique' },
 ];
 
 const BOTTOM_NAV = [

@@ -43,6 +43,11 @@ class DraftState(BaseModel):
     ally_picks: List[DraftPick] = Field(default_factory=list)
     enemy_picks: List[DraftPick] = Field(default_factory=list)
 
+    # ── Ally pre-picks (hover / intent) ──
+    # Champions allies are hovering but haven't locked yet.
+    # Used to anticipate team composition when picking before allies.
+    ally_prepicks: List[DraftPick] = Field(default_factory=list)
+
     # ── Draft progression ──
     current_action: int = 0             # 0-19 index in DRAFT_SEQUENCE
 
@@ -66,6 +71,18 @@ class DraftState(BaseModel):
     @property
     def ally_roles_filled(self) -> set:
         return {p.role for p in self.ally_picks if p.role}
+
+    @property
+    def ally_picks_with_prepicks(self) -> List["DraftPick"]:
+        """Ally picks + prepicks for roles not yet locked.
+        Prepicks fill roles that aren't already confirmed."""
+        filled_roles = self.ally_roles_filled
+        combined = list(self.ally_picks)
+        for pp in self.ally_prepicks:
+            if pp.role and pp.role not in filled_roles and pp.champion_id:
+                combined.append(pp)
+                filled_roles.add(pp.role)
+        return combined
 
     @property
     def remaining_enemy_picks(self) -> int:

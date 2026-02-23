@@ -20,6 +20,8 @@ export default function LCUStatus({ champions = [] }) {
   const setFromLCU = useDraftStore((s) => s.setFromLCU);
   const setBan = useDraftStore((s) => s.setBan);
   const setPick = useDraftStore((s) => s.setPick);
+  const setEnemyPicksFromLCU = useDraftStore((s) => s.setEnemyPicksFromLCU);
+  const setAllyPrepicks = useDraftStore((s) => s.setAllyPrepicks);
 
   const champMap = useMemo(() => {
     const m = {};
@@ -58,11 +60,28 @@ export default function LCUStatus({ champions = [] }) {
       if (ban) setBan('red', i, ban);
     });
 
-    for (const [role, champ] of Object.entries(syncData.bluePicks)) {
-      if (champ) setPick('blue', role, champ);
+    // Sync ally picks (role-keyed — we always know ally roles)
+    for (const [role, champ] of Object.entries(syncData.allyPicks)) {
+      if (champ) setPick(syncData.myTeam, role, champ);
     }
-    for (const [role, champ] of Object.entries(syncData.redPicks)) {
-      if (champ) setPick('red', role, champ);
+
+    // Sync enemy picks: use ordered list (no roles) when available
+    // The server will predict the correct role for each enemy champion
+    const enemyTeam = syncData.myTeam === 'blue' ? 'red' : 'blue';
+    if (syncData.enemyPicksOrder && syncData.enemyPicksOrder.length > 0) {
+      // Use the new ordered list — enemy picks have NO roles attached
+      setEnemyPicksFromLCU(syncData.enemyPicksOrder);
+    } else {
+      // Fallback to role-keyed picks (if LCU provided real roles)
+      const enemyPicks = syncData.myTeam === 'blue' ? syncData.redPicks : syncData.bluePicks;
+      for (const [role, champ] of Object.entries(enemyPicks)) {
+        if (champ) setPick(enemyTeam, role, champ);
+      }
+    }
+
+    // Sync ally pre-picks (hover/intent)
+    if (syncData.allyPrepicks) {
+      setAllyPrepicks(syncData.allyPrepicks);
     }
   }, [autoSync, inChampSelect, lastUpdate, champMap]);
 

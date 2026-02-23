@@ -11,7 +11,7 @@ import useDuoStore from '../../stores/duoStore';
 import RoleIcon from '../RoleIcon';
 import { ROLES, ROLE_LABELS, getDDragonChampUrl } from '../../lib/constants';
 
-export default function DuoPanel() {
+export default function DuoPanel({ embedded = false }) {
   const {
     duoActive, myCode, linked, partner, partnerPool, partnerRole,
     loading, error,
@@ -50,9 +50,8 @@ export default function DuoPanel() {
     await unlink();
   }, [unlink]);
 
-  return (
-    <div className="h-[calc(100vh-3rem)] overflow-y-auto">
-      <div className="max-w-2xl mx-auto p-6 space-y-5">
+  const content = (
+    <div className={embedded ? 'space-y-5' : 'max-w-2xl mx-auto p-6 space-y-5'}>
         {/* Header */}
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-accent-muted border border-accent/20 flex items-center justify-center">
@@ -266,6 +265,15 @@ export default function DuoPanel() {
           </div>
         </div>
       </div>
+  );
+
+  if (embedded) {
+    return <div className="p-5 overflow-y-auto">{content}</div>;
+  }
+
+  return (
+    <div className="h-[calc(100vh-3rem)] overflow-y-auto">
+      {content}
     </div>
   );
 }

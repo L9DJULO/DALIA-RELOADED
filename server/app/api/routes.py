@@ -197,9 +197,13 @@ async def draft_recommend(
 
     # ── DuoQ: load partner's pool if duo is active ──
     if body.duo_active and body.duo_partner_role and not body.duo_partner_pool:
-        partner_pool = await _load_duo_partner_pool(current_user, db)
-        if partner_pool:
-            body.duo_partner_pool = partner_pool
+        try:
+            partner_pool = await _load_duo_partner_pool(current_user, db)
+            if partner_pool:
+                body.duo_partner_pool = partner_pool
+        except Exception as exc:
+            logger.warning("Failed to load duo partner pool: %s", exc)
+            # Continue without partner pool — don't block recommendations
 
     personal_svc = getattr(request.app.state, "personal_stats", None)
     return await engine.recommend(body, personal_svc=personal_svc)

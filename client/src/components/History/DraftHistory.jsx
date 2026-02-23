@@ -8,7 +8,7 @@ import {
   ChevronUp, BarChart3, Target, CheckCircle, XCircle, RotateCcw, Filter,
 } from 'lucide-react';
 import useHistoryStore from '../../stores/historyStore';
-import { getScoreClasses, getWinProbColor } from '../../lib/scores';
+import { getScoreClasses, getWinProbColor, formatWPA, getWPAColor } from '../../lib/scores';
 import Badge from '../ui/Badge';
 import RoleIcon from '../RoleIcon';
 import { getDDragonChampBase } from '../../lib/constants';
@@ -43,10 +43,10 @@ function StatsOverview({ stats }) {
           <div className="w-7 h-7 rounded-lg bg-accent-muted flex items-center justify-center">
             <Trophy size={13} className="text-accent" />
           </div>
-          <span className="section-label">Win Rate</span>
+          <span className="section-label">WPA</span>
         </div>
-        <div className={`text-2xl font-bold tabular-nums ${stats.win_rate >= 50 ? 'text-emerald-400' : 'text-red-400'}`}>
-          {stats.win_rate}%
+        <div className={`text-2xl font-bold tabular-nums ${getWPAColor(stats.win_rate)}`}>
+          {formatWPA(stats.win_rate)}
         </div>
         <div className="text-[11px] text-txt-muted mt-1.5">
           {stats.wins}W {stats.losses}L {stats.remakes > 0 && `${stats.remakes}R`}
@@ -112,7 +112,7 @@ function MostPicked({ champions }) {
             <div>
               <div className="text-xs font-medium text-txt-primary">{c.champion_name}</div>
               <div className="text-[10px] text-txt-muted">
-                {c.count}G · <span className={c.win_rate >= 50 ? 'text-emerald-400' : 'text-red-400'}>{c.win_rate}%</span>
+                {c.count}G · <span className={getWPAColor(c.win_rate)}>{formatWPA(c.win_rate)}</span>
               </div>
             </div>
           </div>
@@ -135,7 +135,7 @@ function RoleStats({ byRole }) {
             <div>
               <div className="text-xs font-medium text-txt-primary capitalize">{role}</div>
               <div className="text-[10px] text-txt-muted">
-                {data.games}G · <span className={data.win_rate >= 50 ? 'text-emerald-400' : 'text-red-400'}>{data.win_rate}%</span>
+                {data.games}G · <span className={getWPAColor(data.win_rate)}>{formatWPA(data.win_rate)}</span>
               </div>
             </div>
           </div>
@@ -308,7 +308,7 @@ function HistoryCard({ entry, onUpdateResult, onDelete }) {
 }
 
 /* -- Main History Component -- */
-export default function DraftHistory({ champions }) {
+export default function DraftHistory({ champions, embedded = false }) {
   const { entries, stats, loading, error, loadHistory, loadStats, updateResult, deleteEntry } = useHistoryStore();
   const [roleFilter, setRoleFilter] = useState('all');
   const [resultFilter, setResultFilter] = useState('all');
@@ -326,6 +326,92 @@ export default function DraftHistory({ champions }) {
     });
   }, [entries, roleFilter, resultFilter]);
 
+  // When embedded inside InsightsPage, skip the outer wrapper + own header
+  const content = (
+    <>
+      {/* Filters */}
+      <div className="flex items-center gap-2 mb-4">
+        <select
+          value={roleFilter}
+          onChange={(e) => setRoleFilter(e.target.value)}
+          className="input-field !w-auto !py-1.5 !px-3 text-xs"
+        >
+          <option value="all">Tous roles</option>
+          <option value="top">Top</option>
+          <option value="jungle">Jungle</option>
+          <option value="mid">Mid</option>
+          <option value="bot">Bot</option>
+          <option value="support">Support</option>
+        </select>
+        <select
+          value={resultFilter}
+          onChange={(e) => setResultFilter(e.target.value)}
+          className="input-field !w-auto !py-1.5 !px-3 text-xs"
+        >
+          <option value="all">Tous resultats</option>
+          <option value="win">Victoires</option>
+          <option value="loss">Defaites</option>
+          <option value="remake">Remakes</option>
+          <option value="">Non enregistres</option>
+        </select>
+      </div>
+
+      <StatsOverview stats={stats} />
+
+      {stats && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <MostPicked champions={stats.most_picked} />
+          <RoleStats byRole={stats.by_role} />
+        </div>
+      )}
+
+      {loading && (
+        <div className="flex items-center justify-center py-12">
+          <div className="text-sm text-txt-secondary">Chargement...</div>
+        </div>
+      )}
+
+      {error && (
+        <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-4 text-sm text-red-400 mb-4">
+          {error}
+        </div>
+      )}
+
+      {!loading && entries.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-16">
+          <div className="w-16 h-16 rounded-xl bg-surface-default border border-border-subtle flex items-center justify-center mb-4">
+            <Clock size={28} className="text-txt-muted" />
+          </div>
+          <div className="text-sm font-medium text-txt-secondary mb-1">{"Pas encore d'historique"}</div>
+          <div className="text-xs text-txt-muted text-center max-w-xs leading-relaxed">
+            {"Vos sessions de draft seront automatiquement enregistrees quand vous utilisez l'analyseur. Vous pourrez ensuite noter victoire ou defaite."}
+          </div>
+        </div>
+      )}
+
+      {filtered.length > 0 && (
+        <div className="space-y-2 mt-4">
+          <div className="text-[11px] text-txt-muted mb-2">
+            {filtered.length} session{filtered.length > 1 ? 's' : ''}
+            {(roleFilter !== 'all' || resultFilter !== 'all') && ' (filtre)'}
+          </div>
+          {filtered.map((entry) => (
+            <HistoryCard
+              key={entry.id}
+              entry={entry}
+              onUpdateResult={updateResult}
+              onDelete={deleteEntry}
+            />
+          ))}
+        </div>
+      )}
+    </>
+  );
+
+  if (embedded) {
+    return content;
+  }
+
   return (
     <div className="h-[calc(100vh-3rem)] overflow-y-auto">
       <div className="max-w-4xl mx-auto p-6">
@@ -340,83 +426,9 @@ export default function DraftHistory({ champions }) {
               <p className="text-xs text-txt-muted">Vos sessions de draft passees et statistiques</p>
             </div>
           </div>
-
-          <div className="flex items-center gap-2">
-            <select
-              value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value)}
-              className="input-field !w-auto !py-1.5 !px-3 text-xs"
-            >
-              <option value="all">Tous roles</option>
-              <option value="top">Top</option>
-              <option value="jungle">Jungle</option>
-              <option value="mid">Mid</option>
-              <option value="bot">Bot</option>
-              <option value="support">Support</option>
-            </select>
-            <select
-              value={resultFilter}
-              onChange={(e) => setResultFilter(e.target.value)}
-              className="input-field !w-auto !py-1.5 !px-3 text-xs"
-            >
-              <option value="all">Tous resultats</option>
-              <option value="win">Victoires</option>
-              <option value="loss">Defaites</option>
-              <option value="remake">Remakes</option>
-              <option value="">Non enregistres</option>
-            </select>
-          </div>
         </div>
 
-        <StatsOverview stats={stats} />
-
-        {stats && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <MostPicked champions={stats.most_picked} />
-            <RoleStats byRole={stats.by_role} />
-          </div>
-        )}
-
-        {loading && (
-          <div className="flex items-center justify-center py-12">
-            <div className="text-sm text-txt-secondary">Chargement...</div>
-          </div>
-        )}
-
-        {error && (
-          <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-4 text-sm text-red-400 mb-4">
-            {error}
-          </div>
-        )}
-
-        {!loading && entries.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-16">
-            <div className="w-16 h-16 rounded-xl bg-surface-default border border-border-subtle flex items-center justify-center mb-4">
-              <Clock size={28} className="text-txt-muted" />
-            </div>
-            <div className="text-sm font-medium text-txt-secondary mb-1">{"Pas encore d'historique"}</div>
-            <div className="text-xs text-txt-muted text-center max-w-xs leading-relaxed">
-              {"Vos sessions de draft seront automatiquement enregistrees quand vous utilisez l'analyseur. Vous pourrez ensuite noter victoire ou defaite."}
-            </div>
-          </div>
-        )}
-
-        {filtered.length > 0 && (
-          <div className="space-y-2 mt-4">
-            <div className="text-[11px] text-txt-muted mb-2">
-              {filtered.length} session{filtered.length > 1 ? 's' : ''}
-              {(roleFilter !== 'all' || resultFilter !== 'all') && ' (filtre)'}
-            </div>
-            {filtered.map((entry) => (
-              <HistoryCard
-                key={entry.id}
-                entry={entry}
-                onUpdateResult={updateResult}
-                onDelete={deleteEntry}
-              />
-            ))}
-          </div>
-        )}
+        {content}
       </div>
     </div>
   );
