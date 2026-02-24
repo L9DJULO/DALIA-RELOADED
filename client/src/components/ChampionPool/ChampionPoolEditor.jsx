@@ -61,7 +61,7 @@ function TierPicker({ champion, position, onSelect, onClose, isUpdate = false })
 export default function ChampionPoolEditor({ champions }) {
   const [activeRole, setActiveRole] = useState('mid');
   const [search, setSearch] = useState('');
-  const [filterByRole, setFilterByRole] = useState(false);
+  const [filterByRole, setFilterByRole] = useState(true);
   const [tierPicker, setTierPicker] = useState(null);
   const [saved, setSaved] = useState(false);
   const { championPool, addToPool, changeTier, savePool } = useUserStore();
@@ -126,16 +126,26 @@ export default function ChampionPoolEditor({ champions }) {
           {ROLES.map((role) => (
             <button
               key={role}
-              onClick={() => { setActiveRole(role); setTierPicker(null); }}
+              onClick={() => {
+                if (activeRole === role) {
+                  setFilterByRole(!filterByRole);
+                } else {
+                  setActiveRole(role);
+                  setFilterByRole(true);
+                }
+                setTierPicker(null);
+              }}
               aria-pressed={activeRole === role}
               aria-label={ROLE_LABELS[role]}
               className={`flex-1 py-2.5 text-[11px] font-medium transition-all duration-200 ${
                 activeRole === role
-                  ? 'border-b-2 border-accent bg-surface-elevated text-txt-primary'
+                  ? filterByRole
+                    ? 'border-b-2 border-accent bg-surface-elevated text-txt-primary'
+                    : 'border-b-2 border-txt-muted bg-surface-elevated text-txt-primary'
                   : 'text-txt-muted hover:text-txt-secondary'
               }`}
             >
-              <RoleIcon role={role} size={16} className={`mx-auto mb-0.5 ${activeRole === role ? 'text-accent' : 'text-txt-muted'}`} />
+              <RoleIcon role={role} size={16} className={`mx-auto mb-0.5 ${activeRole === role ? (filterByRole ? 'text-accent' : 'text-txt-primary') : 'text-txt-muted'}`} />
               {ROLE_LABELS[role]}
             </button>
           ))}
@@ -176,18 +186,6 @@ export default function ChampionPoolEditor({ champions }) {
               className="input-field w-full pl-9 pr-3 py-2 text-sm"
             />
           </div>
-
-          <button
-            onClick={() => setFilterByRole(!filterByRole)}
-            aria-pressed={filterByRole}
-            className={`text-[11px] px-3 py-1.5 rounded-xl border font-medium transition-all duration-200 ${
-              filterByRole
-                ? 'border-accent/30 bg-accent-muted text-accent'
-                : 'border-border-subtle text-txt-secondary hover:border-accent/20'
-            }`}
-          >
-            {filterByRole ? `${ROLE_LABELS[activeRole]} uniquement` : 'Tous les roles'}
-          </button>
 
           <div className="text-[11px] text-txt-muted">
             <span className="tabular-nums font-medium text-txt-primary">{filteredChampions.length}</span> champions

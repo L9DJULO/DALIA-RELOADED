@@ -1,14 +1,12 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Search, X } from 'lucide-react';
 import RoleIcon from '../RoleIcon';
-import { ROLE_LABELS } from '../../lib/constants';
-
-const ROLE_FILTER = ['all', 'top', 'jungle', 'mid', 'bot', 'support'];
-const SELECTOR_LABELS = { all: 'Tous', ...ROLE_LABELS };
+import { ROLES, ROLE_LABELS } from '../../lib/constants';
 
 export default function ChampionSelector({ champions, unavailableIds, onSelect, onClose, target }) {
+  // Default to the target role if available, otherwise 'all'
   const [search, setSearch] = useState('');
-  const [roleFilter, setRoleFilter] = useState('all');
+  const [roleFilter, setRoleFilter] = useState(target?.role || 'all');
   const panelRef = useRef(null);
 
   useEffect(() => {
@@ -82,10 +80,10 @@ export default function ChampionSelector({ champions, unavailableIds, onSelect, 
             />
           </div>
           <div className="flex gap-1.5">
-            {ROLE_FILTER.map((r) => (
+            {ROLES.map((r) => (
               <button
                 key={r}
-                onClick={() => setRoleFilter(r)}
+                onClick={() => setRoleFilter(roleFilter === r ? 'all' : r)}
                 aria-pressed={roleFilter === r}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 border ${
                   roleFilter === r
@@ -93,8 +91,8 @@ export default function ChampionSelector({ champions, unavailableIds, onSelect, 
                     : 'text-txt-secondary hover:text-txt-primary hover:bg-surface-elevated border-transparent'
                 }`}
               >
-                {r !== 'all' && <RoleIcon role={r} size={13} />}
-                {SELECTOR_LABELS[r]}
+                <RoleIcon role={r} size={13} />
+                {ROLE_LABELS[r]}
               </button>
             ))}
           </div>

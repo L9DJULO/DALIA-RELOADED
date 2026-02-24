@@ -14,6 +14,12 @@ export default function RecommendationPanel({ champions }) {
     return m;
   }, [champions]);
 
+  // Must be called unconditionally (Rules of Hooks — no hook after early return)
+  const allRecs = useMemo(
+    () => recommendations.filter((r) => !unavailableIds.has(r.champion_id)),
+    [recommendations, unavailableIds],
+  );
+
   /* ── Loading ── */
   if (loading) {
     return (
@@ -59,12 +65,6 @@ export default function RecommendationPanel({ champions }) {
       </div>
     );
   }
-
-  // Filter out champions that have been picked/banned since last analysis
-  const allRecs = useMemo(
-    () => recommendations.filter((r) => !unavailableIds.has(r.champion_id)),
-    [recommendations, unavailableIds],
-  );
 
   return (
     <div className="p-5 space-y-4">

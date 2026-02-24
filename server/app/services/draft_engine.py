@@ -285,14 +285,51 @@ class DraftEngine:
             ml_s, ml_expl_raw = self.ml.score_with_explanation(champ.id, role, draft)
             ml_expl = MLExplanation(**ml_expl_raw)
 
+        # ── Determine draft context early (needed for weight adjustment) ──
+        has_enemies = len([e for e in draft.enemy_picks if e.champion_id]) > 0
+        has_allies  = len([a for a in draft.ally_picks if a.champion_id]) > 0
+
+        # ── Dynamic weight redistribution for blind pick ──
+        # When no enemies/allies are visible, matchup/synergy return a
+        # flat neutral 50 for ALL champions → zero differentiation.
+        # Without redistribution, mastery tier dominates the ranking
+        # (Tier S = 90 vs Tier A = 72 → +3.6 pts) and champions like
+        # Nilah (S tier, 14 k games) beat Jinx (A tier, Meta S, 100 k games).
+        #
+        # Fix: redistribute the "dead" matchup/synergy weight toward the
+        # sub-scores that actually differentiate in blind-pick scenarios:
+        #   • meta   — is the champion strong right now?
+        #   • risk   — is the champion safe to blind-pick?
+        w_meta    = weights.meta
+        w_matchup = weights.matchup
+        w_synergy = weights.synergy
+        w_comp    = weights.composition
+        w_mastery = weights.mastery
+        w_risk    = weights.draft_risk
+
+        if not has_enemies:
+            # Matchup is uninformative (50 for everyone) — redistribute
+            # 60 % → meta (champion strength matters most)
+            # 40 % → draft_risk (blind-pick safety)
+            w_meta    += w_matchup * 0.60
+            w_risk    += w_matchup * 0.40
+            w_matchup  = 0.0
+
+        if not has_allies:
+            # Synergy is uninformative (50 for everyone) — redistribute
+            # 50 % → meta, 50 % → composition
+            w_meta    += w_synergy * 0.50
+            w_comp    += w_synergy * 0.50
+            w_synergy  = 0.0
+
         # ── 1. Weighted base ──
         base = (
-            weights.meta       * meta_s +
-            weights.matchup    * match_s +
-            weights.synergy    * syn_s +
-            weights.composition* comp_s +
-            weights.mastery    * mast_s +
-            weights.draft_risk * risk_s
+            w_meta    * meta_s +
+            w_matchup * match_s +
+            w_synergy * syn_s +
+            w_comp    * comp_s +
+            w_mastery * mast_s +
+            w_risk    * risk_s
         )
 
         # Blend ML score if available (replaces part of the base)
@@ -311,8 +348,6 @@ class DraftEngine:
             base *= personal_mult
 
         # ── 2. Multiplicative penalties for critical weaknesses ──
-        has_enemies = len([e for e in draft.enemy_picks if e.champion_id]) > 0
-        has_allies  = len([a for a in draft.ally_picks if a.champion_id]) > 0
 
         # Bad matchups tank the score — only penalise genuinely bad matchups
         if match_s < 42 and has_enemies:
