@@ -199,4 +199,18 @@ export const setServerUrl = (url) => {
 export const getServerUrl = () =>
   localStorage.getItem('dalia_server_url') || 'http://localhost:8000';
 
+/**
+ * Quick health check — ping the backend server.
+ * Returns { ok, ready, url } or { ok: false, error, url }.
+ */
+export const checkServerHealth = async () => {
+  const url = getServerUrl();
+  try {
+    const res = await axios.get(`${url}/health`, { timeout: 5000 });
+    return { ok: true, ready: res.data?.ready ?? false, url };
+  } catch {
+    return { ok: false, error: 'unreachable', url };
+  }
+};
+
 export default api;

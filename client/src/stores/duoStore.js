@@ -48,6 +48,12 @@ const useDuoStore = create(
             loading: false,
           };
 
+          // If no longer linked server-side, deactivate duo mode
+          if (!statusRes.linked) {
+            updates.duoActive = false;
+            updates.partnerPool = null;
+          }
+
           // If linked, also fetch partner pool
           if (statusRes.linked) {
             try {
@@ -65,7 +71,7 @@ const useDuoStore = create(
           set(updates);
         } catch (e) {
           console.warn('Failed to load duo state:', e);
-          set({ loading: false, error: 'Impossible de charger le statut duo' });
+          set({ loading: false, error: 'Impossible de charger le statut duo — vérifiez la connexion serveur.' });
         }
       },
 
@@ -163,6 +169,8 @@ const useDuoStore = create(
       partialize: (state) => ({
         duoActive: state.duoActive,
         partnerRole: state.partnerRole,
+        linked: state.linked,
+        partner: state.partner,
       }),
     },
   ),

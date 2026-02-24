@@ -5,7 +5,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import {
   Users, Link2, Unlink, Copy, Check, RefreshCw,
-  ChevronDown, ChevronUp, Sparkles, Shield,
+  ChevronDown, ChevronUp, Sparkles, Shield, AlertTriangle,
 } from 'lucide-react';
 import useDuoStore from '../../stores/duoStore';
 import RoleIcon from '../RoleIcon';
@@ -52,6 +52,26 @@ export default function DuoPanel({ embedded = false }) {
 
   const content = (
     <div className={embedded ? 'space-y-5' : 'max-w-2xl mx-auto p-6 space-y-5'}>
+        {/* Server error banner */}
+        {error && !linked && (
+          <div className="glass-card p-4 border-red-500/15 bg-red-500/[0.03] animate-fade-in-up">
+            <div className="flex items-start gap-2.5">
+              <AlertTriangle size={14} className="text-red-400 shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-[12px] text-red-400 font-medium">{error}</p>
+                <button
+                  onClick={loadDuoState}
+                  disabled={loading}
+                  className="mt-2 flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium bg-surface-elevated text-txt-secondary border border-border-subtle hover:border-red-400/30 transition-colors"
+                >
+                  <RefreshCw size={10} className={loading ? 'animate-spin' : ''} />
+                  Réessayer
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-accent-muted border border-accent/20 flex items-center justify-center">

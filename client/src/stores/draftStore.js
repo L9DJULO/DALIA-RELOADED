@@ -2,7 +2,7 @@
  * Zustand store — Draft state, recommendations, draft board management.
  */
 import { create } from 'zustand';
-import { fetchRecommendations } from '../services/api';
+import { fetchRecommendations, checkServerHealth, getServerUrl } from '../services/api';
 import useLCUStore from './lcuStore';
 
 const EMPTY_ALLY_PICKS = () => ({ top: null, jungle: null, mid: null, bot: null, support: null });
@@ -219,8 +219,17 @@ const useDraftStore = create((set, get) => ({
         msg = `Erreur serveur (${e.response.status}) — ${e.response.statusText || 'vérifiez les logs'}`;
       } else if (e.code === 'ECONNABORTED') {
         msg = 'Temps de réponse dépassé — le serveur met trop de temps.';
-      } else if (e.message === 'Network Error') {
-        msg = 'Serveur inaccessible — vérifiez que le backend est démarré.';
+      } else if (e.config && (e.message === 'Network Error' || !e.response)) {
+        // Axios request failed without response — server unreachable
+        const url = getServerUrl();
+        const health = await checkServerHealth();
+        if (!health.ok) {
+          msg = `Serveur inaccessible (${url}). Vérifiez que le backend est démarré et que l'URL est correcte dans Paramètres.`;
+        } else if (!health.ready) {
+          msg = 'Le serveur démarre encore, réessayez dans quelques secondes.';
+        } else {
+          msg = 'Erreur réseau inattendue — le serveur répond au ping mais la requête a échoué.';
+        }
       } else if (e.message) {
         msg = e.message;
       }

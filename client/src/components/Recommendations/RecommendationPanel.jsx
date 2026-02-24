@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { AlertTriangle, TrendingUp, Trophy } from 'lucide-react';
+import { AlertTriangle, TrendingUp, Trophy, RefreshCw } from 'lucide-react';
 import useDraftStore from '../../stores/draftStore';
 import RecommendationCard from './RecommendationCard';
 import { getWinProbColor } from '../../lib/scores';
@@ -38,12 +38,20 @@ export default function RecommendationPanel({ champions }) {
 
   /* ── Error ── */
   if (error) {
+    const clearError = () => useDraftStore.setState({ error: null });
     return (
       <div className="flex items-center justify-center h-full p-4">
-        <div className="glass-card p-6 max-w-xs text-center animate-fade-in-up">
+        <div className="glass-card p-6 max-w-sm text-center animate-fade-in-up">
           <AlertTriangle size={24} className="text-red-400 mx-auto mb-3" aria-hidden="true" />
           <div className="text-sm text-red-400 font-semibold mb-1">{"Erreur d'analyse"}</div>
-          <div className="text-[11px] text-txt-muted">{error}</div>
+          <div className="text-[11px] text-txt-muted leading-relaxed">{error}</div>
+          <button
+            onClick={clearError}
+            className="mt-3 flex items-center gap-1.5 mx-auto px-3 py-1.5 rounded-xl text-xs font-medium bg-surface-elevated text-txt-secondary border border-border-subtle hover:border-accent/30 transition-colors"
+          >
+            <RefreshCw size={11} />
+            Fermer
+          </button>
         </div>
       </div>
     );
