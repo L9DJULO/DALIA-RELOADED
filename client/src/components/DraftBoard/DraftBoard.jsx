@@ -11,6 +11,7 @@ import ChampionSelector from './ChampionSelector';
 import RecommendationPanel from '../Recommendations/RecommendationPanel';
 import BanPanel from './BanPanel';
 import LCUStatus from './LCUStatus';
+import QuickInput from './QuickInput';
 import DuoPanel from '../DuoQ/DuoPanel';
 
 export default function DraftBoard({ champions }) {
@@ -160,6 +161,11 @@ export default function DraftBoard({ champions }) {
               <LCUStatus champions={champions} />
             </div>
           </div>
+        </div>
+
+        {/* Quick input (fast manual entry, follows real draft pick order) */}
+        <div className="px-3.5 py-3 border-b border-border-subtle">
+          <QuickInput champions={champions} />
         </div>
 
         {/* Bans */}

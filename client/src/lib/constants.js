@@ -46,3 +46,36 @@ export const ROLE_LABELS = {
 
 /** Tier list order. */
 export const TIERS = ['S', 'A', 'B', 'C', 'D'];
+
+/**
+ * LoL Ranked draft sequence — 20 actions, 1:1 mirror of the server
+ * (see `server/app/models/draft.py::DRAFT_SEQUENCE`).
+ *
+ * `slotIndex` is the 0..4 position of this action inside its own team's
+ * bans / picks — so action 9 (Blue's 2nd pick) has slotIndex=1 on the Blue team.
+ * The client uses slotIndex to target `blueBans[i]` / `redBans[i]` / enemy
+ * ordered picks. Ally picks are role-keyed, so slotIndex isn't used for them —
+ * the user picks a role chip instead.
+ */
+export const DRAFT_SEQUENCE = (() => {
+  const raw = [
+    ['ban', 'blue'], ['ban', 'red'], ['ban', 'blue'], ['ban', 'red'], ['ban', 'blue'], ['ban', 'red'],
+    ['pick', 'blue'], ['pick', 'red'], ['pick', 'red'], ['pick', 'blue'], ['pick', 'blue'], ['pick', 'red'],
+    ['ban', 'red'], ['ban', 'blue'], ['ban', 'red'], ['ban', 'blue'],
+    ['pick', 'red'], ['pick', 'blue'], ['pick', 'blue'], ['pick', 'red'],
+  ];
+  const counters = { 'ban-blue': 0, 'ban-red': 0, 'pick-blue': 0, 'pick-red': 0 };
+  return raw.map(([type, team], i) => {
+    const k = `${type}-${team}`;
+    const slotIndex = counters[k]++;
+    return { action: i, type, team, slotIndex };
+  });
+})();
+
+/** Short human label for a DRAFT_SEQUENCE entry. */
+export const draftStepLabel = (step) => {
+  if (!step) return '';
+  const verb = step.type === 'ban' ? 'Ban' : 'Pick';
+  const side = step.team === 'blue' ? 'Blue' : 'Red';
+  return `${verb} ${side} #${step.slotIndex + 1}`;
+};

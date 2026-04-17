@@ -1,21 +1,33 @@
 /**
- * Badge / Tag primitive — small label with color variant.
- * Premium glass-style badges.
+ * Badge — small label with semantic color variant.
+ * Flat + hairline border, aligned with Arena design system.
  */
 const VARIANTS = {
-  default: 'bg-slate-700/40 text-slate-300 border-slate-600/40',
-  accent: 'bg-violet-500/12 text-violet-400 border-violet-500/20',
-  success: 'bg-emerald-500/12 text-emerald-400 border-emerald-500/20',
-  warning: 'bg-amber-500/12 text-amber-400 border-amber-500/20',
-  danger: 'bg-red-500/12 text-red-400 border-red-500/20',
-  info: 'bg-sky-500/12 text-sky-400 border-sky-500/20',
-  purple: 'bg-purple-500/12 text-purple-400 border-purple-500/20',
+  neutral: 'bg-surface-elevated text-txt-secondary border-border',
+  accent:  'bg-accent-muted text-violet-300 border-border-accent',
+  win:     'bg-win-bg text-win border-win-border',
+  loss:    'bg-loss-bg text-loss border-loss-border',
+  warn:    'bg-warn-bg text-warn border-warn-border',
+  info:    'bg-info-bg text-info border-info-border',
+  // Legacy aliases (kept for backward compat with existing usages)
+  default: 'bg-surface-elevated text-txt-secondary border-border',
+  success: 'bg-win-bg text-win border-win-border',
+  warning: 'bg-warn-bg text-warn border-warn-border',
+  danger:  'bg-loss-bg text-loss border-loss-border',
+  purple:  'bg-accent-muted text-violet-300 border-border-accent',
 };
 
-export default function Badge({ children, variant = 'default', className = '' }) {
+const SIZES = {
+  xs: 'px-1 py-px text-[9px]',
+  sm: 'px-1.5 py-0.5 text-[10px]',
+  md: 'px-2 py-0.5 text-[11px]',
+};
+
+export default function Badge({ children, variant = 'neutral', size = 'sm', className = '' }) {
   return (
     <span
-      className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md border text-[10px] font-medium leading-none backdrop-blur-sm ${VARIANTS[variant] || VARIANTS.default} ${className}`}
+      className={`inline-flex items-center gap-1 rounded-xs border font-medium leading-none
+                  ${SIZES[size] || SIZES.sm} ${VARIANTS[variant] || VARIANTS.neutral} ${className}`}
     >
       {children}
     </span>

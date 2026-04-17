@@ -37,6 +37,13 @@ from app.models.draft import (
 )
 from app.services.champion_data import ChampionDatabase
 from app.services.composition import CompositionAnalyzer
+from app.services.composition_archetype import (
+    Archetype,
+    ArchetypeResult,
+    archetype_counter_adjust,
+    detect_archetype,
+    summarise as summarise_archetype,
+)
 from app.services.data_fetcher import LolalyticsFetcher
 from app.services.matchup import MatchupAnalyzer
 from app.services.meta_analyzer import MetaAnalyzer
@@ -198,6 +205,26 @@ class DraftEngine:
         # 1. Pre-load meta for the relevant role
         await self.meta.load_tierlist(role)
 
+        # ── Detect enemy composition archetype (poke / engage / kite / …) ──
+        # Done once here, then passed into _score_candidate so every candidate
+        # is evaluated against the same enemy read. We skip MIXED cases —
+        # archetype_counter_adjust() already returns 1.0 for MIXED, but
+        # short-circuiting keeps logs clean.
+        enemy_champs: List[Champion] = []
+        for ep in draft.enemy_picks:
+            if ep.champion_id is not None:
+                c = self.db.get_by_id(ep.champion_id)
+                if c:
+                    enemy_champs.append(c)
+        enemy_archetype = detect_archetype(enemy_champs)
+        if enemy_archetype.primary != Archetype.MIXED:
+            logger.info(
+                "Enemy archetype detected: %s (conf %.2f, %d picks)",
+                enemy_archetype.primary.value,
+                enemy_archetype.confidence,
+                enemy_archetype.picks_revealed,
+            )
+
         # 2. Gather candidates from user pool
         pool_entries = pool.get(role, [])
         if not pool_entries:
@@ -215,11 +242,17 @@ class DraftEngine:
             if not champ:
                 continue
 
-            rec = await self._score_candidate(champ, entry, draft, role, weights, personal_boost_fn)
+            rec = await self._score_candidate(
+                champ, entry, draft, role, weights, personal_boost_fn,
+                enemy_archetype=enemy_archetype,
+            )
             scored.append(rec)
 
         # 4. Wild-card suggestions (off-pool)
-        wildcards = await self._wild_card_suggestions(draft, role, weights, unavailable, pool_entries)
+        wildcards = await self._wild_card_suggestions(
+            draft, role, weights, unavailable, pool_entries,
+            enemy_archetype=enemy_archetype,
+        )
         scored.extend(wildcards)
 
         # Sort descending by total score
@@ -269,6 +302,7 @@ class DraftEngine:
         role: str,
         weights,
         personal_boost_fn=None,
+        enemy_archetype: Optional[ArchetypeResult] = None,
     ) -> Recommendation:
         # Sub-scores
         meta_s   = self.meta.score(champ.id, role)
@@ -321,6 +355,99 @@ class DraftEngine:
             w_meta    += w_synergy * 0.50
             w_comp    += w_synergy * 0.50
             w_synergy  = 0.0
+
+        # ═════════════════════════════════════════════════════════════════════
+        # ── Pick-order weight shaping ──
+        # The engine's job changes dramatically depending on WHERE in the
+        # draft we are picking. Same champion, same sub-scores — the *right*
+        # answer differs. We reshape weights on top of the blind-pick
+        # redistribution above.
+        #
+        # my_pick_order ∈ {1..5} is the 1-indexed position of this pick
+        # inside the user's team. Draft phase 1 pick order (20-action
+        # sequence) puts:
+        #   • pick_order 1      = 1st overall pick (blue side) — hardest blind
+        #   • pick_order 2/3    = middle, some info but not all
+        #   • pick_order 5      = LAST pick = full info, free counter
+        #
+        # is_last_pick is the authoritative flag for "I see everything" — it
+        # holds when my pick is the final one in the sequence AND my lane
+        # opponent is already revealed. my_pick_order alone doesn't catch
+        # e.g. a red-side 5th that's still being counter-picked by blue's
+        # 5th; `is_last_pick` does.
+        # ═════════════════════════════════════════════════════════════════════
+        is_first_pick = draft.my_pick_order == 1 and not has_enemies
+        is_last_pick  = draft.is_last_pick
+
+        # Track these for the multiplicative bonuses/penalties below
+        flex_bonus_active = False
+        niche_counter_bonus_active = False
+        situational_penalty_active = False
+
+        if is_first_pick:
+            # ── FIRST PICK: blind, high counter exposure, high value on flex ──
+            # No enemy to counter, no lane opponent revealed. Champions that
+            # are counter-proof (flex roles, tanks, high draft_risk safety)
+            # are worth a LOT. Champions that only shine in specific matchups
+            # are a trap — the enemy will simply pick their counter.
+            #
+            # Weight changes (documented deltas relative to baseline):
+            #   • meta        ×1.15   — meta strength matters more (no matchup signal)
+            #   • draft_risk  ×1.40   — safety is the #1 concern blind
+            #   • mastery     ×0.85   — a comfort D-tier that gets countered is worse
+            #                           than a B-tier flex; de-emphasise tier
+            w_meta    *= 1.15
+            w_risk    *= 1.40
+            w_mastery *= 0.85
+
+            # Flex bonus: a champion playable in ≥ 2 roles is harder to counter
+            # because the enemy can't lock a single lane counter. We flag it
+            # here; the multiplicative bonus is applied after base is computed.
+            if len(champ.roles) >= 2:
+                flex_bonus_active = True
+
+            # Situational penalty: single-role + low safety = the champ only
+            # works in specific matchups. On 1st pick that's a liability.
+            if len(champ.roles) <= 1 and risk_s < 55:
+                situational_penalty_active = True
+
+        elif is_last_pick:
+            # ── LAST PICK: full info, free counter-pick ──
+            # We see every enemy and we know our lane opponent. Meta strength
+            # barely matters — a "D-tier" champion that hard-counters their
+            # lane opponent can be worth the pick. Flex is useless (no
+            # ambiguity to exploit). Safety is also less interesting since
+            # there are no more enemy picks coming.
+            #
+            # Weight changes:
+            #   • matchup    ×1.35   — primary signal, we know exactly who we face
+            #   • synergy    ×1.10   — full team known, synergy calls are reliable
+            #   • meta       ×0.80   — a meta-S champ with bad matchup is worse
+            #                          than a B champ with good matchup
+            #   • draft_risk ×0.70   — no one left to counter us
+            w_matchup *= 1.35
+            w_synergy *= 1.10
+            w_meta    *= 0.80
+            w_risk    *= 0.70
+
+            # Niche counter: match_s very high → reward heavily below
+            if match_s >= 62:
+                niche_counter_bonus_active = True
+
+        elif draft.my_pick_order >= 4 and has_enemies:
+            # ── LATE PICK (4th/5th but not fully last, e.g. red side 3rd) ──
+            # We see most of the enemy team. Lean toward matchup, away from
+            # pure meta. Lighter than the last-pick shift.
+            w_matchup *= 1.15
+            w_meta    *= 0.92
+
+        elif draft.my_pick_order <= 2 and has_enemies:
+            # ── EARLY-MIDDLE PICK: partial info ──
+            # 2nd pick (red P1 / blue P2): see 1 enemy at most. Still a
+            # relative blind — keep leaning on meta and risk, but not as
+            # hard as a true 1st.
+            w_meta *= 1.05
+            w_risk *= 1.10
 
         # ── 1. Weighted base ──
         base = (
@@ -378,6 +505,43 @@ class DraftEngine:
             if comp_s >= 70:
                 bonus += (comp_s - 70) * 0.003
             base *= min(bonus, 1.20)  # cap at +20%
+
+        # ── 4. Enemy-archetype counter adjustment ──
+        # archetype_counter_adjust returns ~[0.88, 1.15]. We scale that down
+        # by the detection confidence so a shaky read (e.g. 2 picks revealed)
+        # doesn't steer the ranking as hard as a locked-in 5-pick read.
+        # When no archetype is detected (MIXED) the function returns 1.0 and
+        # this is a no-op. Only applied when enemies are actually visible.
+        if enemy_archetype is not None and has_enemies and enemy_archetype.primary != Archetype.MIXED:
+            raw = archetype_counter_adjust(champ, enemy_archetype.primary)
+            # Scale delta from 1.0 by confidence (0..1)
+            adj = 1.0 + (raw - 1.0) * enemy_archetype.confidence
+            base *= adj
+
+        # ── 5. Pick-order multiplicative bonuses/penalties ──
+        # The weight shaping above moves the relative importance of each
+        # sub-score, but we also need explicit rewards/punishments for
+        # strategic fit — a flex champion on 1st pick deserves a direct
+        # boost beyond what meta/risk weighting alone would give.
+        if flex_bonus_active:
+            # 1st pick × multi-role = ~+8 %. Protects the team from a
+            # single-target counter. Capped deliberately small: meta/risk
+            # weight has already done most of the work.
+            base *= 1.08
+
+        if situational_penalty_active:
+            # 1st pick × single-role × low safety = the pick is a trap.
+            # Enemy will simply pick the counter. Punish softly so a
+            # single-role meta monster (high meta + high risk) can still
+            # surface — the penalty only lands when safety is already weak.
+            base *= 0.92
+
+        if niche_counter_bonus_active:
+            # Last pick × strong matchup = archetypal counter-pick use case.
+            # Scale with match_s so a 80-matchup niche obliterates a
+            # 65-matchup safe pick. Caps at +18 %.
+            bonus = 1.0 + min((match_s - 62) * 0.006, 0.18)
+            base *= bonus
 
         total = round(_clamp(base, 5.0, 98.0), 1)
 
@@ -517,6 +681,7 @@ class DraftEngine:
         weights,
         unavailable: set,
         pool_entries: List[PoolEntry],
+        enemy_archetype: Optional[ArchetypeResult] = None,
     ) -> List[Recommendation]:
         """Find champions NOT in the user's pool with exceptionally high scores.
         
@@ -547,7 +712,10 @@ class DraftEngine:
         best_wildcard: Optional[Recommendation] = None
         for champ in candidates:
             fake_entry = PoolEntry(champion_id=champ.id, champion_key=champ.key, tier="D")
-            rec = await self._score_candidate(champ, fake_entry, draft, role, weights)
+            rec = await self._score_candidate(
+                champ, fake_entry, draft, role, weights,
+                enemy_archetype=enemy_archetype,
+            )
             rec.is_pool_champion = False
             rec.tags.append("off-meta")
             
@@ -596,10 +764,16 @@ class DraftEngine:
         # Flex: truly flexible (2+ roles) — but useless on last pick (no ambiguity)
         if len(champ.roles) >= 2 and not draft.is_last_pick:
             tags.append("flex")
+            # Extra visibility: on 1st pick, flex is the whole point
+            if draft.my_pick_order == 1 and risk_s >= 55:
+                tags.append("first-pick-safe")
 
         # Last-pick counter
         if draft.is_last_pick and match_s >= 58:
             tags.append("last-pick-counter")
+            # Niche but devastating last-pick counter (low meta, high matchup)
+            if match_s >= 68 and self.meta.score(champ.id, draft.my_role) < 55:
+                tags.append("niche-counter")
 
         # Strong meta pick
         if self.meta.score(champ.id, draft.my_role) >= 75:
