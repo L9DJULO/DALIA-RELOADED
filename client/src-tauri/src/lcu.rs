@@ -1,20 +1,21 @@
 /// DALIA Client — LCU (League Client Update) Connector
 ///
 /// Reads the League of Legends lockfile to connect to the local LCU API
-/// and retrieve live champion select data.
+/// and retrieve live champion select data. Uses a multi-strategy detection
+/// chain to remain robust across all Windows install layouts.
 use base64::{engine::general_purpose::STANDARD, Engine};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 #[cfg(target_os = "windows")]
 use std::os::windows::process::CommandExt;
 
-/// Windows flag to prevent CMD windows from appearing.
 #[cfg(target_os = "windows")]
 const CREATE_NO_WINDOW: u32 = 0x08000000;
 
-/// LCU connection credentials parsed from the lockfile.
+/// LCU connection credentials parsed from the lockfile or the LeagueClientUx
+/// command line. Either source yields the same three fields.
 #[derive(Debug, Clone)]
 pub struct LcuCredentials {
     pub port: u16,
@@ -34,9 +35,7 @@ pub struct LiveDraftState {
     pub enemy_bans: Vec<i64>,
     pub ally_picks: HashMap<String, i64>,
     pub enemy_picks: HashMap<String, i64>,
-    /// Ordered list of enemy champion IDs (no role info — server predicts roles)
     pub enemy_picks_order: Vec<i64>,
-    /// Ally hover/intent picks: role → champion_id (not yet locked in)
     pub ally_prepicks: HashMap<String, i64>,
     pub current_action_type: String,
     pub is_my_turn: bool,
@@ -57,7 +56,6 @@ pub struct SummonerInfo {
     pub region: String,
 }
 
-// Role mapping from cell ID to role
 fn cell_to_role(cell_id: i64) -> &'static str {
     match cell_id % 5 {
         0 => "top",
@@ -73,76 +71,160 @@ fn cell_to_team(cell_id: i64) -> &'static str {
     if cell_id < 5 { "blue" } else { "red" }
 }
 
-/// Find the League of Legends lockfile.
-/// Searches common paths on all available drives, RiotClientInstalls.json,
-/// and falls back to process detection.
-pub fn find_lockfile() -> Option<PathBuf> {
-    // 1. Scan all drive letters with common install sub-paths
-    let sub_paths = vec![
-        r"Riot Games\League of Legends\lockfile",
-        r"Program Files\Riot Games\League of Legends\lockfile",
-        r"Program Files (x86)\Riot Games\League of Legends\lockfile",
-        r"Games\League of Legends\lockfile",
-        r"League of Legends\lockfile",
-    ];
+// ═══════════════════════════════════════════════════════════════════════
+//  LOCKFILE DETECTION
+// ═══════════════════════════════════════════════════════════════════════
 
-    for drive in b'C'..=b'Z' {
-        let drive_letter = drive as char;
-        for sub in &sub_paths {
-            let p = PathBuf::from(format!("{}:\\{}", drive_letter, sub));
-            if p.exists() {
-                return Some(p);
+/// Multi-strategy lockfile detection. Tries every known location until one
+/// yields a readable lockfile. Ordered from cheapest/most-reliable to most
+/// expensive. Every strategy is independent — a failure in one does not
+/// abort the chain.
+pub fn find_lockfile() -> Option<PathBuf> {
+    if let Some(p) = find_lockfile_from_riot_installs() {
+        return Some(p);
+    }
+    if let Some(p) = find_lockfile_from_known_paths() {
+        return Some(p);
+    }
+    if let Some(p) = find_lockfile_from_drive_scan() {
+        return Some(p);
+    }
+    #[cfg(target_os = "windows")]
+    if let Some(p) = find_lockfile_from_registry() {
+        return Some(p);
+    }
+    if let Some(p) = find_lockfile_from_process() {
+        return Some(p);
+    }
+    None
+}
+
+/// Strategy 1: parse `%LOCALAPPDATA%\Riot Games\RiotClientInstalls.json`.
+/// This file is authoritative because the Riot Client writes it on every
+/// install/update with the exact install paths.
+fn find_lockfile_from_riot_installs() -> Option<PathBuf> {
+    let app_data = dirs_next::data_local_dir()?;
+    let riot_installs = app_data.join("Riot Games").join("RiotClientInstalls.json");
+    let content = std::fs::read_to_string(&riot_installs).ok()?;
+    let json: serde_json::Value = serde_json::from_str(&content).ok()?;
+
+    if let Some(obj) = json.get("associated_client").and_then(|v| v.as_object()) {
+        for (install_path, _) in obj {
+            let normalized = install_path.replace('/', "\\");
+            let league_dir = PathBuf::from(normalized.trim_end_matches('\\'));
+            if let Some(lock) = first_existing_lockfile(&league_dir) {
+                return Some(lock);
             }
         }
     }
 
-    // 2. Try RiotClientInstalls.json (created by Riot Client on all installs)
-    if let Some(lockfile) = find_lockfile_from_riot_installs() {
-        return Some(lockfile);
+    if let Some(default_path) = json.get("rc_default").and_then(|v| v.as_str()) {
+        let normalized = default_path.replace('/', "\\");
+        let rc_exe = PathBuf::from(normalized);
+        if let Some(riot_games) = rc_exe.parent().and_then(|p| p.parent()) {
+            let league = riot_games.join("League of Legends");
+            if let Some(lock) = first_existing_lockfile(&league) {
+                return Some(lock);
+            }
+        }
     }
-
-    // 3. Fallback: find LeagueClientUx.exe process and derive lockfile path
-    if let Some(lockfile) = find_lockfile_from_process() {
-        return Some(lockfile);
-    }
-
     None
 }
 
-/// Parse RiotClientInstalls.json to find League installation path.
-fn find_lockfile_from_riot_installs() -> Option<PathBuf> {
-    if let Some(app_data) = dirs_next::data_local_dir() {
-        let riot_installs = app_data.join("Riot Games").join("RiotClientInstalls.json");
-        if riot_installs.exists() {
-            if let Ok(content) = std::fs::read_to_string(&riot_installs) {
-                if let Ok(json) = serde_json::from_str::<serde_json::Value>(&content) {
-                    // associated_client maps League install paths to their Riot Client paths
-                    if let Some(obj) = json.get("associated_client").and_then(|v| v.as_object()) {
-                        for (install_path, _) in obj {
-                            // The keys are League installation paths (may use / or \)
-                            let normalized = install_path.replace('/', "\\");
-                            let league_dir = PathBuf::from(&normalized);
-                            let lockfile = league_dir.join("lockfile");
-                            if lockfile.exists() {
-                                return Some(lockfile);
-                            }
-                            // Sometimes the path points to the root, lockfile is inside
-                            // the League of Legends subfolder
-                            let alt_lockfile = league_dir.join("League of Legends").join("lockfile");
-                            if alt_lockfile.exists() {
-                                return Some(alt_lockfile);
-                            }
-                        }
+/// Strategy 2: check common install locations derived from environment
+/// variables (`%PROGRAMFILES%`, `%PROGRAMFILES(X86)%`, `%LOCALAPPDATA%`)
+/// and the usual drive-root folders.
+fn find_lockfile_from_known_paths() -> Option<PathBuf> {
+    let mut bases: Vec<PathBuf> = Vec::new();
+
+    for env in &["PROGRAMFILES", "ProgramW6432", "PROGRAMFILES(X86)", "LOCALAPPDATA"] {
+        if let Ok(v) = std::env::var(env) {
+            bases.push(PathBuf::from(v).join("Riot Games").join("League of Legends"));
+        }
+    }
+
+    for root in &[r"C:\", r"D:\", r"E:\", r"F:\"] {
+        bases.push(PathBuf::from(root).join("Riot Games").join("League of Legends"));
+    }
+
+    for base in bases {
+        if let Some(lock) = first_existing_lockfile(&base) {
+            return Some(lock);
+        }
+    }
+    None
+}
+
+/// Strategy 3: exhaustive drive letter scan (A-Z) against every sub-path
+/// that a user could plausibly have picked. Keeps the I/O cheap — each
+/// probe is a single `PathBuf::exists()` call.
+fn find_lockfile_from_drive_scan() -> Option<PathBuf> {
+    let sub_paths = [
+        r"Riot Games\League of Legends",
+        r"Program Files\Riot Games\League of Legends",
+        r"Program Files (x86)\Riot Games\League of Legends",
+        r"Games\Riot Games\League of Legends",
+        r"Games\League of Legends",
+        r"League of Legends",
+    ];
+
+    for drive in b'A'..=b'Z' {
+        let drive_letter = drive as char;
+        for sub in &sub_paths {
+            let base = PathBuf::from(format!("{}:\\{}", drive_letter, sub));
+            if let Some(lock) = first_existing_lockfile(&base) {
+                return Some(lock);
+            }
+        }
+    }
+    None
+}
+
+/// Strategy 4: Windows registry. The Riot Client registers its URI handler
+/// under `HKCU\Software\Classes\riotclient`, and Riot Games installs used
+/// to write an install path under `HKLM\SOFTWARE\Riot Games` (including
+/// the WOW6432Node mirror on 64-bit machines).
+#[cfg(target_os = "windows")]
+fn find_lockfile_from_registry() -> Option<PathBuf> {
+    use winreg::enums::{HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE};
+    use winreg::RegKey;
+
+    // HKCU\Software\Classes\riotclient\shell\open\command default value:
+    //   "C:\Riot Games\Riot Client\RiotClientServices.exe" "--launch-product=..." ...
+    let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+    if let Ok(key) = hkcu.open_subkey(r"Software\Classes\riotclient\shell\open\command") {
+        if let Ok(val) = key.get_value::<String, _>("") {
+            if let Some(exe) = extract_first_quoted_or_token(&val) {
+                if let Some(league) = league_dir_from_riot_client_exe(&exe) {
+                    if let Some(lock) = first_existing_lockfile(&league) {
+                        return Some(lock);
                     }
-                    // Also check rc_default path
-                    if let Some(default_path) = json.get("rc_default").and_then(|v| v.as_str()) {
-                        let normalized = default_path.replace('/', "\\");
-                        let rc_dir = PathBuf::from(&normalized);
-                        // Riot Client is usually next to League of Legends
-                        if let Some(parent) = rc_dir.parent() {
-                            let lockfile = parent.join("League of Legends").join("lockfile");
-                            if lockfile.exists() {
-                                return Some(lockfile);
+                }
+            }
+        }
+    }
+
+    // HKLM\SOFTWARE\Riot Games (+ WOW6432Node mirror).
+    let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
+    for root in &[r"SOFTWARE\Riot Games", r"SOFTWARE\WOW6432Node\Riot Games"] {
+        if let Ok(rg_key) = hklm.open_subkey(root) {
+            // Direct values on the parent key (older installers).
+            for val_name in &["Path", "InstallLocation", "Location"] {
+                if let Ok(p) = rg_key.get_value::<String, _>(val_name) {
+                    let league = league_dir_from_any_install(&p);
+                    if let Some(lock) = first_existing_lockfile(&league) {
+                        return Some(lock);
+                    }
+                }
+            }
+            // Subkeys per product.
+            for sub in rg_key.enum_keys().flatten() {
+                if let Ok(sub_key) = rg_key.open_subkey(&sub) {
+                    for val_name in &["Path", "InstallLocation", "Location"] {
+                        if let Ok(p) = sub_key.get_value::<String, _>(val_name) {
+                            let league = league_dir_from_any_install(&p);
+                            if let Some(lock) = first_existing_lockfile(&league) {
+                                return Some(lock);
                             }
                         }
                     }
@@ -153,96 +235,312 @@ fn find_lockfile_from_riot_installs() -> Option<PathBuf> {
     None
 }
 
-/// Find lockfile by looking at running LeagueClientUx.exe process.
-fn find_lockfile_from_process() -> Option<PathBuf> {
-    // Use WMIC to find LeagueClientUx.exe path
-    let mut cmd = std::process::Command::new("wmic");
-    cmd.args(["process", "where", "name='LeagueClientUx.exe'", "get", "ExecutablePath"]);
-    #[cfg(target_os = "windows")]
-    cmd.creation_flags(CREATE_NO_WINDOW);
-    let output = cmd.output().ok()?;
+#[cfg(target_os = "windows")]
+fn league_dir_from_riot_client_exe(riot_client_exe: &str) -> Option<PathBuf> {
+    // Typical: C:\Riot Games\Riot Client\RiotClientServices.exe
+    // League is sibling: C:\Riot Games\League of Legends
+    let exe = PathBuf::from(riot_client_exe);
+    let riot_games = exe.parent()?.parent()?;
+    Some(riot_games.join("League of Legends"))
+}
 
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    for line in stdout.lines() {
-        let trimmed = line.trim();
-        if trimmed.is_empty() || trimmed.starts_with("ExecutablePath") {
-            continue;
-        }
-        // Path looks like: D:\Riot Games\League of Legends\LeagueClientUx.exe
-        let exe_path = PathBuf::from(trimmed);
-        if let Some(parent) = exe_path.parent() {
-            let lockfile = parent.join("lockfile");
+#[cfg(target_os = "windows")]
+fn league_dir_from_any_install(raw: &str) -> PathBuf {
+    let p = PathBuf::from(raw.trim_matches('"').trim_end_matches('\\'));
+    // Some entries point at "Riot Games" root, some already at "League of Legends".
+    if p.file_name().map(|n| n == "League of Legends").unwrap_or(false) {
+        p
+    } else {
+        p.join("League of Legends")
+    }
+}
+
+/// Strategy 5: locate a running `LeagueClientUx.exe` and read its command
+/// line. This is the ultimate fallback — even a manually-moved or
+/// portable install reveals itself here, because we can read both the
+/// exe path and the `--install-directory`, `--app-port`,
+/// `--remoting-auth-token` arguments directly.
+fn find_lockfile_from_process() -> Option<PathBuf> {
+    let cmdlines = query_process_cmdlines("LeagueClientUx.exe")?;
+    for cmdline in &cmdlines {
+        // Prefer the explicit --install-directory argument.
+        if let Some(dir) = extract_cli_arg(cmdline, "install-directory") {
+            let lockfile = PathBuf::from(&dir).join("lockfile");
             if lockfile.exists() {
                 return Some(lockfile);
+            }
+        }
+        // Otherwise derive from the exe path.
+        if let Some(exe) = extract_first_quoted_or_token(cmdline) {
+            let exe_path = PathBuf::from(&exe);
+            if let Some(parent) = exe_path.parent() {
+                let lockfile = parent.join("lockfile");
+                if lockfile.exists() {
+                    return Some(lockfile);
+                }
+            }
+        }
+    }
+    None
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  PROCESS COMMAND LINE HELPERS
+// ═══════════════════════════════════════════════════════════════════════
+
+/// Pull the credentials directly from the running LeagueClientUx process
+/// command line. Used as a last-resort bypass when the lockfile is missing
+/// or unreadable (antivirus quarantine, permission issues, race at startup).
+pub fn credentials_from_process() -> Option<LcuCredentials> {
+    let cmdlines = query_process_cmdlines("LeagueClientUx.exe")?;
+    for cmdline in &cmdlines {
+        let port = extract_cli_arg(cmdline, "app-port")
+            .and_then(|v| v.parse::<u16>().ok());
+        let password = extract_cli_arg(cmdline, "remoting-auth-token");
+        if let (Some(port), Some(password)) = (port, password) {
+            return Some(LcuCredentials {
+                port,
+                password,
+                protocol: "https".to_string(),
+            });
+        }
+    }
+    None
+}
+
+/// Query Windows for the command line of every process with the given name.
+/// Tries WMIC first (fast) and falls back to PowerShell's
+/// `Get-CimInstance` on systems where WMIC has been removed.
+fn query_process_cmdlines(process_name: &str) -> Option<Vec<String>> {
+    // WMIC path.
+    let mut wmic = std::process::Command::new("wmic");
+    wmic.args([
+        "process",
+        "where",
+        &format!("name='{}'", process_name),
+        "get",
+        "CommandLine",
+        "/format:list",
+    ]);
+    #[cfg(target_os = "windows")]
+    wmic.creation_flags(CREATE_NO_WINDOW);
+    if let Ok(output) = wmic.output() {
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        let results: Vec<String> = stdout
+            .lines()
+            .filter_map(|l| l.strip_prefix("CommandLine=").map(|s| s.trim().to_string()))
+            .filter(|s| !s.is_empty())
+            .collect();
+        if !results.is_empty() {
+            return Some(results);
+        }
+    }
+
+    // PowerShell fallback.
+    let ps_cmd = format!(
+        "Get-CimInstance Win32_Process -Filter \"Name='{}'\" | Select-Object -ExpandProperty CommandLine",
+        process_name
+    );
+    let mut ps = std::process::Command::new("powershell");
+    ps.args(["-NoProfile", "-NonInteractive", "-Command", &ps_cmd]);
+    #[cfg(target_os = "windows")]
+    ps.creation_flags(CREATE_NO_WINDOW);
+    if let Ok(output) = ps.output() {
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        let results: Vec<String> = stdout
+            .lines()
+            .map(|l| l.trim().to_string())
+            .filter(|s| !s.is_empty())
+            .collect();
+        if !results.is_empty() {
+            return Some(results);
+        }
+    }
+    None
+}
+
+/// Extract a CLI argument value supporting all of:
+///   --foo=bar        --foo "bar"        "--foo=bar with spaces"
+///   "--foo=C:\path"  --foo=C:\path      --foo C:\path
+/// The `arg_name` is the argument *without* leading dashes (e.g. "app-port").
+fn extract_cli_arg(cmdline: &str, arg_name: &str) -> Option<String> {
+    // Three shell-quoting shapes to handle:
+    //   --arg=value-no-spaces
+    //   --arg="value with spaces"
+    //   "--arg=value with spaces"   ← the whole token is quoted
+    // For the last form, we detect the leading `"` by peeking the char
+    // immediately before the match and read until the closing `"`.
+    let needle_eq = format!("--{}=", arg_name);
+    if let Some(idx) = cmdline.find(&needle_eq) {
+        let before = cmdline[..idx].chars().last();
+        let rest = &cmdline[idx + needle_eq.len()..];
+        if before == Some('"') {
+            if let Some(end) = rest.find('"') {
+                return Some(rest[..end].to_string());
+            }
+        }
+        return Some(read_value(rest));
+    }
+    let needle_space = format!("--{} ", arg_name);
+    if let Some(idx) = cmdline.find(&needle_space) {
+        let rest = &cmdline[idx + needle_space.len()..];
+        return Some(read_value(rest));
+    }
+    None
+}
+
+/// Read a single value from a CLI string: either a quoted run, or a
+/// whitespace-terminated token. Terminating `"` is also stripped.
+fn read_value(rest: &str) -> String {
+    let rest = rest.trim_start();
+    if let Some(stripped) = rest.strip_prefix('"') {
+        if let Some(end) = stripped.find('"') {
+            return stripped[..end].to_string();
+        }
+        return stripped.to_string();
+    }
+    rest.split(|c: char| c.is_whitespace() || c == '"')
+        .next()
+        .unwrap_or("")
+        .trim_end_matches('"')
+        .to_string()
+}
+
+/// Pull the first path-like token from a raw command-line string. Handles
+/// the common `"C:\...\exe" --arg=...` pattern as well as unquoted forms.
+fn extract_first_quoted_or_token(raw: &str) -> Option<String> {
+    let trimmed = raw.trim();
+    if let Some(stripped) = trimmed.strip_prefix('"') {
+        let end = stripped.find('"')?;
+        return Some(stripped[..end].to_string());
+    }
+    trimmed.split_whitespace().next().map(|s| s.to_string())
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  LOCKFILE READ / PARSE
+// ═══════════════════════════════════════════════════════════════════════
+
+/// Check for the lockfile inside a given directory. Accepts both the
+/// directory itself and a direct file path. Returns the lockfile path if
+/// it exists and is a regular file.
+fn first_existing_lockfile(base: &Path) -> Option<PathBuf> {
+    // Direct lockfile path.
+    if base.is_file() && base.file_name().map(|n| n == "lockfile").unwrap_or(false) {
+        return Some(base.to_path_buf());
+    }
+    let candidate = base.join("lockfile");
+    if candidate.exists() {
+        return Some(candidate);
+    }
+    None
+}
+
+/// Read the lockfile, handling UTF-8, UTF-16 LE/BE with or without BOM.
+/// League itself writes UTF-8 today, but users have reported UTF-16 on
+/// locale-specific installs, so we handle both.
+fn read_lockfile(path: &Path) -> Option<String> {
+    let bytes = std::fs::read(path).ok()?;
+    if bytes.len() >= 2 && bytes[0] == 0xFF && bytes[1] == 0xFE {
+        let u16s: Vec<u16> = bytes[2..]
+            .chunks_exact(2)
+            .map(|c| u16::from_le_bytes([c[0], c[1]]))
+            .collect();
+        return String::from_utf16(&u16s).ok();
+    }
+    if bytes.len() >= 2 && bytes[0] == 0xFE && bytes[1] == 0xFF {
+        let u16s: Vec<u16> = bytes[2..]
+            .chunks_exact(2)
+            .map(|c| u16::from_be_bytes([c[0], c[1]]))
+            .collect();
+        return String::from_utf16(&u16s).ok();
+    }
+    // UTF-8 (with optional BOM).
+    let text = String::from_utf8_lossy(&bytes).to_string();
+    Some(text.trim_start_matches('\u{feff}').to_string())
+}
+
+/// Parse the lockfile content into credentials. Tolerates CRLF/LF,
+/// stray whitespace, blank leading lines, and trailing content.
+pub fn parse_lockfile(content: &str) -> Option<LcuCredentials> {
+    let normalized = content.replace("\r\n", "\n").replace('\r', "\n");
+    for raw_line in normalized.lines() {
+        let line = raw_line.trim().trim_start_matches('\u{feff}');
+        if line.is_empty() {
+            continue;
+        }
+        let parts: Vec<&str> = line.split(':').collect();
+        if parts.len() < 5 {
+            continue;
+        }
+        let port = parts[2].trim().parse().ok()?;
+        return Some(LcuCredentials {
+            port,
+            password: parts[3].trim().to_string(),
+            protocol: parts[4].trim().to_string(),
+        });
+    }
+    None
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  HTTP / LCU REQUESTS
+// ═══════════════════════════════════════════════════════════════════════
+
+/// Create an HTTP client that accepts the LCU self-signed certificate.
+/// The LCU binds to 127.0.0.1 only, so accepting invalid certs here is
+/// equivalent to trusting localhost — which we already do.
+fn create_lcu_client() -> reqwest::Client {
+    reqwest::Client::builder()
+        .danger_accept_invalid_certs(true)
+        .timeout(std::time::Duration::from_secs(5))
+        .build()
+        .expect("Failed to create HTTP client")
+}
+
+/// Attempt to connect to a running LCU. Tries the lockfile first, then
+/// falls back to scraping the LeagueClientUx command line. Returns `None`
+/// only if *both* strategies fail to produce working credentials.
+pub async fn connect() -> Option<LcuCredentials> {
+    // Lockfile path.
+    if let Some(path) = find_lockfile() {
+        if let Some(content) = read_lockfile(&path) {
+            if let Some(creds) = parse_lockfile(&content) {
+                if verify_credentials(&creds).await {
+                    return Some(creds);
+                }
             }
         }
     }
 
-    // Also try tasklist + wmic for League processes via cmd
-    let mut cmd2 = std::process::Command::new("cmd");
-    cmd2.args(["/c", "wmic process where \"name like '%LeagueClient%'\" get ExecutablePath 2>nul"]);
-    #[cfg(target_os = "windows")]
-    cmd2.creation_flags(CREATE_NO_WINDOW);
-    let output2 = cmd2.output().ok()?;
-
-    let stdout2 = String::from_utf8_lossy(&output2.stdout);
-    for line in stdout2.lines() {
-        let trimmed = line.trim();
-        if trimmed.is_empty() || trimmed.starts_with("ExecutablePath") {
-            continue;
-        }
-        let exe_path = PathBuf::from(trimmed);
-        if let Some(parent) = exe_path.parent() {
-            let lockfile = parent.join("lockfile");
-            if lockfile.exists() {
-                return Some(lockfile);
-            }
+    // Command-line path (independent fallback).
+    if let Some(creds) = credentials_from_process() {
+        if verify_credentials(&creds).await {
+            return Some(creds);
         }
     }
 
     None
 }
 
-/// Parse the lockfile content into credentials.
-pub fn parse_lockfile(content: &str) -> Option<LcuCredentials> {
-    let parts: Vec<&str> = content.trim().split(':').collect();
-    if parts.len() < 5 {
-        return None;
-    }
-    Some(LcuCredentials {
-        port: parts[2].parse().ok()?,
-        password: parts[3].to_string(),
-        protocol: parts[4].to_string(),
-    })
-}
-
-/// Create an HTTP client that accepts self-signed certificates (LCU uses one).
-fn create_lcu_client() -> reqwest::Client {
-    reqwest::Client::builder()
-        .danger_accept_invalid_certs(true)
-        .build()
-        .expect("Failed to create HTTP client")
-}
-
-/// Connect to LCU and return credentials if successful.
-pub async fn connect() -> Option<LcuCredentials> {
-    let lockfile_path = find_lockfile()?;
-    let content = std::fs::read_to_string(&lockfile_path).ok()?;
-    let creds = parse_lockfile(&content)?;
-
-    // Verify connection
+/// Probe an LCU endpoint to confirm the credentials work. Accepts any
+/// 2xx/4xx response as proof of connectivity — only network/TLS errors
+/// mean "not the LCU".
+async fn verify_credentials(creds: &LcuCredentials) -> bool {
     let client = create_lcu_client();
     let auth = STANDARD.encode(format!("riot:{}", creds.password));
     let url = format!("https://127.0.0.1:{}/lol-login/v1/session", creds.port);
-
     match client
         .get(&url)
         .header("Authorization", format!("Basic {}", auth))
         .send()
         .await
     {
-        Ok(resp) if resp.status().is_success() || resp.status().as_u16() == 404 => Some(creds),
-        _ => None,
+        Ok(resp) => {
+            let status = resp.status().as_u16();
+            (200..500).contains(&status)
+        }
+        Err(_) => false,
     }
 }
 
@@ -257,7 +555,6 @@ pub async fn poll_draft_state(creds: &LcuCredentials) -> LiveDraftState {
         ..Default::default()
     };
 
-    // Check game phase
     let phase_url = format!("{}/lol-gameflow/v1/gameflow-phase", base);
     let phase = match client
         .get(&phase_url)
@@ -278,7 +575,6 @@ pub async fn poll_draft_state(creds: &LcuCredentials) -> LiveDraftState {
     }
     state.in_champ_select = true;
 
-    // Get champion select session
     let session_url = format!("{}/lol-champ-select/v1/session", base);
     let session: serde_json::Value = match client
         .get(&session_url)
@@ -293,10 +589,8 @@ pub async fn poll_draft_state(creds: &LcuCredentials) -> LiveDraftState {
         Err(_) => return state,
     };
 
-    // Find local player cell ID
     let local_cell = session["localPlayerCellId"].as_i64().unwrap_or(-1);
 
-    // Helper: normalise LCU assignedPosition → internal role key
     let normalise_pos = |pos: &str| -> &'static str {
         match pos {
             "top"     => "top",
@@ -308,25 +602,13 @@ pub async fn poll_draft_state(creds: &LcuCredentials) -> LiveDraftState {
         }
     };
 
-    // Build cellId → role map from BOTH myTeam and theirTeam arrays.
-    // This is the only reliable way to know each player's assigned role;
-    // the old cell_to_role(cell_id % 5) was pure position-index guesswork.
     let mut cell_role_map: HashMap<i64, String> = HashMap::new();
-    // Track which cells belong to which team for role resolution
-    let mut ally_cells: Vec<i64> = Vec::new();
-    let mut enemy_cells: Vec<i64> = Vec::new();
-    // Collect ally championPickIntent for pre-picks
-    let mut ally_intents: HashMap<i64, i64> = HashMap::new(); // cellId → champId
+    let mut ally_intents: HashMap<i64, i64> = HashMap::new();
     for team_key in &["myTeam", "theirTeam"] {
         if let Some(team) = session[*team_key].as_array() {
             for member in team {
                 if let Some(cid) = member["cellId"].as_i64() {
                     let is_my_team = *team_key == "myTeam";
-                    if is_my_team {
-                        ally_cells.push(cid);
-                    } else {
-                        enemy_cells.push(cid);
-                    }
 
                     if let Some(pos) = member["assignedPosition"].as_str() {
                         let role = normalise_pos(pos);
@@ -335,7 +617,6 @@ pub async fn poll_draft_state(creds: &LcuCredentials) -> LiveDraftState {
                         }
                     }
 
-                    // Collect ally champion pick intent (hover before their turn)
                     if is_my_team && cid != local_cell {
                         let intent = member["championPickIntent"].as_i64().unwrap_or(0);
                         if intent > 0 {
@@ -354,7 +635,6 @@ pub async fn poll_draft_state(creds: &LcuCredentials) -> LiveDraftState {
         }
     }
 
-    // Parse actions (bans and picks)
     if let Some(actions) = session["actions"].as_array() {
         for action_group in actions {
             if let Some(group) = action_group.as_array() {
@@ -387,31 +667,19 @@ pub async fn poll_draft_state(creds: &LcuCredentials) -> LiveDraftState {
                         }
                         "pick" if completed => {
                             if is_ally {
-                                // Ally picks: use assigned role (reliable from LCU)
                                 let role = cell_role_map
                                     .get(&cell_id)
                                     .cloned()
                                     .unwrap_or_else(|| cell_to_role(cell_id).to_string());
                                 state.ally_picks.insert(role, champion_id);
-                                // Remove from prepicks once locked
-                                // (the role is known, no need for intent anymore)
                             } else {
-                                // Enemy picks: DON'T assign fake roles!
-                                // The server will predict the correct role based on
-                                // champion data (e.g. Tristana → bot, not top).
-                                // Only use the role if the LCU actually provides it
-                                // (theirTeam assignedPosition — usually empty in ranked).
                                 if let Some(role) = cell_role_map.get(&cell_id) {
-                                    // Rare: LCU provided a real role for this enemy
                                     state.enemy_picks.insert(role.clone(), champion_id);
                                 }
-                                // Always add to ordered list (server uses this)
                                 state.enemy_picks_order.push(champion_id);
                             }
                         }
                         "pick" if !completed && champion_id > 0 && is_ally && !is_me => {
-                            // Ally is hovering a champion during their pick phase
-                            // (in-progress pick action with a champion selected)
                             if let Some(role) = cell_role_map.get(&cell_id) {
                                 state.ally_prepicks.insert(role.clone(), champion_id);
                             }
@@ -423,12 +691,9 @@ pub async fn poll_draft_state(creds: &LcuCredentials) -> LiveDraftState {
         }
     }
 
-    // Timer
-    // ── Merge ally pick intents into prepicks ──
-    // championPickIntent from myTeam members shows what allies plan to play.
-    // Only include intents for allies who haven't locked a pick yet
-    // and whose intent champion isn't already picked/banned.
-    let picked_ids: std::collections::HashSet<i64> = state.ally_picks.values()
+    let picked_ids: std::collections::HashSet<i64> = state
+        .ally_picks
+        .values()
         .chain(state.enemy_picks.values())
         .chain(state.enemy_picks_order.iter())
         .chain(state.ally_bans.iter())
@@ -438,15 +703,12 @@ pub async fn poll_draft_state(creds: &LcuCredentials) -> LiveDraftState {
 
     for (cell_id, intent_champ) in &ally_intents {
         if let Some(role) = cell_role_map.get(cell_id) {
-            // Skip if this ally already has a locked pick in this role
             if state.ally_picks.contains_key(role) {
                 continue;
             }
-            // Skip if the intent champion is already picked or banned
             if picked_ids.contains(intent_champ) {
                 continue;
             }
-            // Only add if not already in prepicks (action-based hover takes priority)
             if !state.ally_prepicks.contains_key(role) {
                 state.ally_prepicks.insert(role.clone(), *intent_champ);
             }
@@ -471,7 +733,6 @@ pub async fn fetch_summoner_info(creds: &LcuCredentials) -> SummonerInfo {
 
     let mut info = SummonerInfo::default();
 
-    // Get current summoner
     let url = format!("{}/lol-summoner/v1/current-summoner", base);
     let summoner: serde_json::Value = match client
         .get(&url)
@@ -495,7 +756,6 @@ pub async fn fetch_summoner_info(creds: &LcuCredentials) -> SummonerInfo {
     info.summoner_level = summoner["summonerLevel"].as_i64().unwrap_or(0);
     info.profile_icon_id = summoner["profileIconId"].as_i64().unwrap_or(0);
 
-    // Detect region from LCU environment
     let region_url = format!("{}/riotclient/region-locale", base);
     if let Ok(resp) = client
         .get(&region_url)
