@@ -28,18 +28,22 @@ DALIA-RELOADED/
 │   │   │   └── patch_watcher.py    # Surveillance auto des patchs
 │   │   ├── models/            # Schémas Pydantic (champion, draft, history, user)
 │   │   └── services/          # Logique métier
-│   │       ├── draft_engine.py       # Moteur de recommandation (6 sous-scores)
-│   │       ├── ban_recommender.py    # Recommandations de bans
-│   │       ├── champion_data.py      # Base de données champions (DDragon)
-│   │       ├── data_fetcher.py       # Scraping Lolalytics (cache TTL 6h)
-│   │       ├── meta_analyzer.py      # Analyse méta (WR/PR/BR)
-│   │       ├── matchup.py            # Matchups cross-lane (Lolalytics)
-│   │       ├── synergy.py            # Synergies heuristiques
-│   │       ├── composition.py        # Analyse de composition d'équipe
-│   │       └── personal_stats.py     # Stats perso (Riot Match-v5 API)
+│   │       ├── draft_engine.py          # Moteur de recommandation (6 sous-scores)
+│   │       ├── ban_recommender.py       # Recommandations de bans
+│   │       ├── champion_data.py         # Base de données champions (DDragon)
+│   │       ├── data_fetcher.py          # Scraping Lolalytics (cache TTL 6h)
+│   │       ├── meta_analyzer.py         # Analyse méta (WR/PR/BR)
+│   │       ├── matchup.py               # Matchups cross-lane (Lolalytics)
+│   │       ├── synergy.py               # Synergies heuristiques
+│   │       ├── composition.py           # Analyse de composition d'équipe
+│   │       ├── composition_archetype.py # Détection d'archétype de composition
+│   │       ├── edge_cases.py            # Règles spéciales (data/edge_cases.json)
+│   │       ├── reasons.py               # Génération d'explications pour les reco
+│   │       ├── role_predictor.py        # Prédiction ML du rôle joué
+│   │       └── personal_stats.py        # Stats perso (Riot Match-v5 API)
 │   ├── alembic/               # Migrations de base de données
 │   ├── Dockerfile             # Image de production (python:3.11-slim)
-│   ├── docker-compose.yml     # PostgreSQL local (dev)
+│   ├── docker-compose.yml     # Stack complète (PostgreSQL + backend + frontend dev)
 │   ├── overnight.sh           # Script batch : scrape → merge → train
 │   └── requirements.txt
 │
@@ -48,17 +52,17 @@ DALIA-RELOADED/
     │   ├── components/
     │   │   ├── Auth/          # Page d'authentification (login/register)
     │   │   ├── ChampionPool/  # Éditeur de pool (tier list S/A/B/C/D)
-    │   │   ├── DraftBoard/    # Board de draft (picks, bans, sélecteur)
+    │   │   ├── DraftBoard/    # Board de draft (picks, bans, sélecteur, overlay recherche)
     │   │   ├── DuoQ/          # Panneau DuoQ (liaison, pool partenaire)
-    │   │   ├── History/       # Historique des drafts
     │   │   ├── Insights/      # Dashboard stats + prédiction live
-    │   │   ├── Overlay/       # Overlay flottant pour champ select
-    │   │   ├── Recommendations/  # Cartes de recommandation détaillées
+    │   │   ├── Recommendations/  # Panneau de recommandations détaillées
     │   │   ├── Settings/      # Paramètres + admin ML
-    │   │   └── ui/            # Composants UI réutilisables (Badge, Skeleton)
+    │   │   ├── DraftPanel.jsx # Layout principal du draft (board + reco)
+    │   │   ├── HeroPanel.jsx  # Panneau hero / splash art champion sélectionné
+    │   │   └── Primitives.jsx # Composants UI réutilisables (Badge, Button, Card…)
     │   ├── lib/               # Constantes partagées, helpers
     │   ├── services/          # Client API (axios) + connecteur LCU (Tauri IPC)
-    │   └── stores/            # State management (Zustand)
+    │   └── stores/            # State management Zustand (8 stores)
     └── src-tauri/             # Shell natif Rust
         └── src/
             ├── lib.rs         # Commandes IPC Tauri (connect, status, summoner)
@@ -104,7 +108,6 @@ DALIA-RELOADED/
 |---|---|
 | **Auto-détection** | Tauri détecte automatiquement le client LoL via lockfile (toutes lettres de lecteur, RiotClientInstalls.json, détection process) |
 | **Sync live** | Synchronisation bans/picks/rôle/équipe en temps réel pendant le champ select |
-| **Overlay flottant** | Widget draggable avec timer, état du draft et top 5 recommandations |
 | **Identité Summoner** | Récupération PUUID/gameName pour les stats personnelles |
 
 ### Historique & Insights
@@ -153,8 +156,8 @@ DALIA-RELOADED/
 
 | Méthode | Endpoint | Auth | Description |
 |---------|----------|------|-------------|
-| `POST` | `/api/draft/recommend` | Oui | Recommandations de draft (endpoint principal) |
-| `POST` | `/api/draft/bans` | Oui | Recommandations de bans |
+| `POST` | `/api/draft/recommend` | Optionnelle | Recommandations de draft (endpoint principal). Pool body si anonyme, pool DB si authentifié |
+| `POST` | `/api/draft/bans` | Optionnelle | Recommandations de bans (même règle pool body/DB) |
 
 ### Profil & Pool
 
@@ -232,10 +235,11 @@ DALIA-RELOADED/
 | Technologie | Usage |
 |---|---|
 | **React 18** | UI déclarative |
-| **Zustand 4** | State management (5 stores actifs) |
+| **Zustand 4** | State management (8 stores : auth, user, draft, lcu, duo, champions, history, theme) |
 | **React Router v6** | Routage SPA |
 | **Axios** | Client HTTP avec intercepteurs JWT |
 | **Tailwind CSS 3** | Styling utilitaire (dark mode, glass UI) |
+| **@dnd-kit** | Drag & drop pour l'éditeur de pool |
 | **Lucide React** | Icônes SVG |
 | **Vite 5** | Bundler/dev server |
 
@@ -247,6 +251,8 @@ DALIA-RELOADED/
 | **reqwest** | Client HTTP async (API LCU) |
 | **serde** | Sérialisation JSON |
 | **base64** | Auth Basic pour l'API LCU |
+| **winreg** | Lecture du registre Windows (localisation du client LoL) |
+| **dirs-next** | Résolution de chemins système |
 
 ---
 
@@ -292,9 +298,24 @@ Tes amis installent le `.exe`, puis dans **Settings** ils entrent l'URL du serve
 
 ## Développement local
 
+### Stack complète via Docker / Podman (recommandé)
+
+```bash
+# Lance PostgreSQL + backend + frontend dev en un seul compose
+docker-compose up
+# ou avec Podman (voir PODMAN_RUN.md pour les détails WSL)
+podman-compose up
+```
+
+Services exposés : frontend `localhost:1420`, backend `localhost:8000`, Swagger `localhost:8000/docs`.
+
+> Voir **PODMAN_RUN.md** pour le guide complet Podman sous WSL2 (volumes, healthchecks, hot-reload).
+
+### Mode natif (sans conteneur)
+
 ```bash
 # Terminal 1 — PostgreSQL
-cd server && docker-compose up -d
+cd server && docker-compose up db
 
 # Terminal 2 — Serveur backend
 cd server
@@ -339,17 +360,54 @@ bash overnight.sh
 
 ## Scoring des recommandations
 
-Le moteur de draft combine 6 sous-scores (pondérés et configurables) :
+Le moteur de draft combine 6 sous-scores (pondérés et configurables dans `server/app/config.py`) :
 
 | Score | Poids | Source | Description |
 |---|---|---|---|
-| **Méta** | 12% | Lolalytics | WR (80%) + PR (15%) + BR (5%), confiance sample-size |
-| **Matchup** | 33% | Lolalytics | Avantage matchup cross-lane (lane ×3), data ou heuristique |
-| **Synergie** | 5% | Heuristique | Diversité dégâts, chaîne CC, engage/follow-up, ADC+supp |
-| **Composition** | 15% | Heuristique | Équilibre AD/AP, tank, CC, engage, carries |
-| **Maîtrise** | 20% | Pool user | Tier du champion dans le pool (S=100, D=40) |
-| **Risque draft** | 8% | Heuristique | Pénalité pour picks risqués (flex faible, counter fort) |
-| **ML** | Blend | DraftNet | Probabilité de victoire (fusion multiplicative) |
+| **Méta** | 7% | Lolalytics | WR (80%) + PR (15%) + BR (5%), confiance sample-size |
+| **Matchup** | 45% | Lolalytics | Avantage matchup cross-lane (lane ×3), `vslane` data + heuristique fallback |
+| **Synergie** | 10% | Heuristique | Diversité dégâts, chaîne CC, engage/follow-up, ADC+supp |
+| **Composition** | 13% | Heuristique | Équilibre AD/AP, tank, CC, engage, carries + archétype de composition |
+| **Maîtrise** | 17% | Pool user | Tier du champion dans le pool (S=100, D=40) |
+| **Risque draft** | 8% | Heuristique | Pénalité picks risqués (flex faible, counter fort, blind à risque) |
+| **ML** | Blend | DraftNet | Probabilité de victoire (fusion multiplicative calibrée) |
+
+### Bonus & pénalités appliqués
+- **Multi-counter** : bonus si le champion counter plusieurs picks ennemis simultanément
+- **Archetype counters** : détection poke/engage/kite/burst → bonus contre archétypes vulnérables
+- **Blind-pick penalty** : −20 sur les champions à haut risque (Yasuo, Yone, Katarina, Zed, Akali, Fizz, Qiyana, Nidalee, Kindred, …) quand l'ennemi de lane n'est pas encore pick
+- **Edge cases** : règles spéciales configurables via `data/edge_cases.json` (interactions exceptionnelles)
+- **Raisons** : chaque recommandation est accompagnée d'une explication textuelle générée par `reasons.py`
+- **HORS POOL filtering** : recommandations marquées `inPool: false` quand absentes du pool, filtrables côté client
+- **DuoQ synergy boost** : si une liaison duo est active, la synergie partenaire est priorisée
+
+### Bans
+`/api/draft/recommend` retourne aussi des suggestions de ban inline (top 5) basées sur :
+1. Counters de votre pool (ce qui handicape vos champions)
+2. Tier S/A globaux du patch courant
+3. Taux de ban communautaire (popularité du ban)
+
+---
+
+## Auth
+
+L'API supporte les modes **authentifié** et **anonyme** sur les endpoints draft :
+- **Authentifié** (JWT) : pool chargé automatiquement depuis la DB, historique et duo disponibles
+- **Anonyme** : le client doit envoyer le `champion_pool` dans le body de la requête
+
+Les endpoints `/api/draft/recommend` et `/api/draft/bans` utilisent `get_optional_user` (OAuth2 avec `auto_error=False`) pour ne pas refuser les requêtes sans token.
+
+---
+
+## Design system (Soul Eater Edition)
+
+Tokens CSS dans `client/src/index.css` :
+- **Couleurs** : `--ink-0..5` (noirs profonds), `--bone-0..3` (off-whites), `--accent: #d91e2b` (rouge), `--ok/warn/bad`
+- **Typo** : `--f-display: Oswald` (titres), `--f-mono: JetBrains Mono` (data), `--f-body: Inter`
+- **Géométrie** : `--edge-weight: 2.5px` (bordures épaisses), `--skew: -1deg` (légère inclinaison)
+- **Animations** : `anim-fade-up`, `anim-hero-enter`, `anim-name-enter`, `anim-score-enter`
+
+> ⚠️ Ne pas combiner `anim-fade-up` (qui termine sur `transform: translateY(0)` avec `animation-fill-mode: both`) avec un `transform` inline dynamique — l'animation l'écrasera.
 
 ---
 

@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import logging
 from typing import Dict, List, Optional
+# UserDB used as Optional type hint in route signatures
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
@@ -14,7 +15,7 @@ from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import config
 from app.models.draft import DraftRequest, DraftResponse, PoolEntry
-from app.auth.deps import get_current_user, oauth2_scheme, require_admin
+from app.auth.deps import get_current_user, get_optional_user, oauth2_scheme, require_admin
 from app.db.models import ChampionPoolEntryDB, DuoLinkDB, UserDB
 from app.db.session import get_db
 
@@ -183,27 +184,36 @@ async def tierlist(request: Request, role: str = "mid"):
 async def draft_recommend(
     body: DraftRequest,
     request: Request,
-    current_user: UserDB = Depends(get_current_user),
+    current_user: Optional[UserDB] = Depends(get_optional_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Get champion recommendations using the authenticated user's pool."""
+    """Get champion recommendations. Works unauthenticated (pool from body)
+    or authenticated (pool loaded from DB when body pool is empty)."""
     engine = _get_engine(request)
 
-    # If the request doesn't include a pool, load from DB
-    if not body.champion_pool or all(
-        len(v) == 0 for v in body.champion_pool.values()
+    # If the request doesn't include a pool AND the user is logged in,
+    # load pool from DB. Anonymous users must send the pool in the body.
+    if current_user and (
+        not body.champion_pool or all(len(v) == 0 for v in body.champion_pool.values())
     ):
         body.champion_pool = await _get_user_pool(current_user, db)
 
-    # ── DuoQ: load partner's pool if duo is active ──
-    if body.duo_active and body.duo_partner_role and not body.duo_partner_pool:
+    # ── DuoQ: load partner's pool if duo is active (requires auth) ──
+    if current_user and body.duo_active and body.duo_partner_role and not body.duo_partner_pool:
+        partner_pool = None
         try:
             partner_pool = await _load_duo_partner_pool(current_user, db)
-            if partner_pool:
-                body.duo_partner_pool = partner_pool
         except Exception as exc:
             logger.warning("Failed to load duo partner pool: %s", exc)
-            # Continue without partner pool — don't block recommendations
+        if partner_pool:
+            body.duo_partner_pool = partner_pool
+        else:
+            logger.info(
+                "DuoQ requested but no active link for user %s — disabling boost",
+                current_user.username if current_user else "anonymous",
+            )
+            body.duo_active = False
+            body.duo_partner_role = None
 
     personal_svc = getattr(request.app.state, "personal_stats", None)
     return await engine.recommend(body, personal_svc=personal_svc)
@@ -223,15 +233,15 @@ class BanRequest(BaseModel):
 async def recommend_bans(
     body: BanRequest,
     request: Request,
-    current_user: UserDB = Depends(get_current_user),
+    current_user: Optional[UserDB] = Depends(get_optional_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Get ban recommendations based on pool and meta."""
     recommender = _get_ban_recommender(request)
 
-    # Load pool from DB if not provided
-    if not body.champion_pool or all(
-        len(v) == 0 for v in body.champion_pool.values()
+    # Load pool from DB if not provided (requires auth)
+    if current_user and (
+        not body.champion_pool or all(len(v) == 0 for v in body.champion_pool.values())
     ):
         body.champion_pool = await _get_user_pool(current_user, db)
 

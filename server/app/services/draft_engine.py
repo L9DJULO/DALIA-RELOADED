@@ -19,12 +19,15 @@ Also produces "wild-card" suggestions outside the user's pool.
 """
 from __future__ import annotations
 
+import json
 import logging
-from typing import Dict, List, Optional
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 from app.config import config
 from app.models.champion import Champion
 from app.models.draft import (
+    BanSuggestion,
     DraftRequest,
     DraftResponse,
     DraftState,
@@ -45,9 +48,15 @@ from app.services.composition_archetype import (
     summarise as summarise_archetype,
 )
 from app.services.data_fetcher import LolalyticsFetcher
+from app.services.edge_cases import EdgeCaseEvaluator
 from app.services.matchup import MatchupAnalyzer
 from app.services.meta_analyzer import MetaAnalyzer
-from app.services.role_predictor import predict_enemy_roles
+from app.services.reasons import generate_reasons, generate_verdict
+from app.services.role_inference import (
+    MONO_ROLE_THRESHOLD,
+    infer_enemy_roles,
+    most_likely_role,
+)
 from app.services.synergy import SynergyAnalyzer
 
 # ML predictor — optional, loads silently if model not available
@@ -59,6 +68,42 @@ except ImportError:
 logger = logging.getLogger("dalia.engine")
 
 TIER_TO_MASTERY = {"S": 90, "A": 72, "B": 55, "C": 38, "D": 10}
+
+# Champions that are catastrophic to blind-pick: they lose hard to specific
+# counters that the enemy can simply lock in once they see the pick. They
+# may still be S-tier in matchup rolls, but in blind they're a coin flip
+# at best. Penalised by -20 on total score when <2 enemies are visible.
+# Combined with any per-champion blind_pick_penalty from champion_overrides.json
+# (we look it up per-candidate inside _score_candidate).
+HIGH_RISK_BLIND = {
+    "Yasuo", "Yone", "Katarina", "Zed", "Akali",
+    "Fizz", "Qiyana", "Nidalee", "Kindred",
+}
+HIGH_RISK_BLIND_PENALTY = 20.0
+
+# Path to the same overrides file used by ChampionDatabase. Looked up here
+# (additionally to roles/damage/ratings consumption in champion_data.py) so
+# we can read optional blind_pick_penalty entries without round-tripping
+# through the Champion model. Lazy-loaded and cached at module level.
+_OVERRIDES_PATH = Path(__file__).resolve().parent.parent / "data" / "champion_overrides.json"
+_overrides_cache: Optional[Dict[str, Any]] = None
+
+
+def _load_overrides_lower() -> Dict[str, Any]:
+    """Load champion_overrides.json once, keyed by lowercase champion key."""
+    global _overrides_cache
+    if _overrides_cache is not None:
+        return _overrides_cache
+    try:
+        if _OVERRIDES_PATH.exists():
+            raw = json.loads(_OVERRIDES_PATH.read_text(encoding="utf-8"))
+            _overrides_cache = {k.lower(): v for k, v in raw.items() if isinstance(v, dict)}
+        else:
+            _overrides_cache = {}
+    except Exception as exc:
+        logger.warning("Failed to load champion_overrides.json: %s", exc)
+        _overrides_cache = {}
+    return _overrides_cache
 
 
 def _clamp(v: float, lo: float = 0.0, hi: float = 100.0) -> float:
@@ -75,6 +120,7 @@ class DraftEngine:
         self.matchup = MatchupAnalyzer(champion_db, fetcher)
         self.synergy = SynergyAnalyzer(champion_db, fetcher)
         self.composition = CompositionAnalyzer(champion_db)
+        self.edge_cases = EdgeCaseEvaluator(champion_db)
 
         # ML predictor — optional
         self.ml = None
@@ -93,19 +139,32 @@ class DraftEngine:
         pool = request.champion_pool
         role = draft.my_role
 
-        # ── Predict enemy roles if not assigned ──
-        # When LCU doesn't reveal enemy positions (ranked),
-        # intelligently assign roles based on champion data
-        unassigned = [p for p in draft.enemy_picks if p.champion_id and not p.role]
-        if unassigned:
-            logger.info(
-                "Predicting roles for %d enemy champions: %s",
-                len(unassigned),
-                [p.champion_key or p.champion_id for p in unassigned],
-            )
-            draft.enemy_picks = predict_enemy_roles(
-                draft.enemy_picks, self.db, self.meta
-            )
+        # ── Infer enemy role distributions ──
+        # The LCU never reveals enemy positions in ranked. We compute a
+        # probabilistic distribution per enemy (constraint-propagated when
+        # mono-role champions are visible) and store it on the DraftState.
+        # The matchup analyzer reads this to compute weighted matchup
+        # scores; reasons.py reads it to gate "Lane favorable" wording.
+        # We also collapse each distribution to its argmax role for
+        # downstream code paths that still expect a single role.
+        if any(p.champion_id for p in draft.enemy_picks):
+            distributions = infer_enemy_roles(draft.enemy_picks, self.db)
+            draft.role_distributions = distributions
+            for ep in draft.enemy_picks:
+                if ep.champion_id is None:
+                    continue
+                if ep.role:
+                    continue  # already pinned by caller
+                top_role = most_likely_role(distributions.get(ep.champion_id, {}))
+                if top_role:
+                    ep.role = top_role
+                    logger.info(
+                        "Inferred enemy role for %s: %s (dist=%s)",
+                        (self.db.get_by_id(ep.champion_id).name
+                         if self.db.get_by_id(ep.champion_id) else ep.champion_id),
+                        top_role,
+                        distributions.get(ep.champion_id, {}),
+                    )
 
         # ── Inject ally pre-picks for synergy/composition ──
         # When allies are hovering champions (pre-pick intent),
@@ -285,12 +344,20 @@ class DraftEngine:
             if top_rec.breakdown.ml_explanation and top_rec.breakdown.ml_explanation.win_probability:
                 win_prob = round(top_rec.breakdown.ml_explanation.win_probability * 100, 1)
 
+        # 7. Ban suggestions — 4 parallel strategies, top 3 across all
+        ban_suggestions = await self._compute_ban_suggestions(
+            draft=draft,
+            pool=pool,
+            unavailable=unavailable,
+        )
+
         return DraftResponse(
             recommendations=scored[:15],
             team_composition_summary=comp_summary,
             warnings=global_warnings,
             win_probability=win_prob,
             duo_synergy_boost=duo_active,
+            ban_suggestions=ban_suggestions,
         )
 
     # ── Scoring pipeline (non-linear) ────────────────────────────────────
@@ -303,6 +370,7 @@ class DraftEngine:
         weights,
         personal_boost_fn=None,
         enemy_archetype: Optional[ArchetypeResult] = None,
+        is_pool: bool = True,
     ) -> Recommendation:
         # Sub-scores
         meta_s   = self.meta.score(champ.id, role)
@@ -506,6 +574,47 @@ class DraftEngine:
                 bonus += (comp_s - 70) * 0.003
             base *= min(bonus, 1.20)  # cap at +20%
 
+        # ── 3b. MULTI-COUNTER BONUS ──
+        # If the candidate has a meaningful edge against 3+ enemies
+        # simultaneously, this is the strongest situational signal there is
+        # (e.g. Nilah passive vs full auto-attack comp). Boost +15-25 %.
+        # We count every enemy where the per-matchup score crosses a
+        # threshold derived from API data OR archetype tags (auto-attacker,
+        # immobile, engage, etc.), so the bonus fires even when Lolalytics
+        # has no direct head-to-head data.
+        if has_enemies:
+            mu_details_for_bonus = await self.matchup.details(champ.id, role, draft)
+            counter_count = sum(
+                1 for d in mu_details_for_bonus
+                if d.get("delta", 0.0) >= 2.5
+            )
+            # Add archetype-pattern counters even without strong delta data
+            archetype_counters = self._count_archetype_counters(champ, draft)
+            effective_counters = max(counter_count, archetype_counters)
+
+            if effective_counters >= 3:
+                # 3 counters → +15 %, 4 → +20 %, 5 → +25 %
+                multi_bonus = 1.0 + min(0.05 * effective_counters, 0.25)
+                base *= multi_bonus
+                logger.debug(
+                    "Multi-counter bonus ×%.2f for %s (%d counters)",
+                    multi_bonus, champ.name, effective_counters,
+                )
+
+        # ── 3c. SYNERGY STACK BONUS ──
+        # 2+ strong synergies with allies → meaningful bonus.
+        # Mirrors the multi-counter logic on the ally side.
+        if has_allies:
+            syn_details_for_bonus = await self.synergy.details(champ.id, role, draft)
+            strong_syn = sum(
+                1 for d in syn_details_for_bonus
+                if d.get("delta", 0.0) >= 2.0
+            )
+            if strong_syn >= 2:
+                # 2 → +6 %, 3+ → +10 % cap
+                syn_bonus = 1.0 + min(0.03 * strong_syn, 0.10)
+                base *= syn_bonus
+
         # ── 4. Enemy-archetype counter adjustment ──
         # archetype_counter_adjust returns ~[0.88, 1.15]. We scale that down
         # by the detection confidence so a shaky read (e.g. 2 picks revealed)
@@ -543,6 +652,70 @@ class DraftEngine:
             bonus = 1.0 + min((match_s - 62) * 0.006, 0.18)
             base *= bonus
 
+        # ── 6. HIGH-RISK BLIND PENALTY ──
+        # Penalise champions known to fold to common counters they can't
+        # avoid. Scaling is role-aware: penalty is gated by how much of the
+        # threat we can already see in MY role (direct counter risk) and
+        # adjacent roles (ganks, lane swaps).
+        #   0 enemies in my role        → ×1.0 (full)
+        #   1 enemy in my role          → ×0.5
+        #   2+ adjacent or full info    → ×0.3
+        # Stacks with any per-champion blind_pick_penalty configured in
+        # champion_overrides.json.
+        ADJACENT_ROLES = {
+            "top":     {"jungle"},
+            "jungle":  {"top", "mid", "bot", "support"},
+            "mid":     {"jungle"},
+            "bot":     {"jungle", "support"},
+            "support": {"jungle", "bot"},
+        }
+        my_role = draft.my_role
+        in_my_role = sum(
+            1 for e in draft.enemy_picks
+            if e.champion_id and e.role == my_role
+        )
+        adj_set = ADJACENT_ROLES.get(my_role, set())
+        in_adjacent = sum(
+            1 for e in draft.enemy_picks
+            if e.champion_id and e.role in adj_set
+        )
+        total_visible = sum(1 for e in draft.enemy_picks if e.champion_id)
+
+        if in_my_role >= 1:
+            blind_scale = 0.5
+        elif total_visible >= 4 or in_adjacent >= 2:
+            blind_scale = 0.3
+        else:
+            blind_scale = 1.0
+
+        raw_blind_penalty = 0.0
+        if champ.key in HIGH_RISK_BLIND:
+            raw_blind_penalty += HIGH_RISK_BLIND_PENALTY
+        override_pen = self._get_blind_penalty_override(champ.key)
+        if override_pen:
+            raw_blind_penalty += override_pen
+        if raw_blind_penalty > 0:
+            scaled = raw_blind_penalty * blind_scale
+            base -= scaled
+            logger.debug(
+                "Blind-pick penalty -%.1f (raw %.1f × %.2f) on %s "
+                "[my_role=%d, adj=%d, total=%d]",
+                scaled, raw_blind_penalty, blind_scale, champ.name,
+                in_my_role, in_adjacent, total_visible,
+            )
+
+        # ── 7. STRATEGIC EDGE-CASE BONUS ──
+        # Curated rules from data/edge_cases.json (e.g. Olaf vs 3+ hard CC,
+        # Malphite vs 80%+ AD comp, Yasuo with knock-up ally). Only the
+        # single highest-bonus matching rule fires per candidate.
+        edge_case_match = self.edge_cases.evaluate(champ, draft)
+        if edge_case_match:
+            base += edge_case_match["score_bonus"]
+            logger.debug(
+                "Edge case '%s' fired for %s (+%.1f)",
+                edge_case_match["rule_id"], champ.name, edge_case_match["score_bonus"],
+            )
+
         total = round(_clamp(base, 5.0, 98.0), 1)
 
         breakdown = ScoreBreakdown(
@@ -579,7 +752,7 @@ class DraftEngine:
         comp_warnings = self.composition.warnings(champ, draft)
 
         # Tags (context-aware)
-        tags = self._assign_tags(champ, draft, match_s, risk_s, comp_s)
+        tags = self._assign_tags(champ, draft, match_s, risk_s, comp_s, total)
 
         # Confidence (data-quality aware)
         confidence = self._compute_confidence(draft, mu_details, syn_details_raw)
@@ -596,6 +769,52 @@ class DraftEngine:
             except Exception:
                 pass
 
+        # Contextual reasons + verdict — mention the concrete ally/enemy
+        # champions from the draft. No recomputation — we pass in the
+        # matchup / synergy details already built above and an ally-only
+        # comp summary so "AD-heavy / missing front" fillers compare
+        # against the team as it is, not with the candidate added.
+        allies_only = [
+            self.db.get_by_id(ap.champion_id)
+            for ap in draft.ally_picks
+            if ap.champion_id is not None
+        ]
+        allies_only = [a for a in allies_only if a]
+        comp_summary_allies = (
+            self.composition.team_summary_from_list(allies_only, draft)
+            if allies_only
+            else None
+        )
+        reasons = generate_reasons(
+            cand=champ,
+            role=role,
+            draft=draft,
+            db=self.db,
+            matchup_details=mu_details,
+            synergy_details=syn_details_raw,
+            comp_summary=comp_summary_allies,
+            max_reasons=3,
+        )
+        if edge_case_match:
+            edge_reason = {
+                "text": edge_case_match["reason_text"],
+                "kind": edge_case_match["reason_kind"],
+                "champions": edge_case_match["champions"],
+            }
+            reasons = [edge_reason] + [r for r in reasons if r["text"] != edge_reason["text"]]
+            reasons = reasons[:3]
+        verdict = generate_verdict(
+            cand=champ,
+            draft=draft,
+            db=self.db,
+            match_s=match_s,
+            syn_s=syn_s,
+            comp_s=comp_s,
+            risk_s=risk_s,
+            tags=tags,
+            is_pool=is_pool,
+        )
+
         return Recommendation(
             champion_id=champ.id,
             champion_key=champ.key,
@@ -606,11 +825,338 @@ class DraftEngine:
             matchup_details=matchup_details,
             synergy_details=synergy_details,
             composition_warnings=comp_warnings,
-            is_pool_champion=True,
+            is_pool_champion=is_pool,
             tags=tags,
             confidence=confidence,
             meta_games=meta_games,
+            verdict=verdict,
+            reasons=reasons,
         )
+
+    # ── Blind-pick penalty override lookup ───────────────────────────────
+    def _get_blind_penalty_override(self, champion_key: str) -> float:
+        """Return any per-champion `blind_pick_penalty` configured in
+        champion_overrides.json. 0.0 when absent. Stacks additively with
+        the HIGH_RISK_BLIND list."""
+        ov = _load_overrides_lower().get(champion_key.lower(), {})
+        try:
+            return float(ov.get("blind_pick_penalty", 0.0))
+        except (TypeError, ValueError):
+            return 0.0
+
+    # ── Archetype counter count (mechanical kit matchups) ────────────────
+    def _count_archetype_counters(self, cand: Champion, draft: DraftState) -> int:
+        """Count enemies whose archetype is mechanically countered by the
+        candidate's kit. Catches signals Lolalytics misses (e.g. Nilah's
+        passive vs auto-attackers — there is no per-matchup delta column
+        for "dodges autos").
+
+        Returns the number of enemies that fall into a counter pattern.
+        """
+        c = cand.ratings
+        c_tags = set(cand.tags)
+
+        # Candidate's mechanical patterns
+        cand_dodges_autos = (
+            cand.key in {"Nilah", "Jax", "Pantheon", "Fiora"}  # passive/spell denies AAs
+            or (c.utility >= 4 and "Marksman" not in c_tags)
+        )
+        cand_gap_close = c.engage >= 4
+        cand_burst = c.burst >= 4
+        cand_kite = c.poke >= 4 or ("Marksman" in c_tags and c.dps >= 4)
+        cand_sustained_dps = c.dps >= 4
+        cand_cc = c.cc >= 4
+        cand_tank = c.tankiness >= 4
+        cand_anti_heal = cand.key in {"Morgana", "MissFortune", "Varus", "Soraka"}
+
+        count = 0
+        for ep in draft.enemy_picks:
+            if ep.champion_id is None:
+                continue
+            opp = self.db.get_by_id(ep.champion_id)
+            if not opp:
+                continue
+            o = opp.ratings
+            o_tags = set(opp.tags)
+
+            # Enemy archetype patterns
+            opp_auto_attacker = "Marksman" in o_tags or (
+                o.dps >= 4 and o.burst <= 3 and "Mage" not in o_tags
+            )
+            opp_immobile = o.tankiness <= 2 and "Marksman" in o_tags
+            opp_squishy = o.tankiness <= 2 and "Tank" not in o_tags
+            opp_engage = o.engage >= 4
+            opp_poke = o.poke >= 4 and "Marksman" not in o_tags
+            opp_burst = o.burst >= 4 or "Assassin" in o_tags
+            opp_tank = o.tankiness >= 4
+
+            # Match counter patterns — each enemy can fire only once
+            countered = False
+
+            # Anti auto-attack (Nilah passive, Jax E, Pantheon W, Fiora W)
+            if opp_auto_attacker and cand_dodges_autos:
+                countered = True
+            # Gap-close into immobile carry
+            elif opp_immobile and (cand_gap_close or cand_burst):
+                countered = True
+            # Burst kills squishy
+            elif opp_squishy and cand_burst and "Tank" not in c_tags:
+                countered = True
+            # Tankiness eats burst engage
+            elif opp_engage and cand_tank:
+                countered = True
+            # Range kites engage / fighter
+            elif opp_engage and cand_kite and "Marksman" in c_tags:
+                countered = True
+            # Sustained DPS shreds tank
+            elif opp_tank and cand_sustained_dps:
+                countered = True
+            # CC locks down poke mage
+            elif opp_poke and cand_gap_close and cand_cc:
+                countered = True
+            # Anti-heal vs sustain enemy
+            elif cand_anti_heal and (opp.key in {"Soraka", "Yuumi", "Sona", "Aatrox", "Vladimir", "DrMundo", "Zac"}):
+                countered = True
+
+            if countered:
+                count += 1
+
+        return count
+
+    # ── Ban suggestions (4 strategies merged) ────────────────────────────
+    async def _compute_ban_suggestions(
+        self,
+        draft: DraftState,
+        pool: Dict[str, List[PoolEntry]],
+        unavailable: set,
+    ) -> List[BanSuggestion]:
+        """Suggest 3 champions to ban.
+
+        Four strategies run in parallel and each emits weighted candidates;
+        the final list is the top-3 *across* strategies (deduped by champion,
+        keeping the highest severity wins). Strategies:
+
+          1. counter_my_pool      — disabled when the user's pool is empty
+                                    for the current role.
+          2. meta_threat          — S-tier picks on the current patch that
+                                    haven't been picked or banned yet.
+          3. enemy_comp_completion — fill an obvious gap in the enemy comp
+                                     (no engage / no AP / no frontline …).
+          4. patch_broken         — winrate ≥ 52 % in high elo, large
+                                    sample size only.
+        """
+        role = draft.my_role
+        pool_entries = pool.get(role, [])
+        pool_active = bool(pool_entries)
+
+        # Each candidate keeps the highest-severity strategy that picked it.
+        # {cid: {champ, severity, strategy, reason_text, counters_pool, threatens_allies}}
+        candidates: Dict[int, Dict[str, Any]] = {}
+
+        def _consider(
+            strategy: str,
+            cid: int,
+            champ: Champion,
+            severity: float,
+            reason_text: str,
+            counters_pool: Optional[List[str]] = None,
+        ) -> None:
+            existing = candidates.get(cid)
+            if existing is None or severity > existing["severity"]:
+                candidates[cid] = {
+                    "champ": champ,
+                    "severity": severity,
+                    "strategy": strategy,
+                    "reason_text": reason_text,
+                    "counters_pool": list(counters_pool or []),
+                    "threatens_allies": [],
+                }
+
+        # ── Strategy 1 — counter_my_pool ─────────────────────────────────
+        # Skipped entirely when the player has no pool entries for the
+        # current role: the signal would be derived from a placeholder
+        # filler and produce nonsense bans.
+        if pool_active:
+            TIER_W = {"S": 1.0, "A": 0.8, "B": 0.6, "C": 0.4, "D": 0.25}
+            per_champ: Dict[int, Dict[str, Any]] = {}
+            for pe in pool_entries:
+                pool_champ = self.db.get_by_id(pe.champion_id)
+                if not pool_champ:
+                    continue
+                tier_w = TIER_W.get(pe.tier, 0.5)
+                try:
+                    await self.matchup.load_matchups(pe.champion_id, role)
+                except Exception:
+                    continue
+                counters = self.matchup.get_top_counters(pe.champion_id, role, n=10)
+                for opp_id, d2 in counters:
+                    if opp_id in unavailable or d2 >= -1.5:
+                        continue
+                    opp = self.db.get_by_id(opp_id)
+                    if not opp:
+                        continue
+                    bucket = per_champ.setdefault(opp_id, {
+                        "champ": opp, "score": 0.0, "names": [],
+                    })
+                    bucket["score"] += (-d2) * tier_w
+                    if pool_champ.name not in bucket["names"]:
+                        bucket["names"].append(pool_champ.name)
+            for cid, bucket in per_champ.items():
+                severity = min(100.0, bucket["score"] * 9.0)
+                short = ", ".join(bucket["names"][:2])
+                _consider(
+                    "counter_my_pool", cid, bucket["champ"], severity,
+                    f"Counter ton pool — {short}",
+                    counters_pool=bucket["names"][:3],
+                )
+
+        # ── Strategy 2 — meta_threat ─────────────────────────────────────
+        # Top-of-meta picks across roles the enemy could still draft.
+        # We scan every role to surface universally strong picks
+        # (mid assassins, jungle stompers, etc.).
+        threat_roles = ("top", "jungle", "mid", "bot", "support")
+        for r in threat_roles:
+            try:
+                meta_scores = await self.meta.scores_for_role(r)
+            except Exception:
+                continue
+            top_meta = sorted(meta_scores.items(), key=lambda x: -x[1])[:8]
+            for cid, m_score in top_meta:
+                if cid in unavailable or m_score < 70.0:
+                    continue
+                champ = self.db.get_by_id(cid)
+                if not champ:
+                    continue
+                severity = min(100.0, (m_score - 50.0) * 1.4)
+                _consider(
+                    "meta_threat", cid, champ, severity,
+                    "Meta S — empêche un pick fort",
+                )
+
+        # ── Strategy 3 — enemy_comp_completion ───────────────────────────
+        # Identify the single biggest gap in the enemy team and ban the
+        # best meta pick that fills it. Only fires once we have ≥ 1 enemy
+        # locked AND at least one enemy role still open.
+        enemy_champs: List[Champion] = []
+        for ep in draft.enemy_picks:
+            if ep.champion_id is not None:
+                c = self.db.get_by_id(ep.champion_id)
+                if c:
+                    enemy_champs.append(c)
+        enemy_filled_roles = {ep.role for ep in draft.enemy_picks if ep.role}
+        enemy_open_roles = [
+            r for r in ("top", "jungle", "mid", "bot", "support")
+            if r not in enemy_filled_roles
+        ]
+        if enemy_champs and enemy_open_roles:
+            gaps = self._detect_comp_gaps(enemy_champs)
+            if gaps:
+                primary_gap = gaps[0]
+                gap_label = self._gap_label(primary_gap)
+                for r in enemy_open_roles:
+                    try:
+                        meta_scores = await self.meta.scores_for_role(r)
+                    except Exception:
+                        continue
+                    sorted_by_meta = sorted(meta_scores.items(), key=lambda x: -x[1])[:25]
+                    for cid, m_score in sorted_by_meta:
+                        if cid in unavailable:
+                            continue
+                        champ = self.db.get_by_id(cid)
+                        if not champ or not self._fills_gap(champ, primary_gap):
+                            continue
+                        severity = min(100.0, m_score * 0.55 + 30.0)
+                        _consider(
+                            "enemy_comp_completion", cid, champ, severity,
+                            f"{gap_label} ennemi — denied",
+                        )
+                        break  # one nominee per open role is plenty
+
+        # ── Strategy 4 — patch_broken ────────────────────────────────────
+        # Anomalously high winrate on the current patch with a real sample.
+        BROKEN_WR = 52.0
+        for r in threat_roles:
+            try:
+                await self.meta.load_tierlist(r)
+            except Exception:
+                continue
+            for champ in self.db.all_champions():
+                if champ.id in unavailable:
+                    continue
+                stats = self.db.get_stats(champ.id, r)
+                if not stats or stats.games < config.min_games_reliable:
+                    continue
+                if stats.win_rate >= BROKEN_WR:
+                    excess = stats.win_rate - BROKEN_WR
+                    severity = min(100.0, 60.0 + excess * 8.0)
+                    _consider(
+                        "patch_broken", champ.id, champ, severity,
+                        f"Broken sur ce patch ({stats.win_rate:.1f}%)",
+                    )
+
+        if not candidates:
+            return []
+
+        # ── Final ranking — top 3 across all strategies ──────────────────
+        ranked = sorted(candidates.values(), key=lambda e: -e["severity"])[:3]
+        suggestions: List[BanSuggestion] = []
+        for entry in ranked:
+            suggestions.append(BanSuggestion(
+                champion_id=entry["champ"].id,
+                champion_key=entry["champ"].key,
+                champion_name=entry["champ"].name,
+                severity=round(entry["severity"], 1),
+                reason=entry["reason_text"],
+                counters_pool=entry["counters_pool"],
+                threatens_allies=entry["threatens_allies"],
+            ))
+        return suggestions
+
+    # ── Comp-gap detection (for enemy_comp_completion strategy) ──────────
+    def _detect_comp_gaps(self, enemies: List[Champion]) -> List[str]:
+        """Return enemy comp gaps ordered by how badly they should be filled.
+        Only emits a gap once at least 2 enemies are revealed (to avoid
+        over-fitting on a single pick)."""
+        gaps: List[str] = []
+        n = len(enemies)
+        if n < 2:
+            return gaps
+        max_engage = max((c.ratings.engage for c in enemies), default=0)
+        if max_engage < 4:
+            gaps.append("no_engage")
+        avg_phys = sum(c.damage.physical for c in enemies) / n
+        avg_mag = sum(c.damage.magical for c in enemies) / n
+        if avg_mag < 25:
+            gaps.append("no_ap")
+        if avg_phys < 25:
+            gaps.append("no_ad")
+        if not any(c.ratings.tankiness >= 4 or "Tank" in c.tags for c in enemies):
+            gaps.append("no_frontline")
+        if not any("Marksman" in c.tags or c.ratings.dps >= 4 for c in enemies):
+            gaps.append("no_dps")
+        return gaps
+
+    def _fills_gap(self, champ: Champion, gap: str) -> bool:
+        if gap == "no_engage":
+            return champ.ratings.engage >= 4
+        if gap == "no_ap":
+            return champ.damage.magical >= 60
+        if gap == "no_ad":
+            return champ.damage.physical >= 60
+        if gap == "no_frontline":
+            return champ.ratings.tankiness >= 4 or "Tank" in champ.tags
+        if gap == "no_dps":
+            return "Marksman" in champ.tags or champ.ratings.dps >= 4
+        return False
+
+    def _gap_label(self, gap: str) -> str:
+        return {
+            "no_engage":    "Engage manquant",
+            "no_ap":        "AP manquant",
+            "no_ad":        "AD manquant",
+            "no_frontline": "Frontline manquante",
+            "no_dps":       "DPS manquant",
+        }.get(gap, "Gap composition")
 
     # ── Draft risk (counter-pick exposure) ───────────────────────────────
     async def _draft_risk(self, champ: Champion, role: str, draft: DraftState) -> float:
@@ -715,8 +1261,8 @@ class DraftEngine:
             rec = await self._score_candidate(
                 champ, fake_entry, draft, role, weights,
                 enemy_archetype=enemy_archetype,
+                is_pool=False,
             )
-            rec.is_pool_champion = False
             rec.tags.append("off-meta")
             
             # Track best wildcard regardless of threshold
@@ -738,6 +1284,7 @@ class DraftEngine:
     def _assign_tags(
         self, champ: Champion, draft: DraftState,
         match_s: float, risk_s: float, comp_s: float,
+        total: float = 0.0,
     ) -> List[str]:
         tags: List[str] = []
 
@@ -775,8 +1322,9 @@ class DraftEngine:
             if match_s >= 68 and self.meta.score(champ.id, draft.my_role) < 55:
                 tags.append("niche-counter")
 
-        # Strong meta pick
-        if self.meta.score(champ.id, draft.my_role) >= 75:
+        # Strong meta pick — require derived tier ≥ A (total ≥ 70) AND meta_score ≥ 65
+        meta_score = self.meta.score(champ.id, draft.my_role)
+        if meta_score >= 65 and total >= 70:
             tags.append("meta-forte")
 
         return tags

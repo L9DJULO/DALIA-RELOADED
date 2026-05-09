@@ -24,3 +24,11 @@ dirs-next = "2.0"
 
 [target.'cfg(windows)'.dependencies]
 winreg = "0.52"
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
+incremental = false

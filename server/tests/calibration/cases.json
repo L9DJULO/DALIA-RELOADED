@@ -1,0 +1,783 @@
+[
+  {
+    "id": "blind_pick_adc",
+    "category": "blind_pick",
+    "description": "ADC blind pick — safe ranged ADCs over high-risk hyper carries",
+    "setup": {
+      "my_team": "blue",
+      "my_role": "bot",
+      "my_pick_order": 1,
+      "ally_picks": {},
+      "enemy_picks": {},
+      "bans": [],
+      "champion_pool": {
+        "bot": [
+          {"champion": "Caitlyn", "tier": "S"},
+          {"champion": "Jinx", "tier": "A"},
+          {"champion": "Ezreal", "tier": "A"},
+          {"champion": "Kog'Maw", "tier": "B"},
+          {"champion": "Aphelios", "tier": "B"}
+        ]
+      }
+    },
+    "assertions": [
+      {"type": "must_rank_higher_than", "champion_a": "Caitlyn", "champion_b": "Kog'Maw"},
+      {"type": "must_rank_higher_than", "champion_a": "Ezreal", "champion_b": "Kog'Maw"},
+      {"type": "must_be_in_top_3", "champion": "Caitlyn"}
+    ]
+  },
+  {
+    "id": "blind_pick_mid_no_yasuo",
+    "category": "blind_pick",
+    "description": "Mid blind — Yasuo (HIGH_RISK_BLIND) must not dominate the ranking",
+    "setup": {
+      "my_team": "blue",
+      "my_role": "mid",
+      "my_pick_order": 1,
+      "ally_picks": {},
+      "enemy_picks": {},
+      "bans": [],
+      "champion_pool": {
+        "mid": [
+          {"champion": "Orianna", "tier": "A"},
+          {"champion": "Syndra", "tier": "A"},
+          {"champion": "Yasuo", "tier": "S"},
+          {"champion": "Viktor", "tier": "B"},
+          {"champion": "Lux", "tier": "B"}
+        ]
+      }
+    },
+    "assertions": [
+      {"type": "must_not_be_top_3", "champion": "Yasuo"},
+      {"type": "must_rank_higher_than", "champion_a": "Orianna", "champion_b": "Yasuo"},
+      {"type": "must_rank_higher_than", "champion_a": "Syndra", "champion_b": "Yasuo"}
+    ]
+  },
+  {
+    "id": "blind_pick_mid_no_zed_akali",
+    "category": "blind_pick",
+    "description": "Mid blind — Zed and Akali (HIGH_RISK_BLIND) outranked by safer mages",
+    "setup": {
+      "my_team": "blue",
+      "my_role": "mid",
+      "my_pick_order": 1,
+      "ally_picks": {},
+      "enemy_picks": {},
+      "bans": [],
+      "champion_pool": {
+        "mid": [
+          {"champion": "Annie", "tier": "A"},
+          {"champion": "Lux", "tier": "A"},
+          {"champion": "Zed", "tier": "S"},
+          {"champion": "Akali", "tier": "S"},
+          {"champion": "Veigar", "tier": "B"}
+        ]
+      }
+    },
+    "assertions": [
+      {"type": "must_rank_higher_than", "champion_a": "Annie", "champion_b": "Zed"},
+      {"type": "must_rank_higher_than", "champion_a": "Lux", "champion_b": "Akali"}
+    ]
+  },
+  {
+    "id": "blind_pick_top_flex_priority",
+    "category": "blind_pick",
+    "description": "Top blind — flex tanks should rank well thanks to first-pick flex bonus",
+    "setup": {
+      "my_team": "blue",
+      "my_role": "top",
+      "my_pick_order": 1,
+      "ally_picks": {},
+      "enemy_picks": {},
+      "bans": [],
+      "champion_pool": {
+        "top": [
+          {"champion": "Malphite", "tier": "B"},
+          {"champion": "Ornn", "tier": "B"},
+          {"champion": "Fiora", "tier": "S"},
+          {"champion": "Camille", "tier": "A"},
+          {"champion": "Sett", "tier": "B"}
+        ]
+      }
+    },
+    "assertions": [
+      {"type": "must_be_in_top_5", "champion": "Malphite"},
+      {"type": "must_be_in_top_5", "champion": "Ornn"}
+    ],
+    "confidence": "low"
+  },
+  {
+    "id": "counter_pick_adc_full_info",
+    "category": "counter",
+    "description": "ADC last pick with full enemy info — safe ranged ADCs preferred",
+    "setup": {
+      "my_team": "blue",
+      "my_role": "bot",
+      "my_pick_order": 5,
+      "ally_picks": {"top": "Ornn", "jungle": "Sejuani", "mid": "Orianna", "support": "Lulu"},
+      "enemy_picks": {"top": "Camille", "jungle": "Lee Sin", "mid": "Syndra", "bot": "Draven", "support": "Leona"},
+      "bans": [],
+      "champion_pool": {
+        "bot": [
+          {"champion": "Caitlyn", "tier": "A"},
+          {"champion": "Ezreal", "tier": "A"},
+          {"champion": "Jinx", "tier": "B"},
+          {"champion": "Vayne", "tier": "B"},
+          {"champion": "Draven", "tier": "S"}
+        ]
+      }
+    },
+    "assertions": [
+      {"type": "must_be_in_top_5", "champion": "Caitlyn"},
+      {"type": "must_be_in_top_5", "champion": "Ezreal"}
+    ],
+    "confidence": "medium"
+  },
+  {
+    "id": "counter_pick_mid_vs_yasuo",
+    "category": "counter",
+    "description": "Mid last pick vs Yasuo — point-click CC counter (Annie/Malzahar) preferred",
+    "setup": {
+      "my_team": "red",
+      "my_role": "mid",
+      "my_pick_order": 5,
+      "ally_picks": {"top": "Malphite", "jungle": "Sejuani", "bot": "Jinx", "support": "Lulu"},
+      "enemy_picks": {"top": "Camille", "jungle": "Lee Sin", "mid": "Yasuo", "bot": "Caitlyn", "support": "Thresh"},
+      "bans": [],
+      "champion_pool": {
+        "mid": [
+          {"champion": "Annie", "tier": "A"},
+          {"champion": "Malzahar", "tier": "A"},
+          {"champion": "Syndra", "tier": "A"},
+          {"champion": "Lux", "tier": "B"},
+          {"champion": "Yasuo", "tier": "S"}
+        ]
+      }
+    },
+    "assertions": [
+      {"type": "must_rank_higher_than", "champion_a": "Annie", "champion_b": "Yasuo"},
+      {"type": "must_rank_higher_than", "champion_a": "Malzahar", "champion_b": "Yasuo"}
+    ],
+    "confidence": "low"
+  },
+  {
+    "id": "counter_pick_top_vs_darius",
+    "category": "counter",
+    "description": "Top last pick vs Darius — ranged kite picks should outrank melee mirror",
+    "setup": {
+      "my_team": "red",
+      "my_role": "top",
+      "my_pick_order": 5,
+      "ally_picks": {"jungle": "Sejuani", "mid": "Orianna", "bot": "Jinx", "support": "Lulu"},
+      "enemy_picks": {"top": "Darius", "jungle": "Lee Sin", "mid": "Syndra", "bot": "Caitlyn", "support": "Thresh"},
+      "bans": [],
+      "champion_pool": {
+        "top": [
+          {"champion": "Quinn", "tier": "B"},
+          {"champion": "Vayne", "tier": "B"},
+          {"champion": "Teemo", "tier": "B"},
+          {"champion": "Sett", "tier": "A"},
+          {"champion": "Garen", "tier": "B"}
+        ]
+      }
+    },
+    "assertions": [
+      {"type": "must_rank_higher_than", "champion_a": "Quinn", "champion_b": "Garen"},
+      {"type": "must_rank_higher_than", "champion_a": "Vayne", "champion_b": "Sett"}
+    ],
+    "confidence": "low"
+  },
+  {
+    "id": "counter_pick_support_vs_engage",
+    "category": "counter",
+    "description": "Support last pick vs heavy engage comp — peel/disengage over more engage",
+    "setup": {
+      "my_team": "red",
+      "my_role": "support",
+      "my_pick_order": 5,
+      "ally_picks": {"top": "Camille", "jungle": "Lee Sin", "mid": "Syndra", "bot": "Jinx"},
+      "enemy_picks": {"top": "Malphite", "jungle": "Sejuani", "mid": "Sylas", "bot": "Caitlyn", "support": "Leona"},
+      "bans": [],
+      "champion_pool": {
+        "support": [
+          {"champion": "Lulu", "tier": "A"},
+          {"champion": "Janna", "tier": "B"},
+          {"champion": "Soraka", "tier": "B"},
+          {"champion": "Leona", "tier": "S"},
+          {"champion": "Nautilus", "tier": "A"}
+        ]
+      }
+    },
+    "assertions": [
+      {"type": "must_rank_higher_than", "champion_a": "Lulu", "champion_b": "Nautilus"},
+      {"type": "must_rank_higher_than", "champion_a": "Janna", "champion_b": "Leona"}
+    ],
+    "confidence": "medium"
+  },
+  {
+    "id": "comp_full_aa_top_jax",
+    "category": "anti_autoattack",
+    "description": "Top vs full auto-attack enemy comp — Jax (E counter) should rise",
+    "setup": {
+      "my_team": "red",
+      "my_role": "top",
+      "my_pick_order": 5,
+      "ally_picks": {"jungle": "Sejuani", "mid": "Lissandra", "bot": "Jinx", "support": "Lulu"},
+      "enemy_picks": {"top": "Tryndamere", "jungle": "Master Yi", "mid": "Yone", "bot": "Vayne", "support": "Senna"},
+      "bans": [],
+      "champion_pool": {
+        "top": [
+          {"champion": "Jax", "tier": "A"},
+          {"champion": "Pantheon", "tier": "B"},
+          {"champion": "Fiora", "tier": "A"},
+          {"champion": "Renekton", "tier": "B"},
+          {"champion": "Garen", "tier": "B"}
+        ]
+      }
+    },
+    "assertions": [
+      {"type": "must_be_in_top_3", "champion": "Jax"},
+      {"type": "must_rank_higher_than", "champion_a": "Jax", "champion_b": "Garen"}
+    ],
+    "confidence": "medium"
+  },
+  {
+    "id": "comp_full_aa_bot_nilah",
+    "category": "anti_autoattack",
+    "description": "Bot vs full auto-attack enemy comp — Nilah (passive vs AAs) should rise",
+    "setup": {
+      "my_team": "red",
+      "my_role": "bot",
+      "my_pick_order": 5,
+      "ally_picks": {"top": "Ornn", "jungle": "Sejuani", "mid": "Orianna", "support": "Leona"},
+      "enemy_picks": {"top": "Tryndamere", "jungle": "Master Yi", "mid": "Yone", "bot": "Twitch", "support": "Senna"},
+      "bans": [],
+      "champion_pool": {
+        "bot": [
+          {"champion": "Nilah", "tier": "B"},
+          {"champion": "Caitlyn", "tier": "A"},
+          {"champion": "Jinx", "tier": "A"},
+          {"champion": "Ezreal", "tier": "B"},
+          {"champion": "Vayne", "tier": "B"}
+        ]
+      }
+    },
+    "assertions": [
+      {"type": "must_be_in_top_3", "champion": "Nilah"}
+    ],
+    "confidence": "medium"
+  },
+  {
+    "id": "comp_full_aa_top_pantheon",
+    "category": "anti_autoattack",
+    "description": "Top vs AA-heavy enemy — Pantheon (W blocks autos) should rank well",
+    "setup": {
+      "my_team": "red",
+      "my_role": "top",
+      "my_pick_order": 5,
+      "ally_picks": {"jungle": "Sejuani", "mid": "Orianna", "bot": "Jinx", "support": "Lulu"},
+      "enemy_picks": {"top": "Jax", "jungle": "Kindred", "mid": "Yasuo", "bot": "Caitlyn", "support": "Senna"},
+      "bans": [],
+      "champion_pool": {
+        "top": [
+          {"champion": "Pantheon", "tier": "B"},
+          {"champion": "Malphite", "tier": "A"},
+          {"champion": "Ornn", "tier": "A"},
+          {"champion": "Sett", "tier": "B"},
+          {"champion": "Garen", "tier": "B"}
+        ]
+      }
+    },
+    "assertions": [
+      {"type": "must_be_in_top_5", "champion": "Pantheon"}
+    ],
+    "confidence": "low"
+  },
+  {
+    "id": "comp_engage_adc_kite",
+    "category": "anti_engage",
+    "description": "ADC vs full engage — long-range kite ADCs preferred over melee/short-range",
+    "setup": {
+      "my_team": "red",
+      "my_role": "bot",
+      "my_pick_order": 5,
+      "ally_picks": {"top": "Ornn", "jungle": "Sejuani", "mid": "Orianna", "support": "Lulu"},
+      "enemy_picks": {"top": "Malphite", "jungle": "Jarvan IV", "mid": "Diana", "bot": "Sivir", "support": "Leona"},
+      "bans": [],
+      "champion_pool": {
+        "bot": [
+          {"champion": "Caitlyn", "tier": "A"},
+          {"champion": "Ezreal", "tier": "A"},
+          {"champion": "Jinx", "tier": "A"},
+          {"champion": "Vayne", "tier": "B"},
+          {"champion": "Samira", "tier": "B"}
+        ]
+      }
+    },
+    "assertions": [
+      {"type": "must_rank_higher_than", "champion_a": "Caitlyn", "champion_b": "Samira"},
+      {"type": "must_rank_higher_than", "champion_a": "Ezreal", "champion_b": "Samira"}
+    ],
+    "confidence": "medium"
+  },
+  {
+    "id": "comp_engage_mid_peel",
+    "category": "anti_engage",
+    "description": "Mid vs heavy engage — peel/poke mages preferred over assassins",
+    "setup": {
+      "my_team": "red",
+      "my_role": "mid",
+      "my_pick_order": 5,
+      "ally_picks": {"top": "Garen", "jungle": "Sejuani", "bot": "Jinx", "support": "Lulu"},
+      "enemy_picks": {"top": "Malphite", "jungle": "Jarvan IV", "mid": "Akali", "bot": "Sivir", "support": "Leona"},
+      "bans": [],
+      "champion_pool": {
+        "mid": [
+          {"champion": "Lux", "tier": "A"},
+          {"champion": "Orianna", "tier": "A"},
+          {"champion": "Zed", "tier": "S"},
+          {"champion": "Talon", "tier": "B"},
+          {"champion": "Veigar", "tier": "B"}
+        ]
+      }
+    },
+    "assertions": [
+      {"type": "must_rank_higher_than", "champion_a": "Lux", "champion_b": "Talon"},
+      {"type": "must_rank_higher_than", "champion_a": "Orianna", "champion_b": "Zed"}
+    ],
+    "confidence": "low"
+  },
+  {
+    "id": "comp_engage_support_peel",
+    "category": "anti_engage",
+    "description": "Support vs full engage — enchanters/peel over more engage",
+    "setup": {
+      "my_team": "red",
+      "my_role": "support",
+      "my_pick_order": 5,
+      "ally_picks": {"top": "Garen", "jungle": "Lee Sin", "mid": "Orianna", "bot": "Jinx"},
+      "enemy_picks": {"top": "Malphite", "jungle": "Jarvan IV", "mid": "Diana", "bot": "Caitlyn", "support": "Leona"},
+      "bans": [],
+      "champion_pool": {
+        "support": [
+          {"champion": "Janna", "tier": "B"},
+          {"champion": "Lulu", "tier": "A"},
+          {"champion": "Soraka", "tier": "B"},
+          {"champion": "Nautilus", "tier": "S"},
+          {"champion": "Pyke", "tier": "A"}
+        ]
+      }
+    },
+    "assertions": [
+      {"type": "must_rank_higher_than", "champion_a": "Lulu", "champion_b": "Pyke"},
+      {"type": "must_rank_higher_than", "champion_a": "Janna", "champion_b": "Nautilus"}
+    ],
+    "confidence": "medium"
+  },
+  {
+    "id": "synergy_yasuo_with_malphite",
+    "category": "synergy",
+    "description": "Yasuo mid with Malphite top ally — knock-up synergy boost expected",
+    "setup": {
+      "my_team": "blue",
+      "my_role": "mid",
+      "my_pick_order": 3,
+      "ally_picks": {"top": "Malphite", "jungle": "Sejuani"},
+      "enemy_picks": {"jungle": "Lee Sin"},
+      "bans": [],
+      "champion_pool": {
+        "mid": [
+          {"champion": "Yasuo", "tier": "S"},
+          {"champion": "Yone", "tier": "A"},
+          {"champion": "Orianna", "tier": "A"},
+          {"champion": "Lux", "tier": "B"},
+          {"champion": "Veigar", "tier": "B"}
+        ]
+      }
+    },
+    "assertions": [
+      {"type": "must_be_in_top_3", "champion": "Yasuo"}
+    ],
+    "confidence": "low"
+  },
+  {
+    "id": "synergy_senna_tahmkench",
+    "category": "synergy",
+    "description": "Senna ADC with Tahm Kench support ally — well-known synergy lane",
+    "setup": {
+      "my_team": "blue",
+      "my_role": "bot",
+      "my_pick_order": 3,
+      "ally_picks": {"top": "Ornn", "jungle": "Sejuani", "support": "Tahm Kench"},
+      "enemy_picks": {"jungle": "Lee Sin"},
+      "bans": [],
+      "champion_pool": {
+        "bot": [
+          {"champion": "Senna", "tier": "A"},
+          {"champion": "Caitlyn", "tier": "A"},
+          {"champion": "Jinx", "tier": "A"},
+          {"champion": "Ezreal", "tier": "B"},
+          {"champion": "Aphelios", "tier": "B"}
+        ]
+      }
+    },
+    "assertions": [
+      {"type": "must_be_in_top_3", "champion": "Senna"}
+    ],
+    "confidence": "medium"
+  },
+  {
+    "id": "pool_restricted_uses_pool",
+    "category": "pool_restricted",
+    "description": "Restricted pool — pool champions should remain top, not buried by wildcards",
+    "setup": {
+      "my_team": "blue",
+      "my_role": "mid",
+      "my_pick_order": 3,
+      "ally_picks": {"top": "Ornn", "jungle": "Sejuani"},
+      "enemy_picks": {"top": "Camille", "jungle": "Khazix"},
+      "bans": [],
+      "champion_pool": {
+        "mid": [
+          {"champion": "Lux", "tier": "B"},
+          {"champion": "Annie", "tier": "B"}
+        ]
+      }
+    },
+    "assertions": [
+      {"type": "must_be_in_top_5", "champion": "Lux"},
+      {"type": "must_be_in_top_5", "champion": "Annie"}
+    ],
+    "confidence": "medium"
+  },
+  {
+    "id": "pool_single_champion",
+    "category": "pool_restricted",
+    "description": "Pool with single S-tier champion — that champion should be top 3",
+    "setup": {
+      "my_team": "blue",
+      "my_role": "support",
+      "my_pick_order": 2,
+      "ally_picks": {"top": "Ornn"},
+      "enemy_picks": {"bot": "Caitlyn"},
+      "bans": [],
+      "champion_pool": {
+        "support": [
+          {"champion": "Lulu", "tier": "S"}
+        ]
+      }
+    },
+    "assertions": [
+      {"type": "must_be_in_top_3", "champion": "Lulu"}
+    ]
+  },
+  {
+    "id": "pick_order_last_allows_niche",
+    "category": "pick_order",
+    "description": "Last pick — niche counter (low meta but strong matchup) should outrank generic safe pick",
+    "setup": {
+      "my_team": "red",
+      "my_role": "mid",
+      "my_pick_order": 5,
+      "ally_picks": {"top": "Malphite", "jungle": "Sejuani", "bot": "Jinx", "support": "Lulu"},
+      "enemy_picks": {"top": "Camille", "jungle": "Lee Sin", "mid": "Yasuo", "bot": "Caitlyn", "support": "Leona"},
+      "bans": [],
+      "champion_pool": {
+        "mid": [
+          {"champion": "Malzahar", "tier": "B"},
+          {"champion": "Annie", "tier": "B"},
+          {"champion": "Syndra", "tier": "A"},
+          {"champion": "Orianna", "tier": "A"}
+        ]
+      }
+    },
+    "assertions": [
+      {"type": "must_be_in_top_3", "champion": "Malzahar"}
+    ],
+    "confidence": "low"
+  },
+  {
+    "id": "pick_order_first_avoids_niche",
+    "category": "pick_order",
+    "description": "First pick — same niche counter should NOT be top because no enemy info available",
+    "setup": {
+      "my_team": "blue",
+      "my_role": "mid",
+      "my_pick_order": 1,
+      "ally_picks": {},
+      "enemy_picks": {},
+      "bans": [],
+      "champion_pool": {
+        "mid": [
+          {"champion": "Malzahar", "tier": "B"},
+          {"champion": "Annie", "tier": "B"},
+          {"champion": "Syndra", "tier": "A"},
+          {"champion": "Orianna", "tier": "A"}
+        ]
+      }
+    },
+    "assertions": [
+      {"type": "must_rank_higher_than", "champion_a": "Orianna", "champion_b": "Malzahar"},
+      {"type": "must_rank_higher_than", "champion_a": "Syndra", "champion_b": "Malzahar"}
+    ],
+    "confidence": "low"
+  },
+  {
+    "id": "edge_case_olaf_vs_cc",
+    "category": "edge_case",
+    "description": "Olaf jungle vs 3+ hard CC enemies — ulti immunity edge case fires",
+    "setup": {
+      "my_team": "blue",
+      "my_role": "jungle",
+      "my_pick_order": 5,
+      "ally_picks": {"top": "Garen", "mid": "Annie", "bot": "Jinx", "support": "Lulu"},
+      "enemy_picks": {"top": "Malphite", "jungle": "Sejuani", "mid": "Lissandra", "bot": "Ashe", "support": "Leona"},
+      "bans": [],
+      "champion_pool": {
+        "jungle": [
+          {"champion": "Olaf", "tier": "B"},
+          {"champion": "Lee Sin", "tier": "A"},
+          {"champion": "Khazix", "tier": "A"},
+          {"champion": "Graves", "tier": "B"}
+        ]
+      }
+    },
+    "assertions": [
+      {"type": "must_be_in_top_3", "champion": "Olaf"},
+      {"type": "must_rank_higher_than", "champion_a": "Olaf", "champion_b": "Khazix"}
+    ]
+  },
+  {
+    "id": "edge_case_malphite_vs_full_ad",
+    "category": "edge_case",
+    "description": "Malphite top vs full AD enemy comp — armor stack edge case fires",
+    "setup": {
+      "my_team": "blue",
+      "my_role": "top",
+      "my_pick_order": 5,
+      "ally_picks": {"jungle": "Sejuani", "mid": "Orianna", "bot": "Jinx", "support": "Lulu"},
+      "enemy_picks": {"top": "Darius", "jungle": "Lee Sin", "mid": "Zed", "bot": "Caitlyn", "support": "Pyke"},
+      "bans": [],
+      "champion_pool": {
+        "top": [
+          {"champion": "Malphite", "tier": "B"},
+          {"champion": "Ornn", "tier": "A"},
+          {"champion": "Sett", "tier": "A"},
+          {"champion": "Garen", "tier": "B"}
+        ]
+      }
+    },
+    "assertions": [
+      {"type": "must_be_top_1", "champion": "Malphite"}
+    ],
+    "confidence": "medium"
+  },
+  {
+    "id": "edge_case_vayne_vs_tank_comp",
+    "category": "edge_case",
+    "description": "Vayne ADC vs 3+ tank enemies — true damage shred edge case fires",
+    "setup": {
+      "my_team": "red",
+      "my_role": "bot",
+      "my_pick_order": 5,
+      "ally_picks": {"top": "Camille", "jungle": "Lee Sin", "mid": "Syndra", "support": "Lulu"},
+      "enemy_picks": {"top": "Ornn", "jungle": "Sejuani", "mid": "Galio", "bot": "Sivir", "support": "Leona"},
+      "bans": [],
+      "champion_pool": {
+        "bot": [
+          {"champion": "Vayne", "tier": "B"},
+          {"champion": "Caitlyn", "tier": "A"},
+          {"champion": "Jinx", "tier": "A"},
+          {"champion": "Ezreal", "tier": "B"}
+        ]
+      }
+    },
+    "assertions": [
+      {"type": "must_be_in_top_3", "champion": "Vayne"}
+    ]
+  },
+  {
+    "id": "edge_case_yasuo_with_knockup_ally",
+    "category": "edge_case",
+    "description": "Yasuo mid with Malphite ally locked — knock-up combo edge case fires",
+    "setup": {
+      "my_team": "blue",
+      "my_role": "mid",
+      "my_pick_order": 3,
+      "ally_picks": {"top": "Malphite", "jungle": "Sejuani"},
+      "enemy_picks": {"jungle": "Lee Sin"},
+      "bans": [],
+      "champion_pool": {
+        "mid": [
+          {"champion": "Yasuo", "tier": "S"},
+          {"champion": "Orianna", "tier": "A"},
+          {"champion": "Syndra", "tier": "A"},
+          {"champion": "Lux", "tier": "B"}
+        ]
+      }
+    },
+    "assertions": [
+      {"type": "must_be_in_top_3", "champion": "Yasuo"}
+    ]
+  },
+  {
+    "id": "edge_case_garen_vs_darius",
+    "category": "edge_case",
+    "description": "Garen top vs Darius enemy — specific counter edge case fires",
+    "setup": {
+      "my_team": "red",
+      "my_role": "top",
+      "my_pick_order": 4,
+      "ally_picks": {"jungle": "Sejuani", "mid": "Orianna", "bot": "Jinx"},
+      "enemy_picks": {"top": "Darius", "jungle": "Lee Sin"},
+      "bans": [],
+      "champion_pool": {
+        "top": [
+          {"champion": "Garen", "tier": "B"},
+          {"champion": "Sett", "tier": "A"},
+          {"champion": "Camille", "tier": "A"},
+          {"champion": "Ornn", "tier": "B"}
+        ]
+      }
+    },
+    "assertions": [
+      {"type": "must_be_in_top_3", "champion": "Garen"},
+      {"type": "must_rank_higher_than", "champion_a": "Garen", "champion_b": "Sett"}
+    ],
+    "confidence": "medium"
+  },
+  {
+    "id": "edge_case_galio_vs_ap_heavy",
+    "category": "edge_case",
+    "description": "Galio mid vs AP-heavy enemy comp — MR scaling edge case fires",
+    "setup": {
+      "my_team": "blue",
+      "my_role": "mid",
+      "my_pick_order": 5,
+      "ally_picks": {"top": "Malphite", "jungle": "Sejuani", "bot": "Jinx", "support": "Lulu"},
+      "enemy_picks": {"top": "Vladimir", "jungle": "Diana", "mid": "Syndra", "bot": "Ezreal", "support": "Brand"},
+      "bans": [],
+      "champion_pool": {
+        "mid": [
+          {"champion": "Galio", "tier": "B"},
+          {"champion": "Orianna", "tier": "A"},
+          {"champion": "Lux", "tier": "A"},
+          {"champion": "Veigar", "tier": "B"}
+        ]
+      }
+    },
+    "assertions": [
+      {"type": "must_be_in_top_3", "champion": "Galio"}
+    ],
+    "confidence": "medium"
+  },
+  {
+    "id": "edge_case_tryndamere_no_cc",
+    "category": "edge_case",
+    "description": "Tryndamere top vs comp with no hard CC — ult uncounterable edge case fires",
+    "setup": {
+      "my_team": "blue",
+      "my_role": "top",
+      "my_pick_order": 5,
+      "ally_picks": {"jungle": "Khazix", "mid": "Talon", "bot": "Jinx", "support": "Brand"},
+      "enemy_picks": {"top": "Camille", "jungle": "Graves", "mid": "Akali", "bot": "Draven", "support": "Yuumi"},
+      "bans": ["Leona", "Nautilus", "Malphite", "Sejuani", "Ornn", "Amumu"],
+      "champion_pool": {
+        "top": [
+          {"champion": "Tryndamere", "tier": "B"},
+          {"champion": "Sett", "tier": "A"},
+          {"champion": "Renekton", "tier": "A"},
+          {"champion": "Garen", "tier": "B"}
+        ]
+      }
+    },
+    "assertions": [
+      {"type": "must_be_in_top_3", "champion": "Tryndamere"}
+    ],
+    "confidence": "low"
+  },
+  {
+    "id": "role_inference_naafiri_ambiguous",
+    "category": "role_inference",
+    "description": "Mid POV vs Naafiri (jgl 0.62 / mid 0.38) + Aatrox top — reasons must NOT claim 'Lane favorable contre Naafiri' since lane prob < 0.7",
+    "setup": {
+      "my_team": "blue",
+      "my_role": "mid",
+      "my_pick_order": 3,
+      "ally_picks": {},
+      "enemy_picks": {
+        "top": "Aatrox",
+        "_unknown": ["Naafiri"]
+      },
+      "bans": [],
+      "champion_pool": {
+        "mid": [
+          {"champion": "Lissandra", "tier": "S"},
+          {"champion": "Orianna", "tier": "A"},
+          {"champion": "Syndra", "tier": "A"},
+          {"champion": "Lux", "tier": "B"}
+        ]
+      }
+    },
+    "assertions": [
+      {"type": "must_not_have_reason_containing", "champion": "Lissandra", "substring": "Lane favorable contre Naafiri"}
+    ],
+    "confidence": "high"
+  },
+  {
+    "id": "role_inference_galio_alone_ambiguous",
+    "category": "role_inference",
+    "description": "Mid POV vs single locked Galio (mid 0.55 / sup 0.40 / top 0.05) — ambiguity reason must surface and 'Lane favorable' must NOT (lane_prob < 0.7)",
+    "setup": {
+      "my_team": "blue",
+      "my_role": "mid",
+      "my_pick_order": 3,
+      "ally_picks": {},
+      "enemy_picks": [
+        {"name": "Galio"}
+      ],
+      "bans": [],
+      "champion_pool": {
+        "mid": [
+          {"champion": "Orianna", "tier": "S"},
+          {"champion": "Syndra", "tier": "A"},
+          {"champion": "Lux", "tier": "B"}
+        ]
+      }
+    },
+    "assertions": [
+      {"type": "must_not_have_reason_containing", "champion": "Orianna", "substring": "Lane favorable contre Galio"},
+      {"type": "must_have_reason_containing", "champion": "Orianna", "substring": "Galio probable"}
+    ],
+    "confidence": "high"
+  },
+  {
+    "id": "role_inference_galio_forced_support_by_ahri",
+    "category": "role_inference",
+    "description": "Galio + Ahri (mid pinned) — Ahri occupies mid, Galio inference collapses to support, no ambiguity reason should fire on Galio anymore",
+    "setup": {
+      "my_team": "blue",
+      "my_role": "mid",
+      "my_pick_order": 4,
+      "ally_picks": {},
+      "enemy_picks": {
+        "mid": "Ahri",
+        "_unknown": ["Galio"]
+      },
+      "bans": [],
+      "champion_pool": {
+        "mid": [
+          {"champion": "Lissandra", "tier": "S"},
+          {"champion": "Orianna", "tier": "A"},
+          {"champion": "Syndra", "tier": "A"},
+          {"champion": "Lux", "tier": "B"}
+        ]
+      }
+    },
+    "assertions": [
+      {"type": "must_not_have_reason_containing", "champion": "Lissandra", "substring": "Galio probable"},
+      {"type": "must_not_have_reason_containing", "champion": "Lissandra", "substring": "Lane favorable contre Galio"}
+    ],
+    "confidence": "high"
+  }
+]

@@ -1,249 +1,243 @@
+// ─────────────────────────────────────────────
+// Auth page — Soul Eater design tokens
+// ─────────────────────────────────────────────
 import React, { useState } from 'react';
-import { LogIn, UserPlus, AlertCircle, Server, Eye, EyeOff, ChevronDown, Loader2 } from 'lucide-react';
 import useAuthStore from '../../stores/authStore';
 import { getServerUrl, setServerUrl } from '../../services/api';
-import DaliaLogo from '../DaliaLogo';
+import logo from '../../assets/logo.png';
+
+const fieldStyle = {
+  display: 'block', width: '100%',
+  padding: '11px 14px',
+  background: 'var(--ink-2)',
+  border: 'var(--edge-weight) solid var(--ink-5)',
+  color: 'var(--bone-0)',
+  fontFamily: 'var(--f-mono)',
+  fontSize: 12,
+  outline: 'none',
+  transition: 'border-color 0.1s, box-shadow 0.1s',
+};
+
+function Field({ label, ...props }) {
+  const [focused, setFocused] = useState(false);
+  return (
+    <div style={{ marginBottom: 14 }}>
+      <label style={{ display: 'block', fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.18em', color: 'var(--bone-2)', textTransform: 'uppercase', marginBottom: 6 }}>{label}</label>
+      <input
+        {...props}
+        style={{
+          ...fieldStyle,
+          borderColor: focused ? 'var(--accent)' : 'var(--ink-5)',
+          boxShadow: focused ? '3px 3px 0 var(--accent)' : 'none',
+        }}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+      />
+    </div>
+  );
+}
 
 export default function AuthPage() {
   const [mode, setMode] = useState('login');
   const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
+  const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [serverUrl, setServerUrlState] = useState(getServerUrl());
   const [showServerConfig, setShowServerConfig] = useState(false);
-  const isLocalhost = serverUrl.includes('localhost') || serverUrl.includes('127.0.0.1');
+  const [serverUrl, setServerUrlState] = useState(getServerUrl());
 
   const { login, register, loading, error, clearError } = useAuthStore();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     clearError();
-
     if (mode === 'register') {
-      if (password !== confirmPassword) {
-        useAuthStore.setState({ error: 'Les mots de passe ne correspondent pas.' });
-        return;
-      }
-      if (password.length < 6) {
-        useAuthStore.setState({ error: 'Le mot de passe doit faire au moins 6 caracteres.' });
-        return;
-      }
+      if (password !== confirmPassword) { useAuthStore.setState({ error: 'Les mots de passe ne correspondent pas.' }); return; }
+      if (password.length < 6) { useAuthStore.setState({ error: 'Minimum 6 caractères.' }); return; }
       await register(username, email, password);
     } else {
       await login(username, password);
     }
   };
 
-  const handleServerUrlSave = () => {
-    setServerUrl(serverUrl);
-    setShowServerConfig(false);
-  };
+  const isLogin = mode === 'login';
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-surface-base relative overflow-hidden">
-      {/* Background effects */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div
-          className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full opacity-[0.08]"
-          style={{ background: 'radial-gradient(circle, var(--accent) 0%, transparent 70%)' }}
-        />
-        <div
-          className="absolute bottom-0 left-0 right-0 h-px"
-          style={{ background: 'linear-gradient(90deg, transparent, var(--accent-glow), transparent)' }}
-        />
+    <div style={{ height: '100vh', display: 'grid', gridTemplateColumns: '1fr 1fr', background: 'var(--ink-0)', overflow: 'hidden' }}>
+      {/* LEFT — splash */}
+      <div style={{
+        position: 'relative',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        background: 'var(--ink-1)',
+        borderRight: 'var(--edge-weight) solid var(--bone-0)',
+        overflow: 'hidden',
+        padding: 48,
+        order: isLogin ? 1 : 2,
+      }}>
+        {/* diagonal stripes */}
+        <div style={{
+          position: 'absolute', inset: 0,
+          backgroundImage: 'repeating-linear-gradient(-38deg, transparent 0 24px, rgba(244,239,230,0.05) 24px 25px)',
+          pointerEvents: 'none',
+        }}/>
+        {/* bottom accent slash */}
+        <div style={{
+          position: 'absolute', bottom: -28, left: -20, right: -20, height: 70,
+          background: 'var(--accent)',
+          transform: 'rotate(-2deg)',
+          boxShadow: '0 -2px 0 var(--bone-0)',
+        }}/>
+        <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 26 }} className="anim-fade-up">
+          <img
+            src={logo}
+            alt="DALIA"
+            style={{
+              width: 320,
+              height: 'auto',
+              maxWidth: '80%',
+              filter: 'drop-shadow(6px 6px 0 var(--ink-0)) drop-shadow(0 0 28px rgba(217,30,43,0.35))',
+            }}
+          />
+          <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.3em', color: 'var(--bone-2)' }}>
+            DRAFT INTELLIGENCE
+          </div>
+        </div>
       </div>
 
-      <div className="w-full max-w-md relative z-10 animate-fade-in-up">
-        {/* ── Branding ── */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 mb-4">
-            <DaliaLogo size={64} />
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight text-accent">DALIA</h1>
-          <p className="text-sm mt-1.5 text-txt-muted">Draft Analysis League Intelligence Assistant</p>
-        </div>
+      {/* RIGHT — form */}
+      <div style={{
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        padding: '48px 64px',
+        position: 'relative',
+        order: isLogin ? 2 : 1,
+        background: 'var(--ink-0)',
+      }}>
+        {/* corner accents */}
+        <div style={{ position: 'absolute', top: 14, right: 14, width: 22, height: 22, borderTop: '2px solid var(--accent)', borderRight: '2px solid var(--accent)' }}/>
+        <div style={{ position: 'absolute', bottom: 14, left: 14, width: 22, height: 22, borderBottom: '2px solid var(--accent)', borderLeft: '2px solid var(--accent)' }}/>
 
-        {/* ── Auth Card ── */}
-        <div className="glass-panel p-6">
-          {/* Tab switcher */}
-          <div className="flex mb-6 rounded-xl p-1 bg-surface-elevated">
-            {[
-              { id: 'login', label: 'Connexion', icon: LogIn },
-              { id: 'register', label: 'Inscription', icon: UserPlus },
-            ].map(({ id, label, icon: Icon }) => (
-              <button
-                key={id}
-                onClick={() => { setMode(id); clearError(); }}
-                className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  mode === id
-                    ? 'bg-accent text-white shadow-glow'
-                    : 'text-txt-muted hover:text-txt-secondary'
-                }`}
-              >
-                <Icon size={15} />
-                {label}
-              </button>
-            ))}
+        <div style={{ width: '100%', maxWidth: 400 }} className="anim-fade-up">
+          {/* Title */}
+          <div style={{ marginBottom: 28 }}>
+            <div style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 30, letterSpacing: '0.12em', color: 'var(--bone-0)', marginBottom: 10 }}>
+              {isLogin ? 'CONNEXION' : 'INSCRIPTION'}
+            </div>
+            <div style={{ display: 'flex', gap: 0 }}>
+              {['login','register'].map(m => (
+                <button
+                  key={m}
+                  onClick={() => { setMode(m); clearError(); }}
+                  style={{
+                    flex: 1, padding: '9px 0',
+                    fontFamily: 'var(--f-display)', fontSize: 11, letterSpacing: '0.15em',
+                    background: mode === m ? 'var(--accent)' : 'var(--ink-2)',
+                    color: mode === m ? 'var(--accent-ink)' : 'var(--bone-2)',
+                    border: 'var(--edge-weight) solid ' + (mode === m ? 'var(--accent)' : 'var(--ink-5)'),
+                    borderRight: m === 'login' ? '0' : undefined,
+                    cursor: 'pointer',
+                    transition: 'all 0.1s',
+                  }}
+                >
+                  {m === 'login' ? 'SE CONNECTER' : "S'INSCRIRE"}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Error */}
           {error && (
-            <div className="mb-4 p-3 bg-red-500/8 border border-red-500/15 rounded-xl flex items-start gap-2.5 animate-fade-in-up">
-              <AlertCircle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
-              <p className="text-sm text-red-400">{error}</p>
+            <div style={{
+              marginBottom: 14, padding: '9px 12px',
+              background: 'rgba(255,77,86,0.08)',
+              border: 'var(--edge-weight) solid var(--bad)',
+              fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--bad)',
+            }} className="anim-fade">
+              ! {error}
             </div>
           )}
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-xs font-medium mb-1.5 text-txt-secondary">
-                Nom d'utilisateur
-              </label>
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="input-field"
-                placeholder="ton_pseudo"
-                required
-                autoFocus
-                autoComplete="username"
-              />
-            </div>
-
-            {mode === 'register' && (
-              <div className="animate-fade-in-up">
-                <label className="block text-xs font-medium mb-1.5 text-txt-secondary">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="input-field"
-                  placeholder="ton@email.com"
-                  required
-                  autoComplete="email"
-                />
-              </div>
+          <form onSubmit={handleSubmit}>
+            <Field label="Nom d'utilisateur" type="text" value={username} onChange={e => setUsername(e.target.value)} placeholder="soul_eater" required autoComplete="username"/>
+            {!isLogin && (
+              <Field label="Email" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="death@city.com" required autoComplete="email"/>
             )}
-
-            <div>
-              <label className="block text-xs font-medium mb-1.5 text-txt-secondary">
-                Mot de passe
-              </label>
-              <div className="relative">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="input-field pr-10"
-                  placeholder={'*'.repeat(8)}
-                  required
-                  minLength={6}
-                  autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-txt-muted hover:text-txt-secondary transition-colors"
-                  tabIndex={-1}
-                  aria-label={showPassword ? 'Masquer' : 'Afficher'}
-                >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
-            </div>
-
-            {mode === 'register' && (
-              <div className="animate-fade-in-up">
-                <label className="block text-xs font-medium mb-1.5 text-txt-secondary">
-                  Confirmer le mot de passe
-                </label>
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="input-field"
-                  placeholder={'*'.repeat(8)}
-                  required
-                  autoComplete="new-password"
-                />
-              </div>
+            <Field
+              label="Mot de passe"
+              type="password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              placeholder="••••••••"
+              required
+              minLength={6}
+              autoComplete={isLogin ? 'current-password' : 'new-password'}
+            />
+            {!isLogin && (
+              <Field label="Confirmer le mot de passe" type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="••••••••" required autoComplete="new-password"/>
             )}
 
             <button
               type="submit"
               disabled={loading}
-              className="btn-primary w-full py-3 gap-2"
+              style={{
+                width: '100%', padding: '13px 0', marginTop: 6,
+                fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 14, letterSpacing: '0.25em',
+                background: 'var(--accent)', color: 'var(--accent-ink)',
+                border: 'var(--edge-weight) solid var(--bone-0)',
+                boxShadow: '5px 5px 0 var(--ink-0)',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                opacity: loading ? 0.6 : 1,
+                transition: 'transform 0.1s, box-shadow 0.1s',
+              }}
+              onMouseEnter={e => { if (!loading) { e.currentTarget.style.transform = 'translate(-2px,-2px)'; e.currentTarget.style.boxShadow = '7px 7px 0 var(--ink-0)'; }}}
+              onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '5px 5px 0 var(--ink-0)'; }}
             >
-              {loading ? (
-                <>
-                  <Loader2 size={16} className="animate-spin" />
-                  Chargement...
-                </>
-              ) : mode === 'login' ? (
-                <>
-                  <LogIn size={16} />
-                  Se connecter
-                </>
-              ) : (
-                <>
-                  <UserPlus size={16} />
-                  {"S'inscrire"}
-                </>
-              )}
+              {loading ? 'CHARGEMENT…' : isLogin ? '▸ SE CONNECTER' : '▸ CRÉER MON COMPTE'}
             </button>
           </form>
-        </div>
 
-        {/* ── Server Config ── */}
-        <div className="mt-4">
-          <button
-            onClick={() => setShowServerConfig(!showServerConfig)}
-            className="w-full flex items-center justify-center gap-1.5 text-xs text-txt-muted hover:text-accent transition-colors py-2"
-          >
-            <Server size={12} />
-            <span>Configurer le serveur</span>
-            <ChevronDown size={12} className={`transition-transform duration-200 ${showServerConfig ? 'rotate-180' : ''}`} />
-          </button>
-
-          {showServerConfig && (
-            <div className="mt-1 glass-panel p-4 animate-fade-in-up">
-              <label className="block text-xs font-medium mb-1.5 text-txt-secondary">
-                URL du serveur DALIA
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="url"
-                  value={serverUrl}
-                  onChange={(e) => setServerUrlState(e.target.value)}
-                  className="input-field flex-1"
-                  placeholder="https://dalia-reloaded-production.up.railway.app"
-                />
-                <button
-                  onClick={handleServerUrlSave}
-                  className="btn-secondary px-4"
-                >
-                  OK
-                </button>
+          {/* Server config */}
+          <div style={{ marginTop: 22 }}>
+            <button
+              onClick={() => setShowServerConfig(v => !v)}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                width: '100%', padding: '8px 0',
+                fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.18em',
+                color: 'var(--bone-2)', background: 'none', border: 'none', cursor: 'pointer',
+                textTransform: 'uppercase',
+              }}
+            >
+              ⚙ CONFIGURER LE SERVEUR {showServerConfig ? '▴' : '▾'}
+            </button>
+            {showServerConfig && (
+              <div style={{ marginTop: 8, padding: 12, background: 'var(--ink-2)', border: 'var(--edge-weight) solid var(--ink-5)' }} className="anim-fade">
+                <label style={{ display: 'block', fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.15em', color: 'var(--bone-2)', marginBottom: 6, textTransform: 'uppercase' }}>URL serveur DALIA</label>
+                <div style={{ display: 'flex', gap: 0 }}>
+                  <input
+                    type="url" value={serverUrl} onChange={e => setServerUrlState(e.target.value)}
+                    style={{ ...fieldStyle, flex: 1, borderRight: 0 }}
+                    placeholder="http://localhost:8000"
+                  />
+                  <button
+                    onClick={() => { setServerUrl(serverUrl); setShowServerConfig(false); }}
+                    style={{
+                      padding: '0 14px',
+                      background: 'var(--accent)', color: 'var(--accent-ink)',
+                      border: 'var(--edge-weight) solid var(--bone-0)',
+                      fontFamily: 'var(--f-display)', fontSize: 11, letterSpacing: '0.15em',
+                      cursor: 'pointer',
+                    }}
+                  >OK</button>
+                </div>
               </div>
-              {isLocalhost && (
-                <p className="text-[11px] mt-2 text-accent/70">
-                  Serveur local detecte. Pour jouer en ligne, entre l'URL du serveur fournie par l'admin.
-                </p>
-              )}
-            </div>
-          )}
-        </div>
+            )}
+          </div>
 
-        {/* Version */}
-        <p className="text-center text-[10px] mt-6 text-txt-muted">
-          DALIA v2.0 -- Architecture Client/Serveur
-        </p>
+          <div style={{ marginTop: 18, textAlign: 'center', fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--bone-3)', letterSpacing: '0.12em' }}>
+            DALIA · SOUL EATER EDITION
+          </div>
+        </div>
       </div>
     </div>
   );

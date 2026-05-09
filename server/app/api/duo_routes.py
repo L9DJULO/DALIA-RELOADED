@@ -8,6 +8,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy import and_, or_, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -72,6 +73,32 @@ async def _get_partner_from_link(link: DuoLinkDB, my_id) -> UserDB:
     return link.user_a
 
 
+async def _assign_unique_duo_code(user: UserDB, db: AsyncSession, tries: int = 6) -> str:
+    """Assign a fresh duo code to ``user`` with collision-retry.
+
+    The ``duo_code`` column is UNIQUE; ``_generate_duo_code`` picks from
+    a ~30-char alphabet × 6 positions ≈ 7.3e8 combos so collisions are
+    rare, but not impossible. We retry on IntegrityError up to ``tries``
+    times before giving up with a 500.
+    """
+    for _ in range(tries):
+        candidate = _generate_duo_code()
+        user.duo_code = candidate
+        try:
+            await db.commit()
+            await db.refresh(user)
+            return candidate
+        except IntegrityError:
+            await db.rollback()
+            # Re-attach user to the session before next attempt.
+            user = await db.merge(user)
+    logger.error("Exhausted duo-code collision retries for user %s", user.id)
+    raise HTTPException(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        detail="Impossible de générer un code unique pour le moment.",
+    )
+
+
 # ═════════════════════════════════════════════════════════
 #  GET /duo/code — Get or generate my duo code
 # ═════════════════════════════════════════════════════════
@@ -82,9 +109,7 @@ async def get_duo_code(
 ):
     """Return the user's duo code, generating one if it doesn't exist."""
     if not current_user.duo_code:
-        current_user.duo_code = _generate_duo_code()
-        await db.commit()
-        await db.refresh(current_user)
+        await _assign_unique_duo_code(current_user, db)
 
     return DuoCodeResponse(duo_code=current_user.duo_code)
 
@@ -98,9 +123,7 @@ async def regenerate_duo_code(
     db: AsyncSession = Depends(get_db),
 ):
     """Generate a fresh duo code (invalidates previous one)."""
-    current_user.duo_code = _generate_duo_code()
-    await db.commit()
-    await db.refresh(current_user)
+    await _assign_unique_duo_code(current_user, db)
     return DuoCodeResponse(duo_code=current_user.duo_code)
 
 
@@ -207,7 +230,15 @@ async def unlink_duo(
     current_user: UserDB = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """End the active duo partnership."""
+    """End the active duo partnership.
+
+    Physical DELETE (not UPDATE → status='ended') on purpose: the
+    existing ``uq_duo_link_active`` unique constraint includes ``status``
+    in its tuple, which rejects a second ``(a, b, 'ended')`` row when
+    the same pair re-links and unlinks a second time. ``ended`` rows are
+    never read anywhere in the codebase, so DELETE is functionally
+    equivalent and sidesteps the constraint without a schema migration.
+    """
     link = await _get_active_link(current_user.id, db)
     if not link:
         raise HTTPException(
@@ -216,14 +247,14 @@ async def unlink_duo(
         )
 
     partner = await _get_partner_from_link(link, current_user.id)
+    partner_username = partner.username  # capture before DELETE detaches the row
 
-    link.status = "ended"
-    link.ended_at = datetime.now(timezone.utc)
+    await db.delete(link)
     await db.commit()
 
-    logger.info(f"DuoQ link ended: {current_user.username} ↔ {partner.username}")
+    logger.info(f"DuoQ link ended: {current_user.username} ↔ {partner_username}")
 
-    return {"message": f"Duo avec {partner.username} terminé."}
+    return {"message": f"Duo avec {partner_username} terminé."}
 
 
 # ═════════════════════════════════════════════════════════
@@ -252,7 +283,12 @@ async def get_partner_pool(
 
     pool: dict = {"top": [], "jungle": [], "mid": [], "bot": [], "support": []}
     for e in entries:
-        pool[e.role].append({
+        bucket = pool.get(e.role)
+        if bucket is None:
+            # Skip unknown/legacy role values rather than KeyError'ing.
+            logger.warning("Skipping partner pool entry with unknown role: %r", e.role)
+            continue
+        bucket.append({
             "champion_id": e.champion_id,
             "champion_key": e.champion_key,
             "tier": e.tier,

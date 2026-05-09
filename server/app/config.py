@@ -12,11 +12,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 class ScoringWeights(BaseModel):
     """Weights used by the draft engine to combine sub-scores (must sum to ~1.0)."""
-    meta: float = 0.12
-    matchup: float = 0.33
-    synergy: float = 0.05
-    composition: float = 0.15
-    mastery: float = 0.20
+    meta: float = 0.07
+    matchup: float = 0.45
+    synergy: float = 0.10
+    composition: float = 0.13
+    mastery: float = 0.17
     draft_risk: float = 0.08
 
 

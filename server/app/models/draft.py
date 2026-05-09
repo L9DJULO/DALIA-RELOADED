@@ -51,6 +51,13 @@ class DraftState(BaseModel):
     # ── Draft progression ──
     current_action: int = 0             # 0-19 index in DRAFT_SEQUENCE
 
+    # ── Probabilistic enemy role inference ──
+    # Populated by role_inference.infer_enemy_roles() at the start of
+    # recommend(). Maps enemy champion_id → {role: probability}. Used by
+    # matchup analyzer for weighted matchup scoring and by reasons.py to
+    # gate "Lane favorable" wording when role is uncertain.
+    role_distributions: Dict[int, Dict[str, float]] = Field(default_factory=dict)
+
     # ── Helpers ──
     @property
     def all_picked_ids(self) -> set:
@@ -145,6 +152,22 @@ class CompositionWarning(BaseModel):
     message: str = ""
 
 
+class Reason(BaseModel):
+    """Contextual, champion-specific explanation for a recommendation.
+
+    `kind` drives the bullet colour in the UI:
+      - "synergy" → green / ⟳
+      - "counter" → red / ⚔
+      - "warning" → orange / !
+      - "info"    → neutral / ▸
+    `champions` holds the concrete names mentioned in `text` so the UI
+    (or downstream consumers) can highlight / link them.
+    """
+    text: str
+    kind: str = "info"
+    champions: List[str] = Field(default_factory=list)
+
+
 class Recommendation(BaseModel):
     """A single champion recommendation returned by the draft engine."""
     champion_id: int
@@ -160,6 +183,8 @@ class Recommendation(BaseModel):
     tags: List[str] = Field(default_factory=list)  # "safe-blind", "counter-pick", "off-meta", "flex"
     confidence: float = 50.0            # 0-100 how confident the engine is
     meta_games: int = 0                 # total games played in role (30d) — sample size indicator
+    verdict: str = ""                   # short 1-line summary ("Counter direct Syndra. Attention engage.")
+    reasons: List[Reason] = Field(default_factory=list)  # 3 max, contextual, champion-aware
 
 
 class PoolEntry(BaseModel):
@@ -182,9 +207,21 @@ class DraftRequest(BaseModel):
     region: Optional[str] = None      # platform region (e.g. "EUW1")
 
 
+class BanSuggestion(BaseModel):
+    """A champion to ban — counters user pool or threatens allied comp."""
+    champion_id: int
+    champion_key: str
+    champion_name: str
+    severity: float = 0.0          # 0-100 — how much should we want this banned
+    reason: str = ""               # short tag-line shown in UI
+    counters_pool: List[str] = Field(default_factory=list)  # pool champion names countered
+    threatens_allies: List[str] = Field(default_factory=list)  # ally names threatened
+
+
 class DraftResponse(BaseModel):
     recommendations: List[Recommendation]
     team_composition_summary: Dict[str, float] = Field(default_factory=dict)
     warnings: List[str] = Field(default_factory=list)
     win_probability: Optional[float] = None  # 0-100, from ML model
     duo_synergy_boost: bool = False  # True when DuoQ mode was active for recommendations
+    ban_suggestions: List[BanSuggestion] = Field(default_factory=list)

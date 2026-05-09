@@ -7,19 +7,27 @@
 import { create } from 'zustand';
 import { lcuConnect, lcuStatus, lcuDisconnect, lcuSummonerInfo } from '../services/lcu';
 
+// Pick-slot team order for the 10 picks in a full LoL draft.
+// Derived from DRAFT_SEQUENCE in server/app/models/draft.py (pick actions only):
+// Phase 1: blue, red, red, blue, blue, red
+// Phase 2: red, blue, blue, red
+const PICK_SLOT_TEAMS = ['blue', 'red', 'red', 'blue', 'blue', 'red', 'red', 'blue', 'blue', 'red'];
+
+const ROLES = ['top', 'jungle', 'mid', 'bot', 'support'];
+
 const useLCUStore = create((set, get) => ({
   // ── Connection state ──
   connected: false,
   inChampSelect: false,
   gamePhase: '',
-  
+
   // ── My info ──
   myTeam: '',
   myRole: '',
-  
+
   // ── Summoner identity (linked Riot account) ──
   summoner: null,  // { puuid, gameName, tagLine, summonerId, region, ... }
-  
+
   // ── Live draft data ──
   allyBans: [],
   enemyBans: [],
@@ -27,34 +35,79 @@ const useLCUStore = create((set, get) => ({
   enemyPicks: {},
   enemyPicksOrder: [],  // ordered list of enemy champion IDs (no roles)
   allyPrepicks: {},     // role → champId (ally hover/intent picks)
-  
+
+  // ── Pick sequence tracker ──
+  // Grows incrementally during a champ-select session as picks come in.
+  // Each entry: { team: 'blue'|'red', role: string|null, champId: number }
+  // Reset automatically when a fresh champ-select session starts.
+  pickSequence: [],
+
   // ── Current action ──
   currentActionType: '',
   isMyTurn: false,
   timerRemaining: 0,
-  
+
   // ── Polling ──
   polling: false,
   pollInterval: null,
   lastUpdate: null,
   error: null,
-  
+
   // ── Auto-sync with draft store ──
   autoSync: true,
-  
+
   // ═════════════════════════════════════════════════════════
   //  ACTIONS
   // ═════════════════════════════════════════════════════════
-  
+
   setAutoSync: (enabled) => set({ autoSync: enabled }),
-  
+
   /**
    * Fetch current LCU status via Tauri IPC (local Rust connector)
    */
   fetchStatus: async () => {
     try {
       const data = await lcuStatus();
-      const wasConnected = get().connected;
+      const s = get();
+      const wasConnected = s.connected;
+
+      // ── Compute updated pick sequence ──
+      let newPickSequence = s.pickSequence || [];
+
+      if (!s.inChampSelect && data.in_champ_select) {
+        // Entering a new champ-select: reset the sequence for this fresh session
+        newPickSequence = [];
+      } else if (data.in_champ_select) {
+        const seq = [...newPickSequence];
+        const myTeam = data.my_team || s.myTeam || 'blue';
+        const oppTeam = myTeam === 'blue' ? 'red' : 'blue';
+
+        // Detect newly locked ally picks (role-keyed)
+        const oldAlly = s.allyPicks || {};
+        const newAlly = data.ally_picks || {};
+        for (const role of ROLES) {
+          const oldId = oldAlly[role] || 0;
+          const newId = newAlly[role] || 0;
+          if (newId > 0 && newId !== oldId) {
+            seq.push({ team: myTeam, role, champId: newId });
+          }
+        }
+
+        // Detect newly locked enemy picks (ordered array, indexed by pick-order slot)
+        const oldEnemyOrder = s.enemyPicksOrder || [];
+        const newEnemyOrder = data.enemy_picks_order || [];
+        const maxLen = Math.max(oldEnemyOrder.length, newEnemyOrder.length);
+        for (let i = 0; i < maxLen; i++) {
+          const oldId = oldEnemyOrder[i] || 0;
+          const newId = newEnemyOrder[i] || 0;
+          if (newId > 0 && newId !== oldId) {
+            seq.push({ team: oppTeam, role: null, champId: newId });
+          }
+        }
+
+        newPickSequence = seq;
+      }
+
       set({
         connected: data.connected,
         inChampSelect: data.in_champ_select,
@@ -72,6 +125,7 @@ const useLCUStore = create((set, get) => ({
         timerRemaining: data.timer_remaining,
         lastUpdate: new Date(),
         error: null,
+        pickSequence: newPickSequence,
       });
       // Auto-fetch summoner info when LCU becomes connected
       if (data.connected && !wasConnected) {
@@ -87,7 +141,7 @@ const useLCUStore = create((set, get) => ({
       return null;
     }
   },
-  
+
   /**
    * Manually trigger connection to LCU via Tauri
    */
@@ -105,7 +159,7 @@ const useLCUStore = create((set, get) => ({
       return { status: 'error', message: e.message };
     }
   },
-  
+
   /**
    * Fetch summoner identity from LCU (linked Riot account)
    */
@@ -132,26 +186,26 @@ const useLCUStore = create((set, get) => ({
       return null;
     }
   },
-  
+
   /**
    * Start polling LCU status
    */
   startPolling: (intervalMs = 1000) => {
     const state = get();
     if (state.polling) return;
-    
+
     const pollFn = async () => {
       await get().fetchStatus();
     };
-    
+
     // Immediate fetch
     pollFn();
-    
+
     // Set up interval
     const interval = setInterval(pollFn, intervalMs);
     set({ polling: true, pollInterval: interval });
   },
-  
+
   /**
    * Stop polling LCU status
    */
@@ -162,7 +216,42 @@ const useLCUStore = create((set, get) => ({
     }
     set({ polling: false, pollInterval: null });
   },
-  
+
+  /**
+   * Build the 10-slot pick-order timeline from the accumulated pickSequence.
+   * Returns an array shaped like mock.js DRAFT.pickOrder, ready for DraftPanel.
+   *
+   * @param {Object} champById - champion lookup { id: {id, key, name} } from championsStore
+   */
+  buildPickOrderTimeline: (champById = {}) => {
+    const s = get();
+    const seq = s.pickSequence || [];
+    const isPicking = s.inChampSelect && s.currentActionType === 'pick';
+    const nextSlot = seq.length; // the pick slot currently being played
+
+    return PICK_SLOT_TEAMS.map((slotTeam, i) => {
+      const pick = seq[i];
+      if (pick) {
+        // Resolve champion key for icon display
+        const champKey = champById[pick.champId]?.key || null;
+        return {
+          team: pick.team,
+          role: pick.role || null,
+          key: champKey,
+          done: true,
+          current: false,
+        };
+      }
+      return {
+        team: slotTeam,
+        role: null,
+        key: null,
+        done: false,
+        current: i === nextSlot && isPicking,
+      };
+    });
+  },
+
   /**
    * Get draft state formatted for syncing with draftStore.
    * @param {Object} champMap - champion lookup {id: {id, key, name}} to resolve raw IDs from LCU

@@ -1,0 +1,56 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: dalia-postgres
+    environment:
+      POSTGRES_USER: dalia
+      POSTGRES_PASSWORD: dalia
+      POSTGRES_DB: dalia
+    ports:
+      - "5432:5432"
+    volumes:
+      - dalia_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dalia"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: dalia-backend
+    environment:
+      DATABASE_URL: postgresql+asyncpg://dalia:dalia@db:5432/dalia
+      JWT_SECRET: 70043bc98d6aca759326219b3db0407e0c909da9eb6f5ac911a71dc200a8f7f3
+      JWT_ALGORITHM: HS256
+      JWT_EXPIRE_MINUTES: "1440"
+      RIOT_API_KEY: ""
+      RIOT_PLATFORM: euw1
+      ENV: development
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./server:/app
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./client
+      dockerfile: Dockerfile.dev
+    container_name: dalia-frontend
+    environment:
+      VITE_HOST: "0.0.0.0"
+      BACKEND_URL: http://backend:8000
+    ports:
+      - "1420:1420"
+    depends_on:
+      - backend
+
+volumes:
+  dalia_pgdata:

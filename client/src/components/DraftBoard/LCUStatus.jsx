@@ -1,121 +1,59 @@
-/**
- * LCU Status indicator -- Shows connection to LoL client and allows auto-sync.
- */
-import React, { useEffect, useRef, useMemo } from 'react';
-import { RefreshCw } from 'lucide-react';
+import React from 'react';
+import { Wifi, WifiOff, Gamepad2 } from 'lucide-react';
 import useLCUStore from '../../stores/lcuStore';
-import useDraftStore from '../../stores/draftStore';
 
-export default function LCUStatus({ champions = [] }) {
-  const inChampSelect = useLCUStore((s) => s.inChampSelect);
-  const isMyTurn = useLCUStore((s) => s.isMyTurn);
-  const timerRemaining = useLCUStore((s) => s.timerRemaining);
-  const autoSync = useLCUStore((s) => s.autoSync);
-  const lastUpdate = useLCUStore((s) => s.lastUpdate);
-  const startPolling = useLCUStore((s) => s.startPolling);
-  const stopPolling = useLCUStore((s) => s.stopPolling);
-  const setAutoSync = useLCUStore((s) => s.setAutoSync);
-  const getDraftSyncData = useLCUStore((s) => s.getDraftSyncData);
+export default function LCUStatus({ compact = false }) {
+  const connected     = useLCUStore(s => s.connected);
+  const inChampSelect = useLCUStore(s => s.inChampSelect);
+  const summoner      = useLCUStore(s => s.summoner);
+  const connect       = useLCUStore(s => s.connect);
 
-  const setFromLCU = useDraftStore((s) => s.setFromLCU);
-  const setBan = useDraftStore((s) => s.setBan);
-  const setPick = useDraftStore((s) => s.setPick);
-  const setEnemyPicksFromLCU = useDraftStore((s) => s.setEnemyPicksFromLCU);
-  const setAllyPrepicks = useDraftStore((s) => s.setAllyPrepicks);
+  const color = connected
+    ? (inChampSelect ? 'var(--win)' : 'var(--text-muted)')
+    : 'var(--text-muted)';
+  const label = connected
+    ? (inChampSelect ? 'CHAMP SELECT' : 'CONNECTÉ')
+    : 'DÉCONNECTÉ';
+  const Icon = connected ? (inChampSelect ? Gamepad2 : Wifi) : WifiOff;
 
-  const champMap = useMemo(() => {
-    const m = {};
-    for (const c of champions) m[c.id] = c;
-    return m;
-  }, [champions]);
-
-  const prevSync = useRef(null);
-
-  useEffect(() => {
-    startPolling(1500);
-    return () => stopPolling();
-  }, []);
-
-  useEffect(() => {
-    if (!autoSync || !inChampSelect) {
-      prevSync.current = null;
-      return;
-    }
-
-    const syncData = getDraftSyncData(champMap);
-    if (!syncData) return;
-
-    const snap = JSON.stringify(syncData);
-    if (snap === prevSync.current) return;
-    prevSync.current = snap;
-
-    if (syncData.myTeam && syncData.myRole) {
-      setFromLCU(syncData.myTeam, syncData.myRole);
-    }
-
-    syncData.blueBans.forEach((ban, i) => {
-      if (ban) setBan('blue', i, ban);
-    });
-    syncData.redBans.forEach((ban, i) => {
-      if (ban) setBan('red', i, ban);
-    });
-
-    // Sync ally picks (role-keyed — we always know ally roles)
-    for (const [role, champ] of Object.entries(syncData.allyPicks)) {
-      if (champ) setPick(syncData.myTeam, role, champ);
-    }
-
-    // Sync enemy picks: use ordered list (no roles) when available
-    // The server will predict the correct role for each enemy champion
-    const enemyTeam = syncData.myTeam === 'blue' ? 'red' : 'blue';
-    if (syncData.enemyPicksOrder && syncData.enemyPicksOrder.length > 0) {
-      // Use the new ordered list — enemy picks have NO roles attached
-      setEnemyPicksFromLCU(syncData.enemyPicksOrder);
-    } else {
-      // Fallback to role-keyed picks (if LCU provided real roles)
-      const enemyPicks = syncData.myTeam === 'blue' ? syncData.redPicks : syncData.bluePicks;
-      for (const [role, champ] of Object.entries(enemyPicks)) {
-        if (champ) setPick(enemyTeam, role, champ);
-      }
-    }
-
-    // Sync ally pre-picks (hover/intent)
-    if (syncData.allyPrepicks) {
-      setAllyPrepicks(syncData.allyPrepicks);
-    }
-  }, [autoSync, inChampSelect, lastUpdate, champMap]);
+  if (compact) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--f-mono)', fontSize: 10, color, letterSpacing: '0.1em' }}>
+        <span style={{
+          width: 7, height: 7, borderRadius: '50%', background: color,
+          boxShadow: inChampSelect ? `0 0 6px ${color}` : 'none',
+          animation: inChampSelect ? 'pulse-soft 1.8s ease-in-out infinite' : 'none',
+        }}/>
+        <Icon size={11}/>
+        {label}
+      </div>
+    );
+  }
 
   return (
-    <div className="flex items-center gap-2">
-      {/* Timer in champ select */}
-      {inChampSelect && timerRemaining > 0 && (
-        <div
-          className={`px-2 py-0.5 rounded-lg text-[11px] font-mono tabular-nums border ${
-            isMyTurn
-              ? 'bg-accent-muted text-accent border-accent/20 font-semibold'
-              : 'bg-surface-elevated text-txt-muted border-border-subtle'
-          }`}
-          role="timer"
-          aria-label={`${timerRemaining} secondes restantes`}
-        >
-          {timerRemaining}s
-        </div>
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 12,
+      padding: '10px 14px',
+      background: 'var(--surface-card)',
+      border: `2px solid ${connected ? 'var(--border-default)' : 'var(--border-subtle)'}`,
+    }}>
+      <span style={{
+        width: 10, height: 10, borderRadius: '50%', background: color, flexShrink: 0,
+        boxShadow: inChampSelect ? `0 0 6px ${color}` : 'none',
+        animation: inChampSelect ? 'pulse-soft 1.8s ease-in-out infinite' : 'none',
+      }}/>
+      <Icon size={16} style={{ color }}/>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontFamily: 'var(--f-display)', fontSize: 12, letterSpacing: '0.12em', color }}>{label}</div>
+        {summoner && (
+          <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>
+            {summoner.gameName}#{summoner.tagLine}
+          </div>
+        )}
+      </div>
+      {!connected && (
+        <button onClick={connect} className="btn-secondary btn-sm">CONNECTER</button>
       )}
-
-      {/* Auto-sync toggle */}
-      <button
-        onClick={() => setAutoSync(!autoSync)}
-        aria-pressed={autoSync}
-        aria-label={`Auto-sync ${autoSync ? 'active' : 'desactive'}`}
-        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all duration-200 border ${
-          autoSync
-            ? 'bg-accent-muted text-accent border-accent/20 hover:bg-accent-muted'
-            : 'bg-surface-elevated text-txt-muted border-border-subtle hover:border-accent/30 hover:text-txt-secondary'
-        }`}
-      >
-        <RefreshCw size={10} aria-hidden="true" className={autoSync ? 'animate-spin' : ''} style={autoSync ? { animationDuration: '3s' } : undefined} />
-        <span>Sync {autoSync ? 'ON' : 'OFF'}</span>
-      </button>
     </div>
   );
 }

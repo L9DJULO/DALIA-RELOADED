@@ -1,274 +1,109 @@
-import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import { Zap, ChevronRight, SkipForward, Undo2 } from 'lucide-react';
+import React, { useState, useMemo, useRef } from 'react';
+import { Zap } from 'lucide-react';
 import useDraftStore from '../../stores/draftStore';
-import RoleIcon from '../RoleIcon';
-import { DRAFT_SEQUENCE, ROLES, ROLE_LABELS, draftStepLabel } from '../../lib/constants';
+import { getDDragonChampUrl, ROLES } from '../../lib/constants';
 
-/**
- * QuickInput — "command-palette" style fast entry that follows LoL's real
- * draft sequence. For each sequence step it auto-targets the next empty slot
- * (ban index / enemy pick index / ally role chosen by the user) so the user
- * only needs to type the champion name and press Enter.
- *
- * Keyboard:
- *   - Type to filter • ↑/↓ to navigate • Enter to lock • Esc to clear
- *   - Tab cycles the role chip when an ally-pick step needs a role.
- */
+const ROLE_SHORT = { top: 'TOP', jungle: 'JGL', mid: 'MID', bot: 'ADC', support: 'SUP' };
+
 export default function QuickInput({ champions }) {
-  const {
-    myTeam,
-    myRole,
-    blueBans, redBans,
-    allyPicks, enemyPicks,
-    setBan, setAllyPick, setEnemyPick,
-    getAllUnavailableIds,
-  } = useDraftStore();
-
-  const unavailableIds = getAllUnavailableIds();
-
   const [query, setQuery] = useState('');
-  const [cursor, setCursor] = useState(0);
-  const [stepOverride, setStepOverride] = useState(null); // user jumped forward/back manually
-  const [roleChoice, setRoleChoice] = useState(null);     // role selected for ally-pick step
+  const [target, setTarget] = useState('enemy');
   const inputRef = useRef(null);
 
-  // ── Next target: walk DRAFT_SEQUENCE and find the first action whose slot isn't filled.
-  const nextStepIndex = useMemo(() => {
-    for (let i = 0; i < DRAFT_SEQUENCE.length; i++) {
-      const s = DRAFT_SEQUENCE[i];
-      if (s.type === 'ban') {
-        const bans = s.team === 'blue' ? blueBans : redBans;
-        if (!bans[s.slotIndex]) return i;
-      } else {
-        const isAlly = s.team === myTeam;
-        if (isAlly) {
-          // Ally pick: any unfilled ally role counts as "this ally pick slot"
-          const filledCount = Object.values(allyPicks).filter(Boolean).length;
-          if (filledCount <= s.slotIndex) return i;
-        } else {
-          if (!enemyPicks[s.slotIndex]) return i;
-        }
-      }
-    }
-    return DRAFT_SEQUENCE.length; // draft complete
-  }, [blueBans, redBans, allyPicks, enemyPicks, myTeam]);
+  const enemyPicks = useDraftStore(s => s.enemyPicks);
+  const setEnemyPick = useDraftStore(s => s.setEnemyPick);
+  const setAllyPick  = useDraftStore(s => s.setAllyPick);
 
-  const activeIndex = stepOverride ?? nextStepIndex;
-  const activeStep = activeIndex < DRAFT_SEQUENCE.length ? DRAFT_SEQUENCE[activeIndex] : null;
-
-  // Clear override once the user catches back up to organic progress
-  useEffect(() => {
-    if (stepOverride != null && nextStepIndex >= stepOverride) setStepOverride(null);
-  }, [nextStepIndex, stepOverride]);
-
-  // Default role choice for ally pick steps
-  useEffect(() => {
-    if (!activeStep) return;
-    if (activeStep.type === 'pick' && activeStep.team === myTeam) {
-      const emptyRoles = ROLES.filter((r) => !allyPicks[r]);
-      if (emptyRoles.length === 0) { setRoleChoice(null); return; }
-      if (!roleChoice || !emptyRoles.includes(roleChoice)) {
-        setRoleChoice(emptyRoles.includes(myRole) ? myRole : emptyRoles[0]);
-      }
-    } else {
-      setRoleChoice(null);
-    }
-  }, [activeStep, allyPicks, myRole, myTeam, roleChoice]);
-
-  // ── Autocomplete: rank by prefix match, then substring, skip unavailable
   const matches = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = query.toLowerCase().trim();
     if (!q) return [];
-    const list = [];
-    for (const c of champions) {
-      const name = c.name.toLowerCase();
-      if (unavailableIds.has(c.id)) continue;
-      let rank = -1;
-      if (name.startsWith(q)) rank = 0;
-      else if (name.includes(q)) rank = 1;
-      else {
-        // Initials / fuzzy: "ms" → "Miss Fortune"
-        const parts = name.split(/\s|'/).filter(Boolean);
-        if (parts.length > 1 && parts.every((p, i) => i >= q.length || p.startsWith(q[i]))) rank = 2;
-      }
-      if (rank >= 0) list.push({ champ: c, rank });
-    }
-    list.sort((a, b) => a.rank - b.rank || a.champ.name.localeCompare(b.champ.name));
-    return list.slice(0, 8).map((x) => x.champ);
-  }, [query, champions, unavailableIds]);
+    return champions
+      .filter(c => c.name.toLowerCase().startsWith(q) || c.id.toLowerCase().startsWith(q))
+      .slice(0, 6);
+  }, [champions, query]);
 
-  useEffect(() => { setCursor(0); }, [query, activeIndex]);
-
-  const commit = useCallback((champ) => {
-    if (!champ || !activeStep) return;
-    const payload = { id: champ.id, key: champ.key, name: champ.name };
-    if (activeStep.type === 'ban') {
-      setBan(activeStep.team, activeStep.slotIndex, payload);
-    } else if (activeStep.team === myTeam) {
-      const role = roleChoice || ROLES.find((r) => !allyPicks[r]) || myRole;
-      setAllyPick(role, payload);
+  const handleSelect = (champ) => {
+    const c = { id: champ.id, key: champ.key, name: champ.name };
+    if (target === 'enemy') {
+      const emptyIdx = enemyPicks.findIndex(p => !p);
+      if (emptyIdx >= 0) setEnemyPick(emptyIdx, c);
     } else {
-      setEnemyPick(activeStep.slotIndex, payload);
+      setAllyPick(target, c);
     }
     setQuery('');
-    setStepOverride(null);
-    // keep focus for the next step
     inputRef.current?.focus();
-  }, [activeStep, myTeam, myRole, roleChoice, allyPicks, setBan, setAllyPick, setEnemyPick]);
-
-  const cycleRole = useCallback(() => {
-    const empty = ROLES.filter((r) => !allyPicks[r]);
-    if (empty.length < 2) return;
-    const idx = empty.indexOf(roleChoice);
-    setRoleChoice(empty[(idx + 1) % empty.length]);
-  }, [allyPicks, roleChoice]);
-
-  const onKeyDown = (e) => {
-    if (e.key === 'ArrowDown') { e.preventDefault(); setCursor((c) => Math.min(matches.length - 1, c + 1)); }
-    else if (e.key === 'ArrowUp') { e.preventDefault(); setCursor((c) => Math.max(0, c - 1)); }
-    else if (e.key === 'Enter') { e.preventDefault(); if (matches[cursor]) commit(matches[cursor]); }
-    else if (e.key === 'Escape') { e.preventDefault(); setQuery(''); }
-    else if (e.key === 'Tab' && activeStep?.type === 'pick' && activeStep.team === myTeam) {
-      e.preventDefault(); cycleRole();
-    }
   };
 
-  const stepLabel = activeStep ? draftStepLabel(activeStep) : 'Draft complet';
-  const isAllyPick = activeStep?.type === 'pick' && activeStep.team === myTeam;
-  const emptyRoles = useMemo(() => ROLES.filter((r) => !allyPicks[r]), [allyPicks]);
-
-  const prev = () => setStepOverride(Math.max(0, activeIndex - 1));
-  const skip = () => setStepOverride(Math.min(DRAFT_SEQUENCE.length - 1, activeIndex + 1));
-
   return (
-    <div className="card p-0 overflow-hidden">
-      {/* Step strip */}
-      <div className="flex items-stretch border-b border-border-subtle">
-        <div className="flex items-center gap-2 px-3.5 py-2.5 border-r border-border-subtle bg-surface-elevated/50">
-          <Zap size={13} className="text-accent" />
-          <span className="text-[10px] uppercase tracking-widest-2 font-semibold text-txt-muted">
-            Saisie rapide
-          </span>
-        </div>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <Zap size={12} style={{ color: 'var(--accent)', flexShrink: 0 }}/>
 
-        <div className="flex-1 flex items-center gap-2 px-3 py-2 font-mono text-[11px] text-txt-secondary overflow-hidden">
-          <span className="text-txt-muted tabular-nums">
-            {String(Math.min(activeIndex + 1, DRAFT_SEQUENCE.length)).padStart(2, '0')}/20
-          </span>
-          <span className="text-border-strong">·</span>
-          <span className={`font-semibold uppercase tracking-wider ${
-            activeStep?.type === 'ban' ? 'text-loss' :
-            activeStep?.team === myTeam ? 'text-accent' : 'text-txt-primary'
-          }`}>
-            {stepLabel}
-          </span>
-          {isAllyPick && emptyRoles.length > 0 && (
-            <>
-              <ChevronRight size={12} className="text-border-strong" />
-              <div className="flex items-center gap-1">
-                {emptyRoles.map((r) => (
-                  <button
-                    key={r}
-                    onClick={() => setRoleChoice(r)}
-                    aria-pressed={roleChoice === r}
-                    className={`flex items-center gap-1 px-1.5 py-0.5 rounded-xs border text-[10px] font-medium transition-all duration-150 ${
-                      roleChoice === r
-                        ? 'bg-accent-muted border-accent/40 text-accent'
-                        : 'border-border-subtle text-txt-muted hover:text-txt-secondary hover:border-border-default'
-                    }`}
-                  >
-                    <RoleIcon role={r} size={10} />
-                    {ROLE_LABELS[r]}
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
+      <select
+        value={target}
+        onChange={e => setTarget(e.target.value)}
+        style={{
+          padding: '4px 8px',
+          background: 'var(--surface-elevated)',
+          border: '1.5px solid var(--border-subtle)',
+          color: 'var(--text-secondary)',
+          fontFamily: 'var(--f-display)', fontSize: 10, letterSpacing: '0.1em',
+          cursor: 'pointer', outline: 'none', flexShrink: 0,
+        }}
+      >
+        <option value="enemy">ENNEMI</option>
+        {ROLES.map(r => <option key={r} value={r}>{ROLE_SHORT[r]}</option>)}
+      </select>
 
-        <div className="flex items-center gap-1 px-2 border-l border-border-subtle">
-          <button
-            onClick={prev}
-            disabled={activeIndex === 0}
-            title="Étape précédente"
-            aria-label="Étape précédente"
-            className="w-7 h-7 flex items-center justify-center rounded-sm text-txt-muted hover:text-txt-primary hover:bg-surface-elevated disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-          >
-            <Undo2 size={13} />
-          </button>
-          <button
-            onClick={skip}
-            disabled={activeIndex >= DRAFT_SEQUENCE.length - 1}
-            title="Passer l'étape"
-            aria-label="Passer l'étape"
-            className="w-7 h-7 flex items-center justify-center rounded-sm text-txt-muted hover:text-txt-primary hover:bg-surface-elevated disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-          >
-            <SkipForward size={13} />
-          </button>
-        </div>
-      </div>
-
-      {/* Search + autocomplete */}
-      <div className="relative">
+      <div style={{ flex: 1, position: 'relative' }}>
         <input
           ref={inputRef}
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onKeyDown={onKeyDown}
-          disabled={!activeStep}
-          placeholder={activeStep ? `Tapez un champion pour ${stepLabel.toLowerCase()}…` : 'Draft complet'}
-          autoFocus
-          aria-label="Saisie rapide champion"
-          className="w-full bg-transparent px-3.5 py-2.5 text-sm text-txt-primary placeholder:text-txt-muted
-                     focus:outline-none focus:bg-surface-elevated/40 transition-colors tabular-nums"
+          onChange={e => setQuery(e.target.value)}
+          placeholder="Champion rapide..."
+          style={{
+            width: '100%', padding: '5px 10px',
+            background: 'var(--surface-elevated)',
+            border: '1.5px solid var(--border-subtle)',
+            color: 'var(--text-primary)',
+            fontFamily: 'var(--f-mono)', fontSize: 11,
+            outline: 'none', transition: 'border-color 0.1s',
+          }}
+          onFocus={e => e.target.style.borderColor = 'var(--accent)'}
+          onBlur={e => e.target.style.borderColor = 'var(--border-subtle)'}
+          onKeyDown={e => {
+            if (e.key === 'Escape') setQuery('');
+            if (e.key === 'Enter' && matches.length >= 1) handleSelect(matches[0]);
+          }}
         />
 
         {matches.length > 0 && (
-          <div
-            className="absolute top-full left-0 right-0 z-30 bg-surface-card border border-border-default
-                       rounded-sm shadow-lg mt-0.5 overflow-hidden"
-            role="listbox"
-          >
-            {matches.map((c, i) => (
+          <div style={{
+            position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50,
+            background: 'var(--surface-overlay)',
+            border: '2px solid var(--border-default)',
+            boxShadow: '4px 4px 0 var(--accent)',
+          }}>
+            {matches.map(c => (
               <button
                 key={c.id}
-                onMouseEnter={() => setCursor(i)}
-                onClick={() => commit(c)}
-                role="option"
-                aria-selected={cursor === i}
-                className={`w-full flex items-center gap-2.5 px-3 py-1.5 text-left transition-colors ${
-                  cursor === i ? 'bg-accent-muted text-txt-primary' : 'text-txt-secondary hover:bg-surface-hover'
-                }`}
+                onMouseDown={() => handleSelect(c)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  width: '100%', padding: '6px 10px',
+                  background: 'transparent', border: 'none',
+                  color: 'var(--text-primary)', cursor: 'pointer',
+                  transition: 'background 0.1s', textAlign: 'left',
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = 'var(--accent-muted)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
               >
-                <img src={c.image_url} alt="" className="w-6 h-6 rounded-xs object-cover shrink-0" loading="lazy" />
-                <span className="text-[13px] font-medium truncate flex-1">{c.name}</span>
-                {c.roles?.slice(0, 2).map((r) => (
-                  <RoleIcon key={r} role={r} size={11} className="text-txt-muted" />
-                ))}
-                {cursor === i && (
-                  <span className="font-mono text-[9px] text-accent/70 uppercase tracking-widest-2">↵</span>
-                )}
+                <img src={getDDragonChampUrl(c.key)} alt={c.name} style={{ width: 24, height: 24, objectFit: 'cover', flexShrink: 0 }}/>
+                <span style={{ fontFamily: 'var(--f-display)', fontSize: 12, letterSpacing: '0.06em' }}>{c.name}</span>
               </button>
             ))}
           </div>
         )}
       </div>
-
-      {/* Help strip */}
-      {query && matches.length === 0 && (
-        <div className="px-3.5 py-2 text-[11px] text-txt-muted border-t border-border-subtle">
-          Aucun champion — vérifiez qu'il n'est pas déjà ban/pick.
-        </div>
-      )}
-      {!query && (
-        <div className="px-3.5 py-1.5 text-[9px] font-mono uppercase tracking-widest-2 text-txt-muted
-                        border-t border-border-subtle flex items-center gap-3">
-          <span>↑↓ naviguer</span>
-          <span>↵ valider</span>
-          {isAllyPick && emptyRoles.length > 1 && <span>tab = rôle</span>}
-          <span>esc effacer</span>
-        </div>
-      )}
     </div>
   );
 }

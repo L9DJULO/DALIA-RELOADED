@@ -76,6 +76,19 @@ htmlcov/
 *.bak
 *.tmp
 *.temp
+*.save
 nul
+null
 
-.claude
+# ── Local-only / agent ──
+.claude/
+CLAUDE_CONTEXT.md
+
+# ── Root-level junk (lockfiles only belong in client/) ──
+/package-lock.json
+/yarn.lock
+/pnpm-lock.yaml
+
+# ── Tauri generated schemas ──
+client/src-tauri/gen/schemas/
+

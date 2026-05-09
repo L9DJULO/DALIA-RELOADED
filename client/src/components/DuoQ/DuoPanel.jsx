@@ -1,299 +1,262 @@
-/**
- * DuoQ Panel -- Link with a friend, toggle duo mode, see partner info.
- * Premium glass UI with violet accent.
- */
-import { useEffect, useState, useCallback } from 'react';
-import {
-  Users, Link2, Unlink, Copy, Check, RefreshCw,
-  ChevronDown, ChevronUp, Sparkles, Shield, AlertTriangle,
-} from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Users, Copy, Link2, Link2Off, RefreshCw, CheckCircle2, AlertCircle } from 'lucide-react';
 import useDuoStore from '../../stores/duoStore';
-import RoleIcon from '../RoleIcon';
-import { ROLES, ROLE_LABELS, getDDragonChampUrl } from '../../lib/constants';
+import { ROLES } from '../../lib/constants';
+
+const ROLE_SHORT = { top: 'TOP', jungle: 'JGL', mid: 'MID', bot: 'ADC', support: 'SUP' };
 
 export default function DuoPanel({ embedded = false }) {
   const {
-    duoActive, myCode, linked, partner, partnerPool, partnerRole,
-    loading, error,
-    loadDuoState, regenerateCode, linkWithCode, unlink,
-    toggleDuoActive, setPartnerRole,
+    duoActive, myCode, linked, partner, partnerRole,
+    loading, linking, error,
+    loadDuoState, linkWithCode, unlink, toggleDuoActive,
+    setPartnerRole, regenerateCode, clearError,
   } = useDuoStore();
 
-  const [friendCode, setFriendCode] = useState('');
+  const [linkCode, setLinkCode] = useState('');
   const [copied, setCopied] = useState(false);
-  const [showPool, setShowPool] = useState(false);
-  const [linkError, setLinkError] = useState('');
 
   useEffect(() => {
     loadDuoState();
-  }, [loadDuoState]);
+  }, []);
 
-  const handleCopy = useCallback(() => {
+  const handleCopy = () => {
     if (!myCode) return;
-    navigator.clipboard.writeText(myCode);
+    navigator.clipboard.writeText(myCode).catch(() => {});
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  }, [myCode]);
+  };
 
-  const handleLink = useCallback(async () => {
-    if (!friendCode.trim()) return;
-    setLinkError('');
-    const ok = await linkWithCode(friendCode.trim());
-    if (ok) {
-      setFriendCode('');
-    } else {
-      setLinkError(useDuoStore.getState().error || 'Erreur');
-    }
-  }, [friendCode, linkWithCode]);
+  const handleLink = async () => {
+    const ok = await linkWithCode(linkCode);
+    if (ok) setLinkCode('');
+  };
 
-  const handleUnlink = useCallback(async () => {
-    await unlink();
-  }, [unlink]);
+  const containerStyle = embedded
+    ? { padding: 16, overflow: 'auto', height: '100%', background: 'var(--ink-0)' }
+    : { padding: 32, maxWidth: 520, margin: '0 auto' };
 
-  const content = (
-    <div className={embedded ? 'space-y-5' : 'max-w-2xl mx-auto p-6 space-y-5'}>
-        {/* Server error banner */}
-        {error && !linked && (
-          <div className="glass-card p-4 border-red-500/15 bg-red-500/[0.03] animate-fade-in-up">
-            <div className="flex items-start gap-2.5">
-              <AlertTriangle size={14} className="text-red-400 shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <p className="text-[12px] text-red-400 font-medium">{error}</p>
-                <button
-                  onClick={loadDuoState}
-                  disabled={loading}
-                  className="mt-2 flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium bg-surface-elevated text-txt-secondary border border-border-subtle hover:border-red-400/30 transition-colors"
-                >
-                  <RefreshCw size={10} className={loading ? 'animate-spin' : ''} />
-                  Réessayer
-                </button>
-              </div>
-            </div>
-          </div>
+  const SE_LBL = {
+    fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--accent)',
+    letterSpacing: '0.18em', marginBottom: 8, textTransform: 'uppercase',
+    paddingBottom: 4, borderBottom: '1.5px solid var(--accent)',
+  };
+
+  return (
+    <div style={containerStyle}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+        <Users size={16} style={{ color: 'var(--accent)' }}/>
+        <span style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 18, letterSpacing: '0.18em', color: 'var(--bone-0)' }}>DUO Q</span>
+        <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--bone-3)', letterSpacing: '0.1em' }}>/ ANALYSE PARTENAIRE</span>
+        {linked && (
+          <button
+            onClick={toggleDuoActive}
+            style={{
+              marginLeft: 'auto', padding: '5px 14px',
+              fontFamily: 'var(--f-display)', fontSize: 10, fontWeight: 700, letterSpacing: '0.14em',
+              background: duoActive ? 'var(--accent)' : 'var(--ink-3)',
+              color: duoActive ? 'var(--accent-ink)' : 'var(--bone-2)',
+              border: `1.5px solid ${duoActive ? 'var(--accent)' : 'var(--ink-5)'}`,
+              cursor: 'pointer', transition: 'all 0.1s',
+              boxShadow: duoActive ? '2px 2px 0 var(--ink-0)' : 'none',
+            }}
+          >
+            {duoActive ? '▸ ACTIF' : 'ACTIVER'}
+          </button>
         )}
+      </div>
 
-        {/* Header */}
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-accent-muted border border-accent/20 flex items-center justify-center">
-            <Users size={20} className="text-accent" />
-          </div>
-          <div>
-            <h1 className="text-lg font-bold text-txt-primary">DuoQ</h1>
-            <p className="text-xs text-txt-muted">
-              Lie-toi avec un partenaire pour booster vos recommandations de synergie
-            </p>
-          </div>
-          {linked && (
-            <button
-              onClick={toggleDuoActive}
-              className={`ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
-                duoActive
-                  ? 'bg-accent text-white shadow-glow'
-                  : 'bg-surface-elevated text-txt-secondary border border-border-subtle hover:border-accent/30'
-              }`}
-            >
-              <Sparkles size={13} />
-              {duoActive ? 'Duo Actif' : 'Duo Inactif'}
-            </button>
-          )}
-        </div>
-
-        {/* My Code */}
-        <div className="glass-card p-5 space-y-4">
-          <div className="section-label">Mon code duo</div>
-          <div className="flex items-center gap-2.5">
-            <div className="flex-1 bg-surface-elevated rounded-xl px-4 py-3 font-mono text-xl tracking-[0.35em] text-accent text-center select-all border border-border-subtle">
-              {myCode || '------'}
+      {/* Error */}
+      {error && (
+        <div style={{
+          marginBottom: 14, padding: '10px 14px',
+          background: 'rgba(255,40,50,0.08)', border: '1.5px solid rgba(255,40,50,0.4)',
+          display: 'flex', gap: 10, alignItems: 'flex-start',
+        }}>
+          <AlertCircle size={13} style={{ color: 'var(--bad)', flexShrink: 0, marginTop: 1 }}/>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--bad)' }}>
+              {typeof error === 'string' ? error : error.message}
             </div>
+            <button onClick={clearError} style={{
+              background: 'none', border: 'none', color: 'var(--bone-3)',
+              fontFamily: 'var(--f-mono)', fontSize: 10, cursor: 'pointer', marginTop: 4, padding: 0,
+            }}>FERMER ×</button>
+          </div>
+        </div>
+      )}
+
+      {/* My code */}
+      <div style={{
+        marginBottom: 16, padding: '14px 16px',
+        background: 'var(--ink-2)', border: 'var(--edge-weight) solid var(--ink-5)',
+      }}>
+        <div style={SE_LBL}>Mon code duo</div>
+        {loading && !myCode ? (
+          <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--bone-3)' }}>Chargement...</div>
+        ) : myCode ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{
+              flex: 1, padding: '10px 14px',
+              background: 'var(--ink-3)',
+              border: '1.5px solid var(--ink-5)',
+              fontFamily: 'var(--f-mono)', fontWeight: 700, fontSize: 22,
+              letterSpacing: '0.35em', color: 'var(--accent)', textAlign: 'center',
+            }}>{myCode}</div>
             <button
               onClick={handleCopy}
-              className="btn-secondary w-10 h-10 !p-0"
               title="Copier"
+              style={{
+                padding: '10px 13px',
+                background: copied ? 'rgba(38,255,110,0.10)' : 'var(--ink-3)',
+                border: `1.5px solid ${copied ? 'rgba(38,255,110,0.4)' : 'var(--ink-5)'}`,
+                color: copied ? '#26ff6e' : 'var(--bone-2)',
+                cursor: 'pointer', transition: 'all 0.1s', display: 'flex',
+              }}
             >
-              {copied ? <Check size={16} className="text-emerald-400" /> : <Copy size={16} />}
+              {copied ? <CheckCircle2 size={14}/> : <Copy size={14}/>}
             </button>
             <button
               onClick={regenerateCode}
-              className="btn-secondary w-10 h-10 !p-0"
-              title="Regenerer"
+              title="Régénérer"
+              style={{
+                padding: '10px 13px',
+                background: 'var(--ink-3)', border: '1.5px solid var(--ink-5)',
+                color: 'var(--bone-2)', cursor: 'pointer', display: 'flex',
+              }}
             >
-              <RefreshCw size={16} />
+              <RefreshCw size={14}/>
             </button>
           </div>
-          <p className="text-[11px] text-txt-muted leading-relaxed">
-            Partage ce code a ton ami pour vous lier en duo. Les recommandations prendront en compte vos champion pools respectifs.
-          </p>
-        </div>
-
-        {/* Link Section */}
-        {!linked ? (
-          <div className="glass-card p-5 space-y-3">
-            <div className="section-label">{"Code d'un ami"}</div>
-            <div className="flex items-center gap-2.5">
-              <input
-                type="text"
-                value={friendCode}
-                onChange={(e) => setFriendCode(e.target.value.toUpperCase())}
-                placeholder="ABC123"
-                maxLength={8}
-                className="input-field flex-1 font-mono tracking-[0.25em] text-center text-lg"
-                onKeyDown={(e) => e.key === 'Enter' && handleLink()}
-              />
-              <button
-                onClick={handleLink}
-                disabled={!friendCode.trim() || loading}
-                className="btn-primary flex items-center gap-2"
-              >
-                <Link2 size={15} />
-                Lier
-              </button>
-            </div>
-            {(linkError || error) && (
-              <p className="text-xs text-red-400">{linkError || error}</p>
-            )}
-          </div>
         ) : (
-          <>
-            {/* Partner Info */}
-            <div className="glass-card p-5 space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-accent-muted flex items-center justify-center">
-                    <Shield size={18} className="text-accent" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-txt-primary">{partner?.username}</p>
-                    <p className="text-[11px] text-txt-muted">
-                      Lie depuis {partner?.linked_since
-                        ? new Date(partner.linked_since).toLocaleDateString('fr-FR')
-                        : '...'}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={handleUnlink}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs text-red-400 border border-red-500/20 hover:bg-red-500/10 transition-colors"
-                  title="Se delier"
-                >
-                  <Unlink size={13} />
-                  Delier
-                </button>
-              </div>
-
-              {/* Partner Role Selector */}
-              <div>
-                <div className="section-label mb-2">Role du partenaire</div>
-                <div className="flex gap-1.5">
-                  {ROLES.map((role) => (
-                    <button
-                      key={role}
-                      onClick={() => setPartnerRole(role)}
-                      className={`flex-1 flex flex-col items-center gap-1 py-2.5 rounded-xl text-xs font-medium transition-all duration-200 ${
-                        partnerRole === role
-                          ? 'bg-accent text-white shadow-glow'
-                          : 'bg-surface-elevated text-txt-muted hover:text-txt-secondary border border-border-subtle hover:border-accent/30'
-                      }`}
-                    >
-                      <RoleIcon role={role} size={16} className={partnerRole === role ? 'text-white' : ''} />
-                      <span className="text-[10px]">{ROLE_LABELS[role]}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Partner Pool Preview */}
-              {partnerPool && (
-                <div>
-                  <button
-                    onClick={() => setShowPool(!showPool)}
-                    className="flex items-center gap-1.5 section-label hover:text-txt-secondary transition-colors cursor-pointer"
-                  >
-                    Pool du partenaire
-                    {showPool ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-                  </button>
-                  {showPool && partnerRole && (
-                    <div className="mt-2.5 flex flex-wrap gap-1.5 animate-fade-in-up">
-                      {(partnerPool[partnerRole] || []).length === 0 ? (
-                        <p className="text-[11px] text-txt-muted italic">
-                          Aucun champion pour ce role
-                        </p>
-                      ) : (
-                        (partnerPool[partnerRole] || []).map((entry) => (
-                          <div
-                            key={entry.champion_id}
-                            className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-surface-elevated border border-border-subtle text-xs"
-                          >
-                            <img
-                              src={getDDragonChampUrl(entry.champion_key)}
-                              alt={entry.champion_key}
-                              className="w-6 h-6 rounded-lg"
-                              onError={(e) => { e.target.style.display = 'none'; }}
-                            />
-                            <span className="text-txt-secondary font-medium">{entry.champion_key}</span>
-                            <span className={`text-[10px] font-bold ${
-                              entry.tier === 'S' ? 'text-red-400' :
-                              entry.tier === 'A' ? 'text-orange-400' :
-                              entry.tier === 'B' ? 'text-amber-400' :
-                              entry.tier === 'C' ? 'text-blue-400' :
-                              'text-txt-muted'
-                            }`}>
-                              {entry.tier}
-                            </span>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* DuoQ Mode Info */}
-            {duoActive && (
-              <div className="glass-card p-4 border-accent/15 bg-accent/[0.03] animate-fade-in-up">
-                <p className="text-[12px] text-accent/80 leading-relaxed">
-                  <Sparkles size={12} className="inline mr-1.5 text-accent" />
-                  Mode DuoQ actif -- la synergie avec <strong className="text-accent">{partner?.username}</strong> ({ROLE_LABELS[partnerRole] || '?'}) est fortement priorisee dans les recommandations.
-                </p>
-              </div>
-            )}
-          </>
+          <button
+            onClick={loadDuoState}
+            style={{
+              padding: '7px 16px',
+              fontFamily: 'var(--f-display)', fontSize: 11, letterSpacing: '0.12em',
+              background: 'var(--ink-3)', color: 'var(--bone-1)',
+              border: '1.5px solid var(--ink-5)', cursor: 'pointer',
+            }}
+          >Charger</button>
         )}
+      </div>
 
-        {/* How it works */}
-        <div className="glass-card p-5">
-          <div className="section-label mb-3">Comment ca marche</div>
-          <div className="space-y-2.5 text-[12px] text-txt-secondary leading-relaxed">
-            <div className="flex items-start gap-2.5">
-              <div className="w-5 h-5 rounded-lg bg-accent-muted flex items-center justify-center shrink-0 mt-0.5">
-                <span className="text-[10px] text-accent font-bold">1</span>
+      {/* Link / Partner */}
+      {!linked ? (
+        <div style={{
+          padding: '14px 16px',
+          background: 'var(--ink-2)', border: 'var(--edge-weight) solid var(--ink-5)',
+          marginBottom: 16,
+        }}>
+          <div style={SE_LBL}>Entrer le code du partenaire</div>
+          <div style={{ display: 'flex', gap: 0 }}>
+            <input
+              value={linkCode}
+              onChange={e => setLinkCode(e.target.value.toUpperCase())}
+              placeholder="CODE DUO..."
+              maxLength={8}
+              style={{
+                flex: 1, padding: '10px 14px',
+                background: 'var(--ink-3)',
+                border: '1.5px solid var(--ink-5)', borderRight: 0,
+                color: 'var(--bone-0)',
+                fontFamily: 'var(--f-mono)', fontWeight: 700, fontSize: 18,
+                letterSpacing: '0.3em', outline: 'none',
+              }}
+              onFocus={e => e.target.style.borderColor = 'var(--accent)'}
+              onBlur={e => e.target.style.borderColor = 'var(--ink-5)'}
+              onKeyDown={e => { if (e.key === 'Enter') handleLink(); }}
+            />
+            <button
+              onClick={handleLink}
+              disabled={linking || !linkCode.trim()}
+              style={{
+                padding: '10px 20px',
+                background: (linking || !linkCode.trim()) ? 'var(--ink-3)' : 'var(--accent)',
+                color: (linking || !linkCode.trim()) ? 'var(--bone-3)' : 'var(--accent-ink)',
+                border: 'var(--edge-weight) solid var(--bone-0)',
+                fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 11, letterSpacing: '0.15em',
+                cursor: (linking || !linkCode.trim()) ? 'not-allowed' : 'pointer',
+                display: 'flex', alignItems: 'center', gap: 6,
+                boxShadow: (linking || !linkCode.trim()) ? 'none' : '2px 2px 0 var(--ink-0)',
+              }}
+            >
+              <Link2 size={12}/>{linking ? '...' : 'LIER'}
+            </button>
+          </div>
+        </div>
+      ) : (
+        /* Partner card */
+        <div style={{
+          padding: '14px 16px',
+          background: 'var(--ink-2)',
+          border: 'var(--edge-weight) solid var(--bone-0)',
+          marginBottom: 16,
+          boxShadow: '4px 4px 0 var(--accent)',
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
+            <div>
+              <div style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 18, letterSpacing: '0.08em', color: 'var(--bone-0)' }}>
+                {partner?.username || '—'}
               </div>
-              <span>Partage ton code duo avec ton partenaire, ou entre le sien.</span>
+              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: '#26ff6e', marginTop: 4, display: 'flex', alignItems: 'center', gap: 5 }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#26ff6e', display: 'inline-block', boxShadow: '0 0 4px #26ff6e' }}/>LIÉ
+              </div>
             </div>
-            <div className="flex items-start gap-2.5">
-              <div className="w-5 h-5 rounded-lg bg-accent-muted flex items-center justify-center shrink-0 mt-0.5">
-                <span className="text-[10px] text-accent font-bold">2</span>
-              </div>
-              <span>Une fois lies, selectionnez vos roles respectifs.</span>
+            <button
+              onClick={unlink}
+              disabled={linking}
+              style={{
+                padding: '5px 12px',
+                background: 'rgba(255,40,50,0.08)', border: '1.5px solid rgba(255,40,50,0.4)',
+                color: 'var(--bad)',
+                fontFamily: 'var(--f-display)', fontSize: 10, letterSpacing: '0.1em',
+                cursor: linking ? 'not-allowed' : 'pointer',
+                display: 'flex', alignItems: 'center', gap: 5,
+              }}
+            >
+              <Link2Off size={11}/> DÉLIER
+            </button>
+          </div>
+
+          {/* Partner role */}
+          <div>
+            <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--bone-3)', letterSpacing: '0.15em', marginBottom: 8 }}>
+              RÔLE DU PARTENAIRE
             </div>
-            <div className="flex items-start gap-2.5">
-              <div className="w-5 h-5 rounded-lg bg-accent-muted flex items-center justify-center shrink-0 mt-0.5">
-                <span className="text-[10px] text-accent font-bold">3</span>
-              </div>
-              <span>Activez le mode DuoQ pour que DALIA priorise la synergie entre vos champion pools dans les recommandations.</span>
+            <div style={{ display: 'flex', gap: 4 }}>
+              {ROLES.map(r => (
+                <button
+                  key={r}
+                  onClick={() => setPartnerRole(r)}
+                  style={{
+                    flex: 1, padding: '6px 0',
+                    fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 9, letterSpacing: '0.1em',
+                    background: partnerRole === r ? 'var(--accent)' : 'var(--ink-3)',
+                    color: partnerRole === r ? 'var(--accent-ink)' : 'var(--bone-2)',
+                    border: `1.5px solid ${partnerRole === r ? 'var(--accent)' : 'var(--ink-5)'}`,
+                    cursor: 'pointer', transition: 'all 0.1s',
+                  }}
+                >
+                  {ROLE_SHORT[r]}
+                </button>
+              ))}
             </div>
           </div>
         </div>
-      </div>
-  );
+      )}
 
-  if (embedded) {
-    return <div className="p-5 overflow-y-auto">{content}</div>;
-  }
-
-  return (
-    <div className="h-[calc(100vh-3rem)] overflow-y-auto">
-      {content}
+      {!linked && !loading && (
+        <div style={{
+          fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--bone-3)',
+          lineHeight: 1.8, padding: '0 2px', letterSpacing: '0.04em',
+          borderLeft: '2px solid var(--ink-5)', paddingLeft: 12,
+        }}>
+          Partage ton code à ton duo. Il entre ton code et vous êtes liés.<br/>
+          Active le mode <span style={{ color: 'var(--accent)', letterSpacing: '0.12em' }}>DUO Q</span> pour booster les synergies dans l'analyse.
+        </div>
+      )}
     </div>
   );
 }

@@ -1,0 +1,123 @@
+{
+  "_comment": "Curated kit-pattern tags for the edge-case engine. Keys = DDragon champion keys (case-insensitive). One champion can have many tags. Used by app.services.edge_cases to evaluate triggers; values are NOT used for matchup math directly.",
+
+  "hard_cc": [
+    "Leona", "Nautilus", "Malphite", "Sejuani", "Ornn", "Amumu", "Skarner",
+    "Lissandra", "Veigar", "Morgana", "Lux", "Anivia", "Cassiopeia", "Rell",
+    "Alistar", "Blitzcrank", "Thresh", "Pyke", "Zoe", "Ahri", "Maokai",
+    "JarvanIV", "Wukong", "Hecarim", "Nocturne", "Sylas", "Galio", "Zac",
+    "Gragas", "Trundle", "Poppy", "Braum", "TahmKench", "Ashe", "Varus",
+    "Annie", "Nami", "Sona", "Taric", "Renata", "Rakan", "Neeko", "Diana",
+    "RekSai", "Vi", "Zilean", "Lulu", "Volibear", "Olaf", "Singed",
+    "Cho'Gath", "Chogath", "Shen", "Yorick", "Urgot", "MasterYi"
+  ],
+
+  "auto_attacker_dependent": [
+    "Jinx", "Aphelios", "KogMaw", "Twitch", "Tristana", "Vayne", "Yasuo",
+    "Yone", "MasterYi", "Tryndamere", "Kayle", "Caitlyn", "Sivir", "Ashe",
+    "Jhin", "Draven", "Kalista", "Lucian", "Kaisa", "Senna", "Xayah",
+    "MissFortune", "Quinn", "Varus", "Nilah", "Smolder", "Zeri", "Akshan",
+    "Twitch"
+  ],
+
+  "immobile": [
+    "Caitlyn", "Senna", "Sivir", "Cassiopeia", "Veigar", "Karthus", "Soraka",
+    "Janna", "Nami", "Jinx", "KogMaw", "Ashe", "MissFortune", "Varus",
+    "Xerath", "Ziggs", "Vladimir", "Anivia", "Zilean", "Brand", "Twitch",
+    "Sona", "Yuumi", "Lux", "Velkoz", "Heimerdinger", "Annie", "Malzahar",
+    "Swain", "Aphelios", "Smolder"
+  ],
+
+  "dash_blink": [
+    "Yasuo", "Yone", "Akali", "Fizz", "Zed", "Ezreal", "Tristana", "Camille",
+    "Riven", "Irelia", "LeeSin", "Lucian", "Vayne", "Vi", "JarvanIV", "Kayn",
+    "Zac", "Gragas", "Hecarim", "Nidalee", "Khazix", "Talon", "Qiyana",
+    "Diana", "Ahri", "Katarina", "Kassadin", "Renekton", "Pantheon",
+    "Wukong", "Aatrox", "Jax", "MonkeyKing", "Kalista", "Kaisa", "Xayah",
+    "Sett", "Naafiri", "RekSai", "Olaf", "MasterYi", "Briar", "Warwick"
+  ],
+
+  "engage_primary": [
+    "Malphite", "Sejuani", "Leona", "Nautilus", "Amumu", "Hecarim",
+    "JarvanIV", "Rell", "Rakan", "Alistar", "Blitzcrank", "Thresh",
+    "Wukong", "Maokai", "Zac", "Vi", "Gragas", "Diana", "Galio", "Sett",
+    "Skarner", "Sylas", "Nocturne", "Kennen", "Ornn", "Singed", "Volibear",
+    "MonkeyKing", "Shen", "Pantheon"
+  ],
+
+  "disengage_kite": [
+    "Janna", "Lulu", "Jinx", "Caitlyn", "Sivir", "Ezreal", "Anivia",
+    "Tristana", "Karma", "Nami", "Soraka", "Yuumi", "Renata", "Zilean",
+    "Bard", "Morgana", "Lux", "Ashe", "Senna", "Heimerdinger", "Velkoz",
+    "Xerath", "Zoe"
+  ],
+
+  "squishy_carry": [
+    "Caitlyn", "Jinx", "Ezreal", "Aphelios", "KogMaw", "Twitch", "Tristana",
+    "Vayne", "Senna", "Ashe", "Jhin", "Draven", "MissFortune", "Sivir",
+    "Kalista", "Lucian", "Kaisa", "Xayah", "Varus", "Nilah", "Zeri",
+    "Smolder", "Quinn",
+    "Lux", "Veigar", "Syndra", "Orianna", "Ahri", "Zoe", "Ziggs", "Xerath",
+    "Anivia", "Cassiopeia", "Karthus", "Malzahar", "Velkoz", "TwistedFate",
+    "Leblanc", "Vex", "Hwei", "Akali", "Zed", "Katarina", "Talon", "Fizz",
+    "Diana", "Khazix", "Qiyana", "Naafiri"
+  ],
+
+  "burst_threat": [
+    "Zed", "Akali", "Fizz", "Khazix", "Talon", "Katarina", "Qiyana", "Diana",
+    "Leblanc", "Veigar", "Syndra", "Annie", "Brand", "Vex", "Naafiri",
+    "AurelionSol", "Pantheon", "Nocturne", "Rengar", "Evelynn", "Kassadin"
+  ],
+
+  "tank_frontline": [
+    "Malphite", "Ornn", "Sejuani", "Amumu", "Maokai", "Rammus", "Leona",
+    "Nautilus", "Rell", "Alistar", "Braum", "Shen", "Cho'Gath", "Chogath",
+    "Sion", "Singed", "Zac", "Skarner", "Galio", "Poppy", "TahmKench",
+    "DrMundo", "Volibear", "KSante"
+  ],
+
+  "hyper_carry_late": [
+    "Vayne", "KogMaw", "Tristana", "Jinx", "Twitch", "Kayle", "Smolder",
+    "Aphelios", "Kassadin", "Veigar", "Nasus", "MasterYi", "Senna"
+  ],
+
+  "needs_protection": [
+    "Vayne", "KogMaw", "Tristana", "Jinx", "Twitch", "Kayle", "Aphelios",
+    "Smolder", "Senna", "Caitlyn", "Sivir"
+  ],
+
+  "poke_lane": [
+    "Caitlyn", "Ezreal", "Varus", "Jhin", "Xerath", "Ziggs", "Zoe",
+    "Velkoz", "Heimerdinger", "Nidalee", "Lux", "Brand", "Karma", "Vel'Koz"
+  ],
+
+  "no_engage_kit": [
+    "Jinx", "Caitlyn", "Sivir", "Ezreal", "KogMaw", "Twitch", "Tristana",
+    "Aphelios", "Senna", "Smolder", "Karthus", "Janna", "Lulu", "Soraka",
+    "Yuumi", "Anivia", "Cassiopeia", "Veigar", "Karma", "Nami", "Zilean",
+    "Heimerdinger", "Xerath", "Ziggs", "Velkoz"
+  ],
+
+  "execute_revive": [
+    "Akshan", "Zilean", "Kindred", "Anivia", "Karthus", "Aatrox", "Tryndamere"
+  ],
+
+  "double_tap_synergy": [
+    "TahmKench", "Tahm Kench", "Lulu", "Janna", "Yuumi", "Soraka", "Senna"
+  ],
+
+  "knockup_source": [
+    "Malphite", "Alistar", "Gragas", "Zac", "Wukong", "MonkeyKing", "Vi",
+    "Sejuani", "JarvanIV", "Nautilus", "Rell", "Hecarim", "Kennen",
+    "Volibear", "Ornn", "RekSai", "Skarner", "Yasuo", "Yone"
+  ],
+
+  "anti_heal_kit": [
+    "Morgana", "MissFortune", "Varus", "Kayle", "Kled", "Olaf", "Talon"
+  ],
+
+  "sustain_target": [
+    "Soraka", "Yuumi", "Sona", "Aatrox", "Vladimir", "DrMundo", "Zac",
+    "Swain", "Nasus", "Mundo", "Kayn", "Warwick"
+  ]
+}

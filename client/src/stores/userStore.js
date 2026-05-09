@@ -138,6 +138,27 @@ const useUserStore = create(
           enableWildcard: true,
           weightOverrides: null,
         }),
+
+      // Full logout: clear token + user (authStore) + pool (here) + duo/etc.
+      // via the `dalia:logout` event that other stores listen to.
+      logout: () => {
+        // Cancel any pending pool auto-saves so they don't fire after logout
+        for (const k of Object.keys(_saveTimers)) {
+          clearTimeout(_saveTimers[k]);
+          delete _saveTimers[k];
+        }
+        set({
+          championPool: { top: [], jungle: [], mid: [], bot: [], support: [] },
+          preferredRoles: ['mid'],
+          enableWildcard: true,
+          weightOverrides: null,
+        });
+        try { localStorage.removeItem('dalia-user-store'); } catch {}
+        // Notify auth + duo + any other listener
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new Event('dalia:logout'));
+        }
+      },
     }),
     {
       name: 'dalia-user-store',

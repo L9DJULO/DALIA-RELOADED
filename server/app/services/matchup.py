@@ -150,8 +150,16 @@ class MatchupAnalyzer:
     async def score(self, champion_id: int, role: str, draft: DraftState) -> float:
         """Return 0-100 matchup score given current draft state.
 
-        Now uses cross-lane data: for each enemy we query vslane=<enemy_lane>
-        to get real Lolalytics win rates. Uses d2 (normalised delta) for scoring.
+        For each enemy, the matchup score is computed as an expectation over
+        the enemy's inferred role distribution (draft.role_distributions):
+            mu_score(enemy) = Σ_r P(enemy in r) × mu_score_at_role(r)
+
+        The "is_lane" weight (3× vs 1×) is similarly an expectation:
+            weight(enemy) = 3.0 × P(enemy in my role) + 1.0 × P(enemy elsewhere)
+
+        This makes flex picks like Naafiri (jgl 0.62 / mid 0.38) contribute
+        partially to the lane matchup instead of being deterministically
+        labelled jungle and ignored, or labelled mid and overrated.
         """
         if not draft.enemy_picks:
             return 50.0  # no information
@@ -165,27 +173,37 @@ class MatchupAnalyzer:
             if ep.champion_id is None:
                 continue
             opp_id = ep.champion_id
-            is_lane = ep.role == role
 
-            # Try to get real API data (same-lane or cross-lane)
-            mu_data = await self._get_matchup_data(champion_id, role, opp_id, ep.role)
+            dist = draft.role_distributions.get(opp_id) if draft.role_distributions else None
+            if not dist:
+                # No distribution → fall back to the pinned role (or argmax-equivalent)
+                dist = {ep.role: 1.0} if ep.role else {}
 
-            if mu_data is not None:
-                vs_wr, games, d1, d2 = mu_data
-                # Use d2 (normalised delta) — accounts for both champions' strengths
-                # d2=+5 means 5% better than expected → mu_score = 85
-                # d2=-5 means 5% worse → mu_score = 15
-                # d2=+1.4 (slight edge) → mu_score = 59.8
-                mu_score = 50.0 + d2 * 7.0
-                # Low sample size → pull toward 50
-                if games < 30:
-                    mu_score = mu_score * 0.6 + 50.0 * 0.4
-            else:
-                # No API data → use attribute-based estimation
-                mu_score, _ = self._estimate_matchup(champion_id, opp_id, is_lane)
+            # Empty distribution (truly unknown) — single neutral data point
+            if not dist:
+                weighted_scores.append((50.0, 1.0))
+                continue
 
-            weight = 3.0 if is_lane else 1.0
-            weighted_scores.append((_clamp(mu_score, 10.0, 90.0), weight))
+            # Expected matchup score and expected lane-weight
+            expected_score = 0.0
+            expected_weight = 0.0
+            for opp_role, p in dist.items():
+                if p <= 0:
+                    continue
+                is_lane = opp_role == role
+                mu_data = await self._get_matchup_data(champion_id, role, opp_id, opp_role)
+                if mu_data is not None:
+                    _, games, _, d2 = mu_data
+                    mu_score = 50.0 + d2 * 7.0
+                    if games < 30:
+                        mu_score = mu_score * 0.6 + 50.0 * 0.4
+                else:
+                    mu_score, _ = self._estimate_matchup(champion_id, opp_id, is_lane)
+                expected_score += p * _clamp(mu_score, 10.0, 90.0)
+                expected_weight += p * (3.0 if is_lane else 1.0)
+
+            if expected_weight > 0:
+                weighted_scores.append((expected_score, expected_weight))
 
         if not weighted_scores:
             return 50.0
@@ -196,7 +214,13 @@ class MatchupAnalyzer:
 
     # ── Details for UI ───────────────────────────────────────────────────
     async def details(self, champion_id: int, role: str, draft: DraftState) -> List[Dict]:
-        """Return per-enemy matchup breakdown with real cross-lane data."""
+        """Return per-enemy matchup breakdown.
+
+        Uses the most-likely role from draft.role_distributions when
+        available so the per-row delta reflects the dominant scenario, but
+        also surfaces the lane-probability so reasons.py can soften
+        "Lane favorable" wording for ambiguous flex picks.
+        """
         await self.load_matchups(champion_id, role)
         details = []
         for ep in draft.enemy_picks:
@@ -204,9 +228,17 @@ class MatchupAnalyzer:
                 continue
             opp = self.db.get_by_id(ep.champion_id)
             opp_name = opp.name if opp else str(ep.champion_id)
-            is_lane = ep.role == role
 
-            mu_data = await self._get_matchup_data(champion_id, role, ep.champion_id, ep.role)
+            dist = draft.role_distributions.get(ep.champion_id) if draft.role_distributions else None
+            lane_prob = dist.get(role, 0.0) if dist else (1.0 if ep.role == role else 0.0)
+            # Display role = argmax of distribution (or pinned role)
+            if dist:
+                display_role = max(dist.items(), key=lambda x: x[1])[0]
+            else:
+                display_role = ep.role or "?"
+            is_lane = display_role == role
+
+            mu_data = await self._get_matchup_data(champion_id, role, ep.champion_id, display_role)
 
             if mu_data is not None:
                 vs_wr, games, d1, d2 = mu_data
@@ -219,11 +251,13 @@ class MatchupAnalyzer:
 
             details.append({
                 "opponent_name": opp_name,
-                "opponent_role": ep.role or "?",
+                "opponent_role": display_role,
                 "win_rate": vs_wr,
                 "delta": delta,
                 "is_lane_opponent": is_lane,
                 "games": games,
+                "lane_probability": round(lane_prob, 2),
+                "role_distribution": {r: round(p, 2) for r, p in (dist or {}).items()},
             })
         return details
 

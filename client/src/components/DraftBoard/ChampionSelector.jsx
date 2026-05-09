@@ -1,134 +1,156 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Search, X } from 'lucide-react';
-import RoleIcon from '../RoleIcon';
-import { ROLES, ROLE_LABELS } from '../../lib/constants';
+import { X, Search } from 'lucide-react';
+import { getDDragonChampUrl } from '../../lib/constants';
 
 export default function ChampionSelector({ champions, unavailableIds, onSelect, onClose, target }) {
-  // Default to the target role if available, otherwise 'all'
-  const [search, setSearch] = useState('');
-  const [roleFilter, setRoleFilter] = useState(target?.role || 'all');
-  const panelRef = useRef(null);
+  const [query, setQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
+  const inputRef = useRef(null);
 
   useEffect(() => {
-    const handler = (e) => { if (e.key === 'Escape') onClose(); };
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
+    inputRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  const filtered = useMemo(() => {
-    let list = [...champions];
-    if (roleFilter !== 'all') {
-      list = list.filter((c) => c.roles?.includes(roleFilter));
-    }
-    if (search) {
-      const q = search.toLowerCase();
-      list = list.filter((c) => c.name.toLowerCase().includes(q));
-    }
-    list.sort((a, b) => {
-      const aUn = unavailableIds.has(a.id) ? 1 : 0;
-      const bUn = unavailableIds.has(b.id) ? 1 : 0;
-      if (aUn !== bUn) return aUn - bUn;
-      return a.name.localeCompare(b.name);
-    });
-    return list;
-  }, [champions, search, roleFilter, unavailableIds]);
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedQuery(query), 300);
+    return () => clearTimeout(id);
+  }, [query]);
 
-  const titleText = target?.type === 'ban'
-    ? `Ban ${target.team === 'blue' ? 'Blue' : 'Red'} #${(target.index || 0) + 1}`
-    : `Pick ${target?.role || '?'} (${target?.team || '?'})`;
+  const filtered = useMemo(() => {
+    const q = debouncedQuery.toLowerCase().trim();
+    return champions
+      .filter(c => !q || c.name.toLowerCase().includes(q) || c.id.toLowerCase().includes(q))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [champions, debouncedQuery]);
+
+  const isUnavailable = (id) => unavailableIds?.has(id);
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-      role="dialog"
-      aria-modal="true"
-      aria-label="Selection de champion"
+      style={{
+        position: 'fixed', inset: 0, zIndex: 100,
+        background: 'rgba(0,0,0,0.88)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}
+      onClick={onClose}
     >
       <div
-        ref={panelRef}
-        className="glass-panel w-[640px] max-h-[80vh] flex flex-col animate-scale-in"
+        style={{
+          width: 720, maxHeight: '82vh',
+          background: 'var(--surface-card)',
+          border: '2.5px solid #f0ebe0',
+          boxShadow: '8px 8px 0 var(--accent)',
+          display: 'flex', flexDirection: 'column',
+          animation: 'scaleIn 0.14s ease-out both',
+        }}
+        onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-border-subtle">
-          <div>
-            <div className="text-sm font-semibold text-txt-primary">{titleText}</div>
-            <div className="text-[11px] text-txt-muted">Selectionner un champion</div>
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 10,
+          padding: '12px 16px',
+          borderBottom: '2px solid var(--border-default)',
+          flexShrink: 0,
+        }}>
+          <div style={{ fontFamily: 'var(--f-display)', fontSize: 13, letterSpacing: '0.15em', color: 'var(--accent)', marginRight: 4 }}>
+            SÉLECTIONNER
+          </div>
+          <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center' }}>
+            <Search size={13} style={{ position: 'absolute', left: 10, color: 'var(--text-muted)', pointerEvents: 'none' }}/>
+            <input
+              ref={inputRef}
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              placeholder="Rechercher un champion..."
+              style={{
+                width: '100%', padding: '8px 12px 8px 32px',
+                background: 'var(--surface-elevated)',
+                border: '2px solid var(--border-subtle)',
+                color: 'var(--text-primary)',
+                fontFamily: 'var(--f-mono)', fontSize: 12,
+                outline: 'none',
+                transition: 'border-color 0.1s',
+              }}
+              onFocus={e => { e.target.style.borderColor = 'var(--accent)'; e.target.style.boxShadow = '3px 3px 0 var(--accent)'; }}
+              onBlur={e => { e.target.style.borderColor = 'var(--border-subtle)'; e.target.style.boxShadow = 'none'; }}
+            />
           </div>
           <button
             onClick={onClose}
-            aria-label="Fermer"
-            className="w-8 h-8 flex items-center justify-center rounded-lg text-txt-secondary hover:text-txt-primary hover:bg-surface-elevated transition-colors"
+            style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4, display: 'flex' }}
           >
-            <X size={18} />
+            <X size={18}/>
           </button>
         </div>
 
-        {/* Search + filters */}
-        <div className="p-4 space-y-3 border-b border-border-subtle">
-          <div className="relative">
-            <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-txt-muted" />
-            <input
-              autoFocus
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Rechercher..."
-              aria-label="Rechercher un champion"
-              className="input-field w-full pl-10 pr-3 py-2.5 text-sm"
-            />
-          </div>
-          <div className="flex gap-1.5">
-            {ROLES.map((r) => (
+        {/* Grid */}
+        <div style={{
+          flex: 1, overflowY: 'auto', padding: 12,
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(76px, 1fr))',
+          gap: 6, alignContent: 'start',
+        }}>
+          {filtered.map(c => {
+            const unavail = isUnavailable(c.id);
+            return (
               <button
-                key={r}
-                onClick={() => setRoleFilter(roleFilter === r ? 'all' : r)}
-                aria-pressed={roleFilter === r}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 border ${
-                  roleFilter === r
-                    ? 'bg-accent-muted text-accent border-accent/25'
-                    : 'text-txt-secondary hover:text-txt-primary hover:bg-surface-elevated border-transparent'
-                }`}
+                key={c.id}
+                onClick={() => !unavail && onSelect(c)}
+                disabled={unavail}
+                style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+                  padding: '6px 4px',
+                  background: 'var(--surface-elevated)',
+                  border: '1.5px solid var(--border-subtle)',
+                  cursor: unavail ? 'not-allowed' : 'pointer',
+                  opacity: unavail ? 0.3 : 1,
+                  transition: 'all 0.1s',
+                }}
+                onMouseEnter={e => {
+                  if (!unavail) {
+                    e.currentTarget.style.borderColor = 'var(--accent)';
+                    e.currentTarget.style.background = 'var(--accent-subtle)';
+                  }
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.borderColor = 'var(--border-subtle)';
+                  e.currentTarget.style.background = 'var(--surface-elevated)';
+                }}
               >
-                <RoleIcon role={r} size={13} />
-                {ROLE_LABELS[r]}
+                <img src={getDDragonChampUrl(c.key)} alt={c.name} style={{ width: 54, height: 54, objectFit: 'cover' }}/>
+                <span style={{
+                  fontFamily: 'var(--f-display)', fontSize: 9, letterSpacing: '0.07em',
+                  color: 'var(--text-secondary)', textAlign: 'center', lineHeight: 1.2,
+                  maxWidth: 68, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                }}>
+                  {c.name.toUpperCase()}
+                </span>
               </button>
-            ))}
-          </div>
+            );
+          })}
+          {filtered.length === 0 && (
+            <div style={{ gridColumn: '1/-1', padding: 32, textAlign: 'center', fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.08em' }}>
+              AUCUN RÉSULTAT
+            </div>
+          )}
         </div>
 
-        {/* Champion grid */}
-        <div className="flex-1 overflow-y-auto p-4">
-          <div className="grid grid-cols-8 gap-2">
-            {filtered.map((champ) => {
-              const disabled = unavailableIds.has(champ.id);
-              return (
-                <button
-                  key={champ.id}
-                  disabled={disabled}
-                  onClick={() => onSelect(champ)}
-                  aria-label={`${champ.name}${disabled ? ' (indisponible)' : ''}`}
-                  className={`relative rounded-xl overflow-hidden border transition-all duration-200 ${
-                    disabled
-                      ? 'opacity-20 cursor-not-allowed grayscale border-border-subtle'
-                      : 'border-border-subtle hover:border-accent hover:scale-105 hover:shadow-glow cursor-pointer'
-                  }`}
-                >
-                  <img
-                    src={champ.image_url}
-                    alt={champ.name}
-                    className="w-full aspect-square object-cover"
-                    loading="lazy"
-                  />
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/85 to-transparent
-                                  px-1 py-1 text-[9px] text-center truncate text-white font-medium">
-                    {champ.name}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
+        {/* Footer */}
+        <div style={{
+          padding: '8px 16px',
+          borderTop: '1px solid var(--border-subtle)',
+          fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--text-muted)',
+          letterSpacing: '0.08em', display: 'flex', gap: 16, flexShrink: 0,
+        }}>
+          <span>{filtered.length} champion{filtered.length !== 1 ? 's' : ''}</span>
+          {unavailableIds?.size > 0 && <span style={{ color: 'var(--loss)' }}>{unavailableIds.size} indisponibles</span>}
+          <span style={{ marginLeft: 'auto' }}>ESC pour fermer</span>
         </div>
       </div>
     </div>

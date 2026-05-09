@@ -1,118 +1,137 @@
 import React, { useState } from 'react';
-import { Outlet, NavLink, useLocation } from 'react-router-dom';
-import {
-  Swords, Users, Settings, LogOut, User,
-  Wifi, WifiOff, Gamepad2, Brain, ChevronRight,
-} from 'lucide-react';
+import { Outlet, NavLink } from 'react-router-dom';
+import { Swords, Users, Settings, LogOut, User, Gamepad2, Wifi, WifiOff, Brain } from 'lucide-react';
 import useAuthStore from '../stores/authStore';
 import useUserStore from '../stores/userStore';
 import useLCUStore from '../stores/lcuStore';
 import DaliaLogo from './DaliaLogo';
 
 const NAV = [
-  { to: '/draft', label: 'Draft', icon: Swords, desc: 'Draft Board' },
-  { to: '/pool', label: 'Pool', icon: Users, desc: 'Champion Pool' },
-  { to: '/insights', label: 'Insights', icon: Brain, desc: 'Stats & Historique' },
+  { to: '/draft',    label: 'Draft',    icon: Swords,  desc: 'Draft Board' },
+  { to: '/pool',     label: 'Pool',     icon: Users,   desc: 'Champion Pool' },
+  { to: '/insights', label: 'Insights', icon: Brain,   desc: 'Stats & Historique' },
 ];
-
 const BOTTOM_NAV = [
-  { to: '/settings', label: 'Paramètres', icon: Settings, desc: 'Settings' },
+  { to: '/settings', label: 'Settings', icon: Settings, desc: 'Paramètres' },
 ];
 
-/* ── Sidebar Navigation Item ── */
 function SidebarItem({ to, label, icon: Icon, desc }) {
   return (
     <NavLink
       to={to}
       aria-label={label}
-      className={({ isActive }) =>
-        `group relative flex items-center justify-center w-11 h-11 rounded-xl transition-all duration-200 ${
-          isActive
-            ? 'bg-accent text-white shadow-glow'
-            : 'text-txt-muted hover:text-txt-secondary hover:bg-surface-elevated'
-        }`
-      }
+      title={desc}
+      style={({ isActive }) => ({
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        width: 44, height: 44,
+        background: isActive ? 'var(--accent)' : 'transparent',
+        border: isActive ? '2px solid var(--text-primary)' : '2px solid transparent',
+        boxShadow: isActive ? '3px 3px 0 var(--text-primary)' : 'none',
+        color: isActive ? '#000' : 'var(--text-muted)',
+        transition: 'all 0.1s',
+        textDecoration: 'none',
+      })}
+      onMouseEnter={e => { if (!e.currentTarget.getAttribute('aria-current')) e.currentTarget.style.color = 'var(--text-primary)'; }}
+      onMouseLeave={e => { if (!e.currentTarget.getAttribute('aria-current')) e.currentTarget.style.color = 'var(--text-muted)'; }}
     >
-      {({ isActive }) => (
-        <>
-          <Icon size={20} strokeWidth={isActive ? 2.2 : 1.7} />
-          {/* Tooltip */}
-          <div className="pointer-events-none absolute left-full ml-3 px-2.5 py-1.5 rounded-lg
-                          bg-surface-overlay border border-border text-txt-primary text-xs font-medium
-                          opacity-0 group-hover:opacity-100 transition-opacity duration-150 whitespace-nowrap z-50
-                          shadow-lg">
-            {desc || label}
-            <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-surface-overlay" />
-          </div>
-        </>
-      )}
+      {({ isActive }) => <Icon size={18} strokeWidth={isActive ? 2.5 : 1.8}/>}
     </NavLink>
   );
 }
 
-/* ── LCU Status Badge ── */
 function LCUBadge() {
-  const lcuConnected = useLCUStore((s) => s.connected);
-  const lcuInChampSelect = useLCUStore((s) => s.inChampSelect);
-  const lcuGamePhase = useLCUStore((s) => s.gamePhase);
+  const connected     = useLCUStore(s => s.connected);
+  const inChampSelect = useLCUStore(s => s.inChampSelect);
 
-  const statusConfig = lcuConnected
-    ? lcuInChampSelect
-      ? { icon: Gamepad2, text: 'Champ Select', color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20', pulse: true }
-      : { icon: Wifi, text: 'LoL', color: 'text-txt-muted bg-surface-elevated border-border-subtle', pulse: false }
-    : { icon: WifiOff, text: 'LoL', color: 'text-txt-muted bg-transparent border-border-subtle', pulse: false };
-
-  const { icon: StatusIcon, text, color, pulse } = statusConfig;
+  const cfg = connected
+    ? inChampSelect
+      ? { Icon: Gamepad2, label: 'CHAMP SELECT', color: 'var(--win)', bg: 'var(--win-bg)', border: 'var(--win-border)', pulse: true }
+      : { Icon: Wifi,     label: 'LoL',          color: 'var(--text-muted)', bg: 'var(--surface-elevated)', border: 'var(--border-subtle)', pulse: false }
+    : { Icon: WifiOff,   label: 'LoL',            color: 'var(--text-muted)', bg: 'transparent', border: 'var(--border-subtle)', pulse: false };
 
   return (
     <div
-      className={`pill gap-1.5 ${color}`}
-      title={
-        lcuConnected
-          ? lcuInChampSelect
-            ? 'Connecte au client LoL -- Champ Select en cours'
-            : `Connecte au client LoL${lcuGamePhase ? ` -- ${lcuGamePhase}` : ''}`
-          : 'Client LoL non detecte'
-      }
+      className="pill"
+      title={connected ? (inChampSelect ? 'Champ Select en cours' : 'Client LoL connecté') : 'Client LoL non détecté'}
+      style={{ background: cfg.bg, borderColor: cfg.border, color: cfg.color, gap: 6 }}
     >
-      <StatusIcon size={11} className={pulse ? 'animate-pulse' : ''} />
-      <span>{text}</span>
+      <span
+        style={{
+          width: 7, height: 7, borderRadius: '50%', background: cfg.color, flexShrink: 0,
+          boxShadow: cfg.pulse ? `0 0 6px ${cfg.color}` : 'none',
+          animation: cfg.pulse ? 'pulse-soft 1.8s ease-in-out infinite' : 'none',
+        }}
+      />
+      <cfg.Icon size={11}/>
+      <span style={{ fontFamily: 'var(--f-display)', fontSize: 10, letterSpacing: '0.1em' }}>{cfg.label}</span>
     </div>
   );
 }
 
-/* ── User Menu ── */
 function UserMenu({ user, onLogout }) {
   const [open, setOpen] = useState(false);
-
   return (
-    <div className="relative">
+    <div style={{ position: 'relative' }}>
       <button
-        onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 px-2 py-1.5 rounded-xl hover:bg-surface-elevated transition-colors duration-150"
+        onClick={() => setOpen(v => !v)}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 8,
+          padding: '6px 10px',
+          background: open ? 'var(--surface-elevated)' : 'transparent',
+          border: '2px solid ' + (open ? 'var(--border-default)' : 'transparent'),
+          color: 'var(--text-primary)',
+          cursor: 'pointer',
+          transition: 'all 0.1s',
+        }}
       >
-        <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-accent-muted">
-          <User size={13} className="text-accent" />
+        <div style={{
+          width: 26, height: 26,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'var(--accent-muted)',
+          border: '1px solid var(--border-accent)',
+        }}>
+          <User size={12} style={{ color: 'var(--accent)' }}/>
         </div>
-        <span className="text-xs font-medium text-txt-primary max-w-[100px] truncate">{user.username}</span>
-        <ChevronRight size={12} className={`text-txt-muted transition-transform duration-200 ${open ? 'rotate-90' : ''}`} />
+        <span style={{ fontFamily: 'var(--f-display)', fontSize: 11, letterSpacing: '0.1em', maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {user.username}
+        </span>
       </button>
 
       {open && (
         <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-full mt-2 w-44 glass-panel p-1.5 z-50 animate-scale-in">
-            <div className="px-3 py-2 mb-1">
-              <div className="text-xs font-medium text-txt-primary">{user.username}</div>
-              <div className="text-[10px] text-txt-muted truncate">{user.email || 'DALIA User'}</div>
+          <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setOpen(false)}/>
+          <div style={{
+            position: 'absolute', right: 0, top: '100%', marginTop: 4,
+            width: 180,
+            background: 'var(--surface-overlay)',
+            border: '2px solid var(--border-default)',
+            boxShadow: '4px 4px 0 var(--border-strong)',
+            zIndex: 50,
+            animation: 'scaleIn 0.12s ease-out both',
+            padding: '8px 0',
+          }}>
+            <div style={{ padding: '6px 14px 10px', borderBottom: '1px solid var(--border-subtle)' }}>
+              <div style={{ fontFamily: 'var(--f-display)', fontSize: 12, letterSpacing: '0.1em' }}>{user.username}</div>
+              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--text-muted)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.email || 'DALIA User'}</div>
             </div>
-            <div className="divider" />
             <button
               onClick={() => { setOpen(false); onLogout(); }}
-              className="w-full flex items-center gap-2 px-3 py-2 mt-1 rounded-lg text-xs text-red-400 hover:bg-red-500/10 transition-colors"
+              style={{
+                display: 'flex', alignItems: 'center', gap: 8,
+                width: '100%', padding: '8px 14px',
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--loss)',
+                fontFamily: 'var(--f-display)',
+                fontSize: 11, letterSpacing: '0.1em',
+                cursor: 'pointer',
+                transition: 'background 0.1s',
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = 'var(--loss-bg)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
             >
-              <LogOut size={13} />
-              Se deconnecter
+              <LogOut size={12}/>
+              SE DÉCONNECTER
             </button>
           </div>
         </>
@@ -121,85 +140,61 @@ function UserMenu({ user, onLogout }) {
   );
 }
 
-/* ══════════════════════════════════════════════════════════
-   LAYOUT — AppShell
-   ══════════════════════════════════════════════════════════ */
 export default function Layout({ patchInfo }) {
-  const user = useAuthStore((s) => s.user);
-  const logout = useAuthStore((s) => s.logout);
-  const resetPool = useUserStore((s) => s.resetPool);
+  const user      = useAuthStore(s => s.user);
+  const logout    = useAuthStore(s => s.logout);
+  const resetPool = useUserStore(s => s.resetPool);
 
-  const handleLogout = () => {
-    resetPool();
-    logout();
-  };
+  const handleLogout = () => { resetPool(); logout(); };
 
   return (
-    <div className="h-screen flex flex-col bg-surface-base">
-      {/* ── Topbar ── */}
-      <header
-        className="h-12 flex items-center px-4 shrink-0 z-30 border-b"
-        style={{
-          background: 'var(--surface-glass)',
-          backdropFilter: 'blur(16px) saturate(1.2)',
-          borderColor: 'var(--border-subtle)',
-        }}
-      >
-        {/* Left: Brand */}
-        <div className="flex items-center gap-2.5">
-          <DaliaLogo size={22} />
-          <span className="text-sm font-bold tracking-tight text-accent">DALIA</span>
-          <span className="text-[10px] font-medium text-txt-muted hidden sm:block">Draft Assistant</span>
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--surface-base)' }}>
+      {/* Topbar */}
+      <header style={{
+        height: 48, display: 'flex', alignItems: 'center', padding: '0 20px',
+        flexShrink: 0, zIndex: 30,
+        background: 'var(--surface-default)',
+        borderBottom: 'var(--edge-weight) solid var(--text-primary)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <DaliaLogo size={28}/>
+          <span style={{ fontFamily: 'var(--f-display)', fontSize: 18, fontWeight: 700, letterSpacing: '0.3em', color: 'var(--text-primary)' }}>DALIA</span>
         </div>
 
-        {/* Right: Status + User */}
-        <div className="ml-auto flex items-center gap-2.5">
-          {/* Patch info */}
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 0 }}>
           {patchInfo && (
-            <div className="pill gap-1.5 bg-surface-elevated text-txt-muted border-border-subtle">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              <span>Patch {patchInfo.patch}</span>
+            <div className="pill" style={{ background: 'var(--surface-elevated)', color: 'var(--text-muted)', marginRight: 12, gap: 6 }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--win)', boxShadow: '0 0 4px var(--win)' }}/>
+              <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10 }}>Patch {patchInfo.patch}</span>
             </div>
           )}
-
-          {/* LCU */}
-          <LCUBadge />
-
-          {/* Separator */}
-          <div className="w-px h-5 bg-border-subtle" />
-
-          {/* User */}
-          {user && <UserMenu user={user} onLogout={handleLogout} />}
+          <LCUBadge/>
+          <div style={{ width: 1, height: 24, background: 'var(--border-subtle)', margin: '0 12px' }}/>
+          {user && <UserMenu user={user} onLogout={handleLogout}/>}
         </div>
       </header>
 
-      {/* ── Body: Sidebar + Content ── */}
-      <div className="flex flex-1 min-h-0">
+      {/* Body */}
+      <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
         {/* Sidebar */}
-        <aside
-          className="w-[60px] flex flex-col items-center py-3 shrink-0 border-r"
-          style={{
-            background: 'var(--surface-default)',
-            borderColor: 'var(--border-subtle)',
-          }}
-        >
-          <nav className="flex flex-col gap-1.5 flex-1" aria-label="Navigation principale">
-            {NAV.map((item) => (
-              <SidebarItem key={item.to} {...item} />
-            ))}
+        <aside style={{
+          width: 60, display: 'flex', flexDirection: 'column', alignItems: 'center',
+          padding: '12px 0', flexShrink: 0,
+          background: 'var(--surface-default)',
+          borderRight: 'var(--edge-weight) solid var(--border-subtle)',
+          gap: 6,
+        }}>
+          <nav style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
+            {NAV.map(item => <SidebarItem key={item.to} {...item}/>)}
           </nav>
-
-          {/* Bottom nav */}
-          <nav className="flex flex-col gap-1.5 mt-auto" aria-label="Navigation secondaire">
-            {BOTTOM_NAV.map((item) => (
-              <SidebarItem key={item.to} {...item} />
-            ))}
+          <nav style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {BOTTOM_NAV.map(item => <SidebarItem key={item.to} {...item}/>)}
           </nav>
         </aside>
 
-        {/* Main content */}
-        <main className="flex-1 min-w-0 overflow-hidden">
-          <Outlet />
+        {/* Main */}
+        <main style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+          <Outlet/>
         </main>
       </div>
     </div>

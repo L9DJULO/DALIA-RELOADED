@@ -1,0 +1,363 @@
+{
+  "_comment": "Strategic edge cases evaluated by app.services.edge_cases. Each entry: champion (DDragon key), trigger (type + params), score_bonus (0-30 typical), reason_text (template, supports {n}, {champions}, {ad_pct}, {ap_pct}, {ally}), reason_kind (synergy|counter|warning|info). At most one edge case per candidate fires — the highest score_bonus wins.",
+
+  "anti_cc_olaf": {
+    "champion": "Olaf",
+    "trigger": {"type": "enemy_comp_has_n_of_tag", "tag": "hard_cc", "min_count": 3},
+    "score_bonus": 18,
+    "reason_text": "Ulti Olaf immunise contre {n} sources de CC ({champions})",
+    "reason_kind": "synergy"
+  },
+  "armor_stack_malphite_vs_full_ad": {
+    "champion": "Malphite",
+    "trigger": {"type": "enemy_comp_damage_ratio", "ad_min_percent": 75},
+    "score_bonus": 22,
+    "reason_text": "Comp ennemie {ad_pct}% AD — Malphite scale en armor",
+    "reason_kind": "synergy"
+  },
+  "armor_stack_rammus_vs_full_ad": {
+    "champion": "Rammus",
+    "trigger": {"type": "enemy_comp_damage_ratio", "ad_min_percent": 75},
+    "score_bonus": 24,
+    "reason_text": "Comp ennemie {ad_pct}% AD — Rammus passive + W le rendent intuable",
+    "reason_kind": "synergy"
+  },
+  "kassadin_vs_double_ap": {
+    "champion": "Kassadin",
+    "trigger": {"type": "enemy_comp_has_n_of_tag", "tag": "burst_threat", "min_count": 2},
+    "score_bonus": 14,
+    "reason_text": "Kassadin scale en MR + ult dodge contre {champions}",
+    "reason_kind": "synergy"
+  },
+
+  "nilah_vs_full_aa": {
+    "champion": "Nilah",
+    "trigger": {"type": "enemy_comp_has_n_of_tag", "tag": "auto_attacker_dependent", "min_count": 3},
+    "score_bonus": 20,
+    "reason_text": "Passive Nilah dodge les autos de {champions}",
+    "reason_kind": "synergy"
+  },
+  "jax_vs_full_aa": {
+    "champion": "Jax",
+    "trigger": {"type": "enemy_comp_has_n_of_tag", "tag": "auto_attacker_dependent", "min_count": 3},
+    "score_bonus": 18,
+    "reason_text": "Counter-strike (E) bloque les autos de {champions}",
+    "reason_kind": "synergy"
+  },
+  "fiora_vs_full_aa": {
+    "champion": "Fiora",
+    "trigger": {"type": "enemy_comp_has_n_of_tag", "tag": "auto_attacker_dependent", "min_count": 3},
+    "score_bonus": 14,
+    "reason_text": "Riposte (W) annule les autos clés de {champions}",
+    "reason_kind": "synergy"
+  },
+  "pantheon_blocks_aa": {
+    "champion": "Pantheon",
+    "trigger": {"type": "enemy_comp_has_n_of_tag", "tag": "auto_attacker_dependent", "min_count": 3},
+    "score_bonus": 14,
+    "reason_text": "Aegis (W) bloque les autos contre {champions}",
+    "reason_kind": "synergy"
+  },
+
+  "vayne_vs_tank_comp": {
+    "champion": "Vayne",
+    "trigger": {"type": "enemy_comp_has_n_of_tag", "tag": "tank_frontline", "min_count": 3},
+    "score_bonus": 22,
+    "reason_text": "Vrais dégâts (W) shred {n} tanks ennemis ({champions})",
+    "reason_kind": "synergy"
+  },
+  "kogmaw_vs_tank_comp": {
+    "champion": "KogMaw",
+    "trigger": {"type": "enemy_comp_has_n_of_tag", "tag": "tank_frontline", "min_count": 3},
+    "score_bonus": 18,
+    "reason_text": "%HP magic damage (W) déchire les tanks ({champions})",
+    "reason_kind": "synergy"
+  },
+  "fiora_vs_immobile": {
+    "champion": "Fiora",
+    "trigger": {"type": "enemy_comp_has_n_of_tag", "tag": "immobile", "min_count": 3},
+    "score_bonus": 14,
+    "reason_text": "Vital points sur cibles statiques ({champions})",
+    "reason_kind": "synergy"
+  },
+
+  "chogath_vs_burst_comp": {
+    "champion": "Chogath",
+    "trigger": {"type": "enemy_comp_has_n_of_tag", "tag": "burst_threat", "min_count": 3},
+    "score_bonus": 16,
+    "reason_text": "Stacks d'HP rendent Cho'Gath intouchable face au burst ({champions})",
+    "reason_kind": "synergy"
+  },
+  "veigar_vs_squishy_late": {
+    "champion": "Veigar",
+    "trigger": {"type": "enemy_comp_has_n_of_tag", "tag": "squishy_carry", "min_count": 4},
+    "score_bonus": 16,
+    "reason_text": "Veigar one-shot {n} squishies en late ({champions})",
+    "reason_kind": "synergy"
+  },
+
+  "tryndamere_no_cc": {
+    "champion": "Tryndamere",
+    "trigger": {"type": "enemy_comp_no_tag", "tag": "hard_cc"},
+    "score_bonus": 24,
+    "reason_text": "Aucun hard CC ennemi — ult Tryndamere ne peut pas être contré",
+    "reason_kind": "synergy"
+  },
+  "masteryi_vs_squishy_no_peel": {
+    "champion": "MasterYi",
+    "trigger": {"type": "enemy_comp_has_n_of_tag", "tag": "squishy_carry", "min_count": 4},
+    "score_bonus": 16,
+    "reason_text": "Comp ennemie sans peel — Master Yi clean {champions}",
+    "reason_kind": "synergy"
+  },
+
+  "yuumi_with_hyper_carry": {
+    "champion": "Yuumi",
+    "trigger": {"type": "ally_comp_has_n_of_tag", "tag": "hyper_carry_late", "min_count": 1},
+    "score_bonus": 16,
+    "reason_text": "Yuumi attachée à {ally} — scaling hyper carry sécurisé",
+    "reason_kind": "synergy"
+  },
+  "tahm_with_squishy_carry": {
+    "champion": "TahmKench",
+    "trigger": {"type": "ally_comp_has_n_of_tag", "tag": "squishy_carry", "min_count": 1},
+    "score_bonus": 12,
+    "reason_text": "Tahm Kench peel {ally} avec Devour",
+    "reason_kind": "synergy"
+  },
+  "janna_protect_carry": {
+    "champion": "Janna",
+    "trigger": {"type": "ally_comp_has_n_of_tag", "tag": "needs_protection", "min_count": 1},
+    "score_bonus": 14,
+    "reason_text": "Janna protège {ally} (shield + disengage)",
+    "reason_kind": "synergy"
+  },
+  "soraka_with_poke_lane": {
+    "champion": "Soraka",
+    "trigger": {"type": "ally_comp_has_n_of_tag", "tag": "poke_lane", "min_count": 1},
+    "score_bonus": 12,
+    "reason_text": "Soraka heal-back permet à {ally} de spam poke",
+    "reason_kind": "synergy"
+  },
+  "akshan_with_revive_targets": {
+    "champion": "Akshan",
+    "trigger": {"type": "ally_comp_min_size", "min_count": 2},
+    "score_bonus": 8,
+    "reason_text": "Akshan peut revive {ally} avec son passif",
+    "reason_kind": "synergy"
+  },
+
+  "kalista_with_thresh": {
+    "champion": "Kalista",
+    "trigger": {"type": "ally_has_specific_champion", "champion": "Thresh"},
+    "score_bonus": 18,
+    "reason_text": "Combo signature Kalista + {ally} (Lantern + ult fly-in)",
+    "reason_kind": "synergy"
+  },
+  "kalista_with_rell": {
+    "champion": "Kalista",
+    "trigger": {"type": "ally_has_specific_champion", "champion": "Rell"},
+    "score_bonus": 16,
+    "reason_text": "Kalista + {ally} : ult fly-in sur engage Rell",
+    "reason_kind": "synergy"
+  },
+
+  "yasuo_with_knockup": {
+    "champion": "Yasuo",
+    "trigger": {"type": "ally_comp_has_n_of_tag", "tag": "knockup_source", "min_count": 1},
+    "score_bonus": 18,
+    "reason_text": "Yasuo R sur knock-up de {ally}",
+    "reason_kind": "synergy"
+  },
+  "yone_with_knockup": {
+    "champion": "Yone",
+    "trigger": {"type": "ally_comp_has_n_of_tag", "tag": "knockup_source", "min_count": 1},
+    "score_bonus": 16,
+    "reason_text": "Yone R sur knock-up de {ally}",
+    "reason_kind": "synergy"
+  },
+
+  "garen_vs_darius": {
+    "champion": "Garen",
+    "trigger": {"type": "enemy_has_specific_champion", "champion": "Darius"},
+    "score_bonus": 16,
+    "reason_text": "Garen Q silence + W resist → counter direct Darius",
+    "reason_kind": "counter"
+  },
+  "morgana_vs_targetable_cc": {
+    "champion": "Morgana",
+    "trigger": {"type": "enemy_comp_has_n_of_tag", "tag": "hard_cc", "min_count": 3},
+    "score_bonus": 16,
+    "reason_text": "Black Shield vs {n} sources de CC ennemies ({champions})",
+    "reason_kind": "synergy"
+  },
+  "galio_vs_ap_heavy": {
+    "champion": "Galio",
+    "trigger": {"type": "enemy_comp_damage_ratio", "ap_min_percent": 60},
+    "score_bonus": 18,
+    "reason_text": "Comp ennemie {ap_pct}% AP — Galio scale en MR",
+    "reason_kind": "synergy"
+  },
+  "maokai_vs_dive": {
+    "champion": "Maokai",
+    "trigger": {"type": "enemy_comp_has_n_of_tag", "tag": "engage_primary", "min_count": 2},
+    "score_bonus": 12,
+    "reason_text": "Maokai roots disengage les dive de {champions}",
+    "reason_kind": "synergy"
+  },
+  "cassio_vs_low_mr": {
+    "champion": "Cassiopeia",
+    "trigger": {"type": "enemy_comp_damage_ratio", "ad_min_percent": 70},
+    "score_bonus": 12,
+    "reason_text": "Comp ennemie {ad_pct}% AD — pas de MR stack contre Cassiopeia",
+    "reason_kind": "synergy"
+  },
+
+  "pantheon_first_pick": {
+    "champion": "Pantheon",
+    "trigger": {"type": "pick_order_is_first"},
+    "score_bonus": 8,
+    "reason_text": "Pantheon flex sans contre direct early — safe first pick",
+    "reason_kind": "info"
+  },
+  "lissandra_first_pick": {
+    "champion": "Lissandra",
+    "trigger": {"type": "pick_order_is_first"},
+    "score_bonus": 6,
+    "reason_text": "Lissandra impossible à counter en blind (point-click + zhonya R)",
+    "reason_kind": "info"
+  },
+
+  "fiora_vs_immobile_comp": {
+    "champion": "Fiora",
+    "trigger": {"type": "enemy_comp_immobile_count", "min_count": 3},
+    "score_bonus": 12,
+    "reason_text": "{n} ennemis sans dash — Fiora abuse les vital points ({champions})",
+    "reason_kind": "synergy"
+  },
+  "ezreal_no_engage": {
+    "champion": "Ezreal",
+    "trigger": {"type": "enemy_comp_no_engage"},
+    "score_bonus": 10,
+    "reason_text": "Comp ennemie sans engage — Ezreal poke en sécurité",
+    "reason_kind": "synergy"
+  },
+  "caitlyn_no_engage": {
+    "champion": "Caitlyn",
+    "trigger": {"type": "enemy_comp_no_engage"},
+    "score_bonus": 8,
+    "reason_text": "Comp ennemie sans engage — Caitlyn lane pression illimitée",
+    "reason_kind": "synergy"
+  },
+
+  "senna_with_tahm": {
+    "champion": "Senna",
+    "trigger": {"type": "ally_has_specific_champion", "champion": "TahmKench"},
+    "score_bonus": 14,
+    "reason_text": "Senna + {ally} : double-tap synergy + scaling carry-support",
+    "reason_kind": "synergy"
+  },
+  "lulu_with_hyper_carry": {
+    "champion": "Lulu",
+    "trigger": {"type": "ally_comp_has_n_of_tag", "tag": "hyper_carry_late", "min_count": 1},
+    "score_bonus": 14,
+    "reason_text": "Lulu protège {ally} (W speed + R) — game plan late game",
+    "reason_kind": "synergy"
+  },
+
+  "poppy_vs_dash_comp": {
+    "champion": "Poppy",
+    "trigger": {"type": "enemy_comp_has_n_of_tag", "tag": "dash_blink", "min_count": 3},
+    "score_bonus": 14,
+    "reason_text": "W de Poppy cancel les dashes de {champions}",
+    "reason_kind": "synergy"
+  },
+  "janna_vs_dash_comp": {
+    "champion": "Janna",
+    "trigger": {"type": "enemy_comp_has_n_of_tag", "tag": "dash_blink", "min_count": 3},
+    "score_bonus": 12,
+    "reason_text": "Q knock-up + W slow disengage les dashes ennemis ({champions})",
+    "reason_kind": "synergy",
+    "confidence": "low"
+  },
+  "janna_vs_engage_comp": {
+    "champion": "Janna",
+    "trigger": {"type": "enemy_comp_has_n_of_tag", "tag": "engage_primary", "min_count": 3},
+    "score_bonus": 16,
+    "reason_text": "Janna shutdown l'engage de {champions} (Q + R disengage)",
+    "reason_kind": "synergy"
+  },
+
+  "aphelios_vs_no_cc": {
+    "champion": "Aphelios",
+    "trigger": {"type": "enemy_comp_no_tag", "tag": "hard_cc"},
+    "score_bonus": 16,
+    "reason_text": "Aucun hard CC ennemi — Aphelios free-fire en teamfight",
+    "reason_kind": "synergy",
+    "confidence": "low"
+  },
+  "singed_vs_immobile_comp": {
+    "champion": "Singed",
+    "trigger": {"type": "enemy_comp_immobile_count", "min_count": 3},
+    "score_bonus": 12,
+    "reason_text": "Singed kite {n} ennemis sans dash ({champions})",
+    "reason_kind": "synergy",
+    "confidence": "low"
+  },
+  "karthus_vs_all_squishy": {
+    "champion": "Karthus",
+    "trigger": {"type": "enemy_comp_all_squishy", "max_tankiness": 2},
+    "score_bonus": 18,
+    "reason_text": "Comp ennemie 100% squishy — R global cleanup garanti",
+    "reason_kind": "synergy",
+    "confidence": "low"
+  },
+  "mordekaiser_vs_squishy_mid": {
+    "champion": "Mordekaiser",
+    "trigger": {"type": "enemy_comp_has_n_of_tag", "tag": "squishy_carry", "min_count": 3},
+    "score_bonus": 12,
+    "reason_text": "R isole et tue les squishies ({champions})",
+    "reason_kind": "synergy",
+    "confidence": "low"
+  },
+  "sylas_vs_big_ults": {
+    "champion": "Sylas",
+    "trigger": {"type": "enemy_comp_has_n_of_tag", "tag": "engage_primary", "min_count": 3},
+    "score_bonus": 14,
+    "reason_text": "Sylas vole les ults engage de {champions}",
+    "reason_kind": "synergy",
+    "confidence": "low"
+  },
+  "tahm_top_vs_immobile_opp": {
+    "champion": "TahmKench",
+    "trigger": {"type": "enemy_comp_immobile_count", "min_count": 3},
+    "score_bonus": 10,
+    "reason_text": "Tahm Kench Q-stack abuse les ennemis immobiles ({champions})",
+    "reason_kind": "synergy",
+    "confidence": "low"
+  },
+  "pyke_vs_squishy_stack": {
+    "champion": "Pyke",
+    "trigger": {"type": "enemy_comp_has_n_of_tag", "tag": "squishy_carry", "min_count": 3},
+    "score_bonus": 14,
+    "reason_text": "R execute + reset sur {n} squishies ({champions})",
+    "reason_kind": "synergy",
+    "confidence": "low"
+  },
+  "twitch_with_engage_frontline": {
+    "champion": "Twitch",
+    "trigger": {"type": "ally_comp_has_n_of_tag", "tag": "engage_primary", "min_count": 1},
+    "score_bonus": 12,
+    "reason_text": "Twitch ambush combiné à l'engage de {ally}",
+    "reason_kind": "synergy",
+    "confidence": "low"
+  },
+  "heimer_support_vs_no_engage": {
+    "champion": "Heimerdinger",
+    "trigger": {"type": "enemy_comp_no_engage"},
+    "score_bonus": 12,
+    "reason_text": "Comp ennemie sans engage — turrets Heimer zone librement",
+    "reason_kind": "synergy",
+    "confidence": "low"
+  }
+}

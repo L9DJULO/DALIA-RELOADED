@@ -115,7 +115,8 @@ async fn supervisor_loop(app: AppHandle) {
                 // Detect phase changes before we overwrite the cache.
                 let prev_phase = {
                     let s = app.state::<AppState>();
-                    s.last_state.lock().unwrap().game_phase.clone()
+                    let phase = s.last_state.lock().unwrap().game_phase.clone();
+                    phase
                 };
                 let phase_changed = prev_phase != new_state.game_phase;
                 let phase_now = new_state.game_phase.clone();
@@ -131,8 +132,8 @@ async fn supervisor_loop(app: AppHandle) {
                 }
                 let _ = app.emit("lcu:state_updated", &new_state);
 
-                // Tight loop during champ select (500 ms), relaxed elsewhere (2 s).
-                let sleep_ms = if in_champ_select { 500 } else { 2000 };
+                // Tight loop during champ select (500 ms), relaxed elsewhere (5 s).
+                let sleep_ms = if in_champ_select { 500 } else { 5000 };
                 tokio::time::sleep(Duration::from_millis(sleep_ms)).await;
             }
         }

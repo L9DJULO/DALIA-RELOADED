@@ -1,284 +1,282 @@
-/**
- * Settings Page -- User preferences + Admin ML controls.
- * Premium dark theme with consistent design tokens.
- */
-import { useState, useEffect, useCallback } from 'react';
-import {
-  Settings, Server, Shield, Brain, RefreshCw, CheckCircle,
-  AlertTriangle, Clock, Cpu, Loader2, LogOut, User, Sliders,
-} from 'lucide-react';
-import { fetchMLStatus, triggerRetrain, reloadModel, getServerUrl, setServerUrl } from '../../services/api';
+// ─────────────────────────────────────────────
+// Settings page — Soul Eater design tokens
+// ─────────────────────────────────────────────
+import React, { useState } from 'react';
+import { getServerUrl, setServerUrl, checkServerHealth } from '../../services/api';
+import useLCUStore from '../../stores/lcuStore';
 import useAuthStore from '../../stores/authStore';
 import useUserStore from '../../stores/userStore';
+import { SectionLbl } from '../Primitives';
 
-/* -- ML Admin Panel -- */
-const STATUS_CONFIG = {
-  idle:      { label: 'Inactif',       icon: Clock,         color: 'text-txt-muted',   bg: 'bg-surface-elevated border-border-subtle' },
-  checking:  { label: 'Verification...', icon: Loader2,     color: 'text-sky-400',     bg: 'bg-sky-500/10 border-sky-500/20' },
-  training:  { label: 'Entrainement...', icon: Loader2,     color: 'text-amber-400',   bg: 'bg-amber-500/10 border-amber-500/20' },
-  trained:   { label: 'Entraine',      icon: CheckCircle,   color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
-  error:     { label: 'Erreur',        icon: AlertTriangle, color: 'text-red-400',     bg: 'bg-red-500/10 border-red-500/20' },
+const ACCENTS = [
+  { id: 'red',     hex: '#d91e2b', label: 'ROUGE'   },
+  { id: 'violet',  hex: '#7b2cff', label: 'VIOLET'  },
+  { id: 'acid',    hex: '#e5ff00', label: 'ACIDE'   },
+  { id: 'cyan',    hex: '#00e7ff', label: 'CYAN'    },
+  { id: 'magenta', hex: '#ff1ec0', label: 'MAGENTA' },
+  { id: 'toxic',   hex: '#26ff6e', label: 'TOXIC'   },
+];
+
+const inputStyle = {
+  flex: 1, padding: '9px 12px',
+  background: 'var(--ink-2)',
+  border: 'var(--edge-weight) solid var(--ink-5)',
+  color: 'var(--bone-0)',
+  fontFamily: 'var(--f-mono)', fontSize: 12, outline: 'none',
 };
 
-function MLAdminPanel() {
-  const [status, setStatus] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [retraining, setRetraining] = useState(false);
-
-  const load = useCallback(async () => {
-    try {
-      const data = await fetchMLStatus();
-      setStatus(data);
-    } catch {
-      setStatus(null);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    load();
-    const iv = setInterval(load, 10000);
-    return () => clearInterval(iv);
-  }, [load]);
-
-  const handleRetrain = async () => {
-    setRetraining(true);
-    try {
-      await triggerRetrain();
-      await load();
-    } finally {
-      setRetraining(false);
-    }
-  };
-
-  const handleReload = async () => {
-    try {
-      await reloadModel();
-      await load();
-    } catch {}
-  };
-
-  if (loading) {
-    return (
-      <div className="animate-pulse space-y-2.5">
-        <div className="h-4 bg-surface-elevated rounded-lg w-1/3" />
-        <div className="h-3 bg-surface-elevated rounded-lg w-2/3" />
-      </div>
-    );
-  }
-
-  if (!status) {
-    return (
-      <div className="text-sm text-txt-muted">
-        Impossible de contacter le serveur ML.
-      </div>
-    );
-  }
-
-  const cfg = STATUS_CONFIG[status.status] || STATUS_CONFIG.idle;
-  const StatusIcon = cfg.icon;
-  const isTraining = status.status === 'training';
-
+function Card({ children }) {
   return (
-    <div className="space-y-3.5">
-      {/* Status badge */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Cpu size={14} className="text-accent" />
-          <span className="text-xs font-semibold text-txt-primary">Modele IA</span>
-        </div>
-        <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl border text-[11px] font-medium ${cfg.bg} ${cfg.color}`}>
-          <StatusIcon size={11} className={isTraining ? 'animate-spin' : ''} />
-          {cfg.label}
-        </div>
-      </div>
-
-      {/* Info rows */}
-      <div className="space-y-1.5">
-        {status.current_patch && (
-          <div className="flex justify-between text-[11px]">
-            <span className="text-txt-muted">Patch actuel</span>
-            <span className="text-txt-secondary font-medium">{status.current_patch}</span>
-          </div>
-        )}
-        {status.last_trained_patch && (
-          <div className="flex justify-between text-[11px]">
-            <span className="text-txt-muted">Dernier entrainement</span>
-            <span className="text-txt-secondary font-medium">{status.last_trained_patch}</span>
-          </div>
-        )}
-        {status.last_val_accuracy != null && (
-          <div className="flex justify-between text-[11px]">
-            <span className="text-txt-muted">Precision (val)</span>
-            <span className="text-emerald-400 font-medium tabular-nums">
-              {(status.last_val_accuracy * 100).toFixed(1)}%
-            </span>
-          </div>
-        )}
-        {status.last_trained_at && (
-          <div className="flex justify-between text-[11px]">
-            <span className="text-txt-muted">Date</span>
-            <span className="text-txt-secondary tabular-nums">
-              {new Date(status.last_trained_at).toLocaleDateString('fr-FR', {
-                day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
-              })}
-            </span>
-          </div>
-        )}
-        {isTraining && status.training_elapsed != null && (
-          <div className="flex justify-between text-[11px]">
-            <span className="text-txt-muted">Temps ecoule</span>
-            <span className="text-amber-400 tabular-nums">{status.training_elapsed.toFixed(0)}s</span>
-          </div>
-        )}
-        {status.needs_retrain && !isTraining && (
-          <div className="text-[11px] text-amber-400 flex items-center gap-1 mt-1">
-            <AlertTriangle size={11} />
-            Nouveau patch detecte -- re-entrainement necessaire
-          </div>
-        )}
-        {status.last_error && (
-          <div className="text-[10px] text-red-400 mt-1 truncate" title={status.last_error}>
-            {status.last_error}
-          </div>
-        )}
-      </div>
-
-      {/* Actions */}
-      <div className="flex gap-2 pt-1">
-        <button
-          onClick={handleRetrain}
-          disabled={isTraining || retraining}
-          className="btn-primary flex-1 !text-xs !py-2"
-        >
-          <RefreshCw size={12} className={retraining ? 'animate-spin mr-1.5' : 'mr-1.5'} />
-          {isTraining ? 'En cours...' : 'Re-entrainer'}
-        </button>
-        {status.status === 'trained' && (
-          <button
-            onClick={handleReload}
-            className="btn-secondary !text-xs !py-2"
-          >
-            Recharger
-          </button>
-        )}
-      </div>
-
-      <div className="text-[10px] text-txt-muted leading-relaxed">
-        {"Le modele IA utilise un reseau de neurones entraine sur des parties D2+. Le re-entrainement automatique se declenche a chaque nouveau patch."}
-      </div>
-    </div>
+    <section style={{
+      marginBottom: 18, padding: '16px 20px',
+      background: 'var(--ink-2)',
+      border: 'var(--edge-weight) solid var(--ink-5)',
+      boxShadow: '4px 4px 0 var(--ink-0)',
+    }}>
+      {children}
+    </section>
   );
 }
 
-/* -- Main Settings Page -- */
 export default function SettingsPage() {
-  const user = useAuthStore((s) => s.user);
-  const logout = useAuthStore((s) => s.logout);
-  const resetPool = useUserStore((s) => s.resetPool);
-  const [serverUrl, setUrl] = useState(getServerUrl());
-  const [showAdmin, setShowAdmin] = useState(false);
+  const [accent, setAccent] = useState(
+    document.documentElement.dataset.accent || localStorage.getItem('dalia_accent') || 'red'
+  );
+  const [serverUrl, setServerUrlState] = useState(getServerUrl());
+  const [serverStatus, setServerStatus] = useState(null);
+  const [checkingServer, setCheckingServer] = useState(false);
+  const [connecting, setConnecting] = useState(false);
 
-  const handleLogout = () => {
-    resetPool();
-    logout();
+  const lcuConnected = useLCUStore(s => s.connected);
+  const summoner     = useLCUStore(s => s.summoner);
+  const lcuConnect   = useLCUStore(s => s.connect);
+  const user         = useAuthStore(s => s.user);
+  const userLogout   = useUserStore(s => s.logout);
+
+  const handleAccent = (id) => {
+    document.documentElement.dataset.accent = id;
+    localStorage.setItem('dalia_accent', id);
+    setAccent(id);
   };
 
-  const handleServerUrlChange = (newUrl) => {
-    setUrl(newUrl);
-    setServerUrl(newUrl);
+  const handleSaveServer = () => {
+    setServerUrl(serverUrl.trim());
+    setServerStatus({ ok: true, message: 'URL sauvegardée' });
+    setTimeout(() => setServerStatus(null), 2000);
+  };
+
+  const handleCheckServer = async () => {
+    setCheckingServer(true);
+    setServerStatus(null);
+    const result = await checkServerHealth();
+    setServerStatus(result.ok
+      ? { ok: true, message: result.ready ? 'Serveur prêt ✓' : 'Serveur en démarrage…' }
+      : { ok: false, message: `Inaccessible — ${result.url}` }
+    );
+    setCheckingServer(false);
+  };
+
+  const handleLCUConnect = async () => {
+    setConnecting(true);
+    await lcuConnect();
+    setConnecting(false);
+  };
+
+  const handleLogout = () => {
+    // userStore.logout() clears pool + dispatches `dalia:logout` which is
+    // also listened to by authStore + duoStore (token, profile, duo state cleared).
+    userLogout();
   };
 
   return (
-    <div className="h-[calc(100vh-3rem)] overflow-y-auto">
-      <div className="max-w-2xl mx-auto p-6 space-y-5">
+    <div style={{ height: '100%', overflowY: 'auto', background: 'var(--ink-0)' }}>
+      <div style={{ maxWidth: 720, margin: '0 auto', padding: '24px 20px 64px' }}>
+
         {/* Header */}
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-surface-elevated border border-border-subtle flex items-center justify-center">
-            <Settings size={20} className="text-txt-secondary" />
+        <div style={{ marginBottom: 22 }}>
+          <div style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 24, letterSpacing: '0.18em', color: 'var(--bone-0)', marginBottom: 4 }}>
+            PARAMÈTRES
           </div>
-          <div>
-            <h1 className="text-lg font-bold text-txt-primary">Parametres</h1>
-            <p className="text-xs text-txt-muted">{"Configuration de l'application"}</p>
+          <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--bone-2)', letterSpacing: '0.08em' }}>
+            CONFIGURATION DE L'APPLICATION
           </div>
         </div>
 
         {/* Account */}
-        <div className="glass-card p-5 space-y-3">
-          <div className="flex items-center gap-2">
-            <User size={15} className="text-txt-secondary" />
-            <span className="text-sm font-semibold text-txt-primary">Compte</span>
-          </div>
-          {user && (
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-sm text-txt-primary font-medium">{user.username}</div>
-                <div className="text-xs text-txt-muted">{user.email}</div>
+        {user && (
+          <Card>
+            <SectionLbl n={1}>COMPTE</SectionLbl>
+            <div>
+              <div style={{ fontFamily: 'var(--f-display)', fontSize: 16, letterSpacing: '0.06em', color: 'var(--bone-0)' }}>
+                {user.username}
               </div>
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 text-xs font-medium transition-colors"
-              >
-                <LogOut size={13} />
-                Deconnexion
-              </button>
+              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--bone-2)', marginTop: 2 }}>
+                {user.email}
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {/* Accent color */}
+        <Card>
+          <SectionLbl n={2}>COULEUR D'ACCENT</SectionLbl>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            {ACCENTS.map(a => {
+              const isActive = accent === a.id;
+              return (
+                <button
+                  key={a.id}
+                  onClick={() => handleAccent(a.id)}
+                  style={{
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7,
+                    padding: '10px 14px',
+                    background: isActive ? 'var(--ink-3)' : 'var(--ink-2)',
+                    border: `var(--edge-weight) solid ${isActive ? a.hex : 'var(--ink-5)'}`,
+                    boxShadow: isActive ? `3px 3px 0 ${a.hex}` : 'none',
+                    cursor: 'pointer', transition: 'all 0.1s',
+                  }}
+                >
+                  <div style={{ width: 28, height: 28, background: a.hex, border: '1.5px solid var(--bone-0)' }}/>
+                  <span style={{ fontFamily: 'var(--f-display)', fontSize: 9, letterSpacing: '0.18em', color: isActive ? a.hex : 'var(--bone-2)' }}>
+                    {a.label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </Card>
+
+        {/* Server */}
+        <Card>
+          <SectionLbl n={3}>SERVEUR DALIA</SectionLbl>
+
+          {serverStatus && (
+            <div style={{
+              marginBottom: 12, padding: '8px 12px',
+              background: serverStatus.ok ? 'rgba(156,211,107,0.08)' : 'rgba(255,77,86,0.08)',
+              border: `var(--edge-weight) solid ${serverStatus.ok ? 'var(--ok)' : 'var(--bad)'}`,
+              fontFamily: 'var(--f-mono)', fontSize: 11,
+              color: serverStatus.ok ? 'var(--ok)' : 'var(--bad)',
+            }} className="anim-fade">
+              {serverStatus.ok ? '✓' : '!'} {serverStatus.message}
             </div>
           )}
-        </div>
 
-        {/* Server connection */}
-        <div className="glass-card p-5 space-y-3">
-          <div className="flex items-center gap-2">
-            <Server size={15} className="text-txt-secondary" />
-            <span className="text-sm font-semibold text-txt-primary">Serveur</span>
-          </div>
-          <div>
-            <label className="section-label mb-1.5 block">URL du serveur DALIA</label>
+          <div style={{ display: 'flex', gap: 0, marginBottom: 10 }}>
             <input
-              type="text"
+              type="url"
               value={serverUrl}
-              onChange={(e) => handleServerUrlChange(e.target.value)}
-              className="input-field"
+              onChange={e => setServerUrlState(e.target.value)}
               placeholder="http://localhost:8000"
+              style={{ ...inputStyle, borderRight: 0 }}
+              onKeyDown={e => { if (e.key === 'Enter') handleSaveServer(); }}
             />
-            <div className="text-[10px] text-txt-muted mt-1.5 leading-relaxed">
-              {"Adresse du serveur backend. En developpement : http://localhost:8000"}
-            </div>
+            <button
+              onClick={handleSaveServer}
+              style={{
+                padding: '0 16px',
+                background: 'var(--accent)', color: 'var(--accent-ink)',
+                border: 'var(--edge-weight) solid var(--bone-0)',
+                fontFamily: 'var(--f-display)', fontSize: 11, letterSpacing: '0.15em',
+                cursor: 'pointer',
+              }}
+            >
+              ▸ SAUVER
+            </button>
           </div>
-        </div>
 
-        {/* Admin section -- ML controls */}
-        <div className="glass-card p-5 space-y-3">
           <button
-            onClick={() => setShowAdmin(!showAdmin)}
-            className="flex items-center justify-between w-full"
+            onClick={handleCheckServer}
+            disabled={checkingServer}
+            style={{
+              padding: '6px 14px',
+              fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.18em',
+              background: 'transparent', color: 'var(--bone-2)',
+              border: '1.5px solid var(--ink-5)',
+              cursor: checkingServer ? 'wait' : 'pointer',
+              opacity: checkingServer ? 0.6 : 1,
+            }}
           >
-            <div className="flex items-center gap-2">
-              <Shield size={15} className="text-accent" />
-              <span className="text-sm font-semibold text-txt-primary">Administration</span>
-            </div>
-            <span className="text-[11px] text-txt-muted">
-              {showAdmin ? 'Masquer' : 'Afficher'}
-            </span>
+            {checkingServer ? 'TEST EN COURS…' : '◇ TESTER LA CONNEXION'}
           </button>
+        </Card>
 
-          {showAdmin && (
-            <div className="pt-3 border-t border-border-subtle space-y-4 animate-fade-in-up">
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <Brain size={15} className="text-accent" />
-                  <span className="text-xs font-medium text-txt-secondary">{"Modele IA -- Entrainement"}</span>
-                </div>
-                <MLAdminPanel />
+        {/* LCU */}
+        <Card>
+          <SectionLbl n={4}>CLIENT LEAGUE (LCU)</SectionLbl>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12 }}>
+            <span className={`lcu-dot ${lcuConnected ? 'lcu-on' : 'lcu-off'}`}/>
+            <span style={{
+              fontFamily: 'var(--f-display)', fontSize: 12, letterSpacing: '0.1em',
+              color: lcuConnected ? 'var(--ok)' : 'var(--bone-2)',
+            }}>
+              {lcuConnected ? 'CONNECTÉ' : 'DÉCONNECTÉ'}
+            </span>
+            {!lcuConnected && (
+              <button
+                onClick={handleLCUConnect}
+                disabled={connecting}
+                style={{
+                  marginLeft: 'auto',
+                  padding: '6px 14px',
+                  fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.18em',
+                  background: 'transparent', color: 'var(--accent)',
+                  border: '1.5px solid var(--accent)',
+                  cursor: connecting ? 'wait' : 'pointer',
+                  opacity: connecting ? 0.6 : 1,
+                }}
+              >
+                {connecting ? 'CONNEXION…' : '◇ CONNECTER'}
+              </button>
+            )}
+          </div>
+
+          {summoner && (
+            <div style={{ padding: '10px 14px', background: 'var(--ink-3)', border: '1.5px solid var(--ink-5)', marginBottom: 10 }}>
+              <div style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 14, letterSpacing: '0.06em', color: 'var(--bone-0)' }}>
+                {summoner.gameName}
+                <span style={{ color: 'var(--bone-2)', fontSize: 12, marginLeft: 4 }}>#{summoner.tagLine}</span>
+              </div>
+              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--bone-2)', letterSpacing: '0.08em', marginTop: 2 }}>
+                NIV {summoner.summonerLevel} · {summoner.region || 'EUW'}
               </div>
             </div>
           )}
-        </div>
 
-        {/* App info */}
-        <div className="text-center text-[11px] text-txt-muted pt-4">
-          DALIA v2.0 · Draft Assistant for League Intelligence Analysis
+          <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--bone-3)', lineHeight: 1.7, letterSpacing: '0.05em' }}>
+            Le LCU se connecte au client League pour détecter les drafts en cours. Disponible uniquement dans l'application desktop (Tauri).
+          </div>
+        </Card>
+
+        {/* Logout — bouton clairement visible en bas */}
+        {user && (
+          <div style={{ marginTop: 32, padding: '20px 0', borderTop: '1px solid var(--ink-5)' }}>
+            <button
+              onClick={handleLogout}
+              style={{
+                width: '100%', padding: '14px 0',
+                fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 13, letterSpacing: '0.28em',
+                background: 'var(--bad)',
+                color: '#fff',
+                border: 'var(--edge-weight) solid var(--bone-0)',
+                boxShadow: '5px 5px 0 var(--ink-0)',
+                cursor: 'pointer',
+                transition: 'transform 0.1s, box-shadow 0.1s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.transform = 'translate(-2px,-2px)'; e.currentTarget.style.boxShadow = '7px 7px 0 var(--ink-0)'; }}
+              onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '5px 5px 0 var(--ink-0)'; }}
+            >
+              ↩ SE DÉCONNECTER
+            </button>
+            <div style={{ marginTop: 8, textAlign: 'center', fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--bone-3)', letterSpacing: '0.08em' }}>
+              Vide le token, le profil et le pool · retour à la page de connexion
+            </div>
+          </div>
+        )}
+
+        <div style={{ textAlign: 'center', fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--bone-3)', letterSpacing: '0.12em', marginTop: 24 }}>
+          DALIA v2.0 · DRAFT INTELLIGENCE
         </div>
       </div>
     </div>

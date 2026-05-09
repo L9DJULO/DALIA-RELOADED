@@ -4,6 +4,7 @@
 import { create } from 'zustand';
 import { fetchRecommendations, checkServerHealth, getServerUrl } from '../services/api';
 import useLCUStore from './lcuStore';
+import useUserStore from './userStore';
 
 const EMPTY_ALLY_PICKS = () => ({ top: null, jungle: null, mid: null, bot: null, support: null });
 const EMPTY_ENEMY_PICKS = () => [null, null, null, null, null];
@@ -28,6 +29,7 @@ const useDraftStore = create((set, get) => ({
 
   // ── Recommendations ──
   recommendations: [],
+  banSuggestions: [],
   compSummary: {},
   warnings: [],
   winProbability: null,
@@ -130,6 +132,7 @@ const useDraftStore = create((set, get) => ({
       enemyPicks: EMPTY_ENEMY_PICKS(),
       allyPrepicks: EMPTY_ALLY_PICKS(),
       recommendations: [],
+      banSuggestions: [],
       compSummary: {},
       warnings: [],
       winProbability: null,
@@ -195,14 +198,38 @@ const useDraftStore = create((set, get) => ({
     set({ loading: true, error: null });
     try {
       const draftState = get().buildDraftState();
-      // Get summoner identity from LCU store for personal stats
+
+      // champion_pool doit être un Dict[role → List[PoolEntry]] pour le serveur.
+      // Si le caller passe un tableau vide (ou rien), on utilise directement
+      // userStore.championPool qui est déjà dans le bon format role-keyed.
+      if (!championPool || Array.isArray(championPool)) {
+        championPool = useUserStore.getState().championPool || {};
+      }
+
+      // weightOverrides : forcer null si objet vide (évite 422 côté serveur)
+      const weights = (weightOverrides && Object.keys(weightOverrides).length > 0)
+        ? weightOverrides
+        : null;
+
       const summoner = useLCUStore.getState().summoner;
       const personalIdentity = summoner?.puuid
         ? { puuid: summoner.puuid, region: summoner.region }
         : null;
-      const data = await fetchRecommendations(draftState, championPool, weightOverrides, duoOptions, personalIdentity);
+
+      console.log('[ANALYSER] payload →', {
+        draft_state: draftState,
+        champion_pool: championPool,
+        weight_overrides: weights,
+        duo_options: duoOptions,
+        personal_identity: personalIdentity,
+      });
+
+      const data = await fetchRecommendations(draftState, championPool, weights, duoOptions, personalIdentity);
+
+      console.log('[ANALYSER] réponse ←', data);
       set({
         recommendations: data.recommendations || [],
+        banSuggestions: data.ban_suggestions || [],
         compSummary: data.team_composition_summary || {},
         warnings: data.warnings || [],
         winProbability: data.win_probability ?? null,

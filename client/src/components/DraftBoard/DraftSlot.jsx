@@ -1,91 +1,86 @@
 import React from 'react';
-import { X, User } from 'lucide-react';
-import RoleIcon from '../RoleIcon';
-import { ROLE_LABELS } from '../../lib/constants';
+import { X } from 'lucide-react';
+import { getDDragonChampUrl } from '../../lib/constants';
 
-export default function DraftSlot({ role, label, champion, isMySlot, team, onClick, onClear, champions }) {
-  const champData = React.useMemo(
-    () => (champion ? champions?.find((c) => c.id === champion.id) : null),
-    [champion, champions]
-  );
-  const displayLabel = label ?? (role ? ROLE_LABELS[role] : '?');
-  const ariaLabel = champion
-    ? `${displayLabel}: ${champion.name}`
-    : `Choisir ${displayLabel}`;
+const ROLE_SHORT = { top: 'TOP', jungle: 'JGL', mid: 'MID', bot: 'ADC', support: 'SUP' };
 
-  const teamAccent = team === 'blue' ? 'blue' : 'red';
-  const teamBorderColor = team === 'blue' ? 'rgba(59, 130, 246, 0.12)' : 'rgba(239, 68, 68, 0.12)';
+export default function DraftSlot({ role, champion, isMySlot, team, onClick, onClear, label }) {
+  const teamColor = team === 'blue' ? '#4a8bff' : 'var(--accent)';
+  const borderColor = isMySlot
+    ? 'var(--accent)'
+    : champion
+      ? teamColor
+      : 'var(--border-subtle)';
 
   return (
     <div
-      onClick={!champion ? onClick : undefined}
-      role="button"
-      tabIndex={0}
-      aria-label={ariaLabel}
-      onKeyDown={(e) => { if (e.key === 'Enter' && !champion) onClick?.(); }}
-      className={`relative flex items-center gap-3 rounded-xl p-2.5 transition-all duration-200 cursor-pointer group
-        ${champion ? 'bg-surface-elevated' : 'hover:bg-surface-elevated/50'}
-        ${isMySlot ? 'ring-1 ring-accent/30' : ''}
-      `}
+      onClick={onClick}
       style={{
-        border: isMySlot
-          ? '1px solid var(--border-accent)'
-          : `1px solid ${teamBorderColor}`,
+        display: 'flex', alignItems: 'center', gap: 8,
+        padding: '4px 8px', marginBottom: 3,
+        background: isMySlot ? 'var(--accent-subtle)' : 'transparent',
+        border: `1.5px solid ${borderColor}`,
+        cursor: 'pointer', position: 'relative',
+        minHeight: 44,
+        transition: 'border-color 0.1s, background 0.1s',
       }}
     >
-      {/* Champion portrait or placeholder */}
-      {champion && champData ? (
-        <div className="relative">
-          <img
-            src={champData.image_url}
-            alt={champData.name}
-            className="w-11 h-11 rounded-xl object-cover border border-border-subtle"
-          />
-          {/* Team color indicator */}
-          <div
-            className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-surface-elevated ${
-              teamAccent === 'blue' ? 'bg-blue-500' : 'bg-red-500'
-            }`}
-          />
-        </div>
+      {/* My slot left bar */}
+      {isMySlot && (
+        <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 2, background: 'var(--accent)' }}/>
+      )}
+
+      {/* Role label */}
+      <div style={{
+        width: 30, flexShrink: 0, textAlign: 'center',
+        fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 10,
+        letterSpacing: '0.1em', textTransform: 'uppercase',
+        color: isMySlot ? 'var(--accent)' : 'var(--text-muted)',
+      }}>
+        {role ? ROLE_SHORT[role] : (label || '—')}
+      </div>
+
+      {/* Portrait */}
+      {champion ? (
+        <img
+          src={getDDragonChampUrl(champion.key)}
+          alt={champion.name}
+          style={{ width: 34, height: 34, objectFit: 'cover', flexShrink: 0, border: `1.5px solid ${teamColor}` }}
+        />
       ) : (
-        <div className="w-11 h-11 rounded-xl flex items-center justify-center bg-surface-elevated border border-border-subtle">
-          <User size={16} className="text-txt-muted" aria-hidden="true" />
+        <div style={{
+          width: 34, height: 34, flexShrink: 0,
+          background: 'var(--surface-overlay)',
+          border: '1px solid var(--border-subtle)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <span style={{ color: 'var(--text-muted)', fontSize: 18, lineHeight: 1 }}>+</span>
         </div>
       )}
 
-      {/* Info */}
-      <div className="flex-1 min-w-0">
-        <div className="text-[11px] flex items-center gap-1.5 mb-0.5">
-          {role ? (
-            <>
-              <RoleIcon role={role} size={13} className="text-txt-muted" />
-              <span className="text-txt-secondary">{ROLE_LABELS[role]}</span>
-            </>
-          ) : (
-            <span className="text-txt-muted">{displayLabel}</span>
-          )}
-          {isMySlot && (
-            <span className="px-1.5 py-px rounded-md text-[9px] font-bold text-white bg-accent ml-1">
-              MOI
-            </span>
-          )}
-        </div>
-        <div className={`text-sm font-medium truncate ${champion ? 'text-txt-primary' : 'text-txt-muted'}`}>
-          {champion ? champion.name : 'Choisir...'}
-        </div>
+      {/* Name */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        {champion ? (
+          <div style={{
+            fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 13,
+            letterSpacing: '0.04em',
+            color: isMySlot ? 'var(--text-primary)' : teamColor,
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          }}>{champion.name}</div>
+        ) : (
+          <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em' }}>
+            {isMySlot ? '▸ CHOISIR' : '—'}
+          </div>
+        )}
       </div>
 
-      {/* Remove button */}
+      {/* Clear */}
       {champion && (
         <button
-          onClick={(e) => { e.stopPropagation(); onClear(); }}
-          aria-label={`Retirer ${champion.name}`}
-          className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center
-                     opacity-0 group-hover:opacity-100 bg-surface-elevated border border-border
-                     hover:bg-red-500 hover:border-red-500 transition-all duration-200 z-10"
+          onClick={e => { e.stopPropagation(); onClear?.(); }}
+          style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 2, display: 'flex', flexShrink: 0 }}
         >
-          <X size={10} className="text-white" />
+          <X size={11}/>
         </button>
       )}
     </div>

@@ -1,227 +1,501 @@
-import { useState, useMemo, useRef, useEffect } from 'react';
-import { Search, Save, Check } from 'lucide-react';
+// ─────────────────────────────────────────────
+// Champion Pool — Two-pane editor
+// ─────────────────────────────────────────────
+// LEFT  : ton pool, groupé par tier (S→D), promote/demote/remove inline
+// RIGHT : picker des champs du rôle pas encore dans le pool (clic = ajout)
+// Auto-save côté backend.
+// ─────────────────────────────────────────────
+import React, { useEffect, useMemo, useState } from 'react';
 import useUserStore from '../../stores/userStore';
-import { ROLES, TIERS, ROLE_LABELS } from '../../lib/constants';
-import RoleTierList from './RoleTierList';
-import ChampionCard from './ChampionCard';
-import RoleIcon from '../RoleIcon';
+import useChampionsStore from '../../stores/championsStore';
+import { ROLES, TIERS, getDDragonChampUrl } from '../../lib/constants';
+import { champIcon, ROLE_LABEL } from '../../data/mock';
 
-const TIER_COLORS = {
-  S: 'bg-red-500 hover:bg-red-400',
-  A: 'bg-orange-500 hover:bg-orange-400',
-  B: 'bg-amber-500 hover:bg-amber-400',
-  C: 'bg-blue-500 hover:bg-blue-400',
-  D: 'bg-surface-overlay hover:bg-surface-elevated',
+const TIER_COLOR = {
+  S: 'var(--accent)',
+  A: 'var(--ok)',
+  B: 'var(--bone-0)',
+  C: 'var(--bone-2)',
+  D: 'var(--bone-3)',
 };
 
-/* -- Tier picker popover -- */
-function TierPicker({ champion, position, onSelect, onClose, isUpdate = false }) {
-  const ref = useRef(null);
+const TIER_HINT = {
+  S: 'PRIORITAIRE',
+  A: 'TRÈS BON',
+  B: 'STANDARD',
+  C: 'OCCASIONNEL',
+  D: 'BACKUP',
+};
 
-  useEffect(() => {
-    const handler = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) onClose();
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [onClose]);
+function champImg(champ) {
+  if (!champ) return null;
+  return champ.image_url || (champ.key && getDDragonChampUrl(champ.key)) || (champ.key && champIcon(champ.key));
+}
 
-  const popoverHeight = 80;
-  const openUpward = position.y + popoverHeight > window.innerHeight;
-  const top = openUpward ? position.y - popoverHeight - 8 : position.y;
+// ── Mini bouton inline (↑ ↓ ×) ──────────────────────────────────────
+function MiniBtn({ label, color, disabled, title, onClick }) {
+  return (
+    <button
+      onClick={(e) => { e.stopPropagation(); if (!disabled) onClick(); }}
+      disabled={disabled}
+      title={title}
+      style={{
+        width: 20, height: 20,
+        background: disabled ? 'var(--ink-3)' : 'var(--ink-0)',
+        color: disabled ? 'var(--bone-3)' : (color || 'var(--bone-0)'),
+        border: `1.5px solid ${disabled ? 'var(--ink-5)' : (color || 'var(--bone-0)')}`,
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 12, lineHeight: 1,
+        padding: 0,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}
+    >
+      {label}
+    </button>
+  );
+}
 
+// ── Carte d'un champion DANS le pool (LEFT pane) ────────────────────
+function PoolCard({ champ, tier, onPromote, onDemote, onRemove }) {
+  const [hovered, setHovered] = useState(false);
   return (
     <div
-      ref={ref}
-      className="fixed z-50 glass-panel p-3 animate-scale-in"
-      style={{ left: Math.min(position.x, window.innerWidth - 240), top: Math.max(8, top) }}
-      role="dialog"
-      aria-label="Selectionner un tier"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        position: 'relative',
+        width: 78, flexShrink: 0,
+        background: 'var(--ink-2)',
+        border: `2px solid var(--accent)`,
+        boxShadow: '3px 3px 0 var(--ink-0)',
+        textAlign: 'center',
+      }}
     >
-      <div className="text-[11px] mb-2.5 px-0.5 text-txt-secondary">
-        {isUpdate ? 'Changer tier de' : 'Ajouter'}{' '}
-        <span className="font-semibold text-txt-primary">{champion.name}</span>
+      <img
+        src={champImg(champ)}
+        alt={champ.name}
+        style={{ width: '100%', height: 64, objectFit: 'cover', display: 'block' }}
+      />
+      <div style={{
+        padding: '3px 4px',
+        fontFamily: 'var(--f-display)', fontSize: 9, fontWeight: 700,
+        letterSpacing: '0.04em', color: 'var(--bone-0)',
+        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        background: 'var(--ink-3)',
+      }}>
+        {champ.name.toUpperCase()}
       </div>
-      <div className="flex gap-1.5">
-        {TIERS.map((tier) => (
-          <button
-            key={tier}
-            onClick={() => onSelect(tier)}
-            aria-label={`Tier ${tier}`}
-            className={`w-9 h-9 rounded-xl text-xs font-bold text-white transition-all duration-150 hover:scale-105 ${TIER_COLORS[tier]}`}
-          >
-            {tier}
-          </button>
-        ))}
+
+      {/* Hover overlay : ↑ ↓ × */}
+      {hovered && (
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 5,
+          background: 'rgba(11,11,11,0.82)',
+          display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center',
+          gap: 5,
+        }}>
+          <div style={{ display: 'flex', gap: 4 }}>
+            <MiniBtn label="↑" disabled={tier === 'S'} title="Monter d'un tier"
+              color="var(--ok)" onClick={onPromote}/>
+            <MiniBtn label="↓" disabled={tier === 'D'} title="Descendre d'un tier"
+              color="var(--bone-2)" onClick={onDemote}/>
+          </div>
+          <MiniBtn label="×" title="Retirer du pool"
+            color="var(--accent)" onClick={onRemove}/>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Carte d'un champion DISPONIBLE (RIGHT pane picker) ──────────────
+function PickCard({ champ, onAdd }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <button
+      onClick={onAdd}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      title={`Ajouter ${champ.name} au pool (tier B)`}
+      style={{
+        position: 'relative',
+        width: 64, flexShrink: 0,
+        background: 'var(--ink-2)',
+        border: `1.5px solid ${hovered ? 'var(--accent)' : 'var(--ink-5)'}`,
+        boxShadow: hovered ? '2px 2px 0 var(--ink-0)' : 'none',
+        cursor: 'pointer',
+        padding: 0,
+        textAlign: 'center',
+        transform: hovered ? 'translate(-1px,-1px)' : 'none',
+        transition: 'transform 0.08s, box-shadow 0.08s, border-color 0.08s',
+      }}
+    >
+      <img
+        src={champImg(champ)}
+        alt={champ.name}
+        style={{
+          width: '100%', height: 52, objectFit: 'cover', display: 'block',
+          opacity: hovered ? 1 : 0.85,
+          filter: hovered ? 'none' : 'grayscale(40%)',
+          transition: 'opacity 0.1s, filter 0.1s',
+        }}
+      />
+      <div style={{
+        padding: '2px 3px',
+        fontFamily: 'var(--f-display)', fontSize: 8, fontWeight: 700,
+        letterSpacing: '0.04em',
+        color: hovered ? 'var(--accent)' : 'var(--bone-2)',
+        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+      }}>
+        {champ.name.toUpperCase()}
+      </div>
+      {hovered && (
+        <div style={{
+          position: 'absolute', top: 3, right: 3, zIndex: 2,
+          width: 16, height: 16,
+          background: 'var(--accent)', color: 'var(--accent-ink)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 12, lineHeight: 1,
+        }}>+</div>
+      )}
+    </button>
+  );
+}
+
+// ── Une rangée de tier dans le pool (S, A, B, C, D) ─────────────────
+function TierRow({ tier, entries, champById, onPromote, onDemote, onRemove }) {
+  const color = TIER_COLOR[tier];
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'flex-start', gap: 14,
+      padding: '10px 0',
+      borderBottom: '1px solid var(--ink-5)',
+    }}>
+      {/* Tier badge column */}
+      <div style={{ width: 60, flexShrink: 0, textAlign: 'center', paddingTop: 2 }}>
+        <div style={{
+          width: 38, height: 38, margin: '0 auto',
+          background: color,
+          color: 'var(--ink-0)',
+          fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 18,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: '2px 2px 0 var(--ink-0)',
+        }}>{tier}</div>
+        <div style={{
+          fontFamily: 'var(--f-mono)', fontSize: 8, letterSpacing: '0.08em',
+          color: 'var(--bone-3)', marginTop: 5,
+        }}>{TIER_HINT[tier]}</div>
+        <div style={{
+          fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--bone-2)', marginTop: 2,
+        }}>{entries.length}</div>
+      </div>
+
+      {/* Cards column */}
+      <div style={{ flex: 1, minWidth: 0, minHeight: 92 }}>
+        {entries.length === 0 ? (
+          <div style={{
+            height: 84, display: 'flex', alignItems: 'center',
+            paddingLeft: 4,
+            fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.08em',
+            color: 'var(--bone-3)', fontStyle: 'italic',
+          }}>
+            (aucun champion en {tier})
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {entries.map(e => {
+              const champ = champById[e.champion_id];
+              if (!champ) return null;
+              return (
+                <PoolCard key={e.champion_id}
+                  champ={champ} tier={tier}
+                  onPromote={() => onPromote(e.champion_id, tier)}
+                  onDemote={() => onDemote(e.champion_id, tier)}
+                  onRemove={() => onRemove(e.champion_id)}
+                />
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-export default function ChampionPoolEditor({ champions }) {
+// ── Main ────────────────────────────────────────────────────────────
+export default function ChampionPoolEditor() {
+  const { championPool, addToPool, removeFromPool, changeTier, loadProfile } = useUserStore();
+  const { champions, loaded, loading, load } = useChampionsStore();
+
   const [activeRole, setActiveRole] = useState('mid');
   const [search, setSearch] = useState('');
-  const [filterByRole, setFilterByRole] = useState(true);
-  const [tierPicker, setTierPicker] = useState(null);
-  const [saved, setSaved] = useState(false);
-  const { championPool, addToPool, changeTier, savePool } = useUserStore();
+  const [debouncedSearch, setDebouncedSearch] = useState('');
 
-  const poolIdsForRole = useMemo(() => {
-    const ids = new Set();
-    for (const e of (championPool[activeRole] || [])) ids.add(e.champion_id);
-    return ids;
-  }, [championPool, activeRole]);
+  useEffect(() => { load(); loadProfile(); }, [load, loadProfile]);
 
-  const filteredChampions = useMemo(() => {
-    let list = Array.isArray(champions) ? [...champions] : [];
-    if (filterByRole) {
-      list = list.filter((c) => c.roles.includes(activeRole));
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(id);
+  }, [search]);
+
+  const poolForRole = championPool[activeRole] || [];
+
+  // Lookup : champion id → champion
+  const champById = useMemo(() => {
+    const m = {};
+    for (const c of champions) m[c.id] = c;
+    return m;
+  }, [champions]);
+
+  // Lookup : champion id → entry (for current role)
+  const poolByChampId = useMemo(() => {
+    const m = {};
+    for (const e of poolForRole) m[e.champion_id] = e;
+    return m;
+  }, [poolForRole]);
+
+  // Pool entries grouped by tier (S → D), sorted alpha within each tier
+  const entriesByTier = useMemo(() => {
+    const groups = { S: [], A: [], B: [], C: [], D: [] };
+    for (const e of poolForRole) {
+      const t = TIERS.includes(e.tier) ? e.tier : 'B';
+      groups[t].push(e);
     }
-    if (search) {
-      const q = search.toLowerCase();
-      list = list.filter((c) => c.name.toLowerCase().includes(q));
+    for (const t of TIERS) {
+      groups[t].sort((a, b) => {
+        const an = champById[a.champion_id]?.name || '';
+        const bn = champById[b.champion_id]?.name || '';
+        return an.localeCompare(bn);
+      });
     }
-    list.sort((a, b) => {
-      const aIn = poolIdsForRole.has(a.id) ? 0 : 1;
-      const bIn = poolIdsForRole.has(b.id) ? 0 : 1;
-      if (aIn !== bIn) return aIn - bIn;
-      return a.name.localeCompare(b.name);
-    });
+    return groups;
+  }, [poolForRole, champById]);
+
+  // Picker = champs du rôle pas encore dans le pool, filtrés par recherche
+  const availableChamps = useMemo(() => {
+    const q = debouncedSearch.toLowerCase().trim();
+    let list = champions.filter(c =>
+      (Array.isArray(c.roles) ? c.roles.includes(activeRole) : true)
+      && !poolByChampId[c.id]
+    );
+    if (q) list = list.filter(c => c.name.toLowerCase().includes(q));
+    list.sort((a, b) => a.name.localeCompare(b.name));
     return list;
-  }, [champions, activeRole, search, poolIdsForRole, filterByRole]);
+  }, [champions, activeRole, debouncedSearch, poolByChampId]);
 
-  const handleChampClick = (champion, e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    setTierPicker({
-      champion,
-      isUpdate: poolIdsForRole.has(champion.id),
-      x: Math.min(rect.left, window.innerWidth - 240),
-      y: rect.bottom + 6,
-    });
+  const totalCount = ROLES.reduce((sum, r) => sum + (championPool[r]?.length || 0), 0);
+  const roleCount = poolForRole.length;
+
+  const handlePromote = (champId, currentTier) => {
+    const idx = TIERS.indexOf(currentTier);
+    if (idx > 0) changeTier(activeRole, champId, TIERS[idx - 1]);
   };
-
-  const handleTierSelect = (tier) => {
-    if (tierPicker) {
-      if (tierPicker.isUpdate) {
-        changeTier(activeRole, tierPicker.champion.id, tier);
-      } else {
-        addToPool(activeRole, tierPicker.champion, tier);
-      }
-      setTierPicker(null);
-    }
-  };
-
-  const handleSave = async () => {
-    await savePool(activeRole);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+  const handleDemote = (champId, currentTier) => {
+    const idx = TIERS.indexOf(currentTier);
+    if (idx >= 0 && idx < TIERS.length - 1) changeTier(activeRole, champId, TIERS[idx + 1]);
   };
 
   return (
-    <div className="flex h-[calc(100vh-3rem)]">
-      {/* -- Left: Tier list per role -- */}
-      <div className="w-72 border-r border-border-subtle flex flex-col bg-surface-default">
-        {/* Role tabs */}
-        <div className="flex border-b border-border-subtle">
-          {ROLES.map((role) => (
-            <button
-              key={role}
-              onClick={() => {
-                if (activeRole === role) {
-                  setFilterByRole(!filterByRole);
-                } else {
-                  setActiveRole(role);
-                  setFilterByRole(true);
-                }
-                setTierPicker(null);
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'var(--ink-0)' }}>
+
+      {/* Header */}
+      <div style={{
+        padding: '12px 20px', flexShrink: 0,
+        background: 'var(--ink-1)',
+        borderBottom: 'var(--edge-weight) solid var(--bone-0)',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14,
+      }}>
+        <div>
+          <div style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 20, letterSpacing: '0.18em', color: 'var(--bone-0)' }}>
+            CHAMPION POOL
+          </div>
+          <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--bone-2)', letterSpacing: '0.08em', marginTop: 1 }}>
+            GAUCHE = TON POOL (S→D) · DROITE = AJOUTER · HOVER = ↑ ↓ × · SAUVEGARDE AUTO
+          </div>
+        </div>
+        <div style={{
+          fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.18em',
+          color: 'var(--accent)', padding: '6px 12px',
+          border: '1.5px solid var(--accent)', flexShrink: 0,
+        }}>
+          {String(totalCount).padStart(2, '0')} CHAMPIONS DANS TON POOL
+        </div>
+      </div>
+
+      {/* Role tabs */}
+      <div style={{ display: 'flex', flexShrink: 0, background: 'var(--ink-1)', borderBottom: '1px solid var(--ink-5)' }}>
+        {ROLES.map(r => {
+          const count = championPool[r]?.length || 0;
+          const isActive = activeRole === r;
+          return (
+            <button key={r} onClick={() => { setActiveRole(r); setSearch(''); }}
+              style={{
+                flex: 1, padding: '9px 0',
+                fontFamily: 'var(--f-display)', fontSize: 11, letterSpacing: '0.18em',
+                background: isActive ? 'var(--ink-2)' : 'transparent',
+                color: isActive ? 'var(--accent)' : 'var(--bone-2)',
+                border: 'none',
+                borderBottom: isActive ? 'var(--edge-weight) solid var(--accent)' : '2px solid transparent',
+                cursor: 'pointer', transition: 'all 0.1s',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
               }}
-              aria-pressed={activeRole === role}
-              aria-label={ROLE_LABELS[role]}
-              className={`flex-1 py-2.5 text-[11px] font-medium transition-all duration-200 ${
-                activeRole === role
-                  ? filterByRole
-                    ? 'border-b-2 border-accent bg-surface-elevated text-txt-primary'
-                    : 'border-b-2 border-txt-muted bg-surface-elevated text-txt-primary'
-                  : 'text-txt-muted hover:text-txt-secondary'
-              }`}
             >
-              <RoleIcon role={role} size={16} className={`mx-auto mb-0.5 ${activeRole === role ? (filterByRole ? 'text-accent' : 'text-txt-primary') : 'text-txt-muted'}`} />
-              {ROLE_LABELS[role]}
+              {ROLE_LABEL[r]}
+              {count > 0 && (
+                <span style={{
+                  fontFamily: 'var(--f-mono)', fontSize: 9,
+                  padding: '1px 5px',
+                  color: isActive ? 'var(--accent)' : 'var(--bone-3)',
+                  border: `1px solid ${isActive ? 'var(--accent)' : 'var(--ink-5)'}`,
+                }}>{count}</span>
+              )}
             </button>
-          ))}
-        </div>
-
-        {/* Tier list */}
-        <div className="flex-1 overflow-y-auto p-3">
-          <RoleTierList role={activeRole} champions={champions} />
-        </div>
-
-        <div className="p-3 border-t border-border-subtle">
-          <button
-            onClick={handleSave}
-            aria-label={saved ? 'Sauvegarde' : `Sauvegarder ${ROLE_LABELS[activeRole]}`}
-            className={`w-full py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-200 ${
-              saved
-                ? 'bg-emerald-500 text-white'
-                : 'btn-primary'
-            }`}
-          >
-            {saved ? <Check size={15} /> : <Save size={15} />}
-            {saved ? 'Sauvegarde' : `Sauvegarder ${ROLE_LABELS[activeRole]}`}
-          </button>
-        </div>
+          );
+        })}
       </div>
 
-      {/* -- Right: Champion browser -- */}
-      <div className="flex-1 flex flex-col bg-surface-base">
-        <div className="p-3 border-b border-border-subtle flex items-center gap-3">
-          <div className="relative flex-1 max-w-sm">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-txt-muted" />
+      {/* Body — two-pane */}
+      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+
+        {/* LEFT — POOL by tier */}
+        <div style={{
+          flex: '1 1 60%', minWidth: 0,
+          display: 'flex', flexDirection: 'column',
+          borderRight: '1px solid var(--ink-5)',
+          background: 'var(--ink-0)',
+        }}>
+          <div style={{
+            padding: '10px 16px', flexShrink: 0,
+            background: 'var(--ink-1)',
+            borderBottom: '1px solid var(--ink-5)',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          }}>
+            <div style={{
+              fontFamily: 'var(--f-display)', fontSize: 12, fontWeight: 700,
+              letterSpacing: '0.18em', color: 'var(--bone-0)',
+            }}>
+              TON POOL — {ROLE_LABEL[activeRole]}
+            </div>
+            <div style={{
+              fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.12em',
+              color: 'var(--bone-2)',
+            }}>
+              {roleCount} {roleCount > 1 ? 'CHAMPIONS' : 'CHAMPION'}
+            </div>
+          </div>
+
+          <div style={{ flex: 1, overflowY: 'auto', padding: '4px 16px' }}>
+            {(!loaded && loading) && (
+              <div style={{ textAlign: 'center', padding: 40, fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--bone-2)', letterSpacing: '0.08em' }}>
+                CHARGEMENT…
+              </div>
+            )}
+            {loaded && roleCount === 0 && (
+              <div style={{
+                textAlign: 'center', padding: '40px 20px',
+                fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--bone-3)', letterSpacing: '0.08em',
+                lineHeight: 1.6,
+              }}>
+                Pool vide pour {ROLE_LABEL[activeRole]}.<br/>
+                Ajoute des champions depuis le panneau de droite →
+              </div>
+            )}
+            {loaded && roleCount > 0 && TIERS.map(t => (
+              <TierRow key={t}
+                tier={t}
+                entries={entriesByTier[t]}
+                champById={champById}
+                onPromote={handlePromote}
+                onDemote={handleDemote}
+                onRemove={(id) => removeFromPool(activeRole, id)}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* RIGHT — picker */}
+        <div style={{
+          flex: '1 1 40%', minWidth: 320,
+          display: 'flex', flexDirection: 'column',
+          background: 'var(--ink-1)',
+        }}>
+          <div style={{
+            padding: '10px 16px', flexShrink: 0,
+            borderBottom: '1px solid var(--ink-5)',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          }}>
+            <div style={{
+              fontFamily: 'var(--f-display)', fontSize: 12, fontWeight: 700,
+              letterSpacing: '0.18em', color: 'var(--bone-0)',
+            }}>
+              AJOUTER — {ROLE_LABEL[activeRole]}
+            </div>
+            <div style={{
+              fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.12em',
+              color: 'var(--bone-2)',
+            }}>
+              {availableChamps.length} DISPO
+            </div>
+          </div>
+
+          <div style={{
+            padding: '10px 16px', flexShrink: 0,
+            borderBottom: '1px solid var(--ink-5)',
+            display: 'flex', alignItems: 'center', gap: 8,
+          }}>
             <input
-              type="text"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Rechercher..."
-              aria-label="Rechercher un champion"
-              className="input-field w-full pl-9 pr-3 py-2 text-sm"
+              onChange={e => setSearch(e.target.value)}
+              placeholder={`Rechercher ${ROLE_LABEL[activeRole]}…`}
+              style={{
+                flex: 1, padding: '7px 12px',
+                background: 'var(--ink-3)',
+                border: '1.5px solid var(--ink-5)',
+                color: 'var(--bone-0)',
+                fontFamily: 'var(--f-mono)', fontSize: 11, outline: 'none',
+                transition: 'border-color 0.1s',
+              }}
+              onFocus={e => { e.target.style.borderColor = 'var(--accent)'; }}
+              onBlur={e => { e.target.style.borderColor = 'var(--ink-5)'; }}
             />
+            {search && (
+              <button onClick={() => setSearch('')}
+                style={{
+                  background: 'none', border: 'none', color: 'var(--bone-2)',
+                  cursor: 'pointer', fontFamily: 'var(--f-mono)', fontSize: 14,
+                  padding: '4px 8px',
+                }}>×</button>
+            )}
           </div>
 
-          <div className="text-[11px] text-txt-muted">
-            <span className="tabular-nums font-medium text-txt-primary">{filteredChampions.length}</span> champions
-            <span className="mx-1">·</span>
-            <span className="text-accent tabular-nums font-medium">{(championPool[activeRole] || []).length}</span> dans le pool
-          </div>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-3">
-          <div className="grid grid-cols-6 2xl:grid-cols-8 gap-1.5">
-            {filteredChampions.map((champ) => {
-              const inPool = poolIdsForRole.has(champ.id);
-              return (
-                <ChampionCard
-                  key={champ.id}
-                  champion={champ}
-                  inPool={inPool}
-                  onAdd={(e) => handleChampClick(champ, e)}
-                  compact
-                />
-              );
-            })}
+          <div style={{ flex: 1, overflowY: 'auto', padding: '12px 16px' }}>
+            {(!loaded && loading) && (
+              <div style={{ textAlign: 'center', padding: 40, fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--bone-2)', letterSpacing: '0.08em' }}>
+                CHARGEMENT…
+              </div>
+            )}
+            {loaded && availableChamps.length === 0 && (
+              <div style={{
+                textAlign: 'center', padding: '40px 20px',
+                fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--bone-3)', letterSpacing: '0.08em',
+                lineHeight: 1.6,
+              }}>
+                {search
+                  ? `Aucun résultat pour « ${search} »`
+                  : 'Tous les champions de ce rôle sont déjà dans ton pool ✓'}
+              </div>
+            )}
+            {availableChamps.length > 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                {availableChamps.map(c => (
+                  <PickCard key={c.id} champ={c} onAdd={() => addToPool(activeRole, c, 'B')}/>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
-
-      {/* Tier picker popover */}
-      {tierPicker && (
-        <TierPicker
-          champion={tierPicker.champion}
-          position={{ x: tierPicker.x, y: tierPicker.y }}
-          isUpdate={tierPicker.isUpdate}
-          onSelect={handleTierSelect}
-          onClose={() => setTierPicker(null)}
-        />
-      )}
     </div>
   );
 }

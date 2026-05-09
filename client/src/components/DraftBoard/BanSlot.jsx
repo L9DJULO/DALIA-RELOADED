@@ -1,46 +1,52 @@
 import React from 'react';
-import { X, Ban } from 'lucide-react';
+import { X } from 'lucide-react';
 import { getDDragonChampUrl } from '../../lib/constants';
 
 export default function BanSlot({ champion, onClick, onClear }) {
   return (
-    <button
-      onClick={champion ? undefined : onClick}
-      aria-label={champion ? `Ban: ${champion.name}` : 'Selectionner un ban'}
-      className={`relative w-11 h-11 rounded-xl border transition-all duration-200 group overflow-hidden ${
-        champion
-          ? 'border-red-500/20 bg-surface-elevated'
-          : 'border-border-subtle hover:border-accent/40 bg-surface-elevated/50'
-      }`}
+    <div
+      onClick={onClick}
+      title={champion ? champion.name : 'Cliquer pour bannir'}
+      style={{
+        width: 32, height: 32, flexShrink: 0,
+        border: '1.5px solid ' + (champion ? 'var(--loss-border)' : 'var(--border-subtle)'),
+        background: champion ? 'var(--loss-bg)' : 'var(--surface-overlay)',
+        cursor: 'pointer', position: 'relative',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        transition: 'border-color 0.1s',
+      }}
     >
       {champion ? (
         <>
           <img
             src={getDDragonChampUrl(champion.key)}
             alt={champion.name}
-            className="w-full h-full object-cover opacity-30 grayscale"
+            style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'grayscale(60%) brightness(0.55)' }}
           />
-          <div className="absolute inset-0 flex items-center justify-center bg-red-500/8">
-            <X size={18} className="text-red-500/80" strokeWidth={3} />
+          {/* Red X overlay */}
+          <div style={{
+            position: 'absolute', inset: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            pointerEvents: 'none',
+          }}>
+            <X size={14} style={{ color: 'var(--loss)', opacity: 0.85 }}/>
           </div>
-          <div
-            onClick={(e) => { e.stopPropagation(); onClear(); }}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); onClear(); } }}
-            role="button"
-            tabIndex={0}
-            aria-label={`Retirer le ban ${champion.name}`}
-            className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center
-                       opacity-0 group-hover:opacity-100 bg-surface-overlay border border-border
-                       hover:bg-red-500 hover:border-red-500 cursor-pointer transition-all duration-150"
+          <button
+            onClick={e => { e.stopPropagation(); onClear?.(); }}
+            style={{
+              position: 'absolute', top: -7, right: -7,
+              background: 'var(--loss)', border: 'none',
+              width: 14, height: 14, borderRadius: '50%',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', padding: 0, zIndex: 1,
+            }}
           >
-            <X size={8} className="text-white" />
-          </div>
+            <X size={8} style={{ color: '#fff' }}/>
+          </button>
         </>
       ) : (
-        <div className="w-full h-full flex items-center justify-center">
-          <Ban size={13} className="text-txt-muted" aria-hidden="true" />
-        </div>
+        <span style={{ fontFamily: 'var(--f-display)', fontSize: 16, color: 'var(--text-muted)', lineHeight: 1 }}>×</span>
       )}
-    </button>
+    </div>
   );
 }
