@@ -11,6 +11,14 @@
 
 ---
 
+## Getting started
+
+1. Download the latest installer from the [GitHub Releases](../../releases/latest) page.
+2. Run the installer. If Windows SmartScreen warns you about an unsigned build, click **More info** → **Run anyway**.
+3. Create an account and start drafting — the backend is already running.
+
+---
+
 ## Architecture
 
 ```
@@ -253,108 +261,6 @@ DALIA-RELOADED/
 | **base64** | Auth Basic pour l'API LCU |
 | **winreg** | Lecture du registre Windows (localisation du client LoL) |
 | **dirs-next** | Résolution de chemins système |
-
----
-
-## Déploiement
-
-### Serveur (pour toi et tes amis)
-
-Le serveur FastAPI doit tourner en ligne. Options recommandées :
-
-#### Railway (recommandé)
-1. Créer un compte sur [railway.app](https://railway.app)
-2. Nouveau projet → "Deploy from GitHub repo"
-3. Sélectionner le dossier `server/` comme root
-4. Ajouter un service PostgreSQL (plugin Railway)
-5. Variables d'environnement :
-   ```
-   DATABASE_URL=<auto par Railway>
-   JWT_SECRET=<générer: python -c "import secrets; print(secrets.token_hex(32))">
-   RIOT_API_KEY=<optionnel, pour les stats personnelles>
-   ```
-6. Railway donne une URL publique (ex: `https://dalia-server-xxx.up.railway.app`)
-
-#### Render (alternative)
-1. New Web Service → connecter le repo
-2. Root directory: `server`
-3. Build command: `pip install -r requirements.txt`
-4. Start command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-5. Ajouter PostgreSQL comme service managé
-
-### Client (l'appli desktop)
-
-```bash
-cd client
-npm install
-npm run tauri build
-```
-
-L'installeur `.exe` / `.msi` sera dans `client/src-tauri/target/release/bundle/`.
-
-Tes amis installent le `.exe`, puis dans **Settings** ils entrent l'URL du serveur (ex: `https://dalia-server-xxx.up.railway.app`).
-
----
-
-## Développement local
-
-### Stack complète via Docker / Podman (recommandé)
-
-```bash
-# Lance PostgreSQL + backend + frontend dev en un seul compose
-docker-compose up
-# ou avec Podman (voir PODMAN_RUN.md pour les détails WSL)
-podman-compose up
-```
-
-Services exposés : frontend `localhost:1420`, backend `localhost:8000`, Swagger `localhost:8000/docs`.
-
-> Voir **PODMAN_RUN.md** pour le guide complet Podman sous WSL2 (volumes, healthchecks, hot-reload).
-
-### Mode natif (sans conteneur)
-
-```bash
-# Terminal 1 — PostgreSQL
-cd server && docker-compose up db
-
-# Terminal 2 — Serveur backend
-cd server
-pip install -r requirements.txt
-python run.py
-# → http://localhost:8000 (API) + /docs (Swagger)
-
-# Terminal 3 — Client desktop
-cd client
-npm install
-npm run tauri dev
-# → http://localhost:1420 (Vite) + fenêtre Tauri
-```
-
-### Entraînement du modèle ML
-
-```bash
-cd server
-
-# 1. Collecter des matchs (nécessite RIOT_API_KEY)
-python -m app.ml.collect_matches --region EUW1 --tier master --count 5000
-
-# 2. Entraîner le modèle
-python -m app.ml.train --data app/data/matches/ --epochs 30
-
-# 3. Ou lancer le pipeline overnight complet
-bash overnight.sh
-```
-
----
-
-## Variables d'environnement
-
-| Variable | Requis | Description |
-|---|---|---|
-| `DATABASE_URL` | Oui | URL PostgreSQL (async: `postgresql+asyncpg://...`) |
-| `JWT_SECRET` | Oui | Clé secrète pour signer les JWT (min 32 chars) |
-| `RIOT_API_KEY` | Non | Clé API Riot Games (pour stats personnelles + collecte) |
-| `PORT` | Non | Port du serveur (défaut: 8000) |
 
 ---
 
