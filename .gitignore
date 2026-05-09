@@ -92,3 +92,6 @@ CLAUDE_CONTEXT.md
 # ── Tauri generated schemas ──
 client/src-tauri/gen/schemas/
 
+
+# Production secrets
+.env.prod
