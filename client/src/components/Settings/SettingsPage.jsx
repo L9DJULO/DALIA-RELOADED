@@ -2,7 +2,7 @@
 // Settings page — Soul Eater design tokens
 // ─────────────────────────────────────────────
 import React, { useState } from 'react';
-import { getServerUrl, setServerUrl, checkServerHealth } from '../../services/api';
+import { getServerUrl, checkServerHealth } from '../../services/api';
 import useLCUStore from '../../stores/lcuStore';
 import useAuthStore from '../../stores/authStore';
 import useUserStore from '../../stores/userStore';
@@ -42,10 +42,10 @@ export default function SettingsPage() {
   const [accent, setAccent] = useState(
     document.documentElement.dataset.accent || localStorage.getItem('dalia_accent') || 'red'
   );
-  const [serverUrl, setServerUrlState] = useState(getServerUrl());
   const [serverStatus, setServerStatus] = useState(null);
   const [checkingServer, setCheckingServer] = useState(false);
   const [connecting, setConnecting] = useState(false);
+  const serverUrl = getServerUrl();
 
   const lcuConnected = useLCUStore(s => s.connected);
   const summoner     = useLCUStore(s => s.summoner);
@@ -57,12 +57,6 @@ export default function SettingsPage() {
     document.documentElement.dataset.accent = id;
     localStorage.setItem('dalia_accent', id);
     setAccent(id);
-  };
-
-  const handleSaveServer = () => {
-    setServerUrl(serverUrl.trim());
-    setServerStatus({ ok: true, message: 'URL sauvegardée' });
-    setTimeout(() => setServerStatus(null), 2000);
   };
 
   const handleCheckServer = async () => {
@@ -162,27 +156,13 @@ export default function SettingsPage() {
             </div>
           )}
 
-          <div style={{ display: 'flex', gap: 0, marginBottom: 10 }}>
-            <input
-              type="url"
-              value={serverUrl}
-              onChange={e => setServerUrlState(e.target.value)}
-              placeholder="http://localhost:8000"
-              style={{ ...inputStyle, borderRight: 0 }}
-              onKeyDown={e => { if (e.key === 'Enter') handleSaveServer(); }}
-            />
-            <button
-              onClick={handleSaveServer}
-              style={{
-                padding: '0 16px',
-                background: 'var(--accent)', color: 'var(--accent-ink)',
-                border: 'var(--edge-weight) solid var(--bone-0)',
-                fontFamily: 'var(--f-display)', fontSize: 11, letterSpacing: '0.15em',
-                cursor: 'pointer',
-              }}
-            >
-              ▸ SAUVER
-            </button>
+          <div style={{
+            padding: '10px 12px', marginBottom: 10,
+            background: 'var(--ink-3)', border: '1.5px solid var(--ink-5)',
+            fontFamily: 'var(--f-mono)', fontSize: 11,
+            color: 'var(--bone-1)', wordBreak: 'break-all',
+          }}>
+            {serverUrl}
           </div>
 
           <button
