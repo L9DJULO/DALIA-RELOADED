@@ -27,6 +27,7 @@ from typing import Any, Dict, List, Optional
 from app.config import config
 from app.models.champion import Champion
 from app.models.draft import (
+    BanImpact,
     BanSuggestion,
     DraftRequest,
     DraftResponse,
@@ -417,6 +418,13 @@ class DraftEngine:
             unavailable=unavailable,
         )
 
+        # 8. Ban impact — which bans notably helped the top recommendations
+        ban_impact = await self._compute_ban_impact(
+            draft=draft,
+            role=role,
+            top_recs=scored[:5],
+        )
+
         return DraftResponse(
             recommendations=scored[:15],
             team_composition_summary=comp_summary,
@@ -424,6 +432,7 @@ class DraftEngine:
             win_probability=win_prob,
             duo_synergy_boost=duo_active,
             ban_suggestions=ban_suggestions,
+            ban_impact=ban_impact,
         )
 
     # ── Scoring pipeline (non-linear) ────────────────────────────────────
@@ -1040,6 +1049,51 @@ class DraftEngine:
                 count += 1
 
         return count
+
+    # ── Ban impact (which bans helped our recs) ──────────────────────────
+    async def _compute_ban_impact(
+        self,
+        draft: DraftState,
+        role: str,
+        top_recs: List[Recommendation],
+    ) -> List[BanImpact]:
+        """Identify which bans notably benefit the top recommendations.
+
+        Uses already-cached matchup data (loaded during scoring) — no extra
+        API calls. Only reports bans that are meta-relevant (score ≥ 55) or
+        that directly counter a top recommended champion (delta ≤ -1.5%).
+        """
+        if not draft.bans or not top_recs:
+            return []
+
+        impact: List[BanImpact] = []
+        for ban_id in draft.bans:
+            champ = self.db.get_by_id(ban_id)
+            if not champ:
+                continue
+
+            meta_score = self.meta.score(champ.id, role)
+            is_threat = meta_score >= 65
+
+            helped: List[str] = []
+            for rec in top_recs:
+                counters = self.matchup.get_top_counters(rec.champion_id, role, n=20)
+                for opp_id, delta in counters:
+                    if opp_id == ban_id and delta <= -1.5:
+                        helped.append(rec.champion_name)
+                        break
+
+            if is_threat or helped:
+                impact.append(BanImpact(
+                    champion_id=ban_id,
+                    champion_name=champ.name,
+                    champion_key=champ.key,
+                    meta_score=round(meta_score, 1),
+                    is_lane_threat=is_threat,
+                    helped_recommendations=helped[:3],
+                ))
+
+        return impact
 
     # ── Ban suggestions (4 strategies merged) ────────────────────────────
     async def _compute_ban_suggestions(

@@ -218,6 +218,16 @@ class BanSuggestion(BaseModel):
     threatens_allies: List[str] = Field(default_factory=list)  # ally names threatened
 
 
+class BanImpact(BaseModel):
+    """Impact of a ban on the current recommendation scores."""
+    champion_id: int
+    champion_name: str
+    champion_key: str = ""
+    meta_score: float = 0.0       # Meta strength of the banned champion (0-100)
+    is_lane_threat: bool = False   # True if meta_score >= 65 for the player's role
+    helped_recommendations: List[str] = Field(default_factory=list)  # Rec names that benefit
+
+
 class DraftResponse(BaseModel):
     recommendations: List[Recommendation]
     team_composition_summary: Dict[str, float] = Field(default_factory=dict)
@@ -225,3 +235,4 @@ class DraftResponse(BaseModel):
     win_probability: Optional[float] = None  # 0-100, from ML model
     duo_synergy_boost: bool = False  # True when DuoQ mode was active for recommendations
     ban_suggestions: List[BanSuggestion] = Field(default_factory=list)
+    ban_impact: List[BanImpact] = Field(default_factory=list)

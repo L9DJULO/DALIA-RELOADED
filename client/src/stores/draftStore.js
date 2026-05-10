@@ -30,6 +30,7 @@ const useDraftStore = create((set, get) => ({
   // ── Recommendations ──
   recommendations: [],
   banSuggestions: [],
+  banImpact: [],
   compSummary: {},
   warnings: [],
   winProbability: null,
@@ -133,6 +134,7 @@ const useDraftStore = create((set, get) => ({
       allyPrepicks: EMPTY_ALLY_PICKS(),
       recommendations: [],
       banSuggestions: [],
+      banImpact: [],
       compSummary: {},
       warnings: [],
       winProbability: null,
@@ -230,6 +232,7 @@ const useDraftStore = create((set, get) => ({
       set({
         recommendations: data.recommendations || [],
         banSuggestions: data.ban_suggestions || [],
+        banImpact: data.ban_impact || [],
         compSummary: data.team_composition_summary || {},
         warnings: data.warnings || [],
         winProbability: data.win_probability ?? null,

@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/nicegram/nicetauri/v2/tooling/cli/schema.json",
   "productName": "DALIA",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "identifier": "com.dalia.app",
   "build": {
     "frontendDist": "../dist",

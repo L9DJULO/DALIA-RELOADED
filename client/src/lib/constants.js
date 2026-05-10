@@ -24,9 +24,37 @@ export const setDDragonVersion = (version) => {
   }
 };
 
+/**
+ * Some champions have DDragon keys that differ from their display name.
+ * This map corrects the most common mismatches so image URLs always resolve.
+ */
+const DDRAGON_KEY_FIXES = {
+  'Wukong':         'MonkeyKing',
+  'Renata':         'Renata',       // full name "Renata Glasc" → key "Renata"
+  'Belveth':        'Belveth',
+  'Nunu':           'Nunu',         // "Nunu & Willump" → "Nunu"
+  'AurelionSol':    'AurelionSol',
+  'JarvanIV':       'JarvanIV',
+  'KogMaw':         'KogMaw',
+  'TwistedFate':    'TwistedFate',
+  'MasterYi':       'MasterYi',
+  'MissFortune':    'MissFortune',
+  'DrMundo':        'DrMundo',
+  'Chogath':        'Chogath',
+  'Khazix':         'Khazix',
+  'RekSai':         'RekSai',
+  'TahmKench':      'TahmKench',
+  'XinZhao':        'XinZhao',
+  'LeeSin':         'LeeSin',
+  'VelKoz':         'VelKoz',
+  'Kaisa':          'Kaisa',
+};
+
+const _fixKey = (key) => DDRAGON_KEY_FIXES[key] || key;
+
 /** Build a DDragon champion image URL using the current version. */
 export const getDDragonChampUrl = (champKey) =>
-  `${DDRAGON_BASE}/${_resolvedVersion}/img/champion/${champKey}.png`;
+  `${DDRAGON_BASE}/${_resolvedVersion}/img/champion/${_fixKey(champKey)}.png`;
 
 /** Convenience: champion image base path. */
 export const getDDragonChampBase = () =>

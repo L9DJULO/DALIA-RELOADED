@@ -387,9 +387,33 @@ export default function DraftBoard({ champions }) {
             </div>
           </div>
 
-          {/* Quick input */}
-          <div style={{ padding:'8px 16px', borderBottom:'1px solid var(--border-subtle)', flexShrink:0 }}>
-            <QuickInput champions={champions}/>
+          {/* Quick input + Clear */}
+          <div style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 16px', borderBottom:'1px solid var(--border-subtle)', flexShrink:0 }}>
+            <div style={{ flex:1 }}>
+              <QuickInput champions={champions}/>
+            </div>
+            <button
+              onClick={() => {
+                if (window.confirm('Remettre le draft à zéro ?\n(picks, bans et recommandations effacés — rôle et pool conservés)')) {
+                  resetDraft();
+                }
+              }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 5,
+                padding: '6px 12px', flexShrink: 0,
+                fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 10, letterSpacing: '0.18em',
+                background: 'transparent',
+                color: 'var(--loss)',
+                border: '1.5px solid var(--loss)',
+                cursor: 'pointer',
+                transition: 'background 0.1s, color 0.1s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'var(--loss)'; e.currentTarget.style.color = '#fff'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--loss)'; }}
+              title="Réinitialiser le draft"
+            >
+              <RotateCcw size={11}/>CLEAR
+            </button>
           </div>
 
           {/* Tabs */}

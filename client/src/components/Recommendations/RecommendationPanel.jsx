@@ -232,12 +232,45 @@ function RecommendationCard({ rec, rank, champData, isWildcard }) {
   );
 }
 
+function WildcardMini({ rec, champData }) {
+  const score = Math.round(rec.total_score);
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 7,
+      padding: '6px 8px', marginBottom: 5,
+      background: 'var(--surface-card)',
+      border: '1px solid var(--warn-border)',
+    }}>
+      {champData && (
+        <img
+          src={champData.image_url || getDDragonChampUrl(champData.key)}
+          alt={rec.champion_name}
+          style={{ width: 32, height: 32, objectFit: 'cover', border: '1px solid var(--warn-border)', flexShrink: 0 }}
+        />
+      )}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 11, letterSpacing: '0.03em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {rec.champion_name}
+        </div>
+        {rec.matchup_details?.length > 0 && (
+          <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--text-muted)' }}>
+            MU {Math.round(rec.breakdown?.matchup ?? 50)}
+          </div>
+        )}
+      </div>
+      <div style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 18, color: 'var(--warn)', flexShrink: 0 }}>{score}</div>
+    </div>
+  );
+}
+
 export default function RecommendationPanel({ champions }) {
-  const { recommendations, compSummary, warnings, winProbability, loading, error } = useDraftStore();
+  const { recommendations, compSummary, warnings, winProbability, loading, error, banImpact } = useDraftStore();
   const unavailableIds = useDraftStore(s => s.getAllUnavailableIds());
 
   const champMap = useMemo(() => { const m = {}; for (const c of champions) m[c.id] = c; return m; }, [champions]);
-  const allRecs  = useMemo(() => recommendations.filter(r => !unavailableIds.has(r.champion_id)), [recommendations, unavailableIds]);
+  const allRecs      = useMemo(() => recommendations.filter(r => !unavailableIds.has(r.champion_id)), [recommendations, unavailableIds]);
+  const poolRecs     = useMemo(() => allRecs.filter(r => r.is_pool_champion), [allRecs]);
+  const wildcardRecs = useMemo(() => allRecs.filter(r => !r.is_pool_champion), [allRecs]);
 
   const SE = {
     lbl: { fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--accent)', letterSpacing: '0.18em', textTransform: 'uppercase', paddingBottom: 3, borderBottom: '1.5px solid var(--accent)', marginBottom: 8 },
@@ -286,12 +319,29 @@ export default function RecommendationPanel({ champions }) {
     </div>
   );
 
-  return (
+  const hasWildcards = wildcardRecs.length > 0;
+  const notableBans  = (banImpact || []).filter(b => b.is_lane_threat || b.helped_recommendations?.length > 0);
+
+  const mainContent = (
     <div style={{ padding: '14px 16px', overflowY: 'auto', height: '100%' }}>
       {warnings.length > 0 && (
         <div style={{ padding: '10px 14px', background: 'var(--warn-bg)', border: '2px solid var(--warn-border)', marginBottom: 12, display: 'flex', gap: 10 }}>
           <AlertTriangle size={15} style={{ color: 'var(--warn)', flexShrink: 0, marginTop: 1 }}/>
           <div>{warnings.map((w,i) => <div key={i} style={{ fontFamily: 'var(--f-body)', fontSize: 12, color: 'var(--warn)' }}>{w}</div>)}</div>
+        </div>
+      )}
+
+      {notableBans.length > 0 && (
+        <div style={{ padding: '8px 12px', background: 'var(--surface-elevated)', border: '1px solid var(--border-subtle)', marginBottom: 10 }}>
+          <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--accent)', letterSpacing: '0.18em', marginBottom: 5 }}>BANS IMPACTANTS</div>
+          {notableBans.map(b => (
+            <div key={b.champion_id} style={{ fontFamily: 'var(--f-body)', fontSize: 11, color: 'var(--text-secondary)', marginBottom: 2 }}>
+              <span style={{ color: 'var(--win)', fontWeight: 700 }}>{b.champion_name} banni</span>
+              {b.helped_recommendations.length > 0
+                ? ` — lane plus libre pour ${b.helped_recommendations.join(', ')}`
+                : ` — menace meta éliminée`}
+            </div>
+          ))}
         </div>
       )}
 
@@ -340,23 +390,59 @@ export default function RecommendationPanel({ champions }) {
         </div>
       )}
 
-      {allRecs.length > 0 && (
+      {poolRecs.length > 0 && (
         <div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 10 }}>
             <span style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 14, letterSpacing: '0.1em' }}>RECOMMANDATIONS</span>
-            <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--text-muted)' }}>{allRecs.length} champion{allRecs.length > 1 ? 's' : ''}</span>
+            <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--text-muted)' }}>{poolRecs.length} champion{poolRecs.length > 1 ? 's' : ''}</span>
           </div>
           <div className="stagger-children">
-            {allRecs.map((rec, i) => (
+            {poolRecs.map((rec, i) => (
               <RecommendationCard
                 key={rec.champion_id}
                 rec={rec}
                 rank={i + 1}
                 champData={champMap[rec.champion_id]}
-                isWildcard={!rec.is_pool_champion}
+                isWildcard={false}
               />
             ))}
           </div>
+        </div>
+      )}
+
+      {allRecs.length === 0 && recommendations.length > 0 && (
+        <div style={{ padding: '20px 0', textAlign: 'center', fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--text-muted)' }}>
+          Tous les champions recommandés sont déjà sélectionnés.
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <div style={{ display: 'flex', height: '100%', overflow: 'hidden' }}>
+      <div style={{ flex: 1, overflow: 'hidden' }}>
+        {mainContent}
+      </div>
+
+      {hasWildcards && (
+        <div style={{
+          width: 156, flexShrink: 0,
+          borderLeft: '2px solid var(--warn-border)',
+          background: 'var(--surface-elevated)',
+          overflowY: 'auto',
+          padding: '10px 8px',
+        }}>
+          <div style={{
+            fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--warn)',
+            letterSpacing: '0.18em', marginBottom: 8,
+            paddingBottom: 4, borderBottom: '1px solid var(--warn-border)',
+          }}>HORS POOL</div>
+          <div style={{ fontFamily: 'var(--f-body)', fontSize: 9, color: 'var(--text-muted)', marginBottom: 8, lineHeight: 1.4 }}>
+            Picks conseillés hors pool si besoin
+          </div>
+          {wildcardRecs.map(rec => (
+            <WildcardMini key={rec.champion_id} rec={rec} champData={champMap[rec.champion_id]}/>
+          ))}
         </div>
       )}
     </div>
