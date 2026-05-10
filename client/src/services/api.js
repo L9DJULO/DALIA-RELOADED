@@ -8,11 +8,11 @@ import axios from 'axios';
 
 // Server URL — in dev (browser), Vite proxy handles /api → localhost:8000.
 // In Tauri production build, use VITE_API_URL injected at build time
-// (see client/.env.production). The user cannot configure this from the UI;
-// the server runs on a Tailscale tailnet, the URL is fixed.
+// (see client/.env.production). The backend is exposed publicly via
+// Tailscale Funnel, so any user can reach it without joining the tailnet.
 const IS_TAURI = typeof window !== 'undefined' && (window.__TAURI_INTERNALS__ || window.__TAURI__);
 const SERVER_URL = IS_TAURI
-  ? (import.meta.env.VITE_API_URL || 'http://dalia-server.tail75977b.ts.net:8000').replace(/\/+$/, '')
+  ? (import.meta.env.VITE_API_URL || 'https://dalia-server.tail75977b.ts.net').replace(/\/+$/, '')
   : '';
 
 const api = axios.create({
