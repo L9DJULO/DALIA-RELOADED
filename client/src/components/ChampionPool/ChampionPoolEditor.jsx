@@ -231,6 +231,7 @@ export default function ChampionPoolEditor() {
   const [activeRole, setActiveRole] = useState('mid');
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [showAllChamps, setShowAllChamps] = useState(false);
 
   useEffect(() => { load(); loadProfile(); }, [load, loadProfile]);
 
@@ -276,13 +277,13 @@ export default function ChampionPoolEditor() {
   const availableChamps = useMemo(() => {
     const q = debouncedSearch.toLowerCase().trim();
     let list = champions.filter(c =>
-      (Array.isArray(c.roles) ? c.roles.includes(activeRole) : true)
+      (showAllChamps || (Array.isArray(c.roles) ? c.roles.includes(activeRole) : true))
       && !poolByChampId[c.id]
     );
     if (q) list = list.filter(c => c.name.toLowerCase().includes(q));
     list.sort((a, b) => a.name.localeCompare(b.name));
     return list;
-  }, [champions, activeRole, debouncedSearch, poolByChampId]);
+  }, [champions, activeRole, debouncedSearch, poolByChampId, showAllChamps]);
 
   const totalCount = ROLES.reduce((sum, r) => sum + (championPool[r]?.length || 0), 0);
   const roleCount = poolForRole.length;
@@ -447,7 +448,7 @@ export default function ChampionPoolEditor() {
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder={`Rechercher ${ROLE_LABEL[activeRole]}…`}
+              placeholder={showAllChamps ? 'Rechercher tous les champions...' : `Rechercher ${ROLE_LABEL[activeRole]}...`}
               style={{
                 flex: 1, padding: '7px 12px',
                 background: 'var(--ink-3)',
@@ -459,6 +460,25 @@ export default function ChampionPoolEditor() {
               onFocus={e => { e.target.style.borderColor = 'var(--accent)'; }}
               onBlur={e => { e.target.style.borderColor = 'var(--ink-5)'; }}
             />
+            <button
+              onClick={() => setShowAllChamps(v => !v)}
+              title={showAllChamps ? 'Afficher seulement les champions du role' : 'Afficher tous les champions'}
+              style={{
+                flexShrink: 0,
+                minWidth: 58,
+                padding: '7px 10px',
+                background: showAllChamps ? 'var(--accent)' : 'var(--ink-3)',
+                color: showAllChamps ? 'var(--accent-ink)' : 'var(--bone-2)',
+                border: `1.5px solid ${showAllChamps ? 'var(--accent)' : 'var(--ink-5)'}`,
+                cursor: 'pointer',
+                fontFamily: 'var(--f-display)',
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: '0.12em',
+              }}
+            >
+              {showAllChamps ? 'TOUS' : 'ROLE'}
+            </button>
             {search && (
               <button onClick={() => setSearch('')}
                 style={{
