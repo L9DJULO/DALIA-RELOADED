@@ -6,14 +6,14 @@
  */
 import axios from 'axios';
 
-// Server URL — in dev, Vite proxy handles /api → localhost:8000
-// In Tauri production build, use the configured server URL
+// Server URL — in dev (browser), Vite proxy handles /api → localhost:8000.
+// In Tauri production build, use VITE_API_URL injected at build time
+// (see client/.env.production). The backend is exposed publicly via
+// Tailscale Funnel, so any user can reach it without joining the tailnet.
 const IS_TAURI = typeof window !== 'undefined' && (window.__TAURI_INTERNALS__ || window.__TAURI__);
-const _raw = IS_TAURI
-  ? (localStorage.getItem('dalia_server_url') || 'http://localhost:8000')
+const SERVER_URL = IS_TAURI
+  ? (import.meta.env.VITE_API_URL || 'https://dalia-server.tail75977b.ts.net').replace(/\/+$/, '')
   : '';
-// Strip trailing slash to avoid double-slash in URLs
-const SERVER_URL = _raw.replace(/\/+$/, '');
 
 const api = axios.create({
   baseURL: `${SERVER_URL}/api`,
@@ -188,21 +188,10 @@ export const unlinkDuo = () =>
 export const fetchDuoPartnerPool = () =>
   api.get('/duo/partner/pool').then((r) => r.data);
 // ═════════════════════════════════════════════════════════════════════════
-//  SERVER CONFIG
+//  SERVER CONFIG (read-only — URL is fixed at build time)
 // ═════════════════════════════════════════════════════════════════════════
-export const setServerUrl = (url) => {
-  const clean = url.replace(/\/+$/, '');
-  localStorage.setItem('dalia_server_url', clean);
-  api.defaults.baseURL = `${clean}/api`;
-};
+export const getServerUrl = () => SERVER_URL || 'http://localhost:8000';
 
-export const getServerUrl = () =>
-  localStorage.getItem('dalia_server_url') || 'http://localhost:8000';
-
-/**
- * Quick health check — ping the backend server.
- * Returns { ok, ready, url } or { ok: false, error, url }.
- */
 export const checkServerHealth = async () => {
   const url = getServerUrl();
   try {

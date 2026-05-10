@@ -1,4 +1,4 @@
-"""add is_admin and duo_code columns, duo_links table
+"""add is_admin, duo_code columns and duo_links table
 
 Revision ID: 002
 Revises: 001
@@ -17,12 +17,51 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # Add is_admin to users
-    op.add_column("users", sa.Column("is_admin", sa.Boolean(), server_default="false", nullable=False))
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
 
-    # duo_code + duo_links were already created by SQLAlchemy create_all
-    # so we only need to add is_admin here.
+    user_cols = {c["name"] for c in inspector.get_columns("users")}
+    user_indexes = {i["name"] for i in inspector.get_indexes("users")}
+
+    if "is_admin" not in user_cols:
+        op.add_column(
+            "users",
+            sa.Column("is_admin", sa.Boolean(), server_default="false", nullable=False),
+        )
+
+    if "duo_code" not in user_cols:
+        op.add_column("users", sa.Column("duo_code", sa.String(10), nullable=True))
+
+    if "ix_users_duo_code" not in user_indexes:
+        op.create_index("ix_users_duo_code", "users", ["duo_code"], unique=True)
+
+    if "duo_links" not in inspector.get_table_names():
+        op.create_table(
+            "duo_links",
+            sa.Column("id", UUID(as_uuid=True), primary_key=True),
+            sa.Column(
+                "user_a_id",
+                UUID(as_uuid=True),
+                sa.ForeignKey("users.id", ondelete="CASCADE"),
+                nullable=False,
+            ),
+            sa.Column(
+                "user_b_id",
+                UUID(as_uuid=True),
+                sa.ForeignKey("users.id", ondelete="CASCADE"),
+                nullable=False,
+            ),
+            sa.Column("status", sa.String(20), server_default="active"),
+            sa.Column("created_at", sa.DateTime(timezone=True)),
+            sa.Column("ended_at", sa.DateTime(timezone=True), nullable=True),
+            sa.UniqueConstraint(
+                "user_a_id", "user_b_id", "status", name="uq_duo_link_active"
+            ),
+        )
 
 
 def downgrade() -> None:
+    op.drop_table("duo_links")
+    op.drop_index("ix_users_duo_code", table_name="users")
+    op.drop_column("users", "duo_code")
     op.drop_column("users", "is_admin")

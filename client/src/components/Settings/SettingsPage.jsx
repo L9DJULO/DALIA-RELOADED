@@ -2,6 +2,10 @@
 // Settings page — Soul Eater design tokens
 // ─────────────────────────────────────────────
 import React, { useState } from 'react';
+<<<<<<< HEAD
+=======
+import { getServerUrl, checkServerHealth } from '../../services/api';
+>>>>>>> d72885244bdcd0d3c08e196e378d23c0ac8fea02
 import useLCUStore from '../../stores/lcuStore';
 import useAuthStore from '../../stores/authStore';
 import useUserStore from '../../stores/userStore';
@@ -33,7 +37,13 @@ export default function SettingsPage() {
   const [accent, setAccent] = useState(
     document.documentElement.dataset.accent || localStorage.getItem('dalia_accent') || 'red'
   );
+<<<<<<< HEAD
+=======
+  const [serverStatus, setServerStatus] = useState(null);
+  const [checkingServer, setCheckingServer] = useState(false);
+>>>>>>> d72885244bdcd0d3c08e196e378d23c0ac8fea02
   const [connecting, setConnecting] = useState(false);
+  const serverUrl = getServerUrl();
 
   const lcuConnected = useLCUStore(s => s.connected);
   const summoner     = useLCUStore(s => s.summoner);
@@ -47,6 +57,20 @@ export default function SettingsPage() {
     setAccent(id);
   };
 
+<<<<<<< HEAD
+=======
+  const handleCheckServer = async () => {
+    setCheckingServer(true);
+    setServerStatus(null);
+    const result = await checkServerHealth();
+    setServerStatus(result.ok
+      ? { ok: true, message: result.ready ? 'Serveur prêt ✓' : 'Serveur en démarrage…' }
+      : { ok: false, message: `Inaccessible — ${result.url}` }
+    );
+    setCheckingServer(false);
+  };
+
+>>>>>>> d72885244bdcd0d3c08e196e378d23c0ac8fea02
   const handleLCUConnect = async () => {
     setConnecting(true);
     await lcuConnect();
@@ -117,6 +141,50 @@ export default function SettingsPage() {
           </div>
         </Card>
 
+<<<<<<< HEAD
+=======
+        {/* Server */}
+        <Card>
+          <SectionLbl n={3}>SERVEUR DALIA</SectionLbl>
+
+          {serverStatus && (
+            <div style={{
+              marginBottom: 12, padding: '8px 12px',
+              background: serverStatus.ok ? 'rgba(156,211,107,0.08)' : 'rgba(255,77,86,0.08)',
+              border: `var(--edge-weight) solid ${serverStatus.ok ? 'var(--ok)' : 'var(--bad)'}`,
+              fontFamily: 'var(--f-mono)', fontSize: 11,
+              color: serverStatus.ok ? 'var(--ok)' : 'var(--bad)',
+            }} className="anim-fade">
+              {serverStatus.ok ? '✓' : '!'} {serverStatus.message}
+            </div>
+          )}
+
+          <div style={{
+            padding: '10px 12px', marginBottom: 10,
+            background: 'var(--ink-3)', border: '1.5px solid var(--ink-5)',
+            fontFamily: 'var(--f-mono)', fontSize: 11,
+            color: 'var(--bone-1)', wordBreak: 'break-all',
+          }}>
+            {serverUrl}
+          </div>
+
+          <button
+            onClick={handleCheckServer}
+            disabled={checkingServer}
+            style={{
+              padding: '6px 14px',
+              fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.18em',
+              background: 'transparent', color: 'var(--bone-2)',
+              border: '1.5px solid var(--ink-5)',
+              cursor: checkingServer ? 'wait' : 'pointer',
+              opacity: checkingServer ? 0.6 : 1,
+            }}
+          >
+            {checkingServer ? 'TEST EN COURS…' : '◇ TESTER LA CONNEXION'}
+          </button>
+        </Card>
+
+>>>>>>> d72885244bdcd0d3c08e196e378d23c0ac8fea02
         {/* LCU */}
         <Card>
           <SectionLbl n={3}>CLIENT LEAGUE (LCU)</SectionLbl>

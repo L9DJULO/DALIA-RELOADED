@@ -3,7 +3,6 @@
 // ─────────────────────────────────────────────
 import React, { useState } from 'react';
 import useAuthStore from '../../stores/authStore';
-import { getServerUrl, setServerUrl } from '../../services/api';
 import logo from '../../assets/logo.png';
 
 const fieldStyle = {
@@ -43,8 +42,6 @@ export default function AuthPage() {
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [showServerConfig, setShowServerConfig] = useState(false);
-  const [serverUrl, setServerUrlState] = useState(getServerUrl());
 
   const { login, register, loading, error, clearError } = useAuthStore();
 
@@ -196,45 +193,7 @@ export default function AuthPage() {
             </button>
           </form>
 
-          {/* Server config */}
-          <div style={{ marginTop: 22 }}>
-            <button
-              onClick={() => setShowServerConfig(v => !v)}
-              style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                width: '100%', padding: '8px 0',
-                fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.18em',
-                color: 'var(--bone-2)', background: 'none', border: 'none', cursor: 'pointer',
-                textTransform: 'uppercase',
-              }}
-            >
-              ⚙ CONFIGURER LE SERVEUR {showServerConfig ? '▴' : '▾'}
-            </button>
-            {showServerConfig && (
-              <div style={{ marginTop: 8, padding: 12, background: 'var(--ink-2)', border: 'var(--edge-weight) solid var(--ink-5)' }} className="anim-fade">
-                <label style={{ display: 'block', fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.15em', color: 'var(--bone-2)', marginBottom: 6, textTransform: 'uppercase' }}>URL serveur DALIA</label>
-                <div style={{ display: 'flex', gap: 0 }}>
-                  <input
-                    type="url" value={serverUrl} onChange={e => setServerUrlState(e.target.value)}
-                    style={{ ...fieldStyle, flex: 1, borderRight: 0 }}
-                    placeholder="http://localhost:8000"
-                  />
-                  <button
-                    onClick={() => { setServerUrl(serverUrl); setShowServerConfig(false); }}
-                    style={{
-                      padding: '0 14px',
-                      background: 'var(--accent)', color: 'var(--accent-ink)',
-                      border: 'var(--edge-weight) solid var(--bone-0)',
-                      fontFamily: 'var(--f-display)', fontSize: 11, letterSpacing: '0.15em',
-                      cursor: 'pointer',
-                    }}
-                  >OK</button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div style={{ marginTop: 18, textAlign: 'center', fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--bone-3)', letterSpacing: '0.12em' }}>
+          <div style={{ marginTop: 30, textAlign: 'center', fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--bone-3)', letterSpacing: '0.12em' }}>
             DALIA · SOUL EATER EDITION
           </div>
         </div>
