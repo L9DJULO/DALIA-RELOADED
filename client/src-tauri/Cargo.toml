@@ -1,6 +1,6 @@
 [package]
 name = "dalia-client"
-version = "2.0.0"
+version = "2.0.1"
 description = "DALIA Desktop Client — League of Legends Draft Assistant"
 authors = ["DALIA Team"]
 edition = "2021"

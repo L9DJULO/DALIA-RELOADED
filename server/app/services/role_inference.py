@@ -148,33 +148,54 @@ def infer_enemy_roles(
         roles = champ.roles if champ else []
         out[ep.champion_id] = _prior_for_champion(name, key, roles, distribution)
 
-    # Iterative constraint propagation
+    # Iterative constraint propagation.
+    # Each iteration: highest-confidence champion per role claims it exclusively.
+    # If two champions are both mono-role-locked to the same role, the one with
+    # higher probability wins; the other is forced to redistribute to other roles.
     for _iter in range(5):
-        occupied: set = set()
+        # Build role ownership: only the highest-confidence champion per role wins.
+        role_owner: Dict[str, int] = {}   # role → champion_id
+        role_owner_p: Dict[str, float] = {}  # role → winning probability
+
         for cid, dist in out.items():
             if not dist:
                 continue
             best_role, best_p = max(dist.items(), key=lambda x: x[1])
-            if best_p >= MONO_ROLE_THRESHOLD:
-                occupied.add(best_role)
+            if best_p < MONO_ROLE_THRESHOLD:
+                continue
+            # Claim the role only if no one else has claimed it yet, or we beat them
+            if best_role not in role_owner or best_p > role_owner_p[best_role]:
+                role_owner[best_role] = cid
+                role_owner_p[best_role] = best_p
+
+        occupied = set(role_owner.keys())
 
         changed = False
         for cid, dist in out.items():
             if not dist:
                 continue
             best_role, best_p = max(dist.items(), key=lambda x: x[1])
-            # Skip champions already locked
-            if best_p >= MONO_ROLE_THRESHOLD:
+
+            # Skip if this champion is the legitimate owner of its best role
+            if best_p >= MONO_ROLE_THRESHOLD and role_owner.get(best_role) == cid:
                 continue
-            # Drop probability mass on occupied roles (other enemies own them)
+
+            # Drop probability mass on roles owned by other champions
             new_dist = {r: p for r, p in dist.items() if r not in occupied}
             if not new_dist:
-                # Pathological: all roles removed → keep original (avoid empty dist)
+                # Pathological: all roles occupied → keep original (avoid empty dist)
                 continue
             new_dist = _normalise(new_dist)
             if new_dist != dist:
                 out[cid] = new_dist
                 changed = True
+                if best_p >= MONO_ROLE_THRESHOLD:
+                    # Lost role conflict: log so devs can see it
+                    logger.debug(
+                        "Role conflict: champion %d lost %s to champion %d (%.2f < %.2f) — redistributed",
+                        cid, best_role, role_owner.get(best_role, -1),
+                        best_p, role_owner_p.get(best_role, 0),
+                    )
 
         if not changed:
             break

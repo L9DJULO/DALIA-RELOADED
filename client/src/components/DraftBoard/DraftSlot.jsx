@@ -4,6 +4,8 @@ import { getDDragonChampUrl } from '../../lib/constants';
 
 const ROLE_SHORT = { top: 'TOP', jungle: 'JGL', mid: 'MID', bot: 'ADC', support: 'SUP' };
 
+const FALLBACK_ICON = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 34 34"%3E%3Crect width="34" height="34" fill="%23222"%2F%3E%3Ccircle cx="17" cy="13" r="6" fill="%23444"%2F%3E%3Cellipse cx="17" cy="26" rx="10" ry="6" fill="%23444"%2F%3E%3C%2Fsvg%3E';
+
 export default function DraftSlot({ role, champion, isMySlot, team, onClick, onClear, label }) {
   const teamColor = team === 'blue' ? '#4a8bff' : 'var(--accent)';
   const borderColor = isMySlot
@@ -12,15 +14,22 @@ export default function DraftSlot({ role, champion, isMySlot, team, onClick, onC
       ? teamColor
       : 'var(--border-subtle)';
 
+  const handleClick = () => {
+    if (isMySlot && !champion) return; // slot réservé — pas de pick manuel
+    onClick?.();
+  };
+
   return (
     <div
-      onClick={onClick}
+      onClick={handleClick}
+      title={isMySlot && !champion ? "C'est ton slot — utilise la recommandation ou laisse le LCU sync le remplir." : undefined}
       style={{
         display: 'flex', alignItems: 'center', gap: 8,
         padding: '4px 8px', marginBottom: 3,
         background: isMySlot ? 'var(--accent-subtle)' : 'transparent',
         border: `1.5px solid ${borderColor}`,
-        cursor: 'pointer', position: 'relative',
+        cursor: isMySlot && !champion ? 'not-allowed' : 'pointer',
+        position: 'relative',
         minHeight: 44,
         transition: 'border-color 0.1s, background 0.1s',
       }}
@@ -45,16 +54,19 @@ export default function DraftSlot({ role, champion, isMySlot, team, onClick, onC
         <img
           src={getDDragonChampUrl(champion.key)}
           alt={champion.name}
+          onError={e => { e.currentTarget.src = FALLBACK_ICON; }}
           style={{ width: 34, height: 34, objectFit: 'cover', flexShrink: 0, border: `1.5px solid ${teamColor}` }}
         />
       ) : (
         <div style={{
           width: 34, height: 34, flexShrink: 0,
           background: 'var(--surface-overlay)',
-          border: '1px solid var(--border-subtle)',
+          border: `1px solid ${isMySlot ? 'var(--accent)' : 'var(--border-subtle)'}`,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
-          <span style={{ color: 'var(--text-muted)', fontSize: 18, lineHeight: 1 }}>+</span>
+          <span style={{ color: isMySlot ? 'var(--accent)' : 'var(--text-muted)', fontSize: 18, lineHeight: 1 }}>
+            {isMySlot ? '★' : '+'}
+          </span>
         </div>
       )}
 
@@ -68,8 +80,8 @@ export default function DraftSlot({ role, champion, isMySlot, team, onClick, onC
             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
           }}>{champion.name}</div>
         ) : (
-          <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em' }}>
-            {isMySlot ? '▸ CHOISIR' : '—'}
+          <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.06em', color: isMySlot ? 'var(--accent)' : 'var(--text-muted)' }}>
+            {isMySlot ? '▸ TON SLOT' : '—'}
           </div>
         )}
       </div>

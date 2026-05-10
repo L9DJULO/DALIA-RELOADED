@@ -154,7 +154,10 @@ class DraftEngine:
                 if ep.champion_id is None:
                     continue
                 if ep.role:
-                    continue  # already pinned by caller
+                    # Manual slot assignment always takes priority over inference.
+                    # Ensure role_distributions reflects the pinned role at 1.0.
+                    draft.role_distributions[ep.champion_id] = {ep.role: 1.0}
+                    continue
                 top_role = most_likely_role(distributions.get(ep.champion_id, {}))
                 if top_role:
                     ep.role = top_role
@@ -165,6 +168,28 @@ class DraftEngine:
                         top_role,
                         distributions.get(ep.champion_id, {}),
                     )
+
+            # ── Validate: warn on duplicate inferred roles ──
+            # After collapsing distributions, two champions may still share a role
+            # (e.g. Mundo + Darius both inferred as top). The first pick's role wins;
+            # the second's role is cleared so downstream code doesn't see a conflict.
+            _role_seen: Dict[str, int] = {}
+            for ep in draft.enemy_picks:
+                if ep.champion_id is None or not ep.role:
+                    continue
+                if ep.role in _role_seen:
+                    first = self.db.get_by_id(_role_seen[ep.role])
+                    this  = self.db.get_by_id(ep.champion_id)
+                    logger.warning(
+                        "Duplicate role %s: %s and %s both assigned — clearing inferred role for %s",
+                        ep.role,
+                        first.name if first else _role_seen[ep.role],
+                        this.name  if this  else ep.champion_id,
+                        this.name  if this  else ep.champion_id,
+                    )
+                    ep.role = None
+                else:
+                    _role_seen[ep.role] = ep.champion_id
 
         # ── Inject ally pre-picks for synergy/composition ──
         # When allies are hovering champions (pre-pick intent),
@@ -316,6 +341,47 @@ class DraftEngine:
 
         # Sort descending by total score
         scored.sort(key=lambda r: r.total_score, reverse=True)
+
+        # ── Post-scoring normalization: prevent late-draft score inflation ──
+        # When all enemies are visible (≥ 4 picks revealed or is_last_pick),
+        # every pool champion benefits from high matchup + synergy scores,
+        # and the bonus cap still allows good picks to reach 85-92. But if
+        # several picks simultaneously score 90-95, the shortlist looks flat
+        # (97/96/95/95/94 — meaningless). Apply a shift-and-compress so the
+        # winner sits at ≤ TARGET_CEIL and the spread is readable.
+        #
+        # The algorithm:
+        #   1. Shift the whole distribution down so the best pick = TARGET_CEIL.
+        #      (preserves all relative distances — no false precision.)
+        #   2. Only fires when the top is genuinely over-inflated (> INFLATE_THRESH)
+        #      AND there's enough enemy info to justify the normalization.
+        #
+        # This is intentionally conservative: we only nudge, never fan out.
+        # If champions are genuinely close (72 vs 74 vs 75), they stay close
+        # — the shift just moves 75→ TARGET_CEIL, 74→TARGET_CEIL-1, 72→TARGET_CEIL-3.
+        if scored:
+            n_enemy_visible = sum(1 for e in draft.enemy_picks if e.champion_id)
+            # Choose ceiling based on how much info we have
+            if draft.is_last_pick or n_enemy_visible >= 4:
+                target_ceil   = 92.0
+                inflate_thresh = 92.0
+            elif n_enemy_visible >= 2:
+                target_ceil   = 95.0
+                inflate_thresh = 95.0
+            else:
+                target_ceil   = 98.0   # no normalization when mostly blind
+                inflate_thresh = 99.0
+
+            s_top = scored[0].total_score
+            if s_top > inflate_thresh:
+                shift = s_top - target_ceil
+                logger.info(
+                    "Score normalization: shifting shortlist down by %.1f "
+                    "(top was %.1f → %.1f, %d enemies visible)",
+                    shift, s_top, target_ceil, n_enemy_visible,
+                )
+                for rec in scored:
+                    rec.total_score = round(_clamp(rec.total_score - shift, 5.0, 98.0), 1)
 
         # 5. Team composition summary (from current allies only, without candidate)
         comp_summary: Dict[str, float] = {}
@@ -517,6 +583,47 @@ class DraftEngine:
             w_meta *= 1.05
             w_risk *= 1.10
 
+        # ── Role-specific weight multipliers ──
+        # Applied last in the weight-shaping pipeline so they compound with
+        # (not compete against) blind-pick redistribution and pick-order
+        # adjustments. Reflect how the role's strategic context shifts the
+        # relative importance of each sub-score:
+        #   TOP     — long 1v1 lane, few team interactions → matchup + comp
+        #   JUNGLE  — team enabler, global influence → synergy + comp
+        #   MID     — short lane + roaming → matchup slightly boosted
+        #   BOT     — ADC scales with team; duo-lane is everything → synergy
+        #   SUPPORT — pure team role; lane matchup much less relevant
+        _rwm = config.role_weight_multipliers.get(role)
+        if _rwm:
+            w_matchup *= _rwm.matchup
+            w_synergy *= _rwm.synergy
+            w_comp    *= _rwm.composition
+            logger.debug(
+                "Role multipliers for %s: matchup×%.2f synergy×%.2f comp×%.2f",
+                role, _rwm.matchup, _rwm.synergy, _rwm.composition,
+            )
+
+        # ── Bot / Support duo-lane synergy bonus ──
+        # When both halves of the duo lane are confirmed allies, the pairwise
+        # bot↔support synergy — already computed by the synergy module —
+        # deserves extra weight because that duo is the strongest co-ordinated
+        # unit in League. Apply an additional ×1.10 on w_synergy so picking
+        # the right bot or support given a known partner is meaningfully
+        # rewarded over a random pool champion.
+        _COMPLEMENTARY: Dict[str, str] = {"bot": "support", "support": "bot"}
+        if role in _COMPLEMENTARY and w_synergy > 0:
+            _partner_role = _COMPLEMENTARY[role]
+            _partner_confirmed = any(
+                a.role == _partner_role and a.champion_id
+                for a in draft.ally_picks
+            )
+            if _partner_confirmed:
+                w_synergy *= 1.10
+                logger.debug(
+                    "Duo-lane bonus: w_synergy ×1.10 (%s confirmed as partner)",
+                    _partner_role,
+                )
+
         # ── 1. Weighted base ──
         base = (
             w_meta    * meta_s +
@@ -565,37 +672,58 @@ class DraftEngine:
         if not has_enemies:
             base = max(base, 38.0)  # floor: never below 38 on first pick
 
-        # ── 3. Multiplicative bonus when draft fits well ──
-        # Rewards good matchups regardless of comp theory
+        # ── Pre-fetch details once (reused by bonus checks AND the UI output) ──
+        # Avoids two separate async round-trips per candidate later.
+        mu_details_raw  = await self.matchup.details(champ.id, role, draft) if has_enemies else []
+        syn_details_raw = await self.synergy.details(champ.id, role, draft) if has_allies  else []
+
+        # ═══════════════════════════════════════════════════════════════════
+        # ── Bonus multiplier pool ──
+        # ALL positive multipliers are accumulated in _bonus_mult and capped
+        # before being applied to base. This prevents the "bonus cascade"
+        # where matchup × multi-counter × synergy × niche-counter × archetype
+        # stack to ×1.97+ and push every decent pool champion to 95-98 in
+        # last pick. Negative multipliers (situational penalty, archetype
+        # counter-penalty) are still applied directly to base so bad picks
+        # stay bad regardless of the cap.
+        #
+        # Per-phase caps (rationale):
+        #   is_last_pick  → all sub-scores are informative, so genuine
+        #                    differentiation is already in the base; bonuses
+        #                    should fine-tune, not inflate. Cap 1.20.
+        #   otherwise     → partial info; bonuses fill the information gap.
+        #                    Cap 1.28.
+        # ═══════════════════════════════════════════════════════════════════
+        _bonus_mult = 1.0
+        _bonus_cap  = 1.20 if is_last_pick else 1.28
+
+        # ── 3. Good-fit bonus ──
         if match_s >= 55 and has_enemies:
-            bonus = 1.0 + (match_s - 50) * 0.008
-            # Extra bonus if comp is also clean
+            bonus = 1.0 + (match_s - 50) * 0.007   # was 0.008
             if comp_s >= 70:
-                bonus += (comp_s - 70) * 0.003
-            base *= min(bonus, 1.20)  # cap at +20%
+                bonus += (comp_s - 70) * 0.002      # was 0.003
+            _bonus_mult *= min(bonus, 1.12)          # individual cap 1.12 (was 1.20)
 
         # ── 3b. MULTI-COUNTER BONUS ──
         # If the candidate has a meaningful edge against 3+ enemies
         # simultaneously, this is the strongest situational signal there is
-        # (e.g. Nilah passive vs full auto-attack comp). Boost +15-25 %.
+        # (e.g. Nilah passive vs full auto-attack comp). Boost +8-16 %.
         # We count every enemy where the per-matchup score crosses a
         # threshold derived from API data OR archetype tags (auto-attacker,
         # immobile, engage, etc.), so the bonus fires even when Lolalytics
         # has no direct head-to-head data.
         if has_enemies:
-            mu_details_for_bonus = await self.matchup.details(champ.id, role, draft)
             counter_count = sum(
-                1 for d in mu_details_for_bonus
+                1 for d in mu_details_raw
                 if d.get("delta", 0.0) >= 2.5
             )
-            # Add archetype-pattern counters even without strong delta data
             archetype_counters = self._count_archetype_counters(champ, draft)
             effective_counters = max(counter_count, archetype_counters)
 
             if effective_counters >= 3:
-                # 3 counters → +15 %, 4 → +20 %, 5 → +25 %
-                multi_bonus = 1.0 + min(0.05 * effective_counters, 0.25)
-                base *= multi_bonus
+                # 3 → +8 %, 4 → +12 %, 5 → +16 % (was 0.05/+25%)
+                multi_bonus = 1.0 + min(0.04 * effective_counters, 0.16)
+                _bonus_mult *= multi_bonus
                 logger.debug(
                     "Multi-counter bonus ×%.2f for %s (%d counters)",
                     multi_bonus, champ.name, effective_counters,
@@ -603,17 +731,15 @@ class DraftEngine:
 
         # ── 3c. SYNERGY STACK BONUS ──
         # 2+ strong synergies with allies → meaningful bonus.
-        # Mirrors the multi-counter logic on the ally side.
         if has_allies:
-            syn_details_for_bonus = await self.synergy.details(champ.id, role, draft)
             strong_syn = sum(
-                1 for d in syn_details_for_bonus
+                1 for d in syn_details_raw
                 if d.get("delta", 0.0) >= 2.0
             )
             if strong_syn >= 2:
-                # 2 → +6 %, 3+ → +10 % cap
-                syn_bonus = 1.0 + min(0.03 * strong_syn, 0.10)
-                base *= syn_bonus
+                # 2 → +5 %, 3+ → +8 % cap (was 0.03/+10%)
+                syn_bonus = 1.0 + min(0.025 * strong_syn, 0.08)
+                _bonus_mult *= syn_bonus
 
         # ── 4. Enemy-archetype counter adjustment ──
         # archetype_counter_adjust returns ~[0.88, 1.15]. We scale that down
@@ -622,35 +748,28 @@ class DraftEngine:
         # When no archetype is detected (MIXED) the function returns 1.0 and
         # this is a no-op. Only applied when enemies are actually visible.
         if enemy_archetype is not None and has_enemies and enemy_archetype.primary != Archetype.MIXED:
-            raw = archetype_counter_adjust(champ, enemy_archetype.primary)
-            # Scale delta from 1.0 by confidence (0..1)
-            adj = 1.0 + (raw - 1.0) * enemy_archetype.confidence
-            base *= adj
+            raw_adj = archetype_counter_adjust(champ, enemy_archetype.primary)
+            adj = 1.0 + (raw_adj - 1.0) * enemy_archetype.confidence
+            if adj > 1.0:
+                _bonus_mult *= adj   # positive: pooled (subject to cap)
+            else:
+                base *= adj          # negative: applied directly (bypass cap)
 
         # ── 5. Pick-order multiplicative bonuses/penalties ──
-        # The weight shaping above moves the relative importance of each
-        # sub-score, but we also need explicit rewards/punishments for
-        # strategic fit — a flex champion on 1st pick deserves a direct
-        # boost beyond what meta/risk weighting alone would give.
         if flex_bonus_active:
-            # 1st pick × multi-role = ~+8 %. Protects the team from a
-            # single-target counter. Capped deliberately small: meta/risk
-            # weight has already done most of the work.
-            base *= 1.08
+            _bonus_mult *= 1.05     # was 1.08; flex advantage already in weight shaping
 
         if situational_penalty_active:
-            # 1st pick × single-role × low safety = the pick is a trap.
-            # Enemy will simply pick the counter. Punish softly so a
-            # single-role meta monster (high meta + high risk) can still
-            # surface — the penalty only lands when safety is already weak.
-            base *= 0.92
+            base *= 0.92            # penalty: not pooled
 
         if niche_counter_bonus_active:
             # Last pick × strong matchup = archetypal counter-pick use case.
-            # Scale with match_s so a 80-matchup niche obliterates a
-            # 65-matchup safe pick. Caps at +18 %.
-            bonus = 1.0 + min((match_s - 62) * 0.006, 0.18)
-            base *= bonus
+            # Caps at +10 % (was +18 %).
+            bonus = 1.0 + min((match_s - 62) * 0.005, 0.10)
+            _bonus_mult *= bonus
+
+        # Apply the capped bonus multiplier to base
+        base *= min(_bonus_mult, _bonus_cap)
 
         # ── 6. HIGH-RISK BLIND PENALTY ──
         # Penalise champions known to fold to common counters they can't
@@ -716,7 +835,7 @@ class DraftEngine:
                 edge_case_match["rule_id"], champ.name, edge_case_match["score_bonus"],
             )
 
-        total = round(_clamp(base, 5.0, 98.0), 1)
+        total = round(_clamp(base, 5.0, 97.0), 1)
 
         breakdown = ScoreBreakdown(
             meta=round(meta_s, 1),
@@ -729,8 +848,8 @@ class DraftEngine:
             ml_explanation=ml_expl,
         )
 
-        # Details for UI
-        mu_details = await self.matchup.details(champ.id, role, draft)
+        # Details for UI (reuse pre-fetched results from bonus section)
+        mu_details = mu_details_raw
         matchup_details = [
             MatchupDetail(
                 opponent_name=d["opponent_name"],
@@ -743,7 +862,6 @@ class DraftEngine:
             for d in mu_details
         ]
 
-        syn_details_raw = await self.synergy.details(champ.id, role, draft)
         synergy_details = [
             SynergyDetail(ally_name=d["ally_name"], ally_role=d["ally_role"], delta=d["delta"])
             for d in syn_details_raw

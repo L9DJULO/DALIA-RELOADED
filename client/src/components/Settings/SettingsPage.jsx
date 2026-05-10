@@ -2,7 +2,6 @@
 // Settings page — Soul Eater design tokens
 // ─────────────────────────────────────────────
 import React, { useState } from 'react';
-import { getServerUrl, setServerUrl, checkServerHealth } from '../../services/api';
 import useLCUStore from '../../stores/lcuStore';
 import useAuthStore from '../../stores/authStore';
 import useUserStore from '../../stores/userStore';
@@ -16,14 +15,6 @@ const ACCENTS = [
   { id: 'magenta', hex: '#ff1ec0', label: 'MAGENTA' },
   { id: 'toxic',   hex: '#26ff6e', label: 'TOXIC'   },
 ];
-
-const inputStyle = {
-  flex: 1, padding: '9px 12px',
-  background: 'var(--ink-2)',
-  border: 'var(--edge-weight) solid var(--ink-5)',
-  color: 'var(--bone-0)',
-  fontFamily: 'var(--f-mono)', fontSize: 12, outline: 'none',
-};
 
 function Card({ children }) {
   return (
@@ -42,9 +33,6 @@ export default function SettingsPage() {
   const [accent, setAccent] = useState(
     document.documentElement.dataset.accent || localStorage.getItem('dalia_accent') || 'red'
   );
-  const [serverUrl, setServerUrlState] = useState(getServerUrl());
-  const [serverStatus, setServerStatus] = useState(null);
-  const [checkingServer, setCheckingServer] = useState(false);
   const [connecting, setConnecting] = useState(false);
 
   const lcuConnected = useLCUStore(s => s.connected);
@@ -57,23 +45,6 @@ export default function SettingsPage() {
     document.documentElement.dataset.accent = id;
     localStorage.setItem('dalia_accent', id);
     setAccent(id);
-  };
-
-  const handleSaveServer = () => {
-    setServerUrl(serverUrl.trim());
-    setServerStatus({ ok: true, message: 'URL sauvegardée' });
-    setTimeout(() => setServerStatus(null), 2000);
-  };
-
-  const handleCheckServer = async () => {
-    setCheckingServer(true);
-    setServerStatus(null);
-    const result = await checkServerHealth();
-    setServerStatus(result.ok
-      ? { ok: true, message: result.ready ? 'Serveur prêt ✓' : 'Serveur en démarrage…' }
-      : { ok: false, message: `Inaccessible — ${result.url}` }
-    );
-    setCheckingServer(false);
   };
 
   const handleLCUConnect = async () => {
@@ -146,64 +117,9 @@ export default function SettingsPage() {
           </div>
         </Card>
 
-        {/* Server */}
-        <Card>
-          <SectionLbl n={3}>SERVEUR DALIA</SectionLbl>
-
-          {serverStatus && (
-            <div style={{
-              marginBottom: 12, padding: '8px 12px',
-              background: serverStatus.ok ? 'rgba(156,211,107,0.08)' : 'rgba(255,77,86,0.08)',
-              border: `var(--edge-weight) solid ${serverStatus.ok ? 'var(--ok)' : 'var(--bad)'}`,
-              fontFamily: 'var(--f-mono)', fontSize: 11,
-              color: serverStatus.ok ? 'var(--ok)' : 'var(--bad)',
-            }} className="anim-fade">
-              {serverStatus.ok ? '✓' : '!'} {serverStatus.message}
-            </div>
-          )}
-
-          <div style={{ display: 'flex', gap: 0, marginBottom: 10 }}>
-            <input
-              type="url"
-              value={serverUrl}
-              onChange={e => setServerUrlState(e.target.value)}
-              placeholder="http://localhost:8000"
-              style={{ ...inputStyle, borderRight: 0 }}
-              onKeyDown={e => { if (e.key === 'Enter') handleSaveServer(); }}
-            />
-            <button
-              onClick={handleSaveServer}
-              style={{
-                padding: '0 16px',
-                background: 'var(--accent)', color: 'var(--accent-ink)',
-                border: 'var(--edge-weight) solid var(--bone-0)',
-                fontFamily: 'var(--f-display)', fontSize: 11, letterSpacing: '0.15em',
-                cursor: 'pointer',
-              }}
-            >
-              ▸ SAUVER
-            </button>
-          </div>
-
-          <button
-            onClick={handleCheckServer}
-            disabled={checkingServer}
-            style={{
-              padding: '6px 14px',
-              fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.18em',
-              background: 'transparent', color: 'var(--bone-2)',
-              border: '1.5px solid var(--ink-5)',
-              cursor: checkingServer ? 'wait' : 'pointer',
-              opacity: checkingServer ? 0.6 : 1,
-            }}
-          >
-            {checkingServer ? 'TEST EN COURS…' : '◇ TESTER LA CONNEXION'}
-          </button>
-        </Card>
-
         {/* LCU */}
         <Card>
-          <SectionLbl n={4}>CLIENT LEAGUE (LCU)</SectionLbl>
+          <SectionLbl n={3}>CLIENT LEAGUE (LCU)</SectionLbl>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12 }}>
             <span className={`lcu-dot ${lcuConnected ? 'lcu-on' : 'lcu-off'}`}/>

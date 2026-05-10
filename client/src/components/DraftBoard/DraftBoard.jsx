@@ -15,8 +15,8 @@ import LCUStatus from './LCUStatus';
 import QuickInput from './QuickInput';
 import DuoPanel from '../DuoQ/DuoPanel';
 
-const DD = 'https://ddragon.leagueoflegends.com/cdn/14.24.1/img/champion/loading';
-const loadingUrl = (key) => key ? `${DD}/${key}_0.jpg` : null;
+const DD_CENTERED = 'https://ddragon.leagueoflegends.com/cdn/img/champion/centered';
+const loadingUrl = (key) => key ? `${DD_CENTERED}/${key}_0.jpg` : null;
 
 const ROLE_SHORT = { top: 'TOP', jungle: 'JGL', mid: 'MID', bot: 'ADC', support: 'SUP' };
 
@@ -184,8 +184,18 @@ export default function DraftBoard({ champions }) {
           <button onClick={handleAnalyze} disabled={loading} className="btn-primary" style={{ padding: '7px 18px', display: 'flex', alignItems: 'center', gap: 6 }}>
             <Sparkles size={13}/>{loading ? 'ANALYSE...' : 'ANALYSER'}
           </button>
-          <button onClick={resetDraft} className="btn-secondary" style={{ padding: '7px 12px' }} title="Réinitialiser">
-            <RotateCcw size={14}/>
+          <button
+            onClick={() => {
+              if (window.confirm('Remettre le draft à zéro ? (les picks, bans et recommandations seront effacés — ton rôle et ton pool sont conservés)')) {
+                resetDraft();
+              }
+            }}
+            className="btn-secondary"
+            style={{ padding: '7px 10px', display: 'flex', alignItems: 'center', gap: 5 }}
+            title="Réinitialiser le draft"
+          >
+            <RotateCcw size={13}/>
+            <span style={{ fontFamily: 'var(--f-display)', fontSize: 10, letterSpacing: '0.12em' }}>RESET</span>
           </button>
         </div>
       </div>
@@ -201,7 +211,7 @@ export default function DraftBoard({ champions }) {
               style={{
                 position: 'relative', height: 340, flexShrink: 0,
                 backgroundImage: `url(${loadingUrl(topChamp.key)})`,
-                backgroundSize: 'cover', backgroundPosition: 'center 18%',
+                backgroundSize: 'cover', backgroundPosition: 'center top',
                 borderBottom: '2.5px solid #f0ebe0',
                 overflow: 'hidden',
               }}
@@ -307,7 +317,7 @@ export default function DraftBoard({ champions }) {
                       <div style={{ position:'absolute', top:-9, left:-4, background:'var(--accent)', color:'#000', padding:'2px 10px', fontFamily:'var(--f-display)', fontWeight:700, fontSize:10, letterSpacing:'0.25em' }}>▸ CHOIX</div>
                     )}
                     <div style={{ fontFamily:'var(--f-mono)', fontWeight:700, fontSize:13, color: isSel ? 'var(--accent)' : 'var(--text-muted)' }}>{String(i+1).padStart(2,'0')}</div>
-                    {cd && <img src={getDDragonChampUrl(cd.key)} alt={cd.name} style={{ width: isSel ? 48 : 40, height: isSel ? 48 : 40, objectFit:'cover', border:`1.5px solid ${isSel ? 'var(--accent)' : 'var(--border-subtle)'}` }}/>}
+                    {cd && <img src={getDDragonChampUrl(cd.key)} alt={cd.name} onError={e => { e.currentTarget.style.opacity='0.3'; }} style={{ width: isSel ? 48 : 40, height: isSel ? 48 : 40, objectFit:'cover', border:`1.5px solid ${isSel ? 'var(--accent)' : 'var(--border-subtle)'}` }}/>}
                     <div>
                       <div style={{ fontFamily:'var(--f-display)', fontWeight:700, fontSize:14, letterSpacing:'0.03em' }}>{cd?.name || rec.champion_name}</div>
                       <div style={{ display:'flex', gap:5, marginTop:3, flexWrap:'wrap', alignItems:'center' }}>

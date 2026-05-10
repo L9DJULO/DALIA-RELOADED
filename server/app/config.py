@@ -1,6 +1,7 @@
 """DALIA configuration — scoring weights, API URLs, DB settings."""
 import os
 from pathlib import Path
+from typing import Dict
 from pydantic import BaseModel
 from dotenv import load_dotenv
 
@@ -13,11 +14,30 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 class ScoringWeights(BaseModel):
     """Weights used by the draft engine to combine sub-scores (must sum to ~1.0)."""
     meta: float = 0.07
-    matchup: float = 0.45
-    synergy: float = 0.10
+    matchup: float = 0.47
+    synergy: float = 0.07
     composition: float = 0.13
     mastery: float = 0.17
     draft_risk: float = 0.08
+
+
+class RoleWeightMultipliers(BaseModel):
+    """Per-role multipliers applied to matchup, synergy, and composition weights.
+
+    They do not need to sum to any target — they tilt relative importance
+    within the same base formula without re-normalising. The post-scoring
+    ceiling normalization in recommend() absorbs any global scale shift.
+
+    Design intent:
+      TOP     — long 1v1 duel, few team interactions → matchup + comp matter more
+      JUNGLE  — team enabler, ganks everywhere → synergy + comp matter more
+      MID     — short lane + roaming → matchup slightly boosted
+      BOT     — ADC scales with team; duo-lane synergy is everything
+      SUPPORT — pure team role; lane matchup much less relevant than comp/synergy
+    """
+    matchup: float = 1.0
+    synergy: float = 1.0
+    composition: float = 1.0
 
 
 def _build_database_url() -> str:
@@ -59,6 +79,17 @@ class Config(BaseModel):
 
     # ── Scoring ──
     weights: ScoringWeights = ScoringWeights()
+
+    # ── Role-specific weight multipliers ──
+    # Applied after blind-pick redistribution and pick-order shaping,
+    # immediately before the weighted base is computed.
+    role_weight_multipliers: Dict[str, RoleWeightMultipliers] = {
+        "top":     RoleWeightMultipliers(matchup=1.20, synergy=1.00, composition=1.10),
+        "jungle":  RoleWeightMultipliers(matchup=1.00, synergy=1.15, composition=1.20),
+        "mid":     RoleWeightMultipliers(matchup=1.15, synergy=1.00, composition=1.00),
+        "bot":     RoleWeightMultipliers(matchup=1.00, synergy=1.25, composition=1.00),
+        "support": RoleWeightMultipliers(matchup=0.90, synergy=1.30, composition=1.15),
+    }
 
     # ── Patch blending ──
     min_games_threshold: int = 100

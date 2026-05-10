@@ -21,6 +21,7 @@ export default function BanSlot({ champion, onClick, onClear }) {
           <img
             src={getDDragonChampUrl(champion.key)}
             alt={champion.name}
+            onError={e => { e.currentTarget.style.opacity = '0.2'; }}
             style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'grayscale(60%) brightness(0.55)' }}
           />
           {/* Red X overlay */}
