@@ -313,7 +313,6 @@ Tokens CSS dans `client/src/index.css` :
 - **Géométrie** : `--edge-weight: 2.5px` (bordures épaisses), `--skew: -1deg` (légère inclinaison)
 - **Animations** : `anim-fade-up`, `anim-hero-enter`, `anim-name-enter`, `anim-score-enter`
 
-> ⚠️ Ne pas combiner `anim-fade-up` (qui termine sur `transform: translateY(0)` avec `animation-fill-mode: both`) avec un `transform` inline dynamique — l'animation l'écrasera.
 
 ---
 
