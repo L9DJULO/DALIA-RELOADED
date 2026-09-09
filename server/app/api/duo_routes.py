@@ -10,6 +10,7 @@ from pydantic import BaseModel
 from sqlalchemy import and_, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import selectinload
 
 from app.auth.deps import get_current_user
@@ -191,6 +192,10 @@ async def link_duo(
             detail="Code duo introuvable. Vérifie le code avec ton ami.",
         )
 
+    # Lock both accounts in stable order before checking membership again.
+    await db.execute(select(UserDB.id).where(UserDB.id.in_([current_user.id, target.id])).order_by(UserDB.id).with_for_update())
+    if await _get_active_link(current_user.id, db):
+        raise HTTPException(409, "Tu as déjà un partenaire duo.")
     # Check if target already has an active link
     target_link = await _get_active_link(target.id, db)
     if target_link:
@@ -206,7 +211,11 @@ async def link_duo(
         status="active",
     )
     db.add(link)
-    await db.commit()
+    try:
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(409, "Un des joueurs a déjà un partenaire duo.")
     await db.refresh(link)
 
     logger.info(f"DuoQ link created: {current_user.username} ↔ {target.username}")

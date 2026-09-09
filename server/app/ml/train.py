@@ -1,233 +1,132 @@
-#!/usr/bin/env python3
-"""DALIA ML — Training script for the draft prediction model.
+"""Train, calibrate and evaluate a candidate without replacing the active model.
 
-Usage:
-    cd backend
-    python -m app.ml.train [--data app/data/matches/matches.jsonl] [--epochs 50]
-
-Outputs:
-    app/data/models/draft_model.pt          — trained model weights
-    app/data/models/training_stats.json     — accuracy, loss history
+python -m app.ml.train --data app/data/matches/matches.jsonl --patch 16.17
 """
-from __future__ import annotations
-
 import argparse
+from collections import Counter
+import copy
 import json
 import logging
+import math
 import os
-import sys
-import time
 from pathlib import Path
-from typing import Dict
-
+import time
+import subprocess
+from datetime import datetime, timezone
 import torch
-import torch.nn as nn
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader
+from app.ml.model import DraftNet
+from app.ml.training_data import FIELDS, PartialDraftDataset, load_splits
+from app.services.storage import write_json
 
-from app.ml.model import DraftDataset, DraftNet
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)-8s %(message)s",
-    datefmt="%H:%M:%S",
-)
-logger = logging.getLogger("dalia.ml.train")
+log = logging.getLogger("dalia.train")
 
 
-def train_epoch(model, loader, criterion, optimizer, device) -> Dict[str, float]:
-    model.train()
-    total_loss = 0.0
-    correct = 0
-    total = 0
-
-    for blue, red, labels in loader:
-        blue = blue.to(device)
-        red = red.to(device)
-        labels = labels.to(device).unsqueeze(1)
-
-        optimizer.zero_grad()
-        logits = model(blue, red)
-        loss = criterion(logits, labels)
-        loss.backward()
-
-        # Gradient clipping
-        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
-        optimizer.step()
-
-        total_loss += loss.item() * blue.size(0)
-        preds = (torch.sigmoid(logits) >= 0.5).float()
-        correct += (preds == labels).sum().item()
-        total += blue.size(0)
-
-    return {
-        "loss": total_loss / max(total, 1),
-        "accuracy": correct / max(total, 1),
-    }
-
-
-def eval_epoch(model, loader, criterion, device) -> Dict[str, float]:
+def logits_for(model, loader, device):
+    logits, labels = [], []
     model.eval()
-    total_loss = 0.0
-    correct = 0
-    total = 0
-
     with torch.no_grad():
-        for blue, red, labels in loader:
-            blue = blue.to(device)
-            red = red.to(device)
-            labels = labels.to(device).unsqueeze(1)
+        for blue, red, y in loader:
+            logits.append(model(blue.to(device), red.to(device)).flatten().cpu())
+            labels.append(y)
+    return torch.cat(logits), torch.cat(labels)
 
-            logits = model(blue, red)
-            loss = criterion(logits, labels)
 
-            total_loss += loss.item() * blue.size(0)
-            preds = (torch.sigmoid(logits) >= 0.5).float()
-            correct += (preds == labels).sum().item()
-            total += blue.size(0)
+def metrics(logits, labels, temperature=1.):
+    probabilities = torch.sigmoid(logits / temperature)
+    loss = torch.nn.functional.binary_cross_entropy_with_logits(logits / temperature, labels).item()
+    brier = ((probabilities - labels) ** 2).mean().item()
+    ece = 0.
+    for i in range(10):
+        mask = (probabilities >= i / 10) & (probabilities < (i + 1) / 10 if i < 9 else probabilities <= 1)
+        if mask.any():
+            ece += mask.float().mean().item() * abs(probabilities[mask].mean().item() - labels[mask].mean().item())
+    return {"log_loss": loss, "brier": brier, "ece": ece,
+            "accuracy": ((probabilities >= .5) == labels.bool()).float().mean().item()}
 
-    return {
-        "loss": total_loss / max(total, 1),
-        "accuracy": correct / max(total, 1),
-    }
+
+def calibrate(logits, labels):
+    # Calibrate on a separate partition, never the held-out acceptance test.
+    temperatures = torch.logspace(math.log10(.5), math.log10(10), 81).tolist()
+    return min(temperatures, key=lambda t: metrics(logits, labels, t)["log_loss"])
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Train DALIA draft prediction model")
-    parser.add_argument(
-        "--data",
-        default=str(Path(__file__).resolve().parent.parent / "data" / "matches" / "matches.jsonl"),
-        help="Path to matches JSONL file",
-    )
-    parser.add_argument("--epochs", type=int, default=60, help="Training epochs")
-    parser.add_argument("--batch-size", type=int, default=256, help="Batch size")
-    parser.add_argument("--lr", type=float, default=1e-3, help="Learning rate")
-    parser.add_argument("--embed-dim", type=int, default=32, help="Champion embedding dimension")
-    parser.add_argument("--hidden-dim", type=int, default=256, help="MLP hidden layer size")
-    parser.add_argument(
-        "--output",
-        default=str(Path(__file__).resolve().parent.parent / "data" / "models"),
-        help="Output directory for model",
-    )
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--data", default=str(Path(__file__).resolve().parents[1] / "data/matches/matches.jsonl"))
+    parser.add_argument("--output", default=str(Path(__file__).resolve().parents[1] / "data/models"))
+    parser.add_argument("--patch")
+    parser.add_argument("--epochs", type=int, default=60)
+    parser.add_argument("--batch-size", type=int, default=256)
+    parser.add_argument("--embed-dim", type=int, default=32)
+    parser.add_argument("--hidden-dim", type=int, default=256)
+    parser.add_argument("--lr", type=float, default=1e-3)
     args = parser.parse_args()
-
-    output_dir = Path(args.output)
-    output_dir.mkdir(parents=True, exist_ok=True)
-
-    # ── Device ──
+    if args.epochs < 1: parser.error("epochs must be positive")
+    logging.basicConfig(level=logging.INFO)
+    torch.manual_seed(42)
+    started = time.time()
+    splits, metadata = load_splits(args.data, args.patch)
+    if metadata["unique_matches"] < 200:
+        raise ValueError("At least 200 unique matches for the requested patch are needed to train a candidate.")
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    logger.info("Using device: %s", device)
-
-    # ── Load data ──
-    logger.info("Loading data from %s", args.data)
-    dataset = DraftDataset(args.data, augment=True)
-    logger.info("Dataset size: %d samples (with augmentation)", len(dataset))
-
-    if len(dataset) < 200:
-        logger.error("Not enough data to train! Need at least 100 matches.")
-        sys.exit(1)
-
-    # ── Train / val split (85% / 15%) ──
-    val_size = int(len(dataset) * 0.15)
-    train_size = len(dataset) - val_size
-    train_set, val_set = random_split(
-        dataset, [train_size, val_size],
-        generator=torch.Generator().manual_seed(42),
-    )
-
-    train_loader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True, num_workers=0)
-    val_loader = DataLoader(val_set, batch_size=args.batch_size, shuffle=False, num_workers=0)
-
-    logger.info("Train: %d samples | Val: %d samples", train_size, val_size)
-
-    # ── Model ──
-    model = DraftNet(
-        embed_dim=args.embed_dim,
-        hidden_dim=args.hidden_dim,
-        dropout=0.3,
-    ).to(device)
-
-    param_count = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    logger.info("Model parameters: %d (%.1fK)", param_count, param_count / 1000)
-
-    # ── Training ──
-    criterion = nn.BCEWithLogitsLoss()
+    loaders = {name: DataLoader(PartialDraftDataset(rows, name == "train"), batch_size=args.batch_size,
+                               shuffle=name == "train") for name, rows in splits.items()}
+    model = DraftNet(embed_dim=args.embed_dim, hidden_dim=args.hidden_dim).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=1e-4)
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs, eta_min=1e-5)
-
-    best_val_acc = 0.0
+    best_loss = math.inf
+    best_state = None
     best_epoch = 0
-    history = {"train_loss": [], "val_loss": [], "train_acc": [], "val_acc": []}
-
-    logger.info("=== Training for %d epochs ===", args.epochs)
-    start_time = time.time()
-
+    history = []
     for epoch in range(1, args.epochs + 1):
-        train_stats = train_epoch(model, train_loader, criterion, optimizer, device)
-        val_stats = eval_epoch(model, val_loader, criterion, device)
-        scheduler.step()
-
-        history["train_loss"].append(round(train_stats["loss"], 4))
-        history["val_loss"].append(round(val_stats["loss"], 4))
-        history["train_acc"].append(round(train_stats["accuracy"], 4))
-        history["val_acc"].append(round(val_stats["accuracy"], 4))
-
-        is_best = val_stats["accuracy"] > best_val_acc
-        if is_best:
-            best_val_acc = val_stats["accuracy"]
-            best_epoch = epoch
-            torch.save({
-                "model_state": model.state_dict(),
-                "embed_dim": args.embed_dim,
-                "hidden_dim": args.hidden_dim,
-                "epoch": epoch,
-                "val_accuracy": best_val_acc,
-            }, output_dir / "draft_model.pt")
-
-        if epoch % 5 == 0 or epoch == 1 or is_best:
-            marker = " ★" if is_best else ""
-            logger.info(
-                "Epoch %3d/%d  train_loss=%.4f  val_loss=%.4f  "
-                "train_acc=%.3f  val_acc=%.3f  lr=%.2e%s",
-                epoch, args.epochs,
-                train_stats["loss"], val_stats["loss"],
-                train_stats["accuracy"], val_stats["accuracy"],
-                optimizer.param_groups[0]["lr"],
-                marker,
-            )
-
-    elapsed = time.time() - start_time
-    logger.info("=== Training complete in %.1fs ===", elapsed)
-    logger.info("Best val accuracy: %.3f at epoch %d", best_val_acc, best_epoch)
-
-    # ── Save stats ──
-    stats = {
-        "best_val_accuracy": round(best_val_acc, 4),
-        "best_epoch": best_epoch,
-        "total_epochs": args.epochs,
-        "train_samples": train_size,
-        "val_samples": val_size,
-        "embed_dim": args.embed_dim,
-        "hidden_dim": args.hidden_dim,
-        "training_time_seconds": round(elapsed, 1),
-        "history": history,
-    }
-    with open(output_dir / "training_stats.json", "w") as f:
-        json.dump(stats, f, indent=2)
-
-    logger.info("Model saved to %s/draft_model.pt", output_dir)
-
-    # ── Quick sanity check ──
-    ckpt = torch.load(output_dir / "draft_model.pt", map_location="cpu", weights_only=True)
-    model.load_state_dict(ckpt["model_state"])
-    model.eval()
-    logger.info("Sanity check — predicting a random game:")
-    sample_blue, sample_red, sample_label = dataset[0]
-    with torch.no_grad():
-        logit = model(sample_blue.unsqueeze(0), sample_red.unsqueeze(0))
-        prob = torch.sigmoid(logit).item()
-    logger.info("  Blue team: %s", sample_blue.tolist())
-    logger.info("  Red team:  %s", sample_red.tolist())
-    logger.info("  P(blue wins): %.3f  |  Actual: %d", prob, int(sample_label.item()))
+        model.train()
+        for blue, red, labels in loaders["train"]:
+            optimizer.zero_grad()
+            logits = model(blue.to(device), red.to(device)).flatten()
+            loss = torch.nn.functional.binary_cross_entropy_with_logits(logits, labels.to(device))
+            loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), 1.)
+            optimizer.step()
+        val_logits, val_labels = logits_for(model, loaders["validation"], device)
+        val = metrics(val_logits, val_labels)
+        history.append({"epoch": epoch, **val})
+        if val["log_loss"] < best_loss:
+            best_loss, best_epoch = val["log_loss"], epoch
+            best_state = {k: v.detach().cpu().clone() for k, v in model.state_dict().items()}
+        log.info("Epoch %d validation log loss %.4f", epoch, val["log_loss"])
+    model.load_state_dict(best_state)
+    cal_logits, cal_labels = logits_for(model, loaders["calibration"], device)
+    temperature = calibrate(cal_logits, cal_labels)
+    test_logits, test_labels = logits_for(model, loaders["test"], device)
+    test = metrics(test_logits, test_labels, temperature)
+    by_completion = {str(known): metrics(test_logits[i::4], test_labels[i::4], temperature)
+                     for i, known in enumerate((4, 6, 8, 10))}
+    # Baseline side prior learned only from training originals.
+    prior = sum(float(r["blue_win"]) for r in splits["train"]) / len(splits["train"])
+    baseline_brier = ((test_labels - prior) ** 2).mean().item()
+    baseline_log_loss = torch.nn.functional.binary_cross_entropy(torch.full_like(test_labels, prior), test_labels).item()
+    accepted = (len(splits["test"]) >= 200 and metadata["chronological"] and
+                test["brier"] < baseline_brier and test["log_loss"] < baseline_log_loss and test["ece"] <= .08 and
+                all(by_completion[str(n)]["brier"] < baseline_brier and
+                    by_completion[str(n)]["log_loss"] < baseline_log_loss for n in (6, 8, 10)))
+    counts = Counter(cid for row in splits["train"] for cid in (row[k] for k in FIELDS))
+    revision = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, check=False).stdout.strip() or "unknown"
+    report = {"trained_at": datetime.now(timezone.utc).isoformat(), "code_revision": revision, "schema_version": 2, "accepted": accepted, "supports_partial_drafts": True,
+              "temperature": temperature, "test_metrics": test, "metrics_by_known_champions": by_completion, "baseline_brier": baseline_brier,
+              "baseline_log_loss": baseline_log_loss, "test_unique_matches": len(splits["test"]),
+              "best_epoch": best_epoch, "best_val_accuracy": history[best_epoch - 1]["accuracy"],
+              "training_time_seconds": round(time.time() - started, 1), "history": history,
+              **{k: v for k, v in metadata.items() if k != "split_ids"}}
+    out = Path(args.output); out.mkdir(parents=True, exist_ok=True)
+    checkpoint = {**report, "model_state": best_state, "embed_dim": args.embed_dim,
+                  "hidden_dim": args.hidden_dim, "epoch": best_epoch,
+                  "champion_game_counts": dict(counts), "training_games": len(splits["train"])}
+    temp = out / "draft_model.candidate.tmp"
+    torch.save(checkpoint, temp)
+    os.replace(temp, out / "draft_model.candidate.pt")
+    write_json(out / "training_stats.json", report)
+    write_json(out / "split_manifest.json", metadata["split_ids"])
+    log.info("Candidate saved. Acceptance gate: %s. Active model unchanged.", accepted)
 
 
 if __name__ == "__main__":

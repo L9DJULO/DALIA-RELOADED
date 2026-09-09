@@ -36,6 +36,9 @@ pub struct LiveDraftState {
     pub ally_picks: HashMap<String, i64>,
     pub enemy_picks: HashMap<String, i64>,
     pub enemy_picks_order: Vec<i64>,
+    pub pick_sequence: Vec<serde_json::Value>,
+    pub my_pick_order: usize,
+    pub current_action: usize,
     pub ally_prepicks: HashMap<String, i64>,
     pub current_action_type: String,
     pub is_my_turn: bool,
@@ -589,6 +592,11 @@ pub async fn poll_draft_state(creds: &LcuCredentials) -> LiveDraftState {
         Err(_) => return state,
     };
 
+    parse_champ_select(session, state)
+}
+
+/// Pure snapshot parser: trades use current champions, order comes from actions.
+pub fn parse_champ_select(session: serde_json::Value, mut state: LiveDraftState) -> LiveDraftState {
     let local_cell = session["localPlayerCellId"].as_i64().unwrap_or(-1);
 
     let normalise_pos = |pos: &str| -> &'static str {
@@ -604,11 +612,15 @@ pub async fn poll_draft_state(creds: &LcuCredentials) -> LiveDraftState {
 
     let mut cell_role_map: HashMap<i64, String> = HashMap::new();
     let mut ally_intents: HashMap<i64, i64> = HashMap::new();
+    let mut cell_champions: HashMap<i64, i64> = HashMap::new();
+    let mut ally_cells = std::collections::HashSet::new();
     for team_key in &["myTeam", "theirTeam"] {
         if let Some(team) = session[*team_key].as_array() {
             for member in team {
                 if let Some(cid) = member["cellId"].as_i64() {
                     let is_my_team = *team_key == "myTeam";
+                    if is_my_team { ally_cells.insert(cid); }
+                    cell_champions.insert(cid, member["championId"].as_i64().unwrap_or(0));
 
                     if let Some(pos) = member["assignedPosition"].as_str() {
                         let role = normalise_pos(pos);
@@ -629,24 +641,39 @@ pub async fn poll_draft_state(creds: &LcuCredentials) -> LiveDraftState {
     }
 
     if local_cell >= 0 {
-        state.my_team = cell_to_team(local_cell).to_string();
+        let explicit_team = session["myTeam"].as_array().and_then(|members| members.first())
+            .and_then(|m| m["teamId"].as_i64());
+        state.my_team = match explicit_team {
+            Some(100) => "blue", Some(200) => "red", _ => cell_to_team(local_cell)
+        }.to_string();
         if let Some(role) = cell_role_map.get(&local_cell) {
             state.my_role = role.clone();
         }
     }
 
+    let mut ally_pick_number = 0;
     if let Some(actions) = session["actions"].as_array() {
         for action_group in actions {
             if let Some(group) = action_group.as_array() {
                 for action in group {
                     let action_type = action["type"].as_str().unwrap_or("");
-                    let champion_id = action["championId"].as_i64().unwrap_or(0);
+                    let mut champion_id = action["championId"].as_i64().unwrap_or(0);
                     let cell_id = action["actorCellId"].as_i64().unwrap_or(-1);
                     let completed = action["completed"].as_bool().unwrap_or(false);
                     let is_in_progress = action["isInProgress"].as_bool().unwrap_or(false);
 
-                    let is_ally = cell_to_team(cell_id) == cell_to_team(local_cell);
+                    let is_ally = ally_cells.contains(&cell_id);
                     let is_me = cell_id == local_cell;
+                    if completed { state.current_action = (state.current_action + 1).min(19); }
+                    if action_type == "pick" && is_ally {
+                        ally_pick_number += 1;
+                        if is_me { state.my_pick_order = ally_pick_number; }
+                    }
+                    if action_type == "pick" && completed {
+                        if let Some(&current) = cell_champions.get(&cell_id) {
+                            if current > 0 { champion_id = current; }
+                        }
+                    }
 
                     if is_me && is_in_progress {
                         state.is_my_turn = true;
@@ -666,6 +693,11 @@ pub async fn poll_draft_state(creds: &LcuCredentials) -> LiveDraftState {
                             }
                         }
                         "pick" if completed => {
+                            let team = if is_ally { state.my_team.as_str() } else if state.my_team == "blue" { "red" } else { "blue" };
+                            state.pick_sequence.push(serde_json::json!({
+                                "team": team, "role": cell_role_map.get(&cell_id), "champId": champion_id,
+                                "actionId": action["id"], "cellId": cell_id
+                            }));
                             if is_ally {
                                 let role = cell_role_map
                                     .get(&cell_id)
@@ -769,4 +801,42 @@ pub async fn fetch_summoner_info(creds: &LcuCredentials) -> SummonerInfo {
     }
 
     info
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn late_snapshot_preserves_pick_order_and_traded_champions() {
+        let session = serde_json::json!({
+            "localPlayerCellId": 2,
+            "myTeam": [
+                {"cellId": 0, "teamId": 200, "assignedPosition": "top", "championId": 75},
+                {"cellId": 2, "teamId": 200, "assignedPosition": "middle", "championId": 103},
+                {"cellId": 3, "teamId": 200, "assignedPosition": "bottom", "championId": 0, "championPickIntent": 22}
+            ],
+            "theirTeam": [{"cellId": 5, "assignedPosition": "", "championId": 78}],
+            "actions": [
+                [{"id": 0, "actorCellId": 5, "type": "ban", "championId": 238, "completed": true}],
+                [{"id": 1, "actorCellId": 5, "type": "pick", "championId": 78, "completed": true}],
+                [{"id": 2, "actorCellId": 0, "type": "pick", "championId": 103, "completed": true}],
+                [{"id": 3, "actorCellId": 2, "type": "pick", "championId": 75, "completed": true}],
+                [{"id": 4, "actorCellId": 3, "type": "pick", "championId": 0, "completed": false}]
+            ], "timer": {"adjustedTimeLeftInPhase": 12500}
+        });
+        let result = parse_champ_select(session, LiveDraftState::default());
+        assert_eq!(result.my_team, "red");
+        assert_eq!(result.my_role, "mid");
+        assert_eq!(result.my_pick_order, 2);
+        assert_eq!(result.current_action, 4);
+        assert_eq!(result.ally_picks["top"], 75);
+        assert_eq!(result.ally_picks["mid"], 103);
+        assert_eq!(result.ally_prepicks["bot"], 22);
+        assert_eq!(result.enemy_picks_order, vec![78]);
+        assert_eq!(result.enemy_bans, vec![238]);
+        assert_eq!(result.pick_sequence[0]["team"], "blue");
+        assert_eq!(result.pick_sequence[1]["champId"], 75);
+        assert_eq!(result.timer_remaining, 12.5);
+    }
 }

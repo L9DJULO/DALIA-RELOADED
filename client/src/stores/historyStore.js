@@ -12,6 +12,7 @@ import {
   fetchHistoryStats,
 } from '../services/api';
 
+let generation = 0;
 const useHistoryStore = create((set, get) => ({
   entries: [],
   stats: null,
@@ -20,60 +21,72 @@ const useHistoryStore = create((set, get) => ({
 
   // ── Load history ──
   loadHistory: async () => {
-    set({ loading: true, error: null });
+    const ticket = generation;
+    const safeSet = patch => { if (ticket === generation) set(patch); };
+    safeSet({ loading: true, error: null });
     try {
       const entries = await fetchHistory();
-      set({ entries, loading: false });
+      safeSet({ entries, loading: false });
     } catch (e) {
-      set({ error: e.message || 'Failed to load history', loading: false });
+      safeSet({ error: e.message || 'Failed to load history', loading: false });
     }
   },
 
   // ── Save a new entry ──
   saveEntry: async (entry) => {
+    const ticket = generation;
+    const safeSet = patch => { if (ticket === generation) set(patch); };
     try {
       const result = await saveHistoryEntry(entry);
+      if (ticket !== generation) return null;
       await get().loadHistory();
       return result;
     } catch (e) {
-      set({ error: e.message || 'Failed to save history' });
+      safeSet({ error: e.message || 'Failed to save history' });
       return null;
     }
   },
 
   // ── Update result (win/loss) ──
   updateResult: async (entryId, result, notes = '') => {
+    const ticket = generation;
+    const safeSet = patch => { if (ticket === generation) set(patch); };
     try {
       await updateHistoryResult(entryId, result, notes);
-      set({
+      safeSet({
         entries: get().entries.map((e) =>
           e.id === entryId ? { ...e, result, notes } : e
         ),
       });
     } catch (e) {
-      set({ error: e.message || 'Failed to update result' });
+      safeSet({ error: e.message || 'Failed to update result' });
     }
   },
 
   // ── Delete entry ──
   deleteEntry: async (entryId) => {
+    const ticket = generation;
+    const safeSet = patch => { if (ticket === generation) set(patch); };
     try {
       await deleteHistoryEntry(entryId);
-      set({ entries: get().entries.filter((e) => e.id !== entryId) });
+      safeSet({ entries: get().entries.filter((e) => e.id !== entryId) });
     } catch (e) {
-      set({ error: e.message || 'Failed to delete entry' });
+      safeSet({ error: e.message || 'Failed to delete entry' });
     }
   },
 
   // ── Load stats ──
   loadStats: async () => {
+    const ticket = generation;
+    const safeSet = patch => { if (ticket === generation) set(patch); };
     try {
       const stats = await fetchHistoryStats();
-      set({ stats });
+      safeSet({ stats });
     } catch (e) {
-      set({ error: e.message || 'Failed to load stats' });
+      safeSet({ error: e.message || 'Failed to load stats' });
     }
   },
 }));
 
+window.addEventListener('dalia:logout', () => { generation++; useHistoryStore.setState({ entries: [], stats: null, loading: false, error: null }); });
 export default useHistoryStore;

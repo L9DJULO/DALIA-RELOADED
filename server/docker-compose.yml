@@ -1,15 +1,13 @@
-version: "3.8"
-
 services:
   postgres:
     image: postgres:16-alpine
     container_name: dalia-postgres
     environment:
       POSTGRES_USER: dalia
-      POSTGRES_PASSWORD: dalia
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set a private database password}
       POSTGRES_DB: dalia
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - dalia_pgdata:/var/lib/postgresql/data
     healthcheck:

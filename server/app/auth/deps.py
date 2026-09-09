@@ -6,7 +6,7 @@ from uuid import UUID
 
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
-from jose import JWTError
+from jwt import InvalidTokenError as JWTError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -34,10 +34,11 @@ async def get_current_user(
         user_id: str | None = payload.get("sub")
         if user_id is None:
             raise credentials_exception
-    except JWTError:
+        user_uuid = UUID(user_id)
+    except (JWTError, ValueError, TypeError):
         raise credentials_exception
 
-    result = await db.execute(select(UserDB).where(UserDB.id == UUID(user_id)))
+    result = await db.execute(select(UserDB).where(UserDB.id == user_uuid))
     user = result.scalar_one_or_none()
     if user is None or not user.is_active:
         raise credentials_exception
@@ -51,18 +52,7 @@ async def get_optional_user(
     """Like get_current_user but returns None instead of raising 401 when no token."""
     if not token:
         return None
-    try:
-        payload = decode_access_token(token)
-        user_id: str | None = payload.get("sub")
-        if user_id is None:
-            return None
-        result = await db.execute(select(UserDB).where(UserDB.id == UUID(user_id)))
-        user = result.scalar_one_or_none()
-        if user is None or not user.is_active:
-            return None
-        return user
-    except (JWTError, Exception):
-        return None
+    return await get_current_user(token=token, db=db)
 
 
 async def require_admin(

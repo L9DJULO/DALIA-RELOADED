@@ -9,12 +9,8 @@ No recalculation here — rules consume the matchup / synergy details and
 the ally-only comp summary that ``draft_engine._score_candidate`` has
 already computed.
 
-Reason priority (when trimming to max_reasons):
-  1. Mechanical, candidate-specific (MATCHUP_REASONS / SYNERGY_REASONS) —
-     these explain *why* the matchup is favourable in concrete kit terms.
-  2. Generic archetype rules.
-  3. Delta fallback ("+5 % vs X").
-  4. Composition fillers.
+Kit interactions are supplied separately by MechanicsAnalyzer.
+Observed matchups and heuristic synergies retain distinct source labels.
 """
 from __future__ import annotations
 
@@ -57,96 +53,16 @@ def _mk(text: str, kind: str, *names: str) -> Dict:
 # Champion-specific kit pointers (key → mechanical kit notes). When the
 # candidate has a famous, kit-specific interaction we want it called out
 # by name. Only entries we want to surface — don't bloat this.
-_CAND_KIT_VS_AUTOS = {
-    "Nilah":     "Passif Nilah dodge les auto-attacks de {enemy}",
-    "Jax":       "E Jax esquive complètement les auto-attacks de {enemy}",
-    "Pantheon":  "W Pantheon bloque les auto-attacks de {enemy}",
-    "Fiora":     "W Fiora parry les auto-attacks de {enemy}",
-}
-
-_CAND_KIT_VS_IMMOBILE = {
-    "Nilah":     "E Nilah gap-close sur {enemy} sans risque de kite",
-    "Yone":      "Q3 Yone knock-up engage {enemy} immobile",
-    "Yasuo":     "Yasuo windwall + dash punit {enemy} immobile",
-    "Zed":       "Zed all-in {enemy} sans escape",
-    "Akali":     "Akali shroud + reset chain sur {enemy} immobile",
-    "Rengar":    "Rengar one-shot {enemy} sans dash defensive",
-    "Khazix":    "Khazix isolated jump sur {enemy} sans peel",
-    "Malphite":  "R Malphite catch {enemy} sans dash",
-    "Leona":     "E + R Leona lock down {enemy} immobile",
-    "Camille":   "R Camille isole {enemy} sans escape",
-}
-
-_CAND_KIT_VS_ENGAGE = {
-    "Caitlyn":   "Range Caitlyn (650) kite l'engage de {enemy}",
-    "Ezreal":    "E Ezreal repositionne hors de l'engage de {enemy}",
-    "Tristana":  "W Tristana saute hors de l'engage de {enemy}",
-    "Lucian":    "E Lucian dodge l'engage de {enemy}",
-    "Sivir":     "Spellshield Sivir bloque l'engage de {enemy}",
-    "Janna":     "R Janna disengage l'engage de {enemy}",
-    "Kassadin":  "R Kassadin évite l'engage de {enemy}",
-}
-
-_CAND_KIT_VS_SUSTAIN = {
-    "MissFortune": "R MF + grievous wounds annule le sustain de {enemy}",
-    "Varus":       "Varus blight stacks + grievous bypass le sustain de {enemy}",
-    "Morgana":     "Q Morgana setup + grievous coupe le sustain de {enemy}",
-    "Kled":        "Kled grievous wounds passif vs {enemy}",
-}
-
-# Generic archetype templates (used when no kit-specific entry fires).
-# Order matters: the first matching pattern wins.
-MATCHUP_REASONS: List[Tuple[str, str, str]] = [
-    # (candidate_pattern, enemy_pattern, template)
-    ("anti_auto",     "auto_attacker", "Kit anti-AA dénie les autos de {enemy}"),
-    ("burst",         "immobile",      "Burst {cand} one-shot {enemy} sans escape"),
-    ("gap_close",     "immobile",      "Gap-close {cand} colle à {enemy} sans risque"),
-    ("kite",          "engage",        "Range {cand} kite l'engage de {enemy}"),
-    ("disengage",     "engage",        "Disengage {cand} casse l'engage de {enemy}"),
-    ("tank",          "burst",         "Tankiness {cand} mange le burst de {enemy}"),
-    ("tank",          "engage",        "Frontline {cand} eat l'engage de {enemy}"),
-    ("sustained_dps", "tank",          "DPS soutenu {cand} grignote {enemy}"),
-    ("anti_heal",     "sustain",       "Grievous wounds {cand} annule le sustain de {enemy}"),
-    ("cc_lockdown",   "poke",          "Lock-down {cand} punit la lane poke de {enemy}"),
-    ("burst",         "squishy",       "Burst {cand} explose {enemy} squishy"),
-    ("range_advantage","melee",        "Range {cand} harass {enemy} melee"),
-]
-
-# Synergy mechanical templates — same shape.
-_ALLY_KIT_SYNERGY = {
-    # ally_key → list of (cand_pattern, template)
-    "Senna":     [("burst",     "Senna root setup les all-in de {cand}"),
-                  ("dps",       "Senna shields + range double la DPS de {cand}")],
-    "Leona":     [("burst",     "Leona E+R lock setup le burst de {cand}"),
-                  ("dps",       "Leona stuns ouvrent la fenêtre DPS de {cand}")],
-    "Malphite":  [("burst",     "R Malphite engage AOE pour {cand}"),
-                  ("dps",       "R Malphite stun multi-target pour {cand}")],
-    "Amumu":     [("burst",     "R Amumu AOE stun setup {cand}"),
-                  ("dps",       "R Amumu lock teamfight pour {cand}")],
-    "Yasuo":     [("burst",     "Knock-up ally → R Yasuo combo avec {cand}"),
-                  ("dps",       "Windwall Yasuo couvre la DPS de {cand}")],
-    "Yone":      [("burst",     "Q3 Yone setup les follow-up de {cand}")],
-    "Lulu":      [("dps",       "Lulu peel + buff scale la DPS de {cand}")],
-    "Janna":     [("dps",       "Janna shield/peel protège {cand}")],
-    "Soraka":    [("dps",       "Soraka heal sustain les trades de {cand}")],
-    "Lissandra": [("burst",     "R Lissandra freeze setup le burst de {cand}"),
-                  ("engage",    "Lissandra engage à distance complète {cand}")],
-    "Fiddlesticks":[("burst",   "R Fiddlesticks AOE fear chain avec {cand}"),
-                    ("dps",     "R Fiddlesticks teamfight ouvre {cand}")],
-    "DrMundo":   [("dps",       "Mundo frontline + grievous tape pour {cand}"),
-                  ("burst",     "Mundo soaks vs counter-engage de {cand}")],
-}
-
 SYNERGY_REASONS: List[Tuple[str, str, str]] = [
     ("burst",     "engage",   "Engage {ally} ouvre le burst de {cand}"),
     ("dps",       "engage",   "Engage {ally} setup la DPS de {cand}"),
-    ("dps",       "peel",     "Peel {ally} laisse {cand} DPS libre"),
+    ("dps",       "peel",     "La protection de {ally} peut ouvrir une fenêtre de dégâts pour {cand}"),
     ("burst",     "cc",       "CC {ally} lock pour le burst de {cand}"),
     ("dps",       "cc",       "CC {ally} ouvre la fenêtre DPS de {cand}"),
     ("squishy_carry", "tank", "Frontline {ally} protège {cand}"),
     ("poke",      "poke",     "Poke combiné {ally} + {cand}"),
     ("teamfight", "teamfight","Teamfight stack avec {ally}"),
-    ("splitpush", "teamfight","{ally} split, {cand} force 4v4"),
+    ("splitpush", "teamfight","{cand} peut occuper une voie latérale pendant que {ally} regroupe ; coordonner le tempo"),
 ]
 
 
@@ -157,7 +73,7 @@ def _cand_patterns(cand: Champion) -> set:
     c = cand.ratings
     tags = set(cand.tags)
 
-    if cand.key in _CAND_KIT_VS_AUTOS or (c.utility >= 4 and "Marksman" not in tags):
+    if cand.key in {"Jax", "Nilah"}:
         p.add("anti_auto")
     if c.burst >= 4 or "Assassin" in tags:
         p.add("burst")
@@ -173,7 +89,7 @@ def _cand_patterns(cand: Champion) -> set:
     if c.dps >= 4:
         p.add("sustained_dps")
         p.add("dps")
-    if cand.key in _CAND_KIT_VS_SUSTAIN or cand.key in {"Morgana", "Varus", "MissFortune", "Kled"}:
+    if cand.key in {"Varus", "Katarina", "Kled"}:
         p.add("anti_heal")
     if c.cc >= 4 and (c.engage >= 4 or c.tankiness >= 3):
         p.add("cc_lockdown")
@@ -242,63 +158,17 @@ def _ally_patterns(ally: Champion) -> set:
 LANE_CONFIDENCE_THRESHOLD = 0.7
 
 
-def _matchup_reason(
-    cand: Champion,
-    enemy: Champion,
-    delta: float,
-    is_lane: bool,
-    cand_role: Optional[str] = None,
-    enemy_role: Optional[str] = None,
-    lane_probability: float = 1.0,
-) -> Optional[Dict]:
-    """Return a Reason dict explaining the candidate's mechanical edge / risk
-    vs this specific enemy. Priority order:
-
-    1. Champion-specific kit interaction (Nilah passive, Jax E, Fiora W…).
-    2. Generic mechanical archetype templates (MATCHUP_REASONS).
-    3. Delta fallback ("+5 % vs X") — only when no mechanical rule fires.
-    4. Warning when matchup is hard.
-
-    `lane_probability` is the inferred probability that the enemy is in the
-    candidate's role. We never claim "Lane favorable contre X" unless
-    lane_probability ≥ LANE_CONFIDENCE_THRESHOLD (0.7).
-    """
-    en = enemy.name
-    cn = cand.name
-    c_pats = _cand_patterns(cand)
-    e_pats = _enemy_patterns(enemy)
-
-    # Strict same-lane check: both roles known, equal, AND inferred role is
-    # confident. A flex pick like Naafiri (jgl 0.62 / mid 0.38) gets
-    # "Matchup" wording even if argmax happened to be mid.
-    same_lane = bool(
-        is_lane
-        and cand_role and enemy_role and cand_role == enemy_role
-        and lane_probability >= LANE_CONFIDENCE_THRESHOLD
-    )
-
-    # ── 1. Champion-specific kit interactions ──
-    if "auto_attacker" in e_pats and cand.key in _CAND_KIT_VS_AUTOS:
-        return _mk(_CAND_KIT_VS_AUTOS[cand.key].format(enemy=en), "counter", en)
-    if "immobile" in e_pats and cand.key in _CAND_KIT_VS_IMMOBILE:
-        return _mk(_CAND_KIT_VS_IMMOBILE[cand.key].format(enemy=en), "counter", en)
-    if "engage" in e_pats and cand.key in _CAND_KIT_VS_ENGAGE:
-        return _mk(_CAND_KIT_VS_ENGAGE[cand.key].format(enemy=en), "counter", en)
-    if "sustain" in e_pats and cand.key in _CAND_KIT_VS_SUSTAIN:
-        return _mk(_CAND_KIT_VS_SUSTAIN[cand.key].format(enemy=en), "counter", en)
-
-    # ── 2. Generic mechanical archetype templates ──
-    for cand_pat, enemy_pat, template in MATCHUP_REASONS:
-        if cand_pat in c_pats and enemy_pat in e_pats:
-            return _mk(template.format(cand=cn, enemy=en), "counter", en, cn)
-
-    # ── 3. Delta fallback ──
-    if delta >= 3.0:
-        qual = "Lane" if same_lane else "Matchup"
-        return _mk(f"{qual} favorable contre {en} (+{delta:.1f}%)", "counter", en)
-    if delta <= -3.0:
-        return _mk(f"Attention : {en} est un counter (-{abs(delta):.1f}%)", "warning", en)
-
+def _matchup_reason(cand, enemy, delta, is_lane, cand_role=None,
+                    enemy_role=None, lane_probability=1., observed=True):
+    # Kit-specific explanations come from MechanicsAnalyzer with explicit caveats.
+    if not observed:
+        return None
+    lane = is_lane and cand_role == enemy_role and lane_probability >= LANE_CONFIDENCE_THRESHOLD
+    scope = "Lane" if lane else "Matchup"
+    if delta >= 3:
+        return _mk(f"{scope} favorable dans les matchs observes contre {enemy.name} ({delta:+.1f} points de WR normalise).", "counter", enemy.name)
+    if delta <= -3:
+        return _mk(f"{scope} difficile dans les matchs observes contre {enemy.name} ({delta:+.1f} points de WR normalise).", "warning", enemy.name)
     return None
 
 
@@ -370,13 +240,6 @@ def _synergy_reason(
     c_pats = _cand_patterns(cand)
     a_pats = _ally_patterns(ally)
 
-    # ── 1. Ally-specific kit pointers ──
-    if ally.key in _ALLY_KIT_SYNERGY:
-        for cand_pat, template in _ALLY_KIT_SYNERGY[ally.key]:
-            if cand_pat in c_pats:
-                return _mk(template.format(ally=an, cand=cn), "synergy", an, cn)
-
-    # ── 2. Generic mechanical synergy templates ──
     for cand_pat, ally_pat, template in SYNERGY_REASONS:
         if cand_pat in c_pats and ally_pat in a_pats:
             return _mk(template.format(ally=an, cand=cn), "synergy", an, cn)
@@ -524,6 +387,7 @@ def generate_reasons(
                 cand_role=role,
                 enemy_role=pick.role,
                 lane_probability=lane_p,
+                observed=mu.get("games", 0) >= 30,
             ))
             # Surface ambiguity for flex enemies (max prob < 0.85)
             dist = mu.get("role_distribution") or role_dists.get(pick.champion_id) or {}

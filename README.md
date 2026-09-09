@@ -1,321 +1,94 @@
-# DALIA — Draft Analysis League Intelligence Assistant
+# DALIA 2.1 — assistant de draft League of Legends
 
-> Assistant intelligent de draft pour **League of Legends**.
-> Analyse matchups, synergies, compositions d'équipe et méta pour recommander le champion optimal à jouer en ranked.
+DALIA compare les champions de ton pool avec la draft visible : matchups, composition, maîtrise et interactions de compétences. Le client Windows React/Tauri lit la sélection des champions via LCU ; le serveur FastAPI conserve les comptes, pools et replays dans PostgreSQL.
 
-![Stack](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
-![Stack](https://img.shields.io/badge/React_18-61DAFB?logo=react&logoColor=black)
-![Stack](https://img.shields.io/badge/Tauri_v2-FFC131?logo=tauri&logoColor=black)
-![Stack](https://img.shields.io/badge/PyTorch-EE4C2C?logo=pytorch&logoColor=white)
-![Stack](https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white)
+Fonctionnalités accessibles : draft automatique ou manuelle, modification des picks/bans, annulation, comparaison de deux champions, diagnostic du pool, replays étape par étape et variantes, historique/résultats, duo et préférences de scoring.
 
----
+Le score d'adéquation n'est pas une probabilité de victoire. Les probabilités et le WPA estimé DALIA restent indisponibles sans modèle validé et contexte suffisant. Aucune donnée Coachless n'est actuellement connectée. Voir [la méthode WPA et les interactions](docs/WPA_ET_MECANIQUES.md) et [le bilan des correctifs](REPRISE_PROJET.md).
 
-## Getting started
+## Démarrage local Windows
 
-1. Download the latest installer from the [GitHub Releases](../../releases/latest) page.
-2. Run the installer. If Windows SmartScreen warns you about an unsigned build, click **More info** → **Run anyway**.
-3. Create an account and start drafting — the backend is already running.
+Prérequis : Python 3.11, Node 24 LTS, PostgreSQL 16 (ou Docker Desktop pour la base). Pour l'application native : Rust stable, Visual Studio Build Tools avec développement C++ et Windows SDK, WebView2. Le navigateur permet de tester le mode manuel sans Rust ni League.
 
----
+Depuis la racine, générer la configuration privée :
 
-## Architecture
-
-```
-DALIA-RELOADED/
-├── server/                    # Backend Python (FastAPI)
-│   ├── app/
-│   │   ├── api/               # Routes REST (auth, draft, duo, history, user)
-│   │   ├── auth/              # JWT + bcrypt (register, login, deps)
-│   │   ├── db/                # SQLAlchemy async + PostgreSQL (models, session)
-│   │   ├── ml/                # Machine Learning (PyTorch DraftNet)
-│   │   │   ├── model.py       #   Architecture du réseau (embeddings + MLP)
-│   │   │   ├── train.py       #   Script d'entraînement (AdamW + CosineAnnealing)
-│   │   │   ├── predictor.py   #   Prédiction calibrée (temperature scaling)
-│   │   │   ├── collect_matches.py  # Collecte de matchs Master+ (Riot API)
-│   │   │   └── patch_watcher.py    # Surveillance auto des patchs
-│   │   ├── models/            # Schémas Pydantic (champion, draft, history, user)
-│   │   └── services/          # Logique métier
-│   │       ├── draft_engine.py          # Moteur de recommandation (6 sous-scores)
-│   │       ├── ban_recommender.py       # Recommandations de bans
-│   │       ├── champion_data.py         # Base de données champions (DDragon)
-│   │       ├── data_fetcher.py          # Scraping Lolalytics (cache TTL 6h)
-│   │       ├── meta_analyzer.py         # Analyse méta (WR/PR/BR)
-│   │       ├── matchup.py               # Matchups cross-lane (Lolalytics)
-│   │       ├── synergy.py               # Synergies heuristiques
-│   │       ├── composition.py           # Analyse de composition d'équipe
-│   │       ├── composition_archetype.py # Détection d'archétype de composition
-│   │       ├── edge_cases.py            # Règles spéciales (data/edge_cases.json)
-│   │       ├── reasons.py               # Génération d'explications pour les reco
-│   │       ├── role_predictor.py        # Prédiction ML du rôle joué
-│   │       └── personal_stats.py        # Stats perso (Riot Match-v5 API)
-│   ├── alembic/               # Migrations de base de données
-│   ├── Dockerfile             # Image de production (python:3.11-slim)
-│   ├── docker-compose.yml     # Stack complète (PostgreSQL + backend + frontend dev)
-│   ├── overnight.sh           # Script batch : scrape → merge → train
-│   └── requirements.txt
-│
-└── client/                    # Application desktop (Tauri v2 + React)
-    ├── src/
-    │   ├── components/
-    │   │   ├── Auth/          # Page d'authentification (login/register)
-    │   │   ├── ChampionPool/  # Éditeur de pool (tier list S/A/B/C/D)
-    │   │   ├── DraftBoard/    # Board de draft (picks, bans, sélecteur, overlay recherche)
-    │   │   ├── DuoQ/          # Panneau DuoQ (liaison, pool partenaire)
-    │   │   ├── Insights/      # Dashboard stats + prédiction live
-    │   │   ├── Recommendations/  # Panneau de recommandations détaillées
-    │   │   ├── Settings/      # Paramètres + admin ML
-    │   │   ├── DraftPanel.jsx # Layout principal du draft (board + reco)
-    │   │   ├── HeroPanel.jsx  # Panneau hero / splash art champion sélectionné
-    │   │   └── Primitives.jsx # Composants UI réutilisables (Badge, Button, Card…)
-    │   ├── lib/               # Constantes partagées, helpers
-    │   ├── services/          # Client API (axios) + connecteur LCU (Tauri IPC)
-    │   └── stores/            # State management Zustand (8 stores)
-    └── src-tauri/             # Shell natif Rust
-        └── src/
-            ├── lib.rs         # Commandes IPC Tauri (connect, status, summoner)
-            └── lcu.rs         # Connecteur LCU (lockfile, API champ select)
+```powershell
+py scripts/setup_local.py
+docker compose up -d db
 ```
 
----
+Le script crée `.env` et, s'il n'existe pas, `server/.env`. Il préserve les fichiers existants : vérifier alors que le mot de passe PostgreSQL, l'URL de base et le secret JWT correspondent entre les deux fichiers. Modifier une variable ne change pas le mot de passe d'un volume PostgreSQL déjà créé. Les exemples ne sont pas des secrets utilisables en production.
 
-## Fonctionnalités
+Dans un terminal serveur :
 
-### Draft & Recommandations
+```powershell
+cd server
+py -3.11 -m venv .venv
+.venv/Scripts/python.exe -m pip install -r requirements.txt
+.venv/Scripts/python.exe run.py
+```
 
-| Fonctionnalité | Description |
-|---|---|
-| **Draft Board** | Interface 5v5 avec picks alliés par rôle et picks ennemis en ordre de draft |
-| **Recommandations IA** | Scoring multi-facteurs : méta, matchup, synergie, composition, maîtrise, risque de draft |
-| **Bans intelligents** | Suggestions de bans basées sur les counters de votre pool, la méta et le taux de ban communautaire |
-| **Prédiction ML** | Réseau de neurones PyTorch (DraftNet) entraîné sur les matchs D2+, probabilité de victoire calibrée |
-| **Wild-cards** | Suggestions hors-pool quand vos champions sont désavantagés |
-| **Tags contextuels** | Safe blind, counter-pick, flex pick, meta forte, low data |
+`run.py` applique les migrations avant de démarrer. `/health` indique que le processus répond ; `/ready` répond 200 seulement quand la base et le catalogue sont disponibles. Une erreur temporaire d'initialisation est retentée. L'accès Internet à Data Dragon est nécessaire au premier chargement ; les statistiques externes peuvent fonctionner en mode dégradé.
 
-### Données & Analyse
+Dans un autre terminal :
 
-| Fonctionnalité | Description |
-|---|---|
-| **Méta en temps réel** | Tier list fusionnée (patch courant + 30 jours) avec confiance sample-size |
-| **Matchups cross-lane** | Données Lolalytics vslane (lane opponent pondéré ×3) |
-| **Synergies** | Heuristiques : diversité de dégâts, chaîne CC, engage+follow-up, ADC+support |
-| **Composition** | Score d'équilibre (AD/AP, tank, CC, engage, carries) avec warnings |
-| **Stats personnelles** | Historique ranked via Riot API (KDA, CS/min, WR par champion) |
+```powershell
+cd client
+npm.cmd ci
+npm.cmd run dev
+```
 
-### DuoQ
+Ouvrir `http://localhost:1420`, créer un compte, remplir son pool et choisir le mode Manuel. Le serveur local reçoit les appels via le proxy Vite. Pour League en direct : `npm.cmd run tauri dev` dans un terminal développeur Visual Studio, puis ouvrir la sélection des champions de League sur ce PC.
 
-| Fonctionnalité | Description |
-|---|---|
-| **Liaison par code** | Partagez un code unique avec votre duo partenaire |
-| **Pool partenaire** | Visualisez le pool de votre duo et son rôle |
-| **Synergie boostée** | En mode DuoQ, la synergie duo est priorisée dans les recommandations |
+Une clé `RIOT_API_KEY` est optionnelle pour les statistiques personnelles et la collecte ML. La stocker uniquement côté serveur ; les budgets Riot sont partagés entre processus du même hôte via SQLite dans le cache. Plusieurs serveurs doivent partager un limiteur externe adapté.
 
-### LCU (League Client)
+## Conteneurs et build Windows
 
-| Fonctionnalité | Description |
-|---|---|
-| **Auto-détection** | Tauri détecte automatiquement le client LoL via lockfile (toutes lettres de lecteur, RiotClientInstalls.json, détection process) |
-| **Sync live** | Synchronisation bans/picks/rôle/équipe en temps réel pendant le champ select |
-| **Identité Summoner** | Récupération PUUID/gameName pour les stats personnelles |
+```powershell
+docker compose up --build -d
+docker compose ps
+```
 
-### Historique & Insights
+Le Compose de développement expose uniquement les ports locaux 1420, 8000 et 5432. Base, cache, modèles et matchs ont des volumes persistants. Le conteneur serveur installe PyTorch CPU, mais aucun modèle ni corpus de matchs réel n'est livré.
 
-| Fonctionnalité | Description |
-|---|---|
-| **Historique** | Sauvegarde complète de chaque draft (picks, bans, score, probabilité) |
-| **Résultats** | Enregistrement win/loss/remake avec notes |
-| **Dashboard stats** | Win rate, champions les plus joués, performance par rôle, forme récente |
-| **Taux de suivi** | Pourcentage de fois où vous avez suivi la recommandation DALIA |
+Pour produire le client : `./scripts/build-client.ps1` depuis un terminal développeur Visual Studio. Le script installe le lockfile, exécute les tests et construit Tauri. Vérifier `VITE_API_URL` dans `client/.env.production.local` et l'origine correspondante dans la CSP de `client/src-tauri/tauri.conf.json` avant diffusion. La configuration versionnée conserve l'adresse historique du serveur ; elle ne garantit pas sa disponibilité.
 
-### ML & Entraînement
+## Vérifications
 
-| Fonctionnalité | Description |
-|---|---|
-| **DraftNet** | Embeddings de champions + projections par rôle + interactions matchup 5×5 + MLP |
-| **Collecte de données** | Scraping multi-région Master+ avec checkpoints résumables |
-| **Entraînement configurable** | Script overnight avec 5 configs différentes, sélection du meilleur modèle |
-| **Patch Watcher** | Détection auto des nouveaux patchs, déclenchement du re-training |
-| **Calibration** | Temperature scaling (T=5.0) pour des probabilités réalistes |
-| **Embeddings** | Carte 2D PCA des champions, recherche de similarité (cosine distance) |
+```powershell
+cd server
+.venv/Scripts/python.exe -m pip install -r requirements-ml.txt
+.venv/Scripts/python.exe -m pip install -r requirements-dev.txt
+.venv/Scripts/python.exe -m pytest tests/unit -q
+.venv/Scripts/python.exe -m pip_audit -r requirements.txt
+```
 
----
+Les tests d'intégration nécessitent une **base PostgreSQL dédiée aux tests**. Configurer `TEST_DATABASE_URL` avec un nom contenant `test`, appliquer `alembic upgrade head` sur cette base via `DATABASE_URL`, puis lancer `pytest tests/integration -q`. Ils créent des données de test ; ne jamais leur fournir la base des utilisateurs.
 
-## API Endpoints
+```powershell
+cd client
+npm.cmd test -- --run
+npm.cmd run build
+npx.cmd playwright install chromium
+npm.cmd run test:e2e
+npm.cmd audit
+cd src-tauri
+cargo test --locked
+cargo audit
+```
 
-### Authentification
+Les tests navigateur simulent les réponses API et les images. Les tests Rust utilisent un snapshot LCU, sans partie réelle. Le workflow [checks.yml](.github/workflows/checks.yml) exécute ces vérifications avec PostgreSQL, Node 24 et Windows. Les anciennes suites `server/tests` de calibration/concordance restent des évaluations exploratoires dépendantes de données externes, distinctes des tests déterministes de `tests/unit`.
 
-| Méthode | Endpoint | Auth | Description |
-|---------|----------|------|-------------|
-| `POST` | `/api/auth/register` | Non | Créer un compte → retourne JWT + user |
-| `POST` | `/api/auth/login` | Non | Se connecter → retourne JWT + user |
-| `GET` | `/api/auth/me` | Oui | Profil utilisateur courant |
-| `PUT` | `/api/auth/me` | Oui | Modifier paramètres (rôles, poids, wildcards) |
+## Modèle, livraison et récupération
 
-### Champions & Méta
+Installer `requirements-ml.txt` avant les autres requirements pour activer les outils ML. La commande `python -m app.ml.train --patch 16.17` construit un candidat à partir de `server/app/data/matches/matches.jsonl`. Elle conserve le modèle actif. Les matchs doivent contenir leurs identifiants, dates et patchs réels ; voir la méthode dans `docs/WPA_ET_MECANIQUES.md`.
 
-| Méthode | Endpoint | Auth | Description |
-|---------|----------|------|-------------|
-| `GET` | `/api/champions` | Non* | Liste des champions (filtre par rôle optionnel) |
-| `GET` | `/api/champions/{id}` | Non* | Détails d'un champion |
-| `GET` | `/api/meta/tierlist` | Non* | Tier list méta par rôle |
-| `GET` | `/api/patch` | Non* | Version du patch courant |
+L'activation via le watcher vérifie les résultats, le chargement et le patch ; le modèle précédent est conservé dans `draft_model.previous.pt`. Le réentraînement automatique est désactivé par défaut (`AUTO_TRAIN=0`) et exige un nouveau corpus du patch. Les endpoints ML d'administration restent protégés.
 
-### Draft
+Pour une instance partagée : secret JWT nouvellement généré, mot de passe PostgreSQL propre à l'instance, `ENV=production`, HTTPS et `CORS_ORIGINS` limités aux clients autorisés. Tout secret issu de l'ancien Compose doit être remplacé sur l'instance : retirer sa valeur du dernier commit ne le retire pas de l'historique Git. Le limiteur applicatif utilise l'IP de connexion ; avec un reverse proxy, configurer les quotas par IP au proxy plutôt que de faire confiance à des en-têtes publics.
 
-| Méthode | Endpoint | Auth | Description |
-|---------|----------|------|-------------|
-| `POST` | `/api/draft/recommend` | Optionnelle | Recommandations de draft (endpoint principal). Pool body si anonyme, pool DB si authentifié |
-| `POST` | `/api/draft/bans` | Optionnelle | Recommandations de bans (même règle pool body/DB) |
+`scripts/auto-update.sh` annonce les mises à jour par défaut. En mode explicite `DALIA_AUTO_DEPLOY=1`, il exige un arbre propre, teste un checkout isolé, demande un script de sauvegarde avant migration, applique un fast-forward et contrôle `/ready`. Un échec remet le code précédent et ses dépendances. Les migrations ne sont pas annulées automatiquement : elles doivent rester compatibles avec le code précédent. La première livraison de cette reprise doit être préparée manuellement avec sauvegarde et nouvelles variables.
 
-### Profil & Pool
+Sauvegarder PostgreSQL avec `pg_dump -Fc -f dalia.dump` en fournissant la connexion dans un environnement privé ; conserver aussi les répertoires/volumes modèles et matchs. Tester la restauration avec `pg_restore --exit-on-error --dbname=<base_de_restauration_vide> dalia.dump`, puis vérifier migrations, readiness et un compte de test. Restaurer un modèle précédent par copie, contrôler son patch et utiliser le reload administrateur. Une sauvegarde non restaurée au moins une fois n'est pas une récupération vérifiée.
 
-| Méthode | Endpoint | Auth | Description |
-|---------|----------|------|-------------|
-| `GET` | `/api/user/profile` | Oui | Profil complet avec pool |
-| `GET` | `/api/user/pool` | Oui | Pool de champions uniquement |
-| `POST` | `/api/user/pool` | Oui | Remplacer le pool d'un rôle |
-| `DELETE` | `/api/user/pool/{role}/{champion_id}` | Oui | Retirer un champion du pool |
-
-### Historique
-
-| Méthode | Endpoint | Auth | Description |
-|---------|----------|------|-------------|
-| `GET` | `/api/history` | Oui | Historique (triée par date, param `limit`) |
-| `POST` | `/api/history` | Oui | Sauvegarder un draft |
-| `PATCH` | `/api/history/{id}` | Oui | Modifier le résultat (win/loss/remake) |
-| `DELETE` | `/api/history/{id}` | Oui | Supprimer une entrée |
-| `GET` | `/api/history/stats` | Oui | Statistiques agrégées |
-
-### DuoQ
-
-| Méthode | Endpoint | Auth | Description |
-|---------|----------|------|-------------|
-| `GET` | `/api/duo/code` | Oui | Obtenir/générer le code duo |
-| `POST` | `/api/duo/code/regenerate` | Oui | Régénérer le code |
-| `GET` | `/api/duo/status` | Oui | Statut de la liaison duo |
-| `POST` | `/api/duo/link` | Oui | Lier avec un partenaire (par code) |
-| `DELETE` | `/api/duo/unlink` | Oui | Rompre la liaison duo |
-| `GET` | `/api/duo/partner/pool` | Oui | Pool du partenaire |
-
-### ML & Embeddings
-
-| Méthode | Endpoint | Auth | Description |
-|---------|----------|------|-------------|
-| `GET` | `/api/ml/status` | Non* | Statut du modèle ML |
-| `POST` | `/api/ml/retrain` | Admin | Lancer un re-training |
-| `POST` | `/api/ml/reload` | Admin | Recharger le modèle depuis le disque |
-| `GET` | `/api/ml/embeddings` | Non* | Carte d'embeddings 2D |
-| `GET` | `/api/ml/similar/{id}` | Non* | Champions similaires (cosine distance) |
-
-### Stats personnelles
-
-| Méthode | Endpoint | Auth | Description |
-|---------|----------|------|-------------|
-| `POST` | `/api/personal/stats` | Oui | Stats ranked via Riot API (PUUID + région) |
-
-### Santé
-
-| Méthode | Endpoint | Auth | Description |
-|---------|----------|------|-------------|
-| `GET` | `/health` | Non | Healthcheck (toujours 200, `ready` flag) |
-
-> \* Nécessite que les services soient initialisés (503 sinon).
-
----
-
-## Stack technique
-
-### Backend (server/)
-
-| Technologie | Usage |
-|---|---|
-| **FastAPI** | Framework API async |
-| **SQLAlchemy 2.0** | ORM async (asyncpg) |
-| **PostgreSQL** | Base de données (UUID PK, JSONB) |
-| **PyTorch** | Réseau de neurones DraftNet |
-| **python-jose** | JWT tokens (HS256) |
-| **passlib + bcrypt** | Hash des mots de passe |
-| **httpx** | Client HTTP async (Lolalytics, Riot API, DDragon) |
-| **Alembic** | Migrations de base de données |
-
-### Frontend (client/)
-
-| Technologie | Usage |
-|---|---|
-| **React 18** | UI déclarative |
-| **Zustand 4** | State management (8 stores : auth, user, draft, lcu, duo, champions, history, theme) |
-| **React Router v6** | Routage SPA |
-| **Axios** | Client HTTP avec intercepteurs JWT |
-| **Tailwind CSS 3** | Styling utilitaire (dark mode, glass UI) |
-| **@dnd-kit** | Drag & drop pour l'éditeur de pool |
-| **Lucide React** | Icônes SVG |
-| **Vite 5** | Bundler/dev server |
-
-### Desktop (client/src-tauri/)
-
-| Technologie | Usage |
-|---|---|
-| **Tauri v2** | Shell natif (Rust) |
-| **reqwest** | Client HTTP async (API LCU) |
-| **serde** | Sérialisation JSON |
-| **base64** | Auth Basic pour l'API LCU |
-| **winreg** | Lecture du registre Windows (localisation du client LoL) |
-| **dirs-next** | Résolution de chemins système |
-
----
-
-## Scoring des recommandations
-
-Le moteur de draft combine 6 sous-scores (pondérés et configurables dans `server/app/config.py`) :
-
-| Score | Poids | Source | Description |
-|---|---|---|---|
-| **Méta** | 7% | Lolalytics | WR (80%) + PR (15%) + BR (5%), confiance sample-size |
-| **Matchup** | 45% | Lolalytics | Avantage matchup cross-lane (lane ×3), `vslane` data + heuristique fallback |
-| **Synergie** | 10% | Heuristique | Diversité dégâts, chaîne CC, engage/follow-up, ADC+supp |
-| **Composition** | 13% | Heuristique | Équilibre AD/AP, tank, CC, engage, carries + archétype de composition |
-| **Maîtrise** | 17% | Pool user | Tier du champion dans le pool (S=100, D=40) |
-| **Risque draft** | 8% | Heuristique | Pénalité picks risqués (flex faible, counter fort, blind à risque) |
-| **ML** | Blend | DraftNet | Probabilité de victoire (fusion multiplicative calibrée) |
-
-### Bonus & pénalités appliqués
-- **Multi-counter** : bonus si le champion counter plusieurs picks ennemis simultanément
-- **Archetype counters** : détection poke/engage/kite/burst → bonus contre archétypes vulnérables
-- **Blind-pick penalty** : −20 sur les champions à haut risque (Yasuo, Yone, Katarina, Zed, Akali, Fizz, Qiyana, Nidalee, Kindred, …) quand l'ennemi de lane n'est pas encore pick
-- **Edge cases** : règles spéciales configurables via `data/edge_cases.json` (interactions exceptionnelles)
-- **Raisons** : chaque recommandation est accompagnée d'une explication textuelle générée par `reasons.py`
-- **HORS POOL filtering** : recommandations marquées `inPool: false` quand absentes du pool, filtrables côté client
-- **DuoQ synergy boost** : si une liaison duo est active, la synergie partenaire est priorisée
-
-### Bans
-`/api/draft/recommend` retourne aussi des suggestions de ban inline (top 5) basées sur :
-1. Counters de votre pool (ce qui handicape vos champions)
-2. Tier S/A globaux du patch courant
-3. Taux de ban communautaire (popularité du ban)
-
----
-
-## Auth
-
-L'API supporte les modes **authentifié** et **anonyme** sur les endpoints draft :
-- **Authentifié** (JWT) : pool chargé automatiquement depuis la DB, historique et duo disponibles
-- **Anonyme** : le client doit envoyer le `champion_pool` dans le body de la requête
-
-Les endpoints `/api/draft/recommend` et `/api/draft/bans` utilisent `get_optional_user` (OAuth2 avec `auto_error=False`) pour ne pas refuser les requêtes sans token.
-
----
-
-## Design system (Soul Eater Edition)
-
-Tokens CSS dans `client/src/index.css` :
-- **Couleurs** : `--ink-0..5` (noirs profonds), `--bone-0..3` (off-whites), `--accent: #d91e2b` (rouge), `--ok/warn/bad`
-- **Typo** : `--f-display: Oswald` (titres), `--f-mono: JetBrains Mono` (data), `--f-body: Inter`
-- **Géométrie** : `--edge-weight: 2.5px` (bordures épaisses), `--skew: -1deg` (légère inclinaison)
-- **Animations** : `anim-fade-up`, `anim-hero-enter`, `anim-name-enter`, `anim-score-enter`
-
-
----
-
-## License
-
-MIT
+Le code est préparé localement ; aucun serveur distant ni secret de production n'a été modifié par cette reprise.

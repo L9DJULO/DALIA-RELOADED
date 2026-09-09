@@ -4,17 +4,18 @@
  * Uses localStorage as a 24h TTL cache to avoid refetching on every cold start.
  */
 import { create } from 'zustand';
-import { fetchChampions } from '../services/api';
+import { fetchChampions, fetchPatch } from '../services/api';
+import { setDDragonVersion } from '../lib/constants';
 
 const CACHE_KEY = 'dalia_champions_v1';
 const TTL_MS = 24 * 60 * 60 * 1000;
 
-function readCache() {
+function readCache(version) {
   try {
     const raw = localStorage.getItem(CACHE_KEY);
     if (!raw) return null;
-    const { ts, data } = JSON.parse(raw);
-    if (!ts || !Array.isArray(data)) return null;
+    const { ts, data, patch } = JSON.parse(raw);
+    if (!ts || !Array.isArray(data) || (version && patch !== version)) return null;
     if (Date.now() - ts > TTL_MS) return null;
     return data;
   } catch {
@@ -22,9 +23,9 @@ function readCache() {
   }
 }
 
-function writeCache(data) {
+function writeCache(data, patch) {
   try {
-    localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data }));
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data, patch }));
   } catch {
     /* quota / serialization — fine, just skip caching */
   }
@@ -39,9 +40,12 @@ const useChampionsStore = create((set, get) => ({
 
   load: async () => {
     if (get().loaded || get().loading) return;
+    set({ loading: true, error: null });
+    let version;
+    try { const patch = await fetchPatch(); version = patch.version; setDDragonVersion(version); } catch { /* Cached assets remain usable offline. */ }
 
-    const cached = readCache();
-    if (cached) {
+    const cached = readCache(version);
+    if (cached?.length) {
       const byId = {};
       for (const c of cached) byId[c.id] = c;
       set({ champions: cached, byId, loaded: true, loading: false });
@@ -52,10 +56,11 @@ const useChampionsStore = create((set, get) => ({
     try {
       const list = await fetchChampions();
       const arr = Array.isArray(list) ? list : [];
+      if (!arr.length) throw new Error('Catalogue vide ; réessaie le chargement.');
       const byId = {};
       for (const c of arr) byId[c.id] = c;
       set({ champions: arr, byId, loaded: true, loading: false });
-      if (arr.length) writeCache(arr);
+      if (arr.length) writeCache(arr, version);
     } catch (e) {
       set({ error: e.message || 'Erreur chargement champions', loading: false });
     }

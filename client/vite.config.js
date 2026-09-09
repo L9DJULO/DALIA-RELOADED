@@ -11,6 +11,8 @@ export default defineConfig({
     port: 1420,
     strictPort: true,
     proxy: {
+      '/health': { target: process.env.BACKEND_URL || 'http://localhost:8000' },
+      '/ready': { target: process.env.BACKEND_URL || 'http://localhost:8000' },
       '/api': {
         target: process.env.BACKEND_URL || 'http://localhost:8000',
         changeOrigin: true,

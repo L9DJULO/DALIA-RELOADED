@@ -3,14 +3,16 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Dict, List, Optional
 from pydantic import BaseModel, Field
+from app.models.validation import ChampionId, Role
+from typing import Literal
 
 
 class HistoryPick(BaseModel):
     """A pick recorded in history."""
-    champion_id: int
-    champion_key: str = ""
-    champion_name: str = ""
-    role: str = ""
+    champion_id: ChampionId
+    champion_key: str = Field(default="", max_length=50)
+    champion_name: str = Field(default="", max_length=100)
+    role: Role | Literal[""] = ""
 
 
 class HistoryEntry(BaseModel):

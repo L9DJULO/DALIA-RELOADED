@@ -9,9 +9,11 @@ import { DRAFT, SHORTLIST, ROLE_LABEL, champIcon } from '../data/mock';
 import { Portrait, SectionLbl, Bar, Delta, RoleChip, ReasonBullet } from './Primitives';
 import useDraftStore from '../stores/draftStore';
 import useChampionsStore from '../stores/championsStore';
+import useLCUStore from '../stores/lcuStore';
+import { getDDragonChampUrl } from '../lib/constants';
+import DraftWorkshop, { MechanicsDetails } from './DraftWorkshop';
 
-const DD = 'https://ddragon.leagueoflegends.com/cdn/14.8.1/img/champion';
-const ddIcon = (key) => `${DD}/${key}.png`;
+const ddIcon = getDDragonChampUrl;
 const ROLES = ['top', 'jungle', 'mid', 'bot', 'support'];
 
 // ── Champion search overlay ─────────────────────
@@ -55,7 +57,9 @@ function ChampionSearch({ onSelect, onClose, unavailable }) {
         }}
         onClick={e => e.stopPropagation()}
       >
+        <button className="clear-slot" onClick={() => onSelect(null)}>Vider cet emplacement</button>
         <input
+          aria-label="Rechercher un champion"
           ref={inputRef}
           value={query}
           onChange={e => setQuery(e.target.value)}
@@ -107,6 +111,8 @@ function PickSlot({ role, champ, side, onClick }) {
 
   return (
     <div
+      role="button" tabIndex={0} aria-label={`${side} ${role} : ${champ?.name || 'vide'}`}
+      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } }}
       onClick={onClick}
       style={{
         display: 'grid',
@@ -259,6 +265,7 @@ function Board() {
 
   function handleSelect(champ) {
     if (!activeSlot) return;
+    useDraftStore.getState().setMode('manual');
     const { type, team, role, index } = activeSlot;
 
     if (type === 'ban') {
@@ -274,12 +281,10 @@ function Board() {
   }
 
   function openBan(team, index, champ) {
-    if (champ) return;
     setActiveSlot({ type: 'ban', team, index });
   }
 
   function openPick(team, role, index, champ) {
-    if (champ) return;
     setActiveSlot({ type: 'pick', team, role, index });
   }
 
@@ -310,7 +315,7 @@ function Board() {
           {ROLES.map((role, i) => (
             <PickSlot
               key={role}
-              role={role}
+              role={blueIsAlly ? role : `P${i + 1}`}
               champ={bluePicks[role] ? { name: bluePicks[role].name, key: bluePicks[role].key } : null}
               side="blue"
               onClick={() => openPick('blue', role, i, bluePicks[role])}
@@ -334,7 +339,7 @@ function Board() {
           {ROLES.map((role, i) => (
             <PickSlot
               key={role}
-              role={role}
+              role={!blueIsAlly ? role : `P${i + 1}`}
               champ={redPicks[role] ? { name: redPicks[role].name, key: redPicks[role].key } : null}
               side="red"
               onClick={() => openPick('red', role, i, redPicks[role])}
@@ -352,7 +357,7 @@ function AnalyserButton() {
   return (
     <div style={{ padding: '8px 16px', borderBottom: 'var(--edge-weight) solid var(--bone-0)', flexShrink: 0, background: 'var(--ink-0)' }}>
       <button
-        onClick={() => getRecommendations([], {})}
+        onClick={() => getRecommendations()}
         disabled={loading}
         style={{
           width: '100%',
@@ -375,6 +380,9 @@ function AnalyserButton() {
 
 // ── Pick-order timeline ─────────────────────────
 function Timeline() {
+  useLCUStore(s => s.pickSequence);
+  const mode = useDraftStore(s => s.mode);
+  if (mode !== 'live') return null;
   return (
     <div style={{ padding: '8px 16px', borderBottom: 'var(--edge-weight) solid var(--bone-0)', flexShrink: 0, background: 'var(--ink-0)' }}>
       <div style={{ display: 'grid', gridTemplateColumns: '64px 1fr', alignItems: 'center', gap: 10 }}>
@@ -427,7 +435,7 @@ function Reasoning({ pick }) {
   const [tab, setTab] = useState('reasons');
 
   return (
-    <div style={{ flex: 1, overflowY: 'auto', padding: '14px 16px' }}>
+    <div style={{ flexShrink: 0, padding: '14px 16px' }}>
       <div style={{ display: 'flex', gap: 0, marginBottom: 14, border: 'var(--edge-weight) solid var(--ink-5)', background: 'var(--ink-2)' }}>
         {[
           { id: 'reasons', label: 'RAISONS' },
@@ -475,9 +483,9 @@ function Reasoning({ pick }) {
                 <span style={{ color: 'var(--bone-0)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name}</span>
                 <RoleChip role={m.role} />
               </div>
-              <Delta value={m.delta} />
+              <span title={m.games ? `${m.games} matchs · rôle en lane estimé à ${Math.round(m.laneProbability * 100)}%` : 'Estimation du kit, aucun match observé'}>{m.games ? <Delta value={m.delta}/> : `${m.delta > 0 ? '+' : ''}${m.delta.toFixed(1)} pts kit`}</span>
               <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--bone-2)', minWidth: 38, textAlign: 'right' }}>
-                {m.wr.toFixed(1)}%
+                {m.wr == null ? 'Sans données' : `${m.wr.toFixed(1)}% · n=${m.games}`}
               </span>
             </div>
           ))}
@@ -500,7 +508,7 @@ function Reasoning({ pick }) {
                 <span style={{ color: 'var(--bone-0)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
                 <RoleChip role={s.role} />
               </div>
-              <Delta value={s.delta} />
+              <span title="Complémentarité estimée des kits, pas un gain de win rate">{s.delta > 0 ? '+' : ''}{s.delta.toFixed(1)} pts kit</span>
             </div>
           ))}
         </div>
@@ -530,12 +538,14 @@ function DraftPanel({ selected }) {
   useDraftStore(s => s.recommendations);
   const pick = SHORTLIST[selected] || SHORTLIST[0];
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'auto' }}>
+      <DraftWorkshop />
       <BanSuggestionsBanner />
       <Board />
       <AnalyserButton />
       <Timeline />
       <Reasoning pick={pick} />
+      <section className="workshop"><h3>Dynamique des champions</h3><MechanicsDetails rules={pick.mechanics}/></section>
     </div>
   );
 }

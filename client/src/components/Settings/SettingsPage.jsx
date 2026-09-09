@@ -6,6 +6,7 @@ import useLCUStore from '../../stores/lcuStore';
 import useAuthStore from '../../stores/authStore';
 import useUserStore from '../../stores/userStore';
 import { SectionLbl } from '../Primitives';
+import DraftPreferences from './DraftPreferences';
 
 const ACCENTS = [
   { id: 'red',     hex: '#d91e2b', label: 'ROUGE'   },
@@ -165,6 +166,7 @@ export default function SettingsPage() {
           </div>
         </Card>
 
+        <DraftPreferences/>
         {/* Logout — bouton clairement visible en bas */}
         {user && (
           <div style={{ marginTop: 32, padding: '20px 0', borderTop: '1px solid var(--ink-5)' }}>

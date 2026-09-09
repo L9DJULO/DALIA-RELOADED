@@ -6,6 +6,7 @@
 // Auto-save côté backend.
 // ─────────────────────────────────────────────
 import React, { useEffect, useMemo, useState } from 'react';
+import PoolAdvisor from '../PoolAdvisor';
 import useUserStore from '../../stores/userStore';
 import useChampionsStore from '../../stores/championsStore';
 import { ROLES, TIERS, getDDragonChampUrl } from '../../lib/constants';
@@ -225,7 +226,7 @@ function TierRow({ tier, entries, champById, onPromote, onDemote, onRemove }) {
 
 // ── Main ────────────────────────────────────────────────────────────
 export default function ChampionPoolEditor() {
-  const { championPool, addToPool, removeFromPool, changeTier, loadProfile } = useUserStore();
+  const { championPool, addToPool, removeFromPool, changeTier, loadProfile, saveStatus, error, ownerId, profileAvailable, saveAllPools } = useUserStore();
   const { champions, loaded, loading, load } = useChampionsStore();
 
   const [activeRole, setActiveRole] = useState('mid');
@@ -233,7 +234,7 @@ export default function ChampionPoolEditor() {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [showAllChamps, setShowAllChamps] = useState(false);
 
-  useEffect(() => { load(); loadProfile(); }, [load, loadProfile]);
+  useEffect(() => { load(); }, [load]);
 
   useEffect(() => {
     const id = setTimeout(() => setDebouncedSearch(search), 300);
@@ -357,6 +358,11 @@ export default function ChampionPoolEditor() {
       </div>
 
       {/* Body — two-pane */}
+      <div className="workshop" role="status">
+        {saveStatus === 'pending' ? 'Sauvegarde en cours…' : saveStatus === 'saved' ? 'Pool enregistré' : 'Pool personnel'}
+        {error && <p>{error} <button onClick={() => profileAvailable ? saveAllPools() : loadProfile(ownerId)}>Réessayer</button></p>}
+      </div>
+      <PoolAdvisor role={activeRole}/>
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
 
         {/* LEFT — POOL by tier */}

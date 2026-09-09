@@ -1,56 +1,55 @@
-version: "3.8"
-
 services:
   db:
     image: postgres:16-alpine
-    container_name: dalia-postgres
     environment:
       POSTGRES_USER: dalia
-      POSTGRES_PASSWORD: dalia
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run python scripts/setup_local.py}
       POSTGRES_DB: dalia
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - dalia_pgdata:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U dalia"]
       interval: 5s
       timeout: 5s
-      retries: 5
-
+      retries: 10
   backend:
-    build:
-      context: ./server
-      dockerfile: Dockerfile
-    container_name: dalia-backend
+    build: ./server
     environment:
-      DATABASE_URL: postgresql+asyncpg://dalia:dalia@db:5432/dalia
-      JWT_SECRET: 70043bc98d6aca759326219b3db0407e0c909da9eb6f5ac911a71dc200a8f7f3
-      JWT_ALGORITHM: HS256
-      JWT_EXPIRE_MINUTES: "1440"
-      RIOT_API_KEY: ""
-      RIOT_PLATFORM: euw1
+      DATABASE_URL: postgresql+asyncpg://dalia:${POSTGRES_PASSWORD}@db:5432/dalia
+      JWT_SECRET: ${JWT_SECRET:?Run python scripts/setup_local.py}
+      RIOT_API_KEY: ${RIOT_API_KEY:-}
       ENV: development
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     volumes:
-      - ./server:/app
+      - dalia_cache:/app/app/data/cache
+      - dalia_models:/app/app/data/models
+      - dalia_matches:/app/app/data/matches
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/ready', timeout=3)"]
+      interval: 10s
+      start_period: 30s
+      timeout: 5s
+      retries: 12
     depends_on:
       db:
         condition: service_healthy
-
   frontend:
     build:
       context: ./client
       dockerfile: Dockerfile.dev
-    container_name: dalia-frontend
     environment:
       VITE_HOST: "0.0.0.0"
       BACKEND_URL: http://backend:8000
     ports:
-      - "1420:1420"
+      - "127.0.0.1:1420:1420"
     depends_on:
-      - backend
-
+      backend:
+        condition: service_healthy
 volumes:
   dalia_pgdata:
+  dalia_cache:
+  dalia_models:
+  dalia_matches:

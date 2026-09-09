@@ -136,6 +136,8 @@ class DraftNet(nn.Module):
     def _init_weights(self):
         """Xavier init for linear layers, normal for embeddings."""
         nn.init.normal_(self.champion_embed.weight, mean=0.0, std=0.05)
+        with torch.no_grad():
+            self.champion_embed.weight[0].zero_()
         for m in self.mlp:
             if isinstance(m, nn.Linear):
                 nn.init.xavier_uniform_(m.weight)
@@ -149,7 +151,7 @@ class DraftNet(nn.Module):
         raw = self.champion_embed(champ_ids)  # (batch, 5, embed_dim)
         projected = []
         for i in range(5):
-            projected.append(self.role_proj[i](raw[:, i, :]))  # (batch, embed_dim)
+            projected.append(self.role_proj[i](raw[:, i, :]) * (champ_ids[:, i] != 0).unsqueeze(1))
         return torch.stack(projected, dim=1)  # (batch, 5, embed_dim)
 
     def forward(self, blue_champs: torch.Tensor, red_champs: torch.Tensor) -> torch.Tensor:

@@ -1,7 +1,8 @@
 """Draft-state and recommendation models."""
 from __future__ import annotations
-from typing import Dict, List, Optional
-from pydantic import BaseModel, Field
+from typing import Annotated, Dict, List, Optional
+from pydantic import BaseModel, Field, field_validator, model_validator
+from app.models.validation import Role, Team, Tier, ChampionId, Puuid, Region, validate_weights
 
 
 ROLES = ["top", "jungle", "mid", "bot", "support"]
@@ -24,32 +25,43 @@ DRAFT_SEQUENCE = [
 
 class DraftPick(BaseModel):
     """A single pick in the draft."""
-    champion_id: Optional[int] = None
+    champion_id: Optional[ChampionId] = None
     champion_key: Optional[str] = None
-    role: Optional[str] = None          # May be unknown for enemies
+    role: Optional[Role] = None          # May be unknown for enemies
 
 
 class DraftState(BaseModel):
     """Snapshot of the current draft for the recommendation engine."""
     # ── Who am I? ──
-    my_team: str = "blue"               # "blue" | "red"
-    my_role: str = "mid"                # top / jungle / mid / bot / support
-    my_pick_order: int = 1              # 1-5 within my team
+    my_team: Team = "blue"
+    my_role: Role = "mid"
+    my_pick_order: int = Field(default=1, ge=1, le=5)
 
     # ── Bans ──
-    bans: List[int] = Field(default_factory=list)
+    bans: List[ChampionId] = Field(default_factory=list, max_length=10)
 
     # ── Picks already made ──
-    ally_picks: List[DraftPick] = Field(default_factory=list)
-    enemy_picks: List[DraftPick] = Field(default_factory=list)
+    ally_picks: List[DraftPick] = Field(default_factory=list, max_length=5)
+    enemy_picks: List[DraftPick] = Field(default_factory=list, max_length=5)
 
     # ── Ally pre-picks (hover / intent) ──
     # Champions allies are hovering but haven't locked yet.
     # Used to anticipate team composition when picking before allies.
-    ally_prepicks: List[DraftPick] = Field(default_factory=list)
+    ally_prepicks: List[DraftPick] = Field(default_factory=list, max_length=5)
 
     # ── Draft progression ──
-    current_action: int = 0             # 0-19 index in DRAFT_SEQUENCE
+    current_action: int = Field(default=0, ge=0, le=19)
+
+    @model_validator(mode="after")
+    def coherent_draft(self):
+        ids = [p.champion_id for p in self.ally_picks + self.enemy_picks if p.champion_id]
+        if len(ids) != len(set(ids)) or set(ids) & set(self.bans):
+            raise ValueError("Un champion ne peut être sélectionné deux fois ou être à la fois banni et sélectionné")
+        for picks in (self.ally_picks, self.enemy_picks):
+            roles = [p.role for p in picks if p.role]
+            if len(roles) != len(set(roles)):
+                raise ValueError("Un rôle ne peut être attribué deux fois dans une équipe")
+        return self
 
     # ── Probabilistic enemy role inference ──
     # Populated by role_inference.infer_enemy_roles() at the start of
@@ -130,21 +142,26 @@ class ScoreBreakdown(BaseModel):
     draft_risk: float = 0.0
     ml_prediction: Optional[float] = None
     ml_explanation: Optional[MLExplanation] = None
+    mechanics: float = 0.0
+    wpa_adjustment: float = 0.0
 
 
 class MatchupDetail(BaseModel):
     opponent_name: str
     opponent_role: str
-    win_rate: float
+    win_rate: Optional[float] = None
     delta: float
     is_lane_opponent: bool = False
     games: int = 0
+    source: str = "heuristic"
+    lane_probability: float = 0
 
 
 class SynergyDetail(BaseModel):
     ally_name: str
     ally_role: str
     delta: float
+    source: str = "kit_heuristic"
 
 
 class CompositionWarning(BaseModel):
@@ -182,29 +199,47 @@ class Recommendation(BaseModel):
     is_pool_champion: bool = True
     tags: List[str] = Field(default_factory=list)  # "safe-blind", "counter-pick", "off-meta", "flex"
     confidence: float = 50.0            # 0-100 how confident the engine is
+    meta_window: Optional[str] = None
     meta_games: int = 0                 # total games played in role (30d) — sample size indicator
     verdict: str = ""                   # short 1-line summary ("Counter direct Syndra. Attention engage.")
     reasons: List[Reason] = Field(default_factory=list)  # 3 max, contextual, champion-aware
+    mechanics: List[dict] = Field(default_factory=list)
+    wpa: Optional[dict] = None
 
 
 class PoolEntry(BaseModel):
-    champion_id: int
+    champion_id: ChampionId
     champion_key: str = ""
-    tier: str = "B"                     # S / A / B / C / D
+    tier: Tier = "B"
+
+
+AnnotatedPool = Annotated[List[PoolEntry], Field(max_length=200)]
 
 
 class DraftRequest(BaseModel):
     """Request body for /api/draft/recommend."""
     draft_state: DraftState
-    champion_pool: Dict[str, List[PoolEntry]] = Field(default_factory=dict)
+    champion_pool: Dict[Role, AnnotatedPool] = Field(default_factory=dict)
     weight_overrides: Optional[Dict[str, float]] = None
     # ── DuoQ ──
     duo_active: bool = False
-    duo_partner_role: Optional[str] = None  # partner's role ("top", "jungle", etc.)
-    duo_partner_pool: Optional[Dict[str, List[PoolEntry]]] = None  # partner's champion pool
+    duo_partner_role: Optional[Role] = None
+    duo_partner_pool: Optional[Dict[Role, AnnotatedPool]] = None
+    enable_wildcard: bool = True
+    enable_off_meta: bool = True
     # ── Personal stats (from LCU link) ──
-    puuid: Optional[str] = None       # player's Riot PUUID (from LCU)
-    region: Optional[str] = None      # platform region (e.g. "EUW1")
+    puuid: Optional[Puuid] = None
+    region: Optional[Region] = None
+
+    _weights_valid = field_validator("weight_overrides")(validate_weights)
+
+    @field_validator("champion_pool", "duo_partner_pool")
+    @classmethod
+    def unique_pool(cls, pool):
+        for entries in (pool or {}).values():
+            if len({e.champion_id for e in entries}) != len(entries):
+                raise ValueError("Un champion apparaît deux fois dans le pool")
+        return pool
 
 
 class BanSuggestion(BaseModel):
@@ -236,3 +271,20 @@ class DraftResponse(BaseModel):
     duo_synergy_boost: bool = False  # True when DuoQ mode was active for recommendations
     ban_suggestions: List[BanSuggestion] = Field(default_factory=list)
     ban_impact: List[BanImpact] = Field(default_factory=list)
+    data_status: dict = Field(default_factory=dict)
+
+
+class CompareRequest(DraftRequest):
+    champion_ids: List[ChampionId] = Field(min_length=2, max_length=2)
+
+    @field_validator("champion_ids")
+    @classmethod
+    def distinct_champions(cls, ids):
+        if ids[0] == ids[1]:
+            raise ValueError("Choisis deux champions différents")
+        return ids
+
+
+class PoolAdviceRequest(BaseModel):
+    role: Role
+    champion_pool: Dict[Role, AnnotatedPool] = Field(default_factory=dict)

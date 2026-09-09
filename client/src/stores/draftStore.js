@@ -1,271 +1,124 @@
-/**
- * Zustand store — Draft state, recommendations, draft board management.
- */
 import { create } from 'zustand';
-import { fetchRecommendations, checkServerHealth, getServerUrl } from '../services/api';
+import { fetchRecommendations } from '../services/api';
 import useLCUStore from './lcuStore';
 import useUserStore from './userStore';
+import useDuoStore from './duoStore';
+import { validateReplay } from '../lib/replay';
 
-const EMPTY_ALLY_PICKS = () => ({ top: null, jungle: null, mid: null, bot: null, support: null });
-const EMPTY_ENEMY_PICKS = () => [null, null, null, null, null];
-
+const roles = ['top', 'jungle', 'mid', 'bot', 'support'];
+const emptyAllies = () => Object.fromEntries(roles.map(r => [r, null]));
+const emptySlots = () => Array(5).fill(null);
+const fresh = () => ({ myTeam: 'blue', myRole: 'mid', myPickOrder: 1, autoDetected: false,
+  blueBans: emptySlots(), redBans: emptySlots(), allyPicks: emptyAllies(), enemyPicks: emptySlots(), allyPrepicks: emptyAllies(), currentAction: 0 });
+const resultFields = () => ({ recommendations: [], banSuggestions: [], banImpact: [], compSummary: {}, warnings: [], winProbability: null, dataStatus: null });
+let requestController = null;
+let requestNumber = 0;
+const snapshot = s => Object.fromEntries(Object.keys(fresh()).map(k => [k, structuredClone(s[k])]));
+const cancel = () => { requestNumber++; requestController?.abort(); requestController = null; };
 const useDraftStore = create((set, get) => ({
-  // ── Draft setup ──
-  myTeam: 'blue',         // "blue" | "red"
-  myRole: 'mid',
-  autoDetected: false,    // true when team/role came from LCU
-
-  // ── Bans ──
-  blueBans: [null, null, null, null, null],
-  redBans:  [null, null, null, null, null],
-
-  // ── Picks ──
-  // allyPicks: role-keyed { top, jungle, mid, bot, support } — I know my team's roles
-  // enemyPicks: ordered array [P1..P5] — roles unknown, we only see pick order
-  // allyPrepicks: role-keyed { top, ... } — what allies are hovering (intent)
-  allyPicks: EMPTY_ALLY_PICKS(),
-  enemyPicks: EMPTY_ENEMY_PICKS(),
-  allyPrepicks: EMPTY_ALLY_PICKS(),
-
-  // ── Recommendations ──
-  recommendations: [],
-  banSuggestions: [],
-  banImpact: [],
-  compSummary: {},
-  warnings: [],
-  winProbability: null,
-  loading: false,
-  error: null,
-
-  // ── Draft phase tracking ──
-  currentAction: 0,
-
-  // ═════════════════════════════════════════════════════════
-  //  ACTIONS
-  // ═════════════════════════════════════════════════════════
-  setMyTeam: (team) => set({ myTeam: team, autoDetected: false }),
-  setMyRole: (role) => set({ myRole: role, autoDetected: false }),
-  setFromLCU: (team, role) => set({ myTeam: team, myRole: role, autoDetected: true }),
-
-  // ── Bans ──
+  ...fresh(), ...resultFields(), sessionId: crypto.randomUUID(), revision: 0,
+  loading: false, error: null, stale: false, mode: 'live', timeline: [], undoStack: [], replayPosition: null,
+  change: (patch, record = true) => {
+    const before = snapshot(get());
+    const after = { ...before, ...patch };
+    if (JSON.stringify(before) === JSON.stringify(after)) return;
+    cancel();
+    const step = { at: new Date().toISOString(), state: structuredClone(after) };
+    set(s => ({ ...patch, revision: s.revision + 1, loading: false, error: null,
+      stale: s.recommendations.length > 0, replayPosition: null,
+      ...(record ? { timeline: [...(s.timeline.length ? s.timeline : [{ at: step.at, state: before }]), step].slice(-100), undoStack: [...s.undoStack, before].slice(-50) } : {}) }));
+  },
+  setMyTeam: myTeam => { get().setMode('manual'); get().change({ myTeam, autoDetected: false }); },
+  setMyRole: myRole => { get().setMode('manual'); get().change({ myRole, autoDetected: false }); },
+  setMyPickOrder: myPickOrder => get().change({ myPickOrder: Number(myPickOrder) }),
+  setFromLCU: (myTeam, myRole) => get().change({ myTeam, myRole, autoDetected: true }),
+  setMode: mode => { cancel(); set({ mode, loading: false }); },
+  invalidateResults: () => { cancel(); set(s => ({ revision: s.revision + 1, loading: false, stale: s.recommendations.length > 0 })); },
+  applyLCU: data => {
+    if (get().mode !== 'live') return;
+    get().change({ myTeam: data.myTeam || get().myTeam, myRole: data.myRole || get().myRole,
+      myPickOrder: data.myPickOrder || get().myPickOrder, currentAction: data.currentAction ?? get().currentAction,
+      blueBans: data.blueBans, redBans: data.redBans, allyPicks: data.allyPicks,
+      enemyPicks: [...(data.enemyPicksOrder || []), ...emptySlots()].slice(0, 5), allyPrepicks: data.allyPrepicks, autoDetected: true });
+  },
   setBan: (team, index, champion) => {
     const key = team === 'blue' ? 'blueBans' : 'redBans';
-    const bans = [...get()[key]];
-    bans[index] = champion; // champion = {id, key, name} or null
-    set({ [key]: bans });
+    const bans = [...get()[key]]; bans[index] = champion; get().change({ [key]: bans });
   },
-
-  // ── Ally picks (role-keyed — my team) ──
-  setAllyPick: (role, champion) => {
-    const picks = { ...get().allyPicks };
-    picks[role] = champion;
-    set({ allyPicks: picks });
-  },
-
-  clearAllyPick: (role) => {
-    const picks = { ...get().allyPicks };
-    picks[role] = null;
-    set({ allyPicks: picks });
-  },
-
-  // ── Ally pre-picks (hover/intent from LCU) ──
-  setAllyPrepicks: (prepicks) => {
-    // prepicks = { top: {id,key,name} | null, jungle: ..., ... }
-    set({ allyPrepicks: { ...EMPTY_ALLY_PICKS(), ...prepicks } });
-  },
-
-  // ── Enemy picks (ordered array — roles unknown) ──
-  setEnemyPick: (index, champion) => {
-    const picks = [...get().enemyPicks];
-    picks[index] = champion;
-    set({ enemyPicks: picks });
-  },
-
-  clearEnemyPick: (index) => {
-    const picks = [...get().enemyPicks];
-    picks[index] = null;
-    set({ enemyPicks: picks });
-  },
-
-  // ── Set all enemy picks at once from LCU (no roles — server predicts) ──
-  setEnemyPicksFromLCU: (champions) => {
-    // champions = array of {id, key, name} objects (NO roles attached)
-    const picks = [null, null, null, null, null];
-    if (champions) {
-      champions.forEach((champ, i) => {
-        if (i < 5 && champ) picks[i] = champ; // no .role property
-      });
-    }
-    set({ enemyPicks: picks });
-  },
-
-  // ── Team-aware pick (used by LCU auto-sync) ──
+  setAllyPick: (role, champion) => get().change({ allyPicks: { ...get().allyPicks, [role]: champion } }),
+  clearAllyPick: role => get().setAllyPick(role, null),
+  setEnemyPick: (index, champion) => { const picks = [...get().enemyPicks]; picks[index] = champion; get().change({ enemyPicks: picks }); },
+  clearEnemyPick: index => get().setEnemyPick(index, null),
+  setAllyPrepicks: prepicks => get().change({ allyPrepicks: { ...emptyAllies(), ...prepicks } }),
+  setEnemyPicksFromLCU: picks => get().change({ enemyPicks: [...picks, ...emptySlots()].slice(0, 5) }),
   setPick: (team, role, champion) => {
-    const myTeam = get().myTeam;
-    if (team === myTeam) {
-      // Ally pick → role-keyed
-      const picks = { ...get().allyPicks };
-      picks[role] = champion;
-      set({ allyPicks: picks });
-    } else {
-      // Enemy pick → ordered slots (preserve draft pick order, keep role if known)
-      const picks = [...get().enemyPicks];
-      // If this role is already stored (update in place to avoid duplicates)
-      const existingIdx = role ? picks.findIndex((p) => p && p.role === role) : -1;
-      const enriched = role ? { ...champion, role } : champion;
-      if (existingIdx >= 0) {
-        picks[existingIdx] = enriched;
-      } else {
-        // Fill next empty slot to maintain actual draft pick order
-        const emptyIdx = picks.findIndex((p) => !p);
-        if (emptyIdx >= 0) picks[emptyIdx] = enriched;
-      }
-      set({ enemyPicks: picks });
-    }
+    if (team === get().myTeam) get().setAllyPick(role, champion);
+    else { const index = get().enemyPicks.findIndex(p => !p); if (index >= 0) get().setEnemyPick(index, champion); }
   },
-
-  // ── Reset ──
-  resetDraft: () =>
-    set({
-      blueBans: [null, null, null, null, null],
-      redBans:  [null, null, null, null, null],
-      allyPicks: EMPTY_ALLY_PICKS(),
-      enemyPicks: EMPTY_ENEMY_PICKS(),
-      allyPrepicks: EMPTY_ALLY_PICKS(),
-      recommendations: [],
-      banSuggestions: [],
-      banImpact: [],
-      compSummary: {},
-      warnings: [],
-      winProbability: null,
-      currentAction: 0,
-      error: null,
-    }),
-
-  // ── Computed helpers ──
-  getAllBannedIds: () => {
-    const s = get();
-    return [
-      ...s.blueBans.filter(Boolean).map((b) => b.id),
-      ...s.redBans.filter(Boolean).map((b) => b.id),
-    ];
+  undo: () => {
+    const stack = get().undoStack; if (!stack.length || get().mode === 'live') return;
+    get().change(stack[stack.length - 1], false);
+    set({ undoStack: stack.slice(0, -1), timeline: [...get().timeline, { at: new Date().toISOString(), state: snapshot(get()) }].slice(-100) });
   },
-
-  getAllPickedIds: () => {
-    const s = get();
-    const ids = [];
-    for (const c of Object.values(s.allyPicks)) if (c) ids.push(c.id);
-    for (const c of s.enemyPicks) if (c) ids.push(c.id);
-    return ids;
+  resetDraft: (mode = get().mode) => {
+    cancel();
+    const { myTeam, myRole, myPickOrder } = get();
+    set(s => ({ ...fresh(), ...resultFields(), myTeam, myRole, myPickOrder, sessionId: crypto.randomUUID(), revision: s.revision + 1,
+      timeline: [], undoStack: [], loading: false, stale: false, error: null, mode, replayPosition: null }));
   },
-
-  getAllUnavailableIds: () => {
-    return new Set([...get().getAllBannedIds(), ...get().getAllPickedIds()]);
-  },
-
-  // ── Build draft state for API ──
+  getAllBannedIds: () => [...get().blueBans, ...get().redBans].filter(Boolean).map(c => c.id),
+  getAllPickedIds: () => [...Object.values(get().allyPicks), ...get().enemyPicks].filter(Boolean).map(c => c.id),
+  getAllUnavailableIds: () => new Set([...get().getAllBannedIds(), ...get().getAllPickedIds()]),
   buildDraftState: () => {
     const s = get();
-    const bans = s.getAllBannedIds();
-
-    // Ally picks: role is known
-    const allyPicks = Object.entries(s.allyPicks)
-      .filter(([_, c]) => c !== null)
-      .map(([role, c]) => ({ champion_id: c.id, champion_key: c.key, role }));
-
-    // Enemy picks: role is intentionally NOT set (server predicts)
-    // If a pick has a .role from old LCU sync, pass it; otherwise null
-    const enemyPicks = s.enemyPicks
-      .filter(Boolean)
-      .map((c) => ({ champion_id: c.id, champion_key: c.key, role: c.role || null }));
-
-    // Ally pre-picks: champions allies are hovering (intent)
-    const allyPrepicks = Object.entries(s.allyPrepicks)
-      .filter(([_, c]) => c !== null)
-      .map(([role, c]) => ({ champion_id: c.id, champion_key: c.key, role }));
-
-    return {
-      my_team: s.myTeam,
-      my_role: s.myRole,
-      bans,
-      ally_picks: allyPicks,
-      enemy_picks: enemyPicks,
-      ally_prepicks: allyPrepicks,
-      current_action: s.currentAction,
-    };
+    const keyed = picks => Object.entries(picks).filter(([, c]) => c).map(([role, c]) => ({ champion_id: c.id, champion_key: c.key, role }));
+    return { my_team: s.myTeam, my_role: s.myRole, my_pick_order: s.myPickOrder,
+      bans: [...new Set(s.getAllBannedIds())], ally_picks: keyed(s.allyPicks), enemy_picks: s.enemyPicks.filter(Boolean).map(c => ({ champion_id: c.id, champion_key: c.key, role: c.role || null })),
+      ally_prepicks: keyed(s.allyPrepicks), current_action: s.currentAction };
   },
-
-  // ── Fetch Recommendations ──
-  getRecommendations: async (championPool, weightOverrides, duoOptions = null) => {
+  getRecommendations: async (championPool, weightOverrides, duoOptions) => {
+    cancel(); const number = requestNumber; const revision = get().revision;
+    requestController = new AbortController(); const signal = requestController.signal;
     set({ loading: true, error: null });
+    const user = useUserStore.getState();
+    const summoner = useLCUStore.getState().summoner;
     try {
-      const draftState = get().buildDraftState();
-
-      // champion_pool doit être un Dict[role → List[PoolEntry]] pour le serveur.
-      // Si le caller passe un tableau vide (ou rien), on utilise directement
-      // userStore.championPool qui est déjà dans le bon format role-keyed.
-      if (!championPool || Array.isArray(championPool)) {
-        championPool = useUserStore.getState().championPool || {};
-      }
-
-      // weightOverrides : forcer null si objet vide (évite 422 côté serveur)
-      const weights = (weightOverrides && Object.keys(weightOverrides).length > 0)
-        ? weightOverrides
-        : null;
-
-      const summoner = useLCUStore.getState().summoner;
-      const personalIdentity = summoner?.puuid
-        ? { puuid: summoner.puuid, region: summoner.region }
-        : null;
-
-      console.log('[ANALYSER] payload →', {
-        draft_state: draftState,
-        champion_pool: championPool,
-        weight_overrides: weights,
-        duo_options: duoOptions,
-        personal_identity: personalIdentity,
-      });
-
-      const data = await fetchRecommendations(draftState, championPool, weights, duoOptions, personalIdentity);
-
-      console.log('[ANALYSER] réponse ←', data);
-      set({
-        recommendations: data.recommendations || [],
-        banSuggestions: data.ban_suggestions || [],
-        banImpact: data.ban_impact || [],
-        compSummary: data.team_composition_summary || {},
-        warnings: data.warnings || [],
-        winProbability: data.win_probability ?? null,
-        loading: false,
-      });
+      const data = await fetchRecommendations(get().buildDraftState(), championPool && !Array.isArray(championPool) ? championPool : user.championPool,
+        weightOverrides && Object.keys(weightOverrides).length ? weightOverrides : user.weightOverrides,
+        duoOptions === undefined ? useDuoStore.getState().getDuoOptions() : duoOptions,
+        summoner?.puuid ? { puuid: summoner.puuid, region: summoner.region } : null,
+        { signal, enableWildcard: user.enableWildcard, enableOffMeta: user.enableOffMeta });
+      if (number !== requestNumber || revision !== get().revision || signal.aborted) return null;
+      set({ recommendations: data.recommendations || [], banSuggestions: data.ban_suggestions || [], banImpact: data.ban_impact || [],
+        compSummary: data.team_composition_summary || {}, warnings: data.warnings || [], winProbability: data.win_probability ?? null,
+        dataStatus: data.data_status || null, loading: false, stale: false });
+      return data;
     } catch (e) {
-      console.error('Draft recommendation failed:', e);
-      // Build a useful error message from the Axios error
-      let msg = 'Erreur de recommandation';
-      if (e.response?.data?.detail) {
-        const detail = e.response.data.detail;
-        msg = typeof detail === 'string' ? detail : JSON.stringify(detail);
-      } else if (e.response?.status) {
-        msg = `Erreur serveur (${e.response.status}) — ${e.response.statusText || 'vérifiez les logs'}`;
-      } else if (e.code === 'ECONNABORTED') {
-        msg = 'Temps de réponse dépassé — le serveur met trop de temps.';
-      } else if (e.config && (e.message === 'Network Error' || !e.response)) {
-        // Axios request failed without response — server unreachable
-        const url = getServerUrl();
-        const health = await checkServerHealth();
-        if (!health.ok) {
-          msg = `Serveur inaccessible (${url}). Vérifiez que le backend est démarré et que l'URL est correcte dans Paramètres.`;
-        } else if (!health.ready) {
-          msg = 'Le serveur démarre encore, réessayez dans quelques secondes.';
-        } else {
-          msg = 'Erreur réseau inattendue — le serveur répond au ping mais la requête a échoué.';
-        }
-      } else if (e.message) {
-        msg = e.message;
-      }
-      set({ error: msg, loading: false });
+      if (number !== requestNumber || signal.aborted) return null;
+      const detail = e.response?.data?.detail;
+      set({ loading: false, error: typeof detail === 'string' ? detail : e.code === 'ECONNABORTED' ? 'Analyse trop longue. Réessaie dans quelques instants.' : 'Analyse indisponible. Vérifie la connexion au serveur.' });
+      return null;
     }
   },
+  exportSession: () => ({ schema_version: 1, session_id: get().sessionId, steps: get().timeline.length ? get().timeline : [{ at: new Date().toISOString(), state: snapshot(get()) }] }),
+  loadReplay: (steps, index, newSession = false) => {
+    steps = validateReplay({ schema_version: 1, steps }).steps;
+    cancel();
+    const step = steps[index]; if (!step) return;
+    set(s => ({ ...fresh(), ...step.state, ...resultFields(), mode: 'replay', autoDetected: false, loading: false, error: null, stale: false,
+      sessionId: newSession || s.mode !== 'replay' ? crypto.randomUUID() : s.sessionId, revision: s.revision + 1, timeline: steps, undoStack: [], replayPosition: index }));
+  },
+  forkReplay: () => {
+    cancel();
+    set(s => ({ mode: 'manual', sessionId: crypto.randomUUID(), timeline: s.timeline.slice(0, (s.replayPosition ?? s.timeline.length - 1) + 1),
+      replayPosition: null, undoStack: [], loading: false }));
+  },
 }));
-
+window.addEventListener('dalia:logout', () => useDraftStore.getState().resetDraft('manual'));
+useUserStore.subscribe((next, before) => {
+  if (['championPool', 'weightOverrides', 'enableWildcard', 'enableOffMeta'].some(k => next[k] !== before[k])) useDraftStore.getState().invalidateResults();
+});
+useDuoStore.subscribe((next, before) => {
+  if (['duoActive', 'partnerRole', 'partnerPool', 'linked'].some(k => next[k] !== before[k])) useDraftStore.getState().invalidateResults();
+});
 export default useDraftStore;

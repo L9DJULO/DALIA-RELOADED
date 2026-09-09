@@ -11,6 +11,8 @@ Data Dragon (static, no key needed):
 from __future__ import annotations
 
 import json
+import asyncio
+import math
 import logging
 import os
 import time
@@ -20,6 +22,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import httpx
 
 from app.config import config
+from app.services.storage import cache_key as hash_key, write_json
 
 logger = logging.getLogger("dalia.fetcher")
 
@@ -48,7 +51,7 @@ class FileCache:
         self.ttl = ttl_seconds
 
     def _path(self, key: str) -> Path:
-        safe = key.replace("/", "_").replace("?", "_").replace("&", "_").replace(":", "_")
+        safe = hash_key(key)
         return self.dir / f"{safe}.json"
 
     def get(self, key: str) -> Optional[Any]:
@@ -63,9 +66,13 @@ class FileCache:
         except Exception:
             return None
 
+    def collected_at(self, key: str):
+        try: return self._path(key).stat().st_mtime
+        except OSError: return None
+
     def set(self, key: str, data: Any) -> None:
         p = self._path(key)
-        p.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+        write_json(p, data)
 
 
 # ---------------------------------------------------------------------------
@@ -82,7 +89,7 @@ class LolalyticsFetcher:
 
     def __init__(self):
         self._client = httpx.AsyncClient(
-            timeout=30.0,
+            timeout=6.0,
             headers={
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
                 "Referer": "https://lolalytics.com/",
@@ -92,29 +99,58 @@ class LolalyticsFetcher:
         )
         self._cache = FileCache(config.cache_dir, ttl_seconds=config.cache_ttl_hours * 3600)
         self._ddragon_version: Optional[str] = None
+        self._version_checked = 0.0
+        self.last_errors = {}
+        self.last_success = {}
+        self._http_slots = asyncio.Semaphore(6)
+        self._retry_after = {}
+
+    async def _get(self, url, **kwargs):
+        source = "lolalytics" if url.startswith(self.LOLA) else "ddragon"
+        async with self._http_slots:
+            if self._retry_after.get(source, 0) > time.monotonic():
+                raise RuntimeError("Source temporairement indisponible")
+            try:
+                response = await self._client.get(url, **kwargs)
+                response.raise_for_status()
+                self.last_errors.pop(source, None)
+                self.last_success[source] = time.time()
+                return response
+            except (httpx.HTTPError, ValueError):
+                self._retry_after[source] = time.monotonic() + 30
+                self.last_errors[source] = "Source indisponible ; nouvelle tentative différée"
+                raise
 
     async def close(self):
         await self._client.aclose()
 
     # ── Data Dragon ──────────────────────────────────────────────────────
-    async def get_ddragon_version(self) -> str:
-        if self._ddragon_version:
+    async def get_ddragon_version(self, force: bool = False) -> str:
+        if not force and self._ddragon_version and time.monotonic() - self._version_checked < 3600:
             return self._ddragon_version
         url = f"{self.DDRAGON}/api/versions.json"
         cache_key = "ddragon_versions"
-        cached = self._cache.get(cache_key)
+        cached = None if force else self._cache.get(cache_key)
         if cached:
             self._ddragon_version = cached[0]
+            self._version_checked = time.monotonic()
             return self._ddragon_version
         try:
-            resp = await self._client.get(url)
+            resp = await self._get(url)
             resp.raise_for_status()
             versions = resp.json()
+            if not isinstance(versions, list) or not versions:
+                raise ValueError("Catalogue de versions vide")
             self._cache.set(cache_key, versions)
             self._ddragon_version = versions[0]
+            self._version_checked = time.monotonic()
+            self.last_errors.pop("ddragon", None)
+            self.last_success["ddragon"] = time.time()
         except Exception as exc:
-            logger.warning("Failed to fetch DDragon versions: %s — using fallback", exc)
-            self._ddragon_version = "16.3.1"
+            self.last_errors["ddragon"] = "Source DDragon indisponible"
+            logger.warning("Failed to fetch DDragon versions: %s", exc)
+            if not self._ddragon_version:
+                raise RuntimeError("Impossible de charger la version DDragon") from exc
         return self._ddragon_version
 
     async def get_current_patch(self) -> str:
@@ -141,7 +177,7 @@ class LolalyticsFetcher:
             return cached
         url = f"{self.DDRAGON}/cdn/{ver}/data/en_US/champion.json"
         try:
-            resp = await self._client.get(url)
+            resp = await self._get(url)
             resp.raise_for_status()
             data = resp.json()["data"]
             self._cache.set(cache_key, data)
@@ -161,9 +197,10 @@ class LolalyticsFetcher:
         if patch == "current":
             patch = await self.get_current_patch()
 
-        cache_key = f"lola_list_{lane}_{patch}_{self.TIER}"
+        cache_key = f"lola_list_{lane}_{patch}_{self.TIER}_{self.QUEUE}_{self.REGION}"
         cached = self._cache.get(cache_key)
         if cached:
+            self.last_success[f"meta:{role}"] = self._cache.collected_at(cache_key)
             return cached
 
         url = f"{self.LOLA}/mega/"
@@ -177,12 +214,15 @@ class LolalyticsFetcher:
             "region": self.REGION,
         }
         try:
-            resp = await self._client.get(url, params=params)
+            resp = await self._get(url, params=params)
             resp.raise_for_status()
             data = resp.json()
+            self.last_success[f"meta:{role}"] = time.time()
+            self.last_errors.pop(f"meta:{role}", None)
             self._cache.set(cache_key, data)
             return data
         except Exception as exc:
+            self.last_errors[f"meta:{role}"] = "Méta indisponible"
             logger.error("Lolalytics tierlist fetch failed (%s %s): %s", lane, patch, exc)
             return {}
 
@@ -209,7 +249,7 @@ class LolalyticsFetcher:
 
         vs_lane_api = role_to_lane(vs_lane) if vs_lane else None
         cache_suffix = f"_vs{vs_lane_api}" if vs_lane_api else ""
-        cache_key = f"lola_counter_{champion_slug}_{lane}{cache_suffix}_{patch}_{self.TIER}"
+        cache_key = f"lola_counter_{champion_slug}_{lane}{cache_suffix}_{patch}_{self.TIER}_{self.QUEUE}_{self.REGION}"
         cached = self._cache.get(cache_key)
         if cached:
             return cached
@@ -229,7 +269,7 @@ class LolalyticsFetcher:
             params["vslane"] = vs_lane_api
 
         try:
-            resp = await self._client.get(url, params=params)
+            resp = await self._get(url, params=params)
             resp.raise_for_status()
             data = resp.json()
             if "counters" not in data:
@@ -249,8 +289,8 @@ class LolalyticsFetcher:
         Format: {"cid": {"1": {"wr": 51.2, "pr": 3.5, "br": 1.2, "games": 5000, ...}, ...}}
         """
         results: List[Dict[str, Any]] = []
-        cid_data = raw.get("cid", {})
-        avg_wr = raw.get("avgWr", 50.0)
+        cid_data = raw.get("cid", {}) if isinstance(raw, dict) else {}
+        avg_wr = raw.get("avgWr", 50.0) if isinstance(raw, dict) else 50.
 
         if not isinstance(cid_data, dict):
             return results
@@ -270,7 +310,12 @@ class LolalyticsFetcher:
             games = val.get("games", 0)
 
             # Skip champions with 0 games or 0 WR (not played in this role)
-            if games <= 0 or wr <= 0:
+            try:
+                wr, pr, br, games = float(wr), float(pr), float(br), int(games)
+                average = float(avg_wr)
+            except (ValueError, TypeError, OverflowError):
+                continue
+            if games <= 0 or not all(math.isfinite(v) for v in (wr, pr, br, average)) or not 0 < wr <= 100:
                 continue
 
             # Convert string values if needed
@@ -301,38 +346,30 @@ class LolalyticsFetcher:
         - d2: secondary delta (normalised)
         - allWr: opponent's overall win rate
         """
+        if not isinstance(raw_counter_page, dict): return []
         counters = raw_counter_page.get("counters", [])
-        stats = raw_counter_page.get("stats", {})
-        our_wr = stats.get("wr", 50.0)
-        if isinstance(our_wr, str):
-            our_wr = float(our_wr)
-
+        stats = raw_counter_page.get("stats") or {}
+        if not isinstance(counters, list) or not isinstance(stats, dict): return []
+        try: our_wr = float(stats.get("wr", 50.))
+        except (TypeError, ValueError): return []
+        if not math.isfinite(our_wr) or not 0 <= our_wr <= 100: return []
         results = []
         for entry in counters:
-            if not isinstance(entry, dict):
-                continue
-            vs_wr = entry.get("vsWr", 50.0)
-            if isinstance(vs_wr, str):
-                vs_wr = float(vs_wr)
-            # d1 = raw delta (vsWr − our avg WR)
-            # d2 = normalised delta (accounts for opponent strength too)
-            d1 = entry.get("d1", vs_wr - our_wr)
-            d2 = entry.get("d2", d1)  # fallback to d1 if d2 missing
-            if isinstance(d1, str):
-                d1 = float(d1)
-            if isinstance(d2, str):
-                d2 = float(d2)
-            results.append({
-                "opponent_id": entry.get("cid", 0),
-                "vs_win_rate": vs_wr,
-                "games": entry.get("n", 0),
-                "delta": round(d1, 2),
-                "delta_normalised": round(d2, 2),
-                "opponent_overall_wr": entry.get("allWr", 50.0),
-                "opponent_default_lane": entry.get("defaultLane", ""),
-                "our_wr": our_wr,
-            })
-
+            if not isinstance(entry, dict): continue
+            try:
+                cid, games = int(entry["cid"]), int(entry.get("n", 0))
+                wr = float(entry.get("vsWr", 50.))
+                d1 = float(entry.get("d1", wr - our_wr))
+                d2 = float(entry.get("d2", d1))
+                overall = float(entry.get("allWr", 50.))
+            except (KeyError, TypeError, ValueError, OverflowError): continue
+            if not 1 <= cid <= 10000 or games <= 0: continue
+            if not all(math.isfinite(v) for v in (wr, d1, d2, overall)): continue
+            if not 0 <= wr <= 100 or not 0 <= overall <= 100: continue
+            results.append({"opponent_id": cid, "vs_win_rate": wr, "games": games,
+                "delta": round(d1, 2), "delta_normalised": round(d2, 2),
+                "opponent_overall_wr": overall,
+                "opponent_default_lane": entry.get("defaultLane", ""), "our_wr": our_wr})
         return results
 
     # ── Champion slug helper ─────────────────────────────────────────────

@@ -65,13 +65,13 @@ class UserDB(Base):
         "ChampionPoolEntryDB",
         back_populates="user",
         cascade="all, delete-orphan",
-        lazy="selectin",
+        lazy="raise",
     )
     draft_history = relationship(
         "DraftHistoryDB",
         back_populates="user",
         cascade="all, delete-orphan",
-        lazy="selectin",
+        lazy="raise",
     )
     # DuoQ links where this user is "user_a" (initiator)
     duo_links_initiated = relationship(
@@ -79,7 +79,7 @@ class UserDB(Base):
         foreign_keys="DuoLinkDB.user_a_id",
         back_populates="user_a",
         cascade="all, delete-orphan",
-        lazy="selectin",
+        lazy="raise",
     )
     # DuoQ links where this user is "user_b" (target)
     duo_links_received = relationship(
@@ -87,7 +87,7 @@ class UserDB(Base):
         foreign_keys="DuoLinkDB.user_b_id",
         back_populates="user_b",
         cascade="all, delete-orphan",
-        lazy="selectin",
+        lazy="raise",
     )
 
 
@@ -112,6 +112,7 @@ class ChampionPoolEntryDB(Base):
 class DraftHistoryDB(Base):
     """A recorded draft session."""
     __tablename__ = "draft_history"
+    __table_args__ = (UniqueConstraint("user_id", "session_id", name="uq_history_user_session"),)
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
@@ -121,6 +122,8 @@ class DraftHistoryDB(Base):
         index=True,
     )
     patch = Column(String(20), nullable=True)
+    session_id = Column(UUID(as_uuid=True), nullable=True)
+    timeline = Column(JSONB, nullable=False, default=list)
 
     # ── Draft context ──
     my_team = Column(String(10), nullable=True)  # "blue" | "red"

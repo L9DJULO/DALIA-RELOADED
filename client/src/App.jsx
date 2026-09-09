@@ -14,6 +14,10 @@ import useLCUStore         from './stores/lcuStore';
 import useUserStore        from './stores/userStore';
 import useAuthStore        from './stores/authStore';
 import logoSrc             from './assets/logo.png';
+import { startDraftSession } from './services/draftSession';
+import useDuoStore from './stores/duoStore';
+const HistoryPage = lazy(() => import('./components/HistoryPage'));
+const InsightsPage = lazy(() => import('./components/Insights/InsightsPage'));
 
 // ── Logo ────────────────────────────────────────
 function DaliaMoon({ size = 32 }) {
@@ -37,6 +41,8 @@ const NAV_TABS = [
   { id: 'draft',    label: 'DRAFT'      },
   { id: 'pool',     label: 'POOL'       },
   { id: 'duo',      label: 'DUO Q'      },
+  { id: 'history', label: 'REPLAYS' },
+  { id: 'insights', label: 'DONNÉES' },
   { id: 'settings', label: 'PARAMÈTRES' },
 ];
 
@@ -322,6 +328,7 @@ export default function App() {
 
   // Auth gate — re-render whenever the token changes (login/logout).
   const token = useAuthStore(s => s.token);
+  const userId = useAuthStore(s => s.user?.id);
   const isAuthed = !!token;
 
   useEffect(() => {
@@ -332,11 +339,15 @@ export default function App() {
 
   useEffect(() => {
     if (!isAuthed) return;
+    useDraftStore.getState().resetDraft('live');
     // Start LCU polling + load user profile only once authenticated.
-    useLCUStore.getState().startPolling(2000);
-    useUserStore.getState().loadProfile();
-    return () => useLCUStore.getState().stopPolling();
-  }, [isAuthed]);
+    useAuthStore.getState().refreshUser();
+    useUserStore.getState().loadProfile(userId);
+    useDuoStore.getState().loadDuoState();
+    return startDraftSession();
+  }, [isAuthed, userId]);
+
+  useEffect(() => { setSelected(0); }, [recommendations]);
 
   const handleAccent = (id) => {
     setAccent(id);
@@ -375,7 +386,7 @@ export default function App() {
       )}
 
       {page === 'draft' && (
-        <div style={{ display:'grid', gridTemplateColumns:'40% 60%', overflow:'hidden' }}>
+        <div className="draft-layout" style={{ display:'grid', gridTemplateColumns:'40% 60%', overflow:'hidden' }}>
           {hasRecs
             ? <HeroPanel selected={selected} onSelect={setSelected}/>
             : <EmptyRecsPanel loading={draftLoading}/>
@@ -399,6 +410,9 @@ export default function App() {
           </Suspense>
         </div>
       )}
+
+      {page === 'history' && <Suspense fallback={<p>Chargement…</p>}><HistoryPage onReplay={() => setPage('draft')}/></Suspense>}
+      {page === 'insights' && <Suspense fallback={<p>Chargement…</p>}><InsightsPage/></Suspense>}
 
       {page === 'settings' && (
         <div style={{ overflow: 'hidden' }}>

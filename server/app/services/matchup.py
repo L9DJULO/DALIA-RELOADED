@@ -11,6 +11,9 @@ When API data is missing, uses champion-attribute-based threat estimation.
 from __future__ import annotations
 
 import logging
+import asyncio
+import time
+from app.config import config
 from typing import Dict, List, Optional, Tuple
 
 from app.models.draft import DraftPick, DraftState
@@ -37,9 +40,20 @@ class MatchupAnalyzer:
         self.fetcher = fetcher
         # cache: (champ_id, role, vs_lane) → {opp_id: (vs_wr, games, d1, d2)}
         self._matchup_cache: Dict[Tuple, Dict[int, Tuple[float, int, float, float]]] = {}
+        self._loaded_at = {}
+        self._retry_after = {}
+        self._locks = {}
 
     # ── Pre-load matchup data for a champion ─────────────────────────────
     async def load_matchups(self, champion_id: int, role: str, vs_lane: Optional[str] = None):
+        key = (champion_id, role, vs_lane)
+        lock = self._locks.setdefault(key, asyncio.Lock())
+        async with lock:
+            if self._retry_after.get(key, 0) > time.monotonic():
+                return
+            await self._load_matchups(champion_id, role, vs_lane)
+
+    async def _load_matchups(self, champion_id: int, role: str, vs_lane: Optional[str] = None):
         """Fetch and cache matchup data for a (champion, role) vs a specific lane.
 
         Args:
@@ -47,7 +61,7 @@ class MatchupAnalyzer:
                      if None, fetches same-lane data (default).
         """
         cache_key = (champion_id, role, vs_lane)
-        if cache_key in self._matchup_cache:
+        if cache_key in self._matchup_cache and time.time() - self._loaded_at.get(cache_key, 0) < config.cache_ttl_hours * 3600:
             return
 
         champ = self.db.get_by_id(champion_id)
@@ -67,7 +81,11 @@ class MatchupAnalyzer:
             d2 = c["delta_normalised"]
             result[opp_id] = (vs_wr, games, d1, d2)
 
-        self._matchup_cache[cache_key] = result
+        if result:
+            self._matchup_cache[cache_key] = result
+            self._loaded_at[cache_key] = time.time()
+        else:
+            self._retry_after[cache_key] = time.monotonic() + 30
         lane_desc = f"{role} vs {vs_lane}" if vs_lane else role
         logger.debug("Loaded %d matchups for %s (%s)", len(result), champ.name, lane_desc)
 
@@ -75,23 +93,10 @@ class MatchupAnalyzer:
         self, champion_id: int, role: str, opp_id: int, opp_role: Optional[str]
     ) -> Optional[Tuple[float, int, float, float]]:
         """Get matchup data for a specific opponent, trying cross-lane if needed."""
-        # 1. Try same-lane cache first
-        same_lane_key = (champion_id, role, None)
-        if same_lane_key in self._matchup_cache:
-            data = self._matchup_cache[same_lane_key]
-            if opp_id in data:
-                return data[opp_id]
-
-        # 2. Try cross-lane if opponent is in a different role
-        if opp_role and opp_role != role:
-            cross_lane_key = (champion_id, role, opp_role)
-            if cross_lane_key not in self._matchup_cache:
-                await self.load_matchups(champion_id, role, vs_lane=opp_role)
-            data = self._matchup_cache.get(cross_lane_key, {})
-            if opp_id in data:
-                return data[opp_id]
-
-        return None
+        # A champion seen in another role is not the same population as a lane opponent.
+        vs_lane = opp_role if opp_role and opp_role != role else None
+        await self.load_matchups(champion_id, role, vs_lane=vs_lane)
+        return self._matchup_cache.get((champion_id, role, vs_lane), {}).get(opp_id)
 
     # ── Attribute-based fallback when API data missing ────────────────────
     def _estimate_matchup(

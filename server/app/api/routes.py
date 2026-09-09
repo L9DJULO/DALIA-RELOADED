@@ -6,15 +6,17 @@ while draft/recommend uses the auth'd user's pool when available.
 from __future__ import annotations
 
 import logging
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Literal
 # UserDB used as Optional type hint in route signatures
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+from app.models.validation import Role, Puuid, Region, ChampionId
 from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import config
-from app.models.draft import DraftRequest, DraftResponse, PoolEntry
+from app.models.draft import DraftRequest, DraftResponse, PoolEntry, AnnotatedPool, CompareRequest, PoolAdviceRequest
+from app.services.pool_advisor import advise_pool
 from app.auth.deps import get_current_user, get_optional_user, oauth2_scheme, require_admin
 from app.db.models import ChampionPoolEntryDB, DuoLinkDB, UserDB
 from app.db.session import get_db
@@ -153,7 +155,7 @@ async def get_champion(champion_id: int, request: Request):
 #  META / TIER LIST (public)
 # ═════════════════════════════════════════════════════════════════════════
 @router.get("/meta/tierlist")
-async def tierlist(request: Request, role: str = "mid"):
+async def tierlist(request: Request, role: Role = "mid"):
     """Return meta tier list for a role with scores."""
     engine = _get_engine(request)
     scores = await engine.meta.scores_for_role(role)
@@ -190,6 +192,7 @@ async def draft_recommend(
     """Get champion recommendations. Works unauthenticated (pool from body)
     or authenticated (pool loaded from DB when body pool is empty)."""
     engine = _get_engine(request)
+    validate_champion_ids(engine.db, body)
 
     # If the request doesn't include a pool AND the user is logged in,
     # load pool from DB. Anonymous users must send the pool in the body.
@@ -216,17 +219,70 @@ async def draft_recommend(
             body.duo_partner_role = None
 
     personal_svc = getattr(request.app.state, "personal_stats", None)
-    return await engine.recommend(body, personal_svc=personal_svc)
+    try:
+        return await engine.recommend(body, personal_svc=personal_svc)
+    except TimeoutError:
+        raise HTTPException(503, "Les sources de données répondent trop lentement. Réessaie dans quelques instants.")
+
+
+def validate_champion_ids(catalog, body):
+    ids = set(body.draft_state.bans)
+    ids.update(p.champion_id for p in body.draft_state.ally_picks + body.draft_state.enemy_picks + body.draft_state.ally_prepicks if p.champion_id)
+    for pool in (body.champion_pool, body.duo_partner_pool or {}):
+        ids.update(e.champion_id for entries in pool.values() for e in entries)
+    ids.update(getattr(body, "champion_ids", []))
+    if any(catalog.get_by_id(cid) is None for cid in ids):
+        raise HTTPException(422, "Champion inconnu du catalogue actuel")
+
+
+@router.post("/draft/compare")
+async def compare_champions(body: CompareRequest, request: Request,
+                            current_user: Optional[UserDB] = Depends(get_optional_user),
+                            db: AsyncSession = Depends(get_db)):
+    engine = _get_engine(request)
+    validate_champion_ids(engine.db, body)
+    if set(body.champion_ids) & body.draft_state.all_unavailable_ids:
+        raise HTTPException(422, "Un des deux champions est déjà choisi ou banni")
+    if current_user and not body.champion_pool:
+        body.champion_pool = await _get_user_pool(current_user, db)
+    if current_user and body.duo_active:
+        body.duo_partner_pool = await _load_duo_partner_pool(current_user, db)
+        body.duo_active = bool(body.duo_partner_pool)
+    try:
+        result = await engine.recommend(body, personal_svc=getattr(request.app.state, "personal_stats", None),
+                                        candidate_ids=body.champion_ids)
+    except TimeoutError:
+        raise HTTPException(503, "Comparaison temporairement indisponible")
+    indexed = {r.champion_id: r for r in result.recommendations}
+    left, right = (indexed[cid] for cid in body.champion_ids)
+    dimensions = ["meta", "matchup", "synergy", "composition", "mastery", "draft_risk", "mechanics", "wpa_adjustment"]
+    deltas = [{"dimension": key, "left": getattr(left.breakdown, key), "right": getattr(right.breakdown, key),
+               "delta": round(getattr(left.breakdown, key) - getattr(right.breakdown, key), 2)} for key in dimensions]
+    delta_pp = None
+    if left.wpa and right.wpa:
+        delta_pp = round((left.breakdown.ml_explanation.win_probability - right.breakdown.ml_explanation.win_probability) * 100, 2)
+    return {"left": left, "right": right, "score_delta": round(left.total_score - right.total_score, 1),
+            "dimensions": deltas, "wpa_delta_pp": delta_pp, "data_status": result.data_status,
+            "explanation": "Même draft, mêmes préférences. Les sous-scores sont des diagnostics ; le score final applique aussi des pondérations et des ajustements de contexte."}
+
+
+@router.post("/pool/advice")
+async def pool_advice(body: PoolAdviceRequest, request: Request):
+    catalog = _get_db_service(request)
+    entries = body.champion_pool.get(body.role, [])
+    if any(catalog.get_by_id(e.champion_id) is None for e in entries):
+        raise HTTPException(422, "Champion inconnu du catalogue actuel")
+    return advise_pool(catalog, body.role, entries)
 
 
 # ═════════════════════════════════════════════════════════════════════════
 #  BAN RECOMMENDATIONS (auth required)
 # ═════════════════════════════════════════════════════════════════════════
 class BanRequest(BaseModel):
-    my_role: str = "mid"
-    champion_pool: Dict[str, List[PoolEntry]] = {}
-    already_banned: List[int] = []
-    already_picked: List[int] = []
+    my_role: Role = "mid"
+    champion_pool: Dict[Role, AnnotatedPool] = {}
+    already_banned: List[ChampionId] = Field(default_factory=list, max_length=10)
+    already_picked: List[ChampionId] = Field(default_factory=list, max_length=10)
 
 
 @router.post("/draft/bans")
@@ -269,6 +325,7 @@ async def current_patch(request: Request):
 #  ML — STATUS / RETRAIN / EMBEDDINGS (public reads, auth for writes)
 # ═════════════════════════════════════════════════════════════════════════
 def _get_patch_watcher(request: Request):
+    _require_ready(request)
     return request.app.state.patch_watcher
 
 
@@ -286,7 +343,7 @@ async def ml_retrain(request: Request, _admin: UserDB = Depends(require_admin)):
     started = pw.trigger_retrain()
     if started:
         return {"status": "started", "message": "Entraînement lancé en arrière-plan."}
-    return {"status": "already_running", "message": "Un entraînement est déjà en cours."}
+    return {"status": pw.status, "message": pw.get_status_dict().get("last_error") or "Un entraînement est déjà en cours."}
 
 
 @router.post("/ml/reload")
@@ -294,7 +351,8 @@ async def ml_reload(request: Request, _admin: UserDB = Depends(require_admin)):
     """Reload the ML model from disk. Admin only."""
     pw = _get_patch_watcher(request)
     engine = _get_engine(request)
-    pw.reload_model(engine.ml)
+    if not await pw.reload_model():
+        raise HTTPException(409, "Aucun modèle validé pour le patch courant à charger.")
     return {"status": "reloaded"}
 
 
@@ -330,10 +388,10 @@ async def ml_similar(champion_id: int, request: Request, role: str = "mid", n: i
 #  PERSONAL STATS (auth required — uses Riot API via LCU identity)
 # ═════════════════════════════════════════════════════════════════════════
 class PersonalStatsRequest(BaseModel):
-    puuid: str
-    region: str = "EUW1"
-    queue: str = "ranked"
-    count: int = 50
+    puuid: Puuid
+    region: Region = "EUW1"
+    queue: Literal["ranked", "flex"] = "ranked"
+    count: int = Field(default=50, ge=1, le=100)
 
 
 @router.post("/personal/stats")

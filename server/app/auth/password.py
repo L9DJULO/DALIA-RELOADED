@@ -1,14 +1,20 @@
-"""Password hashing with bcrypt via passlib."""
-from passlib.context import CryptContext
+"""Argon2 for new passwords; verify legacy bcrypt hashes during migration."""
+from argon2 import PasswordHasher
+from argon2.exceptions import VerificationError, InvalidHashError
+import bcrypt
 
-_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
+_hasher = PasswordHasher()
 
 def hash_password(plain: str) -> str:
-    """Hash a plaintext password."""
-    return _ctx.hash(plain)
-
+    return _hasher.hash(plain)
 
 def verify_password(plain: str, hashed: str) -> bool:
-    """Verify a plaintext password against a hash."""
-    return _ctx.verify(plain, hashed)
+    try:
+        if hashed.startswith(("$2a$", "$2b$", "$2y$")):
+            return bcrypt.checkpw(plain.encode("utf-8")[:72], hashed.encode("ascii"))
+        return _hasher.verify(hashed, plain)
+    except (VerificationError, InvalidHashError, ValueError):
+        return False
+
+def needs_rehash(hashed: str) -> bool:
+    return not hashed.startswith("$argon2") or _hasher.check_needs_rehash(hashed)

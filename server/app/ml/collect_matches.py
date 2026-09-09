@@ -142,6 +142,8 @@ class RiotClient:
         self.platform = platform.lower()
         self.regional = PLATFORM_TO_REGIONAL.get(self.platform, "europe")
         self.limiter = RateLimiter(key_type)
+        from app.services.riot_budget import RiotBudget
+        self.shared_budget = RiotBudget()
         self._client = httpx.Client(
             timeout=30.0,
             headers={"X-Riot-Token": api_key},
@@ -163,6 +165,7 @@ class RiotClient:
         url = f"https://{base}.api.riotgames.com{path}"
         for attempt in range(5):
             self.limiter.wait()
+            self.shared_budget.wait(self.api_key)
             try:
                 resp = self._client.get(url, params=params)
                 self._request_count += 1
@@ -171,6 +174,7 @@ class RiotClient:
                     return resp.json()
                 elif resp.status_code == 429:
                     retry_after = int(resp.headers.get("Retry-After", 10))
+                    self.shared_budget.penalize(self.api_key, retry_after)
                     logger.warning("429 Rate Limited — retrying in %ds (attempt %d)", retry_after, attempt + 1)
                     time.sleep(retry_after + 1)
                     continue
@@ -444,6 +448,7 @@ def collect_matches(
             continue
 
         draft["match_id"] = mid
+        draft["game_creation"] = match_data.get("info", {}).get("gameCreation", 0)
         checkpoint.append_match(draft)
         collected += 1
 

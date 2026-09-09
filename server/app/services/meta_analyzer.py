@@ -7,7 +7,9 @@ Score 0-100 derived from:
 """
 from __future__ import annotations
 
+import asyncio
 import logging
+import time
 from typing import Dict, List, Optional
 
 from app.config import config
@@ -29,73 +31,34 @@ class MetaAnalyzer:
         self.db = champion_db
         self.fetcher = fetcher
         self._loaded_roles: set = set()
+        self._loaded_at = {}
 
     # ── Pre-load tier list for a whole role ──────────────────────────────
     async def load_tierlist(self, role: str):
-        """Fetch + cache blended tier list for *role* so score() is synchronous.
-
-        Blending strategy:
-          • Fetch BOTH the current-patch tier list AND the 30-day tier list.
-          • For each champion, compute a **game-count–weighted average** of
-            WR / PR / BR  (prorata des games en Master+).
-          • This ensures:
-            – Early-patch (few games) → 30-day data dominates = stable stats
-            – Mid-patch (many games)  → current patch pushes stats toward fresh meta
-          • The game count stored = max(current, 30d) to avoid double-counting
-            (the 30d window *includes* the current patch).
-        """
-        if role in self._loaded_roles:
+        """Select one observed window; never blend overlapping samples."""
+        if role in self._loaded_roles and time.time() - self._loaded_at.get(role, 0) < config.cache_ttl_hours * 3600:
             return
-
-        # Fetch both data sources in parallel-ish fashion
-        raw_current = await self.fetcher.fetch_tierlist(role=role, patch="current")
-        raw_30d = await self.fetcher.fetch_tierlist(role=role, patch="30")
-
-        entries_current = LolalyticsFetcher.parse_tierlist(raw_current)
-        entries_30d = LolalyticsFetcher.parse_tierlist(raw_30d)
-
-        # Index by champion_id for fast lookup
-        cur_by_id = {e["champion_id"]: e for e in entries_current}
-        t30_by_id = {e["champion_id"]: e for e in entries_30d}
-
-        all_ids = set(cur_by_id.keys()) | set(t30_by_id.keys())
-
+        raw_current, raw_30d = await asyncio.gather(
+            self.fetcher.fetch_tierlist(role=role, patch="current"),
+            self.fetcher.fetch_tierlist(role=role, patch="30"))
+        current = {e["champion_id"]: e for e in LolalyticsFetcher.parse_tierlist(raw_current)}
+        recent = {e["champion_id"]: e for e in LolalyticsFetcher.parse_tierlist(raw_30d)}
+        all_ids = current.keys() | recent.keys()
+        self.db.clear_role_stats(role)
+        if not all_ids:
+            self._loaded_roles.discard(role)
+            return
         for cid in all_ids:
-            cur = cur_by_id.get(cid)
-            t30 = t30_by_id.get(cid)
-
-            if cur and t30:
-                # Weighted average — prorata des games
-                gc, g30 = cur["games"], t30["games"]
-                total_w = gc + g30
-                if total_w <= 0:
-                    continue
-                wr = (cur["win_rate"] * gc + t30["win_rate"] * g30) / total_w
-                pr = (cur["pick_rate"] * gc + t30["pick_rate"] * g30) / total_w
-                br = (cur["ban_rate"] * gc + t30["ban_rate"] * g30) / total_w
-                # 30d includes current patch → don't double-count
-                games = max(gc, g30)
-            elif cur:
-                wr, pr, br, games = cur["win_rate"], cur["pick_rate"], cur["ban_rate"], cur["games"]
-            else:  # t30 only
-                wr, pr, br, games = t30["win_rate"], t30["pick_rate"], t30["ban_rate"], t30["games"]
-
-            stats = ChampionStats(
-                champion_id=cid,
-                role=role,
-                win_rate=round(wr, 2),
-                pick_rate=round(pr, 2),
-                ban_rate=round(br, 2),
-                games=games,
-                patch="blended",
-            )
-            self.db.set_stats(stats)
-
+            cur = current.get(cid)
+            use_current = cur and (cur["games"] >= config.min_games_reliable or cid not in recent)
+            entry = cur if use_current else recent[cid]
+            self.db.set_stats(ChampionStats(champion_id=cid, role=role,
+                win_rate=entry["win_rate"], pick_rate=entry["pick_rate"],
+                ban_rate=entry["ban_rate"], games=entry["games"],
+                patch="current" if use_current else "30d"))
         self._loaded_roles.add(role)
-        logger.info(
-            "Meta tier list loaded for %s — %d entries (blended current+30d)",
-            role, len(all_ids),
-        )
+        self._loaded_at[role] = time.time()
+        logger.info("Meta loaded for %s: %d entries, one sample window per champion", role, len(all_ids))
 
     # ── Score ────────────────────────────────────────────────────────────
     def score(self, champion_id: int, role: str) -> float:

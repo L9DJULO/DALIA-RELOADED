@@ -2,7 +2,8 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
+from app.models.validation import Role, validate_weights
 
 
 # ── Requests ──
@@ -13,8 +14,8 @@ class RegisterRequest(BaseModel):
 
 
 class LoginRequest(BaseModel):
-    username: str
-    password: str
+    username: str = Field(min_length=3, max_length=50)
+    password: str = Field(min_length=1, max_length=128)
 
 
 # ── Responses ──
@@ -41,10 +42,11 @@ class TokenResponse(BaseModel):
 
 
 class UpdateMeRequest(BaseModel):
-    preferred_roles: list[str] | None = None
+    preferred_roles: list[Role] | None = Field(default=None, max_length=5)
     enable_wildcard: bool | None = None
     enable_off_meta: bool | None = None
-    weight_overrides: dict | None = None
+    weight_overrides: dict[str, float] | None = None
+    _weights_valid = field_validator("weight_overrides")(validate_weights)
 
 
 class MessageResponse(BaseModel):

@@ -5,6 +5,7 @@ and computes per-champion, per-role statistics for personalised recommendations.
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import time
@@ -14,6 +15,8 @@ from typing import Any, Dict, List, Optional
 import httpx
 
 from app.config import config
+from app.services.storage import cache_key, write_json
+from app.services.riot_budget import RiotBudget
 
 logger = logging.getLogger("dalia.personal")
 
@@ -83,6 +86,9 @@ class PersonalStatsService:
 
     def __init__(self):
         self._cache: Dict[str, Any] = {}  # puuid → { ts, data }
+        self._refresh_tasks = {}
+        self._limit = asyncio.Semaphore(2)
+        self._budget = RiotBudget()
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
     async def get_personal_stats(
@@ -102,15 +108,16 @@ class PersonalStatsService:
             "overall": { "games", "wins", "win_rate" },
         }
         """
+        key = cache_key(puuid, region.upper(), queue, count)
         # Check in-memory cache
-        cached = self._cache.get(puuid)
+        cached = self._cache.get(key)
         if cached and (time.time() - cached["ts"]) < CACHE_TTL:
             return cached["data"]
 
         # Check disk cache
-        disk_cache = self._load_disk_cache(puuid)
+        disk_cache = self._load_disk_cache(key)
         if disk_cache:
-            self._cache[puuid] = {"ts": time.time(), "data": disk_cache}
+            self._cache[key] = {"ts": time.time(), "data": disk_cache}
             return disk_cache
 
         # Fetch from Riot API
@@ -120,9 +127,14 @@ class PersonalStatsService:
             return self._empty_result(puuid)
 
         try:
-            data = await self._fetch_and_compute(puuid, region, api_key, queue, count)
-            self._cache[puuid] = {"ts": time.time(), "data": data}
-            self._save_disk_cache(puuid, data)
+            async with self._limit, asyncio.timeout(90):
+                data = await self._fetch_and_compute(puuid, region, api_key, queue, count)
+            if not data.get("available", False):
+                return data
+            self._cache[key] = {"ts": time.time(), "data": data}
+            while len(self._cache) > 500:
+                self._cache.pop(next(iter(self._cache)))
+            self._save_disk_cache(key, data)
             return data
         except Exception as exc:
             logger.error("Failed to fetch personal stats for %s: %s", puuid, exc)
@@ -137,12 +149,20 @@ class PersonalStatsService:
         headers = {"X-Riot-Token": api_key}
 
         async with httpx.AsyncClient(timeout=15.0) as client:
+            async def riot_get(url, **kwargs):
+                for _ in range(2):
+                    await self._budget.acquire(api_key)
+                    response = await client.get(url, **kwargs)
+                    if response.status_code != 429:
+                        return response
+                    await asyncio.to_thread(self._budget.penalize, api_key, response.headers.get("Retry-After", 10))
+                return response
             # 1. Get recent match IDs
             queue_id = 420 if queue == "ranked" else 440  # 420=SoloQ, 440=Flex
             url = f"{regional_base}/lol/match/v5/matches/by-puuid/{puuid}/ids"
             params = {"queue": queue_id, "type": "ranked", "start": 0, "count": count}
 
-            resp = await client.get(url, headers=headers, params=params)
+            resp = await riot_get(url, headers=headers, params=params)
             if resp.status_code != 200:
                 logger.warning("Match IDs fetch failed: %d %s", resp.status_code, resp.text[:200])
                 return self._empty_result(puuid)
@@ -160,18 +180,11 @@ class PersonalStatsService:
             for i, mid in enumerate(match_ids):
                 # Basic rate limiting: 1 req per 60ms ≈ 16/s (safe for dev key 20/s)
                 if i > 0 and i % 15 == 0:
-                    import asyncio
                     await asyncio.sleep(1.2)
 
                 match_url = f"{regional_base}/lol/match/v5/matches/{mid}"
                 try:
-                    match_resp = await client.get(match_url, headers=headers)
-                    if match_resp.status_code == 429:
-                        # Rate limited — wait and retry
-                        retry_after = int(match_resp.headers.get("Retry-After", "5"))
-                        import asyncio
-                        await asyncio.sleep(retry_after + 1)
-                        match_resp = await client.get(match_url, headers=headers)
+                    match_resp = await riot_get(match_url, headers=headers)
 
                     if match_resp.status_code != 200:
                         continue
@@ -227,6 +240,7 @@ class PersonalStatsService:
             )
 
             return {
+                "available": True,
                 "puuid": puuid,
                 "games_analyzed": total_games,
                 "champions": {k: v.to_dict() for k, v in champions.items()},
@@ -238,11 +252,30 @@ class PersonalStatsService:
                 },
             }
 
+    def refresh_in_background(self, puuid, region="EUW1"):
+        key = cache_key(puuid, region.upper(), "ranked", 50)
+        if key in self._refresh_tasks or len(self._refresh_tasks) >= 8:
+            return
+        async def refresh():
+            try:
+                await self.get_personal_stats(puuid, region)
+            finally:
+                self._refresh_tasks.pop(key, None)
+        self._refresh_tasks[key] = asyncio.create_task(refresh())
+
+    async def close(self):
+        tasks = list(self._refresh_tasks.values())
+        for task in tasks:
+            task.cancel()
+        await asyncio.gather(*tasks, return_exceptions=True)
+        self._refresh_tasks.clear()
+
     def get_champion_score_boost(
         self,
         puuid: str,
         champion_id: int,
         role: str,
+        region: str = "EUW1",
     ) -> float:
         """Get a personal score multiplier for a champion.
 
@@ -251,8 +284,8 @@ class PersonalStatsService:
         - >1.0 = player performs well on this champion
         - <1.0 = player underperforms on this champion
         """
-        cached = self._cache.get(puuid)
-        if not cached:
+        cached = self._cache.get(cache_key(puuid, region.upper(), "ranked", 50))
+        if not cached or time.time() - cached["ts"] >= CACHE_TTL:
             return 1.0
 
         data = cached["data"]
@@ -276,6 +309,7 @@ class PersonalStatsService:
 
     def _empty_result(self, puuid: str) -> Dict[str, Any]:
         return {
+            "available": False,
             "puuid": puuid,
             "games_analyzed": 0,
             "champions": {},
@@ -284,7 +318,7 @@ class PersonalStatsService:
         }
 
     def _load_disk_cache(self, puuid: str) -> Optional[Dict]:
-        path = CACHE_DIR / f"{puuid[:16]}.json"
+        path = CACHE_DIR / f"{cache_key(puuid)}.json"
         if not path.exists():
             return None
         try:
@@ -299,7 +333,7 @@ class PersonalStatsService:
     def _save_disk_cache(self, puuid: str, data: Dict):
         try:
             cache_data = {**data, "_cached_at": time.time()}
-            path = CACHE_DIR / f"{puuid[:16]}.json"
-            path.write_text(json.dumps(cache_data, ensure_ascii=False), encoding="utf-8")
+            path = CACHE_DIR / f"{cache_key(puuid)}.json"
+            write_json(path, cache_data)
         except Exception as exc:
             logger.warning("Failed to save personal cache: %s", exc)

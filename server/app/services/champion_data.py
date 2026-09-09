@@ -107,9 +107,12 @@ class ChampionDatabase:
     async def initialize(self):
         """Load champion list from Data Dragon and apply overrides."""
         raw = await self.fetcher.fetch_all_champions_ddragon()
+        if not raw:
+            raise RuntimeError("Catalogue de champions vide : nouvelle tentative nécessaire")
         overrides_raw = self._load_overrides()
         # Build case-insensitive lookup so "KhaZix" matches DDragon's "Khazix"
         overrides: Dict[str, Any] = {}
+        by_id, by_key, by_name = {}, {}, {}
         for ok, ov in overrides_raw.items():
             overrides[ok.lower()] = ov
 
@@ -151,9 +154,11 @@ class ChampionDatabase:
                 ratings=ratings,
                 image_url=self.fetcher.champion_image_url(key),
             )
-            self._by_id[cid] = champ
-            self._by_key[key] = champ
-            self._by_name[name.lower()] = champ
+            by_id[cid] = champ
+            by_key[key] = champ
+            by_name[name.lower()] = champ
+
+        self._by_id, self._by_key, self._by_name = by_id, by_key, by_name
 
         logger.info("Loaded %d champions", len(self._by_id))
 
@@ -184,6 +189,9 @@ class ChampionDatabase:
     # ── Stats helpers ────────────────────────────────────────────────────
     def set_stats(self, stats: ChampionStats):
         self._stats_cache[f"{stats.champion_id}_{stats.role}"] = stats
+
+    def clear_role_stats(self, role: str):
+        self._stats_cache = {key: stats for key, stats in self._stats_cache.items() if stats.role != role}
 
     def get_stats(self, cid: int, role: str) -> Optional[ChampionStats]:
         return self._stats_cache.get(f"{cid}_{role}")

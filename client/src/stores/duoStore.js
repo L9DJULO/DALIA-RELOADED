@@ -21,6 +21,7 @@ import {
   regenerateDuoCode,
 } from '../services/api';
 
+let generation = 0;
 const INITIAL_STATE = {
   duoActive: false,
   myCode: null,
@@ -61,14 +62,17 @@ const useDuoStore = create(
        * so the UI can't render stale partner data under an error banner.
        */
       loadDuoState: async () => {
+        const ticket = generation;
+        const safeSet = patch => { if (ticket === generation) set(patch); };
         if (get().loading) return;
-        set({ loading: true, error: null });
+        safeSet({ loading: true, error: null });
         try {
           const [codeRes, statusRes] = await Promise.all([
             fetchDuoCode(),
             fetchDuoStatus(),
           ]);
 
+          if (ticket !== generation) return;
           const updates = {
             myCode: codeRes?.duo_code ?? null,
             linked: Boolean(statusRes?.linked),
@@ -103,11 +107,11 @@ const useDuoStore = create(
             }
           }
 
-          set(updates);
+          safeSet(updates);
         } catch (e) {
           // Couldn't even reach /duo/code or /duo/status — reset to neutral.
           const err = parseApiError(e, 'Impossible de charger le statut duo.');
-          set({
+          safeSet({
             loading: false,
             // Don't nuke myCode if we already had one cached; only reset link-state.
             linked: false,
@@ -121,13 +125,15 @@ const useDuoStore = create(
 
       /** Regenerate my duo code. Surfaces error in the store. */
       regenerateCode: async () => {
-        set({ error: null });
+        const ticket = generation;
+        const safeSet = patch => { if (ticket === generation) set(patch); };
+        safeSet({ error: null });
         try {
           const res = await regenerateDuoCode();
-          set({ myCode: res?.duo_code ?? get().myCode });
+          safeSet({ myCode: res?.duo_code ?? get().myCode });
           return true;
         } catch (e) {
-          set({ error: parseApiError(e, 'Impossible de régénérer le code.') });
+          safeSet({ error: parseApiError(e, 'Impossible de régénérer le code.') });
           return false;
         }
       },
@@ -137,15 +143,18 @@ const useDuoStore = create(
        * Guards against double-submit via the `linking` flag.
        */
       linkWithCode: async (code) => {
+        const ticket = generation;
+        const safeSet = patch => { if (ticket === generation) set(patch); };
         if (get().linking) return false;
         const clean = (code || '').trim().toUpperCase();
         if (!clean) {
-          set({ error: { message: 'Entre un code duo.', kind: 'validation' } });
+          safeSet({ error: { message: 'Entre un code duo.', kind: 'validation' } });
           return false;
         }
-        set({ linking: true, error: null });
+        safeSet({ linking: true, error: null });
         try {
           const res = await linkDuo(clean);
+          if (ticket !== generation) return false;
           // Build the next state atomically so we never land in an
           // inconsistent "linked:true + partner:null" transient.
           const partner = res?.partner || null;
@@ -165,7 +174,7 @@ const useDuoStore = create(
             // but keep the link established — user can retry pool fetch.
           }
 
-          set({
+          safeSet({
             linked: true,
             partner,
             partnerPool: pool,
@@ -178,7 +187,7 @@ const useDuoStore = create(
           return true;
         } catch (e) {
           const err = parseApiError(e, 'Erreur lors du lien duo.');
-          set({ linking: false, error: err });
+          safeSet({ linking: false, error: err });
           return false;
         }
       },
@@ -189,8 +198,10 @@ const useDuoStore = create(
        * is "I don't want a partner anymore" and the server agrees.
        */
       unlink: async () => {
+        const ticket = generation;
+        const safeSet = patch => { if (ticket === generation) set(patch); };
         if (get().linking) return;
-        set({ linking: true, error: null });
+        safeSet({ linking: true, error: null });
         let apiError = null;
         try {
           await unlinkDuo();
@@ -204,7 +215,7 @@ const useDuoStore = create(
         // Always flush local link state regardless of server outcome.
         // The worst case is a lingering server-side row which the next
         // loadDuoState / link attempt will handle.
-        set({
+        safeSet({
           linked: false,
           partner: null,
           partnerPool: null,
@@ -233,7 +244,7 @@ const useDuoStore = create(
       },
 
       /** Hard reset — called on logout so persist doesn't leak across users. */
-      resetDuo: () => set({ ...INITIAL_STATE }),
+      resetDuo: () => { generation++; set({ ...INITIAL_STATE }); },
     }),
     {
       name: 'dalia-duo-store',

@@ -52,11 +52,15 @@ def _build_database_url() -> str:
 
 
 class Config(BaseModel):
+    environment: str = os.getenv("ENV", "production")
+    allowed_origins: list[str] = os.getenv(
+        "CORS_ORIGINS", "http://localhost:1420,http://tauri.localhost,https://tauri.localhost,tauri://localhost"
+    ).split(",")
     # ── Database ──
     database_url: str = _build_database_url()
 
     # ── JWT Auth ──
-    jwt_secret: str = os.getenv("JWT_SECRET", "CHANGE_ME_TO_A_RANDOM_SECRET_KEY")
+    jwt_secret: str = os.getenv("JWT_SECRET", "")
     jwt_algorithm: str = os.getenv("JWT_ALGORITHM", "HS256")
     jwt_expire_minutes: int = int(os.getenv("JWT_EXPIRE_MINUTES", "1440"))
 
@@ -111,3 +115,14 @@ class Config(BaseModel):
 
 
 config = Config()
+
+
+KNOWN_INSECURE_SECRET_HASHES = {'0482f74dcac109e02d5811fac6920228c6e7ca6429af3f22125b49de5fe5f643', '3a5c694ad67eccd627602cda6c4291dafa984dc881afa2def66c7f0d232f2dfd'}
+
+def validate_runtime_config():
+    import hashlib
+    if (len(config.jwt_secret) < 32 or config.jwt_secret.startswith("CHANGE_ME") or
+            hashlib.sha256(config.jwt_secret.encode()).hexdigest() in KNOWN_INSECURE_SECRET_HASHES):
+        raise RuntimeError("JWT_SECRET doit contenir un secret privé d'au moins 32 caractères. Voir server/.env.example.")
+    if config.jwt_algorithm != "HS256":
+        raise RuntimeError("Seul HS256 est pris en charge pour les jetons DALIA.")

@@ -4,7 +4,8 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from jose import JWTError, jwt
+import jwt
+from jwt import InvalidTokenError as JWTError
 
 from app.config import config
 
@@ -24,4 +25,4 @@ def create_access_token(
 
 def decode_access_token(token: str) -> dict:
     """Decode and verify a JWT token. Raises JWTError on failure."""
-    return jwt.decode(token, config.jwt_secret, algorithms=[config.jwt_algorithm])
+    return jwt.decode(token, config.jwt_secret, algorithms=["HS256"], options={"require": ["exp", "sub"]})

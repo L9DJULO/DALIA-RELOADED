@@ -5,11 +5,13 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
+from starlette.concurrency import run_in_threadpool
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.deps import get_current_user
 from app.auth.jwt import create_access_token
-from app.auth.password import hash_password, verify_password
+from app.auth.password import hash_password, verify_password, needs_rehash
 from app.auth.schemas import (
     LoginRequest,
     MessageResponse,
@@ -30,9 +32,9 @@ async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
     """Create a new user account."""
     # Check username uniqueness
     existing = await db.execute(
-        select(UserDB).where(
+        select(UserDB.id).where(
             (UserDB.username == body.username) | (UserDB.email == body.email)
-        )
+        ).limit(1)
     )
     if existing.scalar_one_or_none():
         raise HTTPException(
@@ -43,10 +45,14 @@ async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
     user = UserDB(
         username=body.username,
         email=body.email,
-        hashed_password=hash_password(body.password),
+        hashed_password=await run_in_threadpool(hash_password, body.password),
     )
     db.add(user)
-    await db.commit()
+    try:
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(status_code=409, detail="Ce nom d'utilisateur ou email est déjà utilisé.")
     await db.refresh(user)
 
     token = create_access_token({"sub": str(user.id)})
@@ -65,7 +71,7 @@ async def login(body: LoginRequest, db: AsyncSession = Depends(get_db)):
     )
     user = result.scalar_one_or_none()
 
-    if not user or not verify_password(body.password, user.hashed_password):
+    if not user or not await run_in_threadpool(verify_password, body.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Nom d'utilisateur ou mot de passe incorrect.",
@@ -77,6 +83,9 @@ async def login(body: LoginRequest, db: AsyncSession = Depends(get_db)):
             detail="Compte désactivé.",
         )
 
+    if needs_rehash(user.hashed_password):
+        user.hashed_password = await run_in_threadpool(hash_password, body.password)
+        await db.commit()
     token = create_access_token({"sub": str(user.id)})
     logger.info("User logged in: %s", user.username)
     return TokenResponse(
@@ -104,7 +113,7 @@ async def update_me(
         current_user.enable_wildcard = body.enable_wildcard
     if body.enable_off_meta is not None:
         current_user.enable_off_meta = body.enable_off_meta
-    if body.weight_overrides is not None:
+    if "weight_overrides" in body.model_fields_set:
         current_user.weight_overrides = body.weight_overrides
 
     await db.commit()

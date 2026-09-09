@@ -12,7 +12,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     rm -rf /var/lib/apt/lists/*
 
 # Install PyTorch CPU-only first (avoids downloading the 2GB CUDA build)
-RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
+COPY requirements-ml.txt .
+RUN pip install --no-cache-dir -r requirements-ml.txt
 
 # Install remaining Python deps
 COPY requirements.txt .

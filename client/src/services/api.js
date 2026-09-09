@@ -11,9 +11,7 @@ import axios from 'axios';
 // (see client/.env.production). The backend is exposed publicly via
 // Tailscale Funnel, so any user can reach it without joining the tailnet.
 const IS_TAURI = typeof window !== 'undefined' && (window.__TAURI_INTERNALS__ || window.__TAURI__);
-const SERVER_URL = IS_TAURI
-  ? (import.meta.env.VITE_API_URL || 'https://dalia-server.tail75977b.ts.net').replace(/\/+$/, '')
-  : '';
+const SERVER_URL = (import.meta.env.VITE_API_URL || (IS_TAURI ? 'http://localhost:8000' : '')).replace(/\/+$/, '');
 
 const api = axios.create({
   baseURL: `${SERVER_URL}/api`,
@@ -33,7 +31,9 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const sentToken = error.config?.headers?.Authorization;
+    const activeToken = localStorage.getItem('dalia_token');
+    if (error.response?.status === 401 && activeToken && sentToken === `Bearer ${activeToken}`) {
       localStorage.removeItem('dalia_token');
       localStorage.removeItem('dalia_user');
       window.dispatchEvent(new Event('dalia:logout'));
@@ -81,12 +81,15 @@ export const fetchRecommendations = (
   weightOverrides = null,
   duoOptions = null,
   personalIdentity = null,
+  options = {},
 ) =>
   api
     .post('/draft/recommend', {
       draft_state: draftState,
       champion_pool: championPool,
       weight_overrides: weightOverrides,
+      enable_wildcard: options.enableWildcard ?? true,
+      enable_off_meta: options.enableOffMeta ?? true,
       ...(duoOptions?.active
         ? {
             duo_active: true,
@@ -99,7 +102,7 @@ export const fetchRecommendations = (
             region: personalIdentity.region || 'EUW1',
           }
         : {}),
-    })
+    }, { signal: options.signal })
     .then((r) => r.data);
 
 // ═════════════════════════════════════════════════════════════════════════
@@ -111,8 +114,8 @@ export const fetchProfile = () =>
 export const fetchPool = () =>
   api.get('/user/pool').then((r) => r.data);
 
-export const updatePool = (role, entries) =>
-  api.post('/user/pool', { role, entries }).then((r) => r.data);
+export const updatePool = (role, entries, options = {}) =>
+  api.post('/user/pool', { role, entries }, options).then((r) => r.data);
 
 export const removeFromPool = (role, championId) =>
   api.delete(`/user/pool/${role}/${championId}`).then((r) => r.data);
@@ -121,6 +124,8 @@ export const removeFromPool = (role, championId) =>
 //  PATCH
 // ═════════════════════════════════════════════════════════════════════════
 export const fetchPatch = () => api.get('/patch').then((r) => r.data);
+export const compareChampions = (body, signal) => api.post('/draft/compare', body, { signal }).then(r => r.data);
+export const fetchPoolAdvice = (role, championPool, signal) => api.post('/pool/advice', { role, champion_pool: championPool }, { signal }).then(r => r.data);
 
 // ═════════════════════════════════════════════════════════════════════════
 //  DRAFT HISTORY (auth-protected, no username param needed)
@@ -195,7 +200,7 @@ export const getServerUrl = () => SERVER_URL || 'http://localhost:8000';
 export const checkServerHealth = async () => {
   const url = getServerUrl();
   try {
-    const res = await axios.get(`${url}/health`, { timeout: 5000 });
+    const res = await axios.get(`${SERVER_URL}/health`, { timeout: 5000 });
     return { ok: true, ready: res.data?.ready ?? false, url };
   } catch {
     return { ok: false, error: 'unreachable', url };

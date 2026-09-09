@@ -95,3 +95,6 @@ client/src-tauri/gen/schemas/
 
 # Production secrets
 .env.prod
+.tools/
+client/test-results/
+client/playwright-report/

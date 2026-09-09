@@ -50,6 +50,8 @@ class MLPredictor:
         self._available = False
         self._champ_game_counts: Dict[int, int] = {}
         self._total_training_games: int = 0
+        self.metadata = {}
+        self.TEMPERATURE = 1.0
 
         if model_path is None:
             model_path = str(
@@ -57,7 +59,6 @@ class MLPredictor:
             )
         self._model_path = model_path
         self._load_model()
-        self._load_game_counts()
 
     def _load_model(self):
         """Try to load the trained model. Silently skip if unavailable."""
@@ -71,6 +72,17 @@ class MLPredictor:
 
         try:
             ckpt = _torch.load(path, map_location="cpu", weights_only=True)
+            if (ckpt.get("schema_version") != 2 or not ckpt.get("accepted") or
+                    not ckpt.get("supports_partial_drafts") or not ckpt.get("chronological") or
+                    ckpt.get("test_unique_matches", 0) < 200):
+                raise ValueError("Modèle non validé : séparation des matchs, calibration et test temporel requis")
+            temperature = float(ckpt.get("temperature", 0))
+            if not math.isfinite(temperature) or not .1 <= temperature <= 20:
+                raise ValueError("Calibration invalide")
+            self.TEMPERATURE = temperature
+            self.metadata = {k: v for k, v in ckpt.items() if k not in {"model_state", "champion_game_counts"}}
+            self._champ_game_counts = {int(k): int(v) for k, v in ckpt.get("champion_game_counts", {}).items()}
+            self._total_training_games = int(ckpt.get("training_games", 0))
             embed_dim = ckpt.get("embed_dim", 32)
             hidden_dim = ckpt.get("hidden_dim", 256)
 
@@ -118,6 +130,13 @@ class MLPredictor:
     def is_available(self) -> bool:
         return self._available
 
+    def supports(self, candidate_id, role, draft):
+        ids = self._build_team_vector(draft.ally_picks, candidate_id, role) + self._build_team_vector(draft.enemy_picks)
+        known = [cid for cid in ids if cid]
+        return (self._available and len(known) >= 6 and
+                all(self._champ_game_counts.get(cid, 0) >= 80 for cid in known) and
+                all(max(dist.values(), default=0) >= .7 for dist in draft.role_distributions.values()))
+
     def _build_team_vector(self, picks: List[DraftPick], candidate_id: int = 0, candidate_role: str = "") -> List[int]:
         """Build [top, jg, mid, bot, sup] champion ID vector from draft picks."""
         team = [0, 0, 0, 0, 0]
@@ -150,7 +169,7 @@ class MLPredictor:
     ) -> float:
         """Predict P(our team wins) with candidate in role."""
         if not self._available or self._model is None:
-            return 0.5
+            raise RuntimeError("Model unavailable")
 
         blue_team = self._build_team_vector(draft.ally_picks, candidate_id, role)
         red_team = self._build_team_vector(draft.enemy_picks)
@@ -163,25 +182,26 @@ class MLPredictor:
 
         known = sum(1 for c in blue_team + red_team if c > 0)
         if known < 4:
-            return 0.5
+            raise RuntimeError("Insufficient draft context")
 
         try:
             prob = self._model.predict_proba(blue_team, red_team)
+            if not math.isfinite(prob) or not 0 <= prob <= 1:
+                raise ValueError("Invalid model probability")
             if flip:
                 prob = 1.0 - prob
             return prob
         except Exception as e:
             logger.warning("ML prediction error: %s", e)
-            return 0.5
+            raise RuntimeError("Model inference failed") from e
 
     # ─── Temperature scaling (standard ML calibration) ─────────────────
-    TEMPERATURE = 5.0  # T > 1 softens overconfident predictions toward 50%
+    TEMPERATURE = 1.0  # Replaced by the measured held-out calibration on load.
 
     def _calibrate(self, p: float) -> float:
         """Temperature-scale the raw model probability.
 
-        The model (~60% accuracy) outputs extreme probabilities (5% / 95%).
-        Temperature scaling in logit space is the standard calibration fix:
+        Use the temperature measured on the calibration partition:
           logit = log(p / (1-p))
           logit_cal = logit / T
           p_cal = sigmoid(logit_cal)
@@ -241,7 +261,7 @@ class MLPredictor:
 
         # ── 1. Win probability (use calibrated value for user-facing text as WPA) ──
         wpa_cal = (prob_cal - 0.5) * 100
-        wpa_str = f"{wpa_cal:+.1f}% WPA"
+        wpa_str = f"P(victoire) estimée {prob_cal * 100:.1f}%"
         pct_raw = f"{prob_raw:.0%}"
         if prob_cal >= 0.56:
             reasons.append(f"Le modèle prédit un avantage ({wpa_str}) avec {name}")
@@ -281,7 +301,8 @@ class MLPredictor:
 
         # ── 4. Model accuracy reminder ──
         reasons.append(
-            f"Précision du modèle : ~60% (entraîné sur {self._total_training_games} games D2+)"
+            f"Test indépendant : {self.metadata.get('test_metrics', {}).get('accuracy', 0):.1%} d'exactitude ; "
+            f"{self._total_training_games} matchs d'entraînement."
         )
 
         # ── 5. Confidence summary ──

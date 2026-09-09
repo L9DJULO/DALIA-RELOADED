@@ -80,8 +80,8 @@ function HeroSplash({ pick, idx }) {
         <div style={{ display:'flex', flexDirection:'column', gap:5, fontFamily:'var(--f-mono)', fontSize:11 }}>
           {[
             ['TIER',   <TierBadge key="t" tier={pick.tier}/>],
-            ['P(WIN)', <b key="w" style={{ fontFamily:'var(--f-display)', fontSize:14, color:'var(--ok)' }}>{pick.winProb.toFixed(1)}%</b>],
-            ['FIABLE', <b key="f" style={{ fontFamily:'var(--f-display)', fontSize:14, color:'var(--bone-0)' }}>{pick.confidence}%</b>],
+            ['P(WIN) MODÈLE', <b key="w" style={{ fontFamily:'var(--f-display)', fontSize:14, color:'var(--ok)' }}>{pick.winProb == null ? '—' : `${pick.winProb.toFixed(1)}%`}</b>],
+            ['CONTEXTE', <b key="f" style={{ fontFamily:'var(--f-display)', fontSize:14, color:'var(--bone-0)' }}>{pick.confidence}/100</b>],
           ].map(([lbl, val]) => (
             <div key={lbl} style={{ display:'flex', justifyContent:'space-between', gap:14, alignItems:'center' }}>
               <span style={{ color:'var(--bone-2)', letterSpacing:'0.12em', fontSize:10 }}>{lbl}</span>
@@ -139,7 +139,7 @@ const ShortRow = React.memo(function ShortRow({ pick, idx, selected, onSelect })
           {pick.score}
         </div>
         <div style={{ fontFamily:'var(--f-mono)', fontSize:10, color:'var(--bone-2)' }}>
-          ±{Math.round((pick.scoreRange[1] - pick.scoreRange[0]) / 2)}
+          /100
         </div>
       </div>
     </button>

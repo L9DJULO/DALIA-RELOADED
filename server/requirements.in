@@ -1,0 +1,16 @@
+# Direct dependencies pinned from PyPI; transitive dependencies locked with pip-compile.
+fastapi==0.141.1
+uvicorn[standard]==0.52.4
+httpx==0.28.1
+pydantic[email]==2.13.5
+python-dotenv==1.2.3
+aiofiles==25.1.0
+aiohttp==3.14.3
+sqlalchemy[asyncio]==2.0.52
+asyncpg==0.31.0
+alembic==1.19.2
+PyJWT[crypto]==2.13.0
+argon2-cffi==25.1.0
+bcrypt==5.0.0
+numpy==2.4.6
+scikit-learn==1.9.0

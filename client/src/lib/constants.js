@@ -8,7 +8,7 @@
 export const DDRAGON_BASE = 'https://ddragon.leagueoflegends.com/cdn';
 
 /** Fallback DDragon version (used until the real one is fetched). */
-const FALLBACK_VERSION = '14.24.1';
+const FALLBACK_VERSION = '16.17.1';
 
 /** Module-level cache for the resolved DDragon version. */
 let _resolvedVersion = localStorage.getItem('dalia_ddragon_version') || FALLBACK_VERSION;
@@ -18,7 +18,7 @@ export const getDDragonVersion = () => _resolvedVersion;
 
 /** Set the DDragon version (called once after fetchPatch). */
 export const setDDragonVersion = (version) => {
-  if (version && version !== '?') {
+  if (typeof version === 'string' && /^\d+\.\d+\.\d+$/.test(version)) {
     _resolvedVersion = version;
     localStorage.setItem('dalia_ddragon_version', version);
   }

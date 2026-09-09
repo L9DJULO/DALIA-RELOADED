@@ -4,8 +4,9 @@ from __future__ import annotations
 import logging
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException, Request
+from pydantic import BaseModel, Field, field_validator
+from app.models.validation import Role, Tier, ChampionId
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -19,9 +20,9 @@ router = APIRouter(prefix="/user", tags=["user"])
 
 # ── Schemas ──────────────────────────────────────────────────────────────
 class PoolEntryIn(BaseModel):
-    champion_id: int
-    champion_key: str
-    tier: str = "B"
+    champion_id: ChampionId
+    champion_key: str = Field(max_length=50)
+    tier: Tier = "B"
 
 
 class PoolEntryOut(BaseModel):
@@ -32,8 +33,15 @@ class PoolEntryOut(BaseModel):
 
 
 class PoolUpdateRequest(BaseModel):
-    role: str
-    entries: List[PoolEntryIn]
+    role: Role
+    entries: List[PoolEntryIn] = Field(max_length=200)
+
+    @field_validator("entries")
+    @classmethod
+    def unique_entries(cls, entries):
+        if len({e.champion_id for e in entries}) != len(entries):
+            raise ValueError("Champion en double dans le pool")
+        return entries
 
 
 class PoolResponse(BaseModel):
@@ -115,13 +123,25 @@ async def get_pool(
 @router.post("/pool")
 async def update_pool(
     body: PoolUpdateRequest,
+    request: Request,
     current_user: UserDB = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Replace champion pool for a single role."""
+    if not getattr(request.app.state, "ready", False):
+        raise HTTPException(503, "Catalogue en cours de chargement")
+    catalog = request.app.state.champion_db
+    for entry in body.entries:
+        champion = catalog.get_by_id(entry.champion_id)
+        if not champion:
+            raise HTTPException(422, "Champion inconnu du catalogue actuel")
+        entry.champion_key = champion.key
     role = body.role.lower()
     if role not in ("top", "jungle", "mid", "bot", "support"):
         raise HTTPException(status_code=400, detail=f"Rôle invalide: {role}")
+
+    # Serialize pool replacements for this account.
+    await db.execute(select(UserDB.id).where(UserDB.id == current_user.id).with_for_update())
 
     # Delete existing entries for this role
     await db.execute(

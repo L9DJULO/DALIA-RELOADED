@@ -6,14 +6,17 @@ from datetime import datetime, timezone
 from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel, Field
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.deps import get_current_user
 from app.db.models import DraftHistoryDB, UserDB
 from app.db.session import get_db
+from app.models.validation import Role, Team, Result, ChampionId
+from app.models.replay import ReplayStep
+from app.models.history import HistoryPick
 
 logger = logging.getLogger("dalia.api.history")
 router = APIRouter(prefix="/history", tags=["history"])
@@ -21,25 +24,29 @@ router = APIRouter(prefix="/history", tags=["history"])
 
 # ── Schemas ──────────────────────────────────────────────────────────────
 class HistoryEntryIn(BaseModel):
-    patch: Optional[str] = None
-    my_team: Optional[str] = None
-    my_role: Optional[str] = None
-    my_champion_id: Optional[int] = None
-    my_champion_key: Optional[str] = None
-    my_champion_name: Optional[str] = None
-    ally_picks: list = []
-    enemy_picks: list = []
-    ally_bans: list = []
-    enemy_bans: list = []
-    recommended_champion: Optional[str] = None
-    recommendation_score: Optional[float] = None
-    win_probability: Optional[float] = None
-    result: Optional[str] = None
-    notes: Optional[str] = None
-    tags: list = []
+    session_id: Optional[UUID] = None
+    timeline: list[ReplayStep] = Field(default_factory=list, max_length=100)
+    patch: Optional[str] = Field(default=None, max_length=20)
+    my_team: Optional[Team] = None
+    my_role: Optional[Role] = None
+    my_champion_id: Optional[ChampionId] = None
+    my_champion_key: Optional[str] = Field(default=None, max_length=50)
+    my_champion_name: Optional[str] = Field(default=None, max_length=50)
+    ally_picks: list[HistoryPick] = Field(default_factory=list, max_length=5)
+    enemy_picks: list[HistoryPick] = Field(default_factory=list, max_length=5)
+    ally_bans: list[HistoryPick] = Field(default_factory=list, max_length=5)
+    enemy_bans: list[HistoryPick] = Field(default_factory=list, max_length=5)
+    recommended_champion: Optional[str] = Field(default=None, max_length=50)
+    recommendation_score: Optional[float] = Field(default=None, ge=0, le=100)
+    win_probability: Optional[float] = Field(default=None, ge=0, le=100)
+    result: Optional[Result] = None
+    notes: Optional[str] = Field(default=None, max_length=5000)
+    tags: list[str] = Field(default_factory=list, max_length=20)
 
 
 class HistoryEntryOut(BaseModel):
+    session_id: Optional[UUID] = None
+    timeline: list = []
     id: UUID
     timestamp: datetime
     patch: Optional[str]
@@ -64,8 +71,8 @@ class HistoryEntryOut(BaseModel):
 
 
 class HistoryResultUpdate(BaseModel):
-    result: str  # "win" | "loss" | "remake"
-    notes: str = ""
+    result: Result
+    notes: str = Field(default="", max_length=5000)
 
 
 class HistoryStatsOut(BaseModel):
@@ -86,7 +93,7 @@ class HistoryStatsOut(BaseModel):
 # ── Routes ───────────────────────────────────────────────────────────────
 @router.get("", response_model=List[HistoryEntryOut])
 async def get_history(
-    limit: int = 50,
+    limit: int = Query(default=50, ge=1, le=100),
     current_user: UserDB = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -107,10 +114,25 @@ async def save_history_entry(
     db: AsyncSession = Depends(get_db),
 ):
     """Save a new draft session to history."""
+    # Lock per user to make repeated saves of a session idempotent.
+    await db.execute(select(UserDB.id).where(UserDB.id == current_user.id).with_for_update())
+    payload = entry.model_dump(mode="json")
+    payload["session_id"] = entry.session_id
+    if entry.session_id:
+        existing = (await db.execute(select(DraftHistoryDB).where(
+            DraftHistoryDB.user_id == current_user.id, DraftHistoryDB.session_id == entry.session_id))).scalar_one_or_none()
+        if existing:
+            for key, value in payload.items():
+                if key in {"notes", "result"} and value is None:
+                    continue
+                setattr(existing, key, value)
+            await db.commit()
+            await db.refresh(existing)
+            return existing
     db_entry = DraftHistoryDB(
         user_id=current_user.id,
         timestamp=datetime.now(timezone.utc),
-        **entry.model_dump(),
+        **payload,
     )
     db.add(db_entry)
     await db.commit()
