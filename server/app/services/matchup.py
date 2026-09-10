@@ -38,29 +38,33 @@ class MatchupAnalyzer:
     def __init__(self, champion_db: ChampionDatabase, fetcher: LolalyticsFetcher):
         self.db = champion_db
         self.fetcher = fetcher
-        # cache: (champ_id, role, vs_lane) → {opp_id: (vs_wr, games, d1, d2)}
+        # cache: (champ_id, role, vs_lane, tier) → {opp_id: (vs_wr, games, d1, d2)}
         self._matchup_cache: Dict[Tuple, Dict[int, Tuple[float, int, float, float]]] = {}
         self._loaded_at = {}
         self._retry_after = {}
         self._locks = {}
+        self.rank_fallback: set = set()  # tiers servis avec les données du tier par défaut
 
     # ── Pre-load matchup data for a champion ─────────────────────────────
-    async def load_matchups(self, champion_id: int, role: str, vs_lane: Optional[str] = None):
-        key = (champion_id, role, vs_lane)
+    async def load_matchups(self, champion_id: int, role: str, vs_lane: Optional[str] = None, tier: Optional[str] = None):
+        tier = tier or self.fetcher.TIER
+        key = (champion_id, role, vs_lane, tier)
         lock = self._locks.setdefault(key, asyncio.Lock())
         async with lock:
             if self._retry_after.get(key, 0) > time.monotonic():
                 return
-            await self._load_matchups(champion_id, role, vs_lane)
+            await self._load_matchups(champion_id, role, vs_lane, tier)
 
-    async def _load_matchups(self, champion_id: int, role: str, vs_lane: Optional[str] = None):
-        """Fetch and cache matchup data for a (champion, role) vs a specific lane.
+    async def _load_matchups(self, champion_id: int, role: str, vs_lane: Optional[str] = None, tier: Optional[str] = None):
+        """Fetch and cache matchup data for a (champion, role) vs a specific lane at a tier.
 
         Args:
             vs_lane: if set, fetches cross-lane data (e.g. bot vs top).
                      if None, fetches same-lane data (default).
+            tier: Lolalytics tier; falls back to the default tier's data when empty.
         """
-        cache_key = (champion_id, role, vs_lane)
+        tier = tier or self.fetcher.TIER
+        cache_key = (champion_id, role, vs_lane, tier)
         if cache_key in self._matchup_cache and time.time() - self._loaded_at.get(cache_key, 0) < config.cache_ttl_hours * 3600:
             return
 
@@ -69,7 +73,7 @@ class MatchupAnalyzer:
             return
 
         slug = LolalyticsFetcher.key_to_slug(champ.key)
-        raw = await self.fetcher.fetch_counter_page(slug, role, vs_lane=vs_lane)
+        raw = await self.fetcher.fetch_counter_page(slug, role, vs_lane=vs_lane, tier=tier)
         counters = LolalyticsFetcher.parse_counters(raw)
 
         result: Dict[int, Tuple[float, int, float, float]] = {}
@@ -84,21 +88,32 @@ class MatchupAnalyzer:
         if result:
             self._matchup_cache[cache_key] = result
             self._loaded_at[cache_key] = time.time()
+        elif tier != self.fetcher.TIER:
+            # Rang sans page de counters : on sert le tier par défaut et on le signale.
+            await self.load_matchups(champion_id, role, vs_lane, self.fetcher.TIER)
+            self._matchup_cache[cache_key] = dict(self._matchup_cache.get((champion_id, role, vs_lane, self.fetcher.TIER), {}))
+            self._loaded_at[cache_key] = time.time()
+            self.rank_fallback.add(tier)
         else:
             self._retry_after[cache_key] = time.monotonic() + 30
         lane_desc = f"{role} vs {vs_lane}" if vs_lane else role
         logger.debug("Loaded %d matchups for %s (%s)", len(result), champ.name, lane_desc)
 
-    async def _get_matchup_data(
-        self, champion_id: int, role: str, opp_id: int, opp_role: Optional[str]
+    async def matchup_data(
+        self, champion_id: int, role: str, opp_id: int, opp_role: Optional[str], tier: Optional[str] = None
     ) -> Optional[Tuple[float, int, float, float]]:
         """Get matchup data for a specific opponent, trying cross-lane if needed."""
         # A champion seen in another role is not the same population as a lane opponent.
+        tier = tier or self.fetcher.TIER
         vs_lane = opp_role if opp_role and opp_role != role else None
-        await self.load_matchups(champion_id, role, vs_lane=vs_lane)
-        return self._matchup_cache.get((champion_id, role, vs_lane), {}).get(opp_id)
+        await self.load_matchups(champion_id, role, vs_lane=vs_lane, tier=tier)
+        return self._matchup_cache.get((champion_id, role, vs_lane, tier), {}).get(opp_id)
 
-    async def _prefetch(self, champion_id: int, role: str, draft: DraftState) -> None:
+    def counters(self, champion_id: int, role: str, tier: Optional[str] = None) -> Dict[int, Tuple[float, int, float, float]]:
+        """Page de counters déjà chargée pour (champion, rôle, même lane, tier)."""
+        return self._matchup_cache.get((champion_id, role, None, tier or self.fetcher.TIER), {})
+
+    async def prefetch(self, champion_id: int, role: str, draft: DraftState, tier: Optional[str] = None) -> None:
         """Load in parallel every counter page that scoring this draft will read."""
         lanes = {None}
         for ep in draft.enemy_picks:
@@ -107,10 +122,10 @@ class MatchupAnalyzer:
             dist = draft.role_distributions.get(ep.champion_id) if draft.role_distributions else None
             roles = [r for r, p in dist.items() if p > 0] if dist else ([ep.role] if ep.role else [])
             lanes.update(r for r in roles if r and r != role)
-        await asyncio.gather(*(self.load_matchups(champion_id, role, vs_lane=lane) for lane in lanes))
+        await asyncio.gather(*(self.load_matchups(champion_id, role, vs_lane=lane, tier=tier) for lane in lanes))
 
     # ── Attribute-based fallback when API data missing ────────────────────
-    def _estimate_matchup(
+    def estimate_matchup(
         self, candidate_id: int, opponent_id: int, is_lane: bool
     ) -> Tuple[float, int]:
         """Heuristic matchup when no counter data exists.
@@ -163,7 +178,7 @@ class MatchupAnalyzer:
         return round(_clamp(score, 15.0, 58.0), 1), 0
 
     # ── Score ────────────────────────────────────────────────────────────
-    async def score(self, champion_id: int, role: str, draft: DraftState) -> float:
+    async def score(self, champion_id: int, role: str, draft: DraftState, tier: Optional[str] = None) -> float:
         """Return 0-100 matchup score given current draft state.
 
         For each enemy, the matchup score is computed as an expectation over
@@ -182,7 +197,7 @@ class MatchupAnalyzer:
 
         # Pre-load every (same-lane and cross-lane) page this draft needs at once
         # instead of one awaited fetch per enemy and per candidate role.
-        await self._prefetch(champion_id, role, draft)
+        await self.prefetch(champion_id, role, draft, tier)
 
         weighted_scores: List[Tuple[float, float]] = []
 
@@ -208,14 +223,14 @@ class MatchupAnalyzer:
                 if p <= 0:
                     continue
                 is_lane = opp_role == role
-                mu_data = await self._get_matchup_data(champion_id, role, opp_id, opp_role)
+                mu_data = await self.matchup_data(champion_id, role, opp_id, opp_role, tier)
                 if mu_data is not None:
                     _, games, _, d2 = mu_data
                     mu_score = 50.0 + d2 * 7.0
                     if games < 30:
                         mu_score = mu_score * 0.6 + 50.0 * 0.4
                 else:
-                    mu_score, _ = self._estimate_matchup(champion_id, opp_id, is_lane)
+                    mu_score, _ = self.estimate_matchup(champion_id, opp_id, is_lane)
                 expected_score += p * _clamp(mu_score, 10.0, 90.0)
                 expected_weight += p * (3.0 if is_lane else 1.0)
 
@@ -230,7 +245,7 @@ class MatchupAnalyzer:
         return round(_clamp(avg), 1)
 
     # ── Details for UI ───────────────────────────────────────────────────
-    async def details(self, champion_id: int, role: str, draft: DraftState) -> List[Dict]:
+    async def details(self, champion_id: int, role: str, draft: DraftState, tier: Optional[str] = None) -> List[Dict]:
         """Return per-enemy matchup breakdown.
 
         Uses the most-likely role from draft.role_distributions when
@@ -238,7 +253,7 @@ class MatchupAnalyzer:
         also surfaces the lane-probability so reasons.py can soften
         "Lane favorable" wording for ambiguous flex picks.
         """
-        await self._prefetch(champion_id, role, draft)
+        await self.prefetch(champion_id, role, draft, tier)
         details = []
         for ep in draft.enemy_picks:
             if ep.champion_id is None:
@@ -255,13 +270,13 @@ class MatchupAnalyzer:
                 display_role = ep.role or "?"
             is_lane = display_role == role
 
-            mu_data = await self._get_matchup_data(champion_id, role, ep.champion_id, display_role)
+            mu_data = await self.matchup_data(champion_id, role, ep.champion_id, display_role, tier)
 
             if mu_data is not None:
                 vs_wr, games, d1, d2 = mu_data
                 delta = d2  # use normalised delta for display
             else:
-                est_score, _ = self._estimate_matchup(champion_id, ep.champion_id, is_lane)
+                est_score, _ = self.estimate_matchup(champion_id, ep.champion_id, is_lane)
                 vs_wr = est_score
                 games = 0
                 delta = round(est_score - 50.0, 1)
@@ -279,9 +294,9 @@ class MatchupAnalyzer:
         return details
 
     # ── Counter detection ────────────────────────────────────────────────
-    def get_top_counters(self, champion_id: int, role: str, n: int = 10) -> List[Tuple[int, float]]:
-        """Return worst matchups (lowest deltas). Used for draft-risk scoring."""
-        data = self._matchup_cache.get((champion_id, role, None), {})
+    def get_top_counters(self, champion_id: int, role: str, n: int = 10, tier: Optional[str] = None) -> List[Tuple[int, float]]:
+        """Return worst matchups (lowest deltas). Used by the ban recommender."""
+        data = self.counters(champion_id, role, tier)
         if not data:
             return []
         sorted_m = sorted(data.items(), key=lambda x: x[1][3])  # by d2 normalised ascending

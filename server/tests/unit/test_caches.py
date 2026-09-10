@@ -48,11 +48,11 @@ async def test_empty_meta_can_recover(catalog):
 @pytest.mark.asyncio
 async def test_expired_cross_lane_cache_refetches(catalog):
     matchup = MatchupAnalyzer(catalog, catalog.fetcher)
-    matchup._matchup_cache[(78, 'top', 'jungle')] = {59: (60., 100, 5., 5.)}
-    matchup._loaded_at[(78, 'top', 'jungle')] = 0
+    matchup._matchup_cache[(78, 'top', 'jungle', catalog.fetcher.TIER)] = {59: (60., 100, 5., 5.)}
+    matchup._loaded_at[(78, 'top', 'jungle', catalog.fetcher.TIER)] = 0
     catalog.fetcher.fetch_counter_page = AsyncMock(return_value={"counters": [{"cid": 59, "vsWr": 48., "n": 100, "d1": -2, "d2": -2}]})
     await matchup.load_matchups(78, 'top', 'jungle')
-    assert matchup._matchup_cache[(78, 'top', 'jungle')][59][0] == 48
+    assert matchup._matchup_cache[(78, 'top', 'jungle', catalog.fetcher.TIER)][59][0] == 48
 
 
 @pytest.mark.asyncio
@@ -79,9 +79,9 @@ async def test_meta_never_blends_overlapping_windows(catalog):
 @pytest.mark.asyncio
 async def test_cross_lane_does_not_use_same_lane_population(catalog):
     matchup = MatchupAnalyzer(catalog, catalog.fetcher)
-    matchup._matchup_cache[(78, 'top', None)] = {59: (65, 100, 10, 10)}
-    matchup._loaded_at[(78, 'top', None)] = time.time()
-    assert await matchup._get_matchup_data(78, 'top', 59, 'jungle') is None
+    matchup._matchup_cache[(78, 'top', None, catalog.fetcher.TIER)] = {59: (65, 100, 10, 10)}
+    matchup._loaded_at[(78, 'top', None, catalog.fetcher.TIER)] = time.time()
+    assert await matchup.matchup_data(78, 'top', 59, 'jungle') is None
 
 
 def test_malformed_source_rows_never_become_scores():
