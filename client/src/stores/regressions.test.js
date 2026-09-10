@@ -237,3 +237,20 @@ it('never invents P(win), WPA or confidence intervals from scores', () => {
   expect(rec.tags).toEqual(['flex']);
   expect(mapRec({ total_score: 40, breakdown: { ml_explanation: { win_probability: .531 } } }).winProb).toBeCloseTo(53.1);
 });
+
+it('sends the League rank, then the profile rank, as rank_bucket', async () => {
+  useUserStore.setState({ championPool: { mid: [{ champion_id: 103, tier: 'A' }] }, rankTier: 'gold' });
+  api.fetchRecommendations.mockResolvedValue({ recommendations: [] });
+  await useDraftStore.getState().getRecommendations();
+  expect(api.fetchRecommendations.mock.calls[0][5].rankBucket).toBe('gold');
+  useLCUStore.setState({ connected: true, summoner: { puuid: 'p', region: 'EUW', rankTier: 'DIAMOND' } });
+  await useDraftStore.getState().getRecommendations();
+  expect(api.fetchRecommendations.mock.calls[1][5].rankBucket).toBe('DIAMOND');
+});
+
+it('stores the profile rank and multiplier preferences', async () => {
+  api.fetchProfile.mockResolvedValue({ username: 'u', champion_pool: {}, preferred_roles: ['mid'], enable_wildcard: true, enable_off_meta: true, weight_overrides: { meta: 1.2 }, rank_tier: 'silver' });
+  await useUserStore.getState().loadProfile('u');
+  expect(useUserStore.getState().rankTier).toBe('silver');
+  expect(useUserStore.getState().weightOverrides).toEqual({ meta: 1.2 });
+});

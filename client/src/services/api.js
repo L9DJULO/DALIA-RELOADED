@@ -113,6 +113,7 @@ export const fetchRecommendations = (
             region: personalIdentity.region || 'EUW1',
           }
         : {}),
+      ...(options.rankBucket ? { rank_bucket: options.rankBucket } : {}),
     }, { signal: options.signal })
     .then((r) => r.data);
 

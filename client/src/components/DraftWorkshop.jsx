@@ -55,7 +55,8 @@ export function ComparePanel() {
         weight_overrides: user.weightOverrides, champion_ids: [Number(left), Number(right)],
         duo_active: !!partner?.active, duo_partner_role: partner?.partnerRole || null,
         enable_wildcard: user.enableWildcard, enable_off_meta: user.enableOffMeta,
-        puuid: summoner?.puuid || null, region: summoner?.region || null }, pending.signal);
+        puuid: summoner?.puuid || null, region: summoner?.region || null,
+        rank_bucket: summoner?.rankTier || user.rankTier || null }, pending.signal);
       if (!pending.signal.aborted) setData(result);
     } catch (e) {
       if (!pending.signal.aborted) setError(apiErrorText(e, 'Comparaison indisponible. Réessaie.'));

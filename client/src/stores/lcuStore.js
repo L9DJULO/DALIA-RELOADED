@@ -53,7 +53,8 @@ const useLCUStore = create((set, get) => ({
       const data = await lcuSummonerInfo();
       if (ticket === generation && get().connected && data.available) set({ summoner: {
         puuid: data.puuid, gameName: data.game_name, tagLine: data.tag_line, summonerId: data.summoner_id,
-        accountId: data.account_id, summonerLevel: data.summoner_level, profileIconId: data.profile_icon_id, region: data.region } });
+        accountId: data.account_id, summonerLevel: data.summoner_level, profileIconId: data.profile_icon_id, region: data.region,
+        rankTier: data.rank_tier || '' } });
       return data;
     } catch { return null; } finally { identityPending = false; }
   },
