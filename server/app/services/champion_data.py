@@ -148,6 +148,7 @@ class ChampionDatabase:
                 key=key,
                 name=name,
                 title=info.get("title", ""),
+                difficulty=max(1, min(10, int((info.get("info") or {}).get("difficulty", 5) or 5))),
                 tags=tags,
                 roles=roles,
                 damage=damage,
