@@ -108,12 +108,88 @@ it('marks recommendations stale on an edit', () => {
   expect(useDraftStore.getState().stale).toBe(true);
 });
 
-it('discards an analysis if preferences change during the request', async () => {
+it('applies but flags stale an analysis finished after a preference change', async () => {
   const pending = deferred(); api.fetchRecommendations.mockReturnValueOnce(pending.promise);
   const work = useDraftStore.getState().getRecommendations();
   useUserStore.setState({ weightOverrides: { meta: .1 } });
   pending.resolve({ recommendations: [{ champion_id: 103 }] }); await work;
-  expect(useDraftStore.getState().recommendations).toEqual([]);
+  expect(useDraftStore.getState().recommendations).toEqual([{ champion_id: 103 }]);
+  expect(useDraftStore.getState().stale).toBe(true);
+  expect(useDraftStore.getState().loading).toBe(false);
+});
+
+it('keeps a running analysis alive when the League client reports a hover', async () => {
+  useChampionsStore.setState({ loaded: true, byId: { 103: ahri, 61: orianna } });
+  useDraftStore.getState().setMode('live');
+  const stop = startDraftSession(); await Promise.resolve();
+  useLCUStore.setState({ connected: true, inChampSelect: true, myTeam: 'blue', myRole: 'mid', myPickOrder: 1,
+    allyPicks: {}, enemyPicksOrder: [], allyBans: [], enemyBans: [], allyPrepicks: {} });
+  const pending = deferred(); api.fetchRecommendations.mockReturnValueOnce(pending.promise);
+  const work = useDraftStore.getState().getRecommendations();
+  useLCUStore.setState({ allyPrepicks: { top: 61 } });
+  expect(useDraftStore.getState().loading).toBe(true);
+  expect(api.fetchRecommendations.mock.calls[0][5].signal.aborted).toBe(false);
+  pending.resolve({ recommendations: [{ champion_id: 103 }] }); await work;
+  expect(useDraftStore.getState().recommendations).toEqual([{ champion_id: 103 }]);
+  expect(useDraftStore.getState().stale).toBe(true);
+  stop();
+});
+
+it('leaving replay mode keeps only the steps already seen', () => {
+  const draft = useDraftStore.getState(); draft.resetDraft('manual'); draft.setAllyPick('mid', ahri); draft.setEnemyPick(0, orianna);
+  const steps = validateReplay(draft.exportSession()).steps;
+  draft.loadReplay(steps, 1, true);
+  const replayId = useDraftStore.getState().sessionId;
+  draft.setMode('manual');
+  expect(useDraftStore.getState().timeline).toHaveLength(2);
+  expect(useDraftStore.getState().sessionId).not.toBe(replayId);
+  expect(useDraftStore.getState().enemyPicks[0]).toBeNull();
+});
+
+it('does not commit placeholder champions before the catalogue is available', async () => {
+  useChampionsStore.setState({ loaded: false, error: null, byId: {} });
+  useDraftStore.getState().setMode('live');
+  const stop = startDraftSession(); await Promise.resolve();
+  useLCUStore.setState({ connected: true, inChampSelect: true, myTeam: 'blue', myRole: 'mid', myPickOrder: 1,
+    allyPicks: { mid: 103 }, enemyPicksOrder: [], allyBans: [], enemyBans: [], allyPrepicks: {} });
+  expect(useDraftStore.getState().allyPicks.mid).toBeNull();
+  useChampionsStore.setState({ loaded: true, byId: { 103: ahri } });
+  expect(useDraftStore.getState().allyPicks.mid).toEqual(ahri);
+  stop();
+});
+
+it('publishes League state only when it changes', async () => {
+  const { lcuStatus } = await import('../services/lcu');
+  lcuStatus.mockResolvedValue({ connected: true, in_champ_select: true, my_team: 'blue', ally_picks: { mid: 103 }, pick_sequence: [{ team: 'blue', champId: 103 }] });
+  let notifications = 0; const off = useLCUStore.subscribe(() => { notifications++; });
+  await useLCUStore.getState().fetchStatus();
+  await useLCUStore.getState().fetchStatus();
+  off();
+  expect(notifications).toBe(1);
+  expect(useLCUStore.getState().pickSequence).toEqual([{ team: 'blue', champId: 103 }]);
+});
+
+it('serves the cached catalogue immediately and keeps it when the server is unreachable', async () => {
+  localStorage.setItem('dalia_champions_v1', JSON.stringify({ ts: Date.now() - 48 * 3600 * 1000, patch: '16.16.1', data: [ahri] }));
+  const patch = deferred(); api.fetchPatch.mockReturnValueOnce(patch.promise);
+  useChampionsStore.setState({ champions: [], byId: {}, loaded: false, loading: false, error: null });
+  const work = useChampionsStore.getState().load();
+  expect(useChampionsStore.getState().loaded).toBe(true);
+  expect(useChampionsStore.getState().byId[103]).toEqual(ahri);
+  patch.resolve(Promise.reject(new Error('offline'))); await work;
+  expect(useChampionsStore.getState().champions).toEqual([ahri]);
+  expect(useChampionsStore.getState().error).toBeNull();
+  expect(api.fetchChampions).not.toHaveBeenCalled();
+});
+
+it('replaces a cached catalogue when the patch changed', async () => {
+  localStorage.setItem('dalia_champions_v1', JSON.stringify({ ts: Date.now(), patch: '16.16.1', data: [ahri] }));
+  api.fetchPatch.mockResolvedValueOnce({ version: '16.17.1' });
+  api.fetchChampions.mockResolvedValueOnce([ahri, orianna]);
+  useChampionsStore.setState({ champions: [], byId: {}, loaded: false, loading: false, error: null });
+  await useChampionsStore.getState().load();
+  expect(useChampionsStore.getState().champions).toHaveLength(2);
+  expect(JSON.parse(localStorage.getItem('dalia_champions_v1')).patch).toBe('16.17.1');
 });
 
 it('opening an imported replay cannot overwrite an unrelated saved session', () => {
@@ -156,7 +232,8 @@ it('rejects malformed replays', () => {
 });
 
 it('never invents P(win), WPA or confidence intervals from scores', () => {
-  const rec = mapRec({ total_score: 90, champion_key: 'Ahri', breakdown: {}, matchup_details: [{ win_rate: 58 }] });
-  expect(rec.winProb).toBeNull(); expect(rec.scoreRange).toBeNull(); expect(rec.wpa).toBeNull();
+  const rec = mapRec({ total_score: 90, champion_key: 'Ahri', breakdown: {}, matchup_details: [{ win_rate: 58 }], tags: ['hors-pool', 'flex'] });
+  expect(rec.winProb).toBeNull(); expect(rec).not.toHaveProperty('scoreRange'); expect(rec.wpa).toBeNull();
+  expect(rec.tags).toEqual(['flex']);
   expect(mapRec({ total_score: 40, breakdown: { ml_explanation: { win_probability: .531 } } }).winProb).toBeCloseTo(53.1);
 });

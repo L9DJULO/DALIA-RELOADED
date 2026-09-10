@@ -641,10 +641,12 @@ pub fn parse_champ_select(session: serde_json::Value, mut state: LiveDraftState)
     }
 
     if local_cell >= 0 {
-        let explicit_team = session["myTeam"].as_array().and_then(|members| members.first())
-            .and_then(|m| m["teamId"].as_i64());
+        // Champ-select members carry `team` (1 = blue, 2 = red); older payloads used
+        // `teamId` (100 / 200). Cell layout is the fallback when neither is present.
+        let first_member = session["myTeam"].as_array().and_then(|members| members.first());
+        let explicit_team = first_member.and_then(|m| m["team"].as_i64().or_else(|| m["teamId"].as_i64()));
         state.my_team = match explicit_team {
-            Some(100) => "blue", Some(200) => "red", _ => cell_to_team(local_cell)
+            Some(1) | Some(100) => "blue", Some(2) | Some(200) => "red", _ => cell_to_team(local_cell)
         }.to_string();
         if let Some(role) = cell_role_map.get(&local_cell) {
             state.my_role = role.clone();
@@ -664,7 +666,11 @@ pub fn parse_champ_select(session: serde_json::Value, mut state: LiveDraftState)
 
                     let is_ally = ally_cells.contains(&cell_id);
                     let is_me = cell_id == local_cell;
-                    if completed { state.current_action = (state.current_action + 1).min(19); }
+                    // Count draft actions only: the `ten_bans_reveal` pseudo-action and any
+                    // future non-draft action types must not advance the draft index.
+                    if completed && (action_type == "ban" || action_type == "pick") {
+                        state.current_action = (state.current_action + 1).min(19);
+                    }
                     if action_type == "pick" && is_ally {
                         ally_pick_number += 1;
                         if is_me { state.my_pick_order = ally_pick_number; }
@@ -812,13 +818,14 @@ mod tests {
         let session = serde_json::json!({
             "localPlayerCellId": 2,
             "myTeam": [
-                {"cellId": 0, "teamId": 200, "assignedPosition": "top", "championId": 75},
-                {"cellId": 2, "teamId": 200, "assignedPosition": "middle", "championId": 103},
-                {"cellId": 3, "teamId": 200, "assignedPosition": "bottom", "championId": 0, "championPickIntent": 22}
+                {"cellId": 0, "team": 2, "assignedPosition": "top", "championId": 75},
+                {"cellId": 2, "team": 2, "assignedPosition": "middle", "championId": 103},
+                {"cellId": 3, "team": 2, "assignedPosition": "bottom", "championId": 0, "championPickIntent": 22}
             ],
-            "theirTeam": [{"cellId": 5, "assignedPosition": "", "championId": 78}],
+            "theirTeam": [{"cellId": 5, "team": 1, "assignedPosition": "", "championId": 78}],
             "actions": [
                 [{"id": 0, "actorCellId": 5, "type": "ban", "championId": 238, "completed": true}],
+                [{"id": 10, "actorCellId": -1, "type": "ten_bans_reveal", "championId": 0, "completed": true}],
                 [{"id": 1, "actorCellId": 5, "type": "pick", "championId": 78, "completed": true}],
                 [{"id": 2, "actorCellId": 0, "type": "pick", "championId": 103, "completed": true}],
                 [{"id": 3, "actorCellId": 2, "type": "pick", "championId": 75, "completed": true}],

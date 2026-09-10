@@ -9,7 +9,7 @@ import logging
 from typing import Dict, List, Optional, Literal
 # UserDB used as Optional type hint in route signatures
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 from app.models.validation import Role, Puuid, Region, ChampionId
 from sqlalchemy import and_, or_, select
@@ -193,30 +193,7 @@ async def draft_recommend(
     or authenticated (pool loaded from DB when body pool is empty)."""
     engine = _get_engine(request)
     validate_champion_ids(engine.db, body)
-
-    # If the request doesn't include a pool AND the user is logged in,
-    # load pool from DB. Anonymous users must send the pool in the body.
-    if current_user and (
-        not body.champion_pool or all(len(v) == 0 for v in body.champion_pool.values())
-    ):
-        body.champion_pool = await _get_user_pool(current_user, db)
-
-    # ── DuoQ: load partner's pool if duo is active (requires auth) ──
-    if current_user and body.duo_active and body.duo_partner_role and not body.duo_partner_pool:
-        partner_pool = None
-        try:
-            partner_pool = await _load_duo_partner_pool(current_user, db)
-        except Exception as exc:
-            logger.warning("Failed to load duo partner pool: %s", exc)
-        if partner_pool:
-            body.duo_partner_pool = partner_pool
-        else:
-            logger.info(
-                "DuoQ requested but no active link for user %s — disabling boost",
-                current_user.username if current_user else "anonymous",
-            )
-            body.duo_active = False
-            body.duo_partner_role = None
+    await _apply_account_context(body, current_user, db)
 
     personal_svc = getattr(request.app.state, "personal_stats", None)
     try:
@@ -225,14 +202,57 @@ async def draft_recommend(
         raise HTTPException(503, "Les sources de données répondent trop lentement. Réessaie dans quelques instants.")
 
 
+def _pool_is_empty(pool) -> bool:
+    return not pool or all(len(v) == 0 for v in pool.values())
+
+
+async def _apply_account_context(body: DraftRequest, current_user: Optional[UserDB], db: AsyncSession) -> None:
+    """Fill the pool and DuoQ partner from the account, identically for every draft route.
+
+    Anonymous users must send their pool in the body. DuoQ needs an active link and
+    a partner role; when either is missing the boost is disabled rather than half-applied.
+    """
+    if current_user and _pool_is_empty(body.champion_pool):
+        body.champion_pool = await _get_user_pool(current_user, db)
+
+    if not body.duo_active:
+        body.duo_partner_role = None
+        body.duo_partner_pool = None
+        return
+    if current_user and body.duo_partner_role and not body.duo_partner_pool:
+        try:
+            body.duo_partner_pool = await _load_duo_partner_pool(current_user, db)
+        except Exception as exc:
+            logger.warning("Failed to load duo partner pool: %s", exc)
+            body.duo_partner_pool = None
+    if not current_user or not body.duo_partner_role or not body.duo_partner_pool:
+        logger.info("DuoQ requested without an active link, partner role or pool — disabling boost")
+        body.duo_active = False
+        body.duo_partner_role = None
+        body.duo_partner_pool = None
+
+
 def validate_champion_ids(catalog, body):
+    """Reject unknown champions on the board; silently drop them from pools.
+
+    Board ids are chosen in the current session and must exist. Pool entries may
+    predate the current catalog (removed or renamed champion): the editor cannot
+    always show them, so they must not block every analysis of the account.
+    """
     ids = set(body.draft_state.bans)
     ids.update(p.champion_id for p in body.draft_state.ally_picks + body.draft_state.enemy_picks + body.draft_state.ally_prepicks if p.champion_id)
-    for pool in (body.champion_pool, body.duo_partner_pool or {}):
-        ids.update(e.champion_id for entries in pool.values() for e in entries)
     ids.update(getattr(body, "champion_ids", []))
     if any(catalog.get_by_id(cid) is None for cid in ids):
         raise HTTPException(422, "Champion inconnu du catalogue actuel")
+    for attribute in ("champion_pool", "duo_partner_pool"):
+        pool = getattr(body, attribute, None)
+        if not pool:
+            continue
+        for role, entries in pool.items():
+            kept = [e for e in entries if catalog.get_by_id(e.champion_id) is not None]
+            if len(kept) != len(entries):
+                logger.warning("Dropping %d unknown pool entries for role %s", len(entries) - len(kept), role)
+                pool[role] = kept
 
 
 @router.post("/draft/compare")
@@ -243,17 +263,15 @@ async def compare_champions(body: CompareRequest, request: Request,
     validate_champion_ids(engine.db, body)
     if set(body.champion_ids) & body.draft_state.all_unavailable_ids:
         raise HTTPException(422, "Un des deux champions est déjà choisi ou banni")
-    if current_user and not body.champion_pool:
-        body.champion_pool = await _get_user_pool(current_user, db)
-    if current_user and body.duo_active:
-        body.duo_partner_pool = await _load_duo_partner_pool(current_user, db)
-        body.duo_active = bool(body.duo_partner_pool)
+    await _apply_account_context(body, current_user, db)
     try:
         result = await engine.recommend(body, personal_svc=getattr(request.app.state, "personal_stats", None),
                                         candidate_ids=body.champion_ids)
     except TimeoutError:
         raise HTTPException(503, "Comparaison temporairement indisponible")
     indexed = {r.champion_id: r for r in result.recommendations}
+    if any(cid not in indexed for cid in body.champion_ids):
+        raise HTTPException(422, "Un des deux champions ne peut pas être évalué dans cette draft")
     left, right = (indexed[cid] for cid in body.champion_ids)
     dimensions = ["meta", "matchup", "synergy", "composition", "mastery", "draft_risk", "mechanics", "wpa_adjustment"]
     deltas = [{"dimension": key, "left": getattr(left.breakdown, key), "right": getattr(right.breakdown, key),
@@ -294,12 +312,15 @@ async def recommend_bans(
 ):
     """Get ban recommendations based on pool and meta."""
     recommender = _get_ban_recommender(request)
+    catalog = _get_db_service(request)
+    if any(catalog.get_by_id(cid) is None for cid in body.already_banned + body.already_picked):
+        raise HTTPException(422, "Champion inconnu du catalogue actuel")
 
     # Load pool from DB if not provided (requires auth)
-    if current_user and (
-        not body.champion_pool or all(len(v) == 0 for v in body.champion_pool.values())
-    ):
+    if current_user and _pool_is_empty(body.champion_pool):
         body.champion_pool = await _get_user_pool(current_user, db)
+    for role, entries in body.champion_pool.items():
+        body.champion_pool[role] = [e for e in entries if catalog.get_by_id(e.champion_id) is not None]
 
     bans = await recommender.recommend_bans(
         my_role=body.my_role,
@@ -357,24 +378,28 @@ async def ml_reload(request: Request, _admin: UserDB = Depends(require_admin)):
 
 
 @router.get("/ml/embeddings")
-async def ml_embeddings(request: Request, role: str = "mid"):
+async def ml_embeddings(request: Request, role: Role = "mid"):
     """Return 2D embedding map for champion cluster visualisation."""
     engine = _get_engine(request)
-    if engine.ml is None:
+    ml = engine.ml
+    if ml is None:
         return {"embeddings": [], "available": False}
-    data = engine.ml.get_embedding_map(role)
+    data = ml.get_embedding_map(role)
     return {"embeddings": data, "available": True, "role": role}
 
 
 @router.get("/ml/similar/{champion_id}")
-async def ml_similar(champion_id: int, request: Request, role: str = "mid", n: int = 8):
+async def ml_similar(champion_id: int, request: Request, role: Role = "mid", n: int = Query(default=8, ge=1, le=30)):
     """Return champions most similar in embedding space."""
     engine = _get_engine(request)
-    if engine.ml is None:
+    ml = engine.ml
+    if ml is None:
         return {"similar": [], "available": False}
     db = _get_db_service(request)
     champ = db.get_by_id(champion_id)
-    similar = engine.ml.get_similar_champions(champion_id, role, n=n)
+    if not champ:
+        raise HTTPException(status_code=404, detail="Champion introuvable.")
+    similar = ml.get_similar_champions(champion_id, role, n=n)
     return {
         "champion_id": champion_id,
         "champion_name": champ.name if champ else "?",

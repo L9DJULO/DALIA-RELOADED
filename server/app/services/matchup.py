@@ -98,6 +98,17 @@ class MatchupAnalyzer:
         await self.load_matchups(champion_id, role, vs_lane=vs_lane)
         return self._matchup_cache.get((champion_id, role, vs_lane), {}).get(opp_id)
 
+    async def _prefetch(self, champion_id: int, role: str, draft: DraftState) -> None:
+        """Load in parallel every counter page that scoring this draft will read."""
+        lanes = {None}
+        for ep in draft.enemy_picks:
+            if ep.champion_id is None:
+                continue
+            dist = draft.role_distributions.get(ep.champion_id) if draft.role_distributions else None
+            roles = [r for r, p in dist.items() if p > 0] if dist else ([ep.role] if ep.role else [])
+            lanes.update(r for r in roles if r and r != role)
+        await asyncio.gather(*(self.load_matchups(champion_id, role, vs_lane=lane) for lane in lanes))
+
     # ── Attribute-based fallback when API data missing ────────────────────
     def _estimate_matchup(
         self, candidate_id: int, opponent_id: int, is_lane: bool
@@ -169,8 +180,9 @@ class MatchupAnalyzer:
         if not draft.enemy_picks:
             return 50.0  # no information
 
-        # Pre-load same-lane matchups
-        await self.load_matchups(champion_id, role)
+        # Pre-load every (same-lane and cross-lane) page this draft needs at once
+        # instead of one awaited fetch per enemy and per candidate role.
+        await self._prefetch(champion_id, role, draft)
 
         weighted_scores: List[Tuple[float, float]] = []
 
@@ -226,7 +238,7 @@ class MatchupAnalyzer:
         also surfaces the lane-probability so reasons.py can soften
         "Lane favorable" wording for ambiguous flex picks.
         """
-        await self.load_matchups(champion_id, role)
+        await self._prefetch(champion_id, role, draft)
         details = []
         for ep in draft.enemy_picks:
             if ep.champion_id is None:

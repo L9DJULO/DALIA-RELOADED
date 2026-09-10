@@ -1,4 +1,9 @@
-"""Bound request bodies and per-process traffic before expensive work starts."""
+"""Bound request bodies and per-process traffic before expensive work starts.
+
+Buckets are keyed on the ASGI client address. Behind a reverse proxy (Railway,
+Tailscale Funnel, nginx) that address is the proxy itself unless uvicorn is
+started with proxy headers enabled: see FORWARDED_ALLOW_IPS in run.py.
+"""
 import time
 from collections import OrderedDict, deque
 from starlette.responses import JSONResponse
@@ -27,6 +32,9 @@ class TrafficLimits:
             while len(self.buckets) > 10000:
                 self.buckets.popitem(last=False)
         if scope["method"] in {"POST", "PUT", "PATCH"}:
+            declared = next((v for k, v in scope.get("headers", []) if k == b"content-length"), None)
+            if declared is not None and declared.isdigit() and int(declared) > self.max_body:
+                return await JSONResponse({"detail": "Requête trop volumineuse"}, 413)(scope, receive, send)
             chunks, size = [], 0
             while True:
                 message = await receive()

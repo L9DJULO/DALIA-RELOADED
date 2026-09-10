@@ -30,7 +30,8 @@ test.beforeEach(async ({ page }) => {
       data = { left, right, score_delta: 4, dimensions: [{ dimension: 'composition', left: 65, right: 60, delta: 5 }], wpa_delta_pp: null, explanation: 'Même contexte pour les deux choix.' };
     } else if (path === '/api/pool/advice') data = { covered: ['dégâts magiques'], gaps: ['réponse à la mobilité'], suggestions: [{ champion_id: 61, champion_key: 'Orianna', champion_name: 'Orianna', reason: 'Exemple de complémentarité pour le parcours.', learning_plan: ['Apprendre les échanges.'] }], method: 'Kits', note: 'Test simulé' };
     else if (path === '/api/history' && req.method() === 'POST') { const body = req.postDataJSON(); data = { ...body, id: 'history-1', timestamp: '2026-09-09T10:00:00Z' }; history = [data]; }
-    else if (path === '/api/history') data = history;
+    else if (path === '/api/history') data = history.map(({ timeline, ...entry }) => ({ ...entry, timeline_steps: timeline.length }));
+    else if (path.startsWith('/api/history/')) data = history.find(e => path.endsWith(e.id)) || {};
     await route.fulfill({ json: data });
   });
   await page.goto('/');

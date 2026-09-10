@@ -207,7 +207,17 @@ function TierRow({ tier, entries, champById, onPromote, onDemote, onRemove }) {
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
             {entries.map(e => {
               const champ = champById[e.champion_id];
-              if (!champ) return null;
+              if (!champ) {
+                // Entry saved under a previous catalogue: keep it removable.
+                return (
+                  <button key={e.champion_id} onClick={() => onRemove(e.champion_id)}
+                    title="Champion absent du catalogue actuel — cliquer pour retirer"
+                    style={{ width: 64, height: 76, background: 'var(--ink-3)', border: '1px dashed var(--ink-5)',
+                      color: 'var(--bone-3)', fontFamily: 'var(--f-mono)', fontSize: 9, cursor: 'pointer' }}>
+                    #{e.champion_id}<br/>inconnu ×
+                  </button>
+                );
+              }
               return (
                 <PoolCard key={e.champion_id}
                   champ={champ} tier={tier}

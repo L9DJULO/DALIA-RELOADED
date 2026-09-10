@@ -8,8 +8,7 @@ import { champLoading, champIcon, SHORTLIST, TAG_CFG, ROLE_LABEL, hasPoolForCurr
 import { Portrait, Tag, TierBadge, SectionLbl, ReasonBullet, Bar, Delta, RoleChip } from './Primitives';
 
 // ── Score box ──────────────────────────────────
-function ScoreBox({ value, range, accent }) {
-  const half = range ? Math.round((range[1] - range[0]) / 2) : null;
+function ScoreBox({ value, accent }) {
   return (
     <div style={{
       background: accent ? 'var(--accent)' : 'var(--ink-2)',
@@ -22,9 +21,6 @@ function ScoreBox({ value, range, accent }) {
       minWidth: 118, flexShrink: 0,
     }}>
       <div style={{ fontSize: 56, fontWeight: 700, lineHeight: 0.85, letterSpacing: '-0.04em' }}>{value}</div>
-      {half != null && (
-        <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.05em', marginTop: 2 }}>±{half}</div>
-      )}
       <div style={{ fontSize: 9, letterSpacing: '0.3em', marginTop: 3, fontWeight: 500, opacity: 0.75 }}>SCORE</div>
     </div>
   );
@@ -76,7 +72,7 @@ function HeroSplash({ pick, idx }) {
 
       {/* foot */}
       <div className="anim-score-enter" style={{ position:'absolute', bottom:0, left:0, right:0, padding:'12px 18px 16px', zIndex:1, display:'flex', alignItems:'flex-end', gap:20, borderTop:'1px solid rgba(244,239,230,0.12)' }}>
-        <ScoreBox value={pick.score} range={pick.scoreRange} accent/>
+        <ScoreBox value={pick.score} accent/>
         <div style={{ display:'flex', flexDirection:'column', gap:5, fontFamily:'var(--f-mono)', fontSize:11 }}>
           {[
             ['TIER',   <TierBadge key="t" tier={pick.tier}/>],

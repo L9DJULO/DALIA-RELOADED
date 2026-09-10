@@ -60,3 +60,35 @@ Ces dépendances restent à suivre avec Tauri ; « aucun avis bloquant » ne sig
 ## Prochaine validation utile
 
 Une fois la configuration locale lancée selon le [README](README.md), jouer une vraie sélection en direct, enregistrer la draft et vérifier dans Replays les étapes auxquelles un conseil semble discutable. Ces cas permettront de revoir les règles et leur pondération. Avant diffusion, il reste la rotation des secrets de l'instance, une restauration de sauvegarde testée et le contrôle du déploiement réel. L'utilisation des données Coachless nécessite encore une source autorisée et compatible avec les décisions de draft.
+
+## Passe de relecture du 10 septembre 2026
+
+Relecture du commit de reprise avec correctifs. Les points ci-dessous n'apparaissaient pas dans l'audit initial.
+
+| Problème constaté | Correctif |
+|---|---|
+| Le client League fournit la région sous forme courte (`EUW`, `NA`, `EUNE`) alors que les schémas n'acceptaient que les identifiants de plateforme (`EUW1`) : toute analyse échouait en 422 dès que League était connecté. | Normalisation des alias de région à la validation ; test paramétré. |
+| Limiteur de débit indexé sur l'adresse de connexion alors que uvicorn ignorait les en-têtes de proxy : derrière Railway ou Tailscale Funnel, tous les utilisateurs partageaient 15 connexions/min et 60 analyses/min. | `FORWARDED_ALLOW_IPS` (détection automatique sur Railway), rejet anticipé des corps trop volumineux annoncés par `Content-Length`. |
+| Un rafraîchissement méta vide après expiration du TTL effaçait les statistiques précédentes : tout le rôle passait en « inconnu ». | L'échantillon précédent est conservé, nouvelle tentative après dix minutes, un seul chargement concurrent par rôle. |
+| Le disjoncteur Lolalytics se déclenchait pour un simple 404 (champion inconnu de la source) et bloquait toutes les requêtes pendant trente secondes. | Seuls les pannes réseau, 429 et 5xx ouvrent le circuit. |
+| Changer le résultat d'une partie depuis Replays écrasait les notes avec une chaîne vide. | `notes` optionnel dans la mise à jour ; conservé si absent. Test d'intégration. |
+| La liste de l'historique renvoyait toutes les timelines (jusqu'à 100 étapes par entrée). | Liste allégée avec `timeline_steps` ; `GET /api/history/{id}` charge une entrée complète à la demande. |
+| Un identifiant de champion périmé dans un pool enregistré faisait rejeter toutes les analyses du compte, sans moyen de le retirer depuis l'éditeur. | Les entrées inconnues sont ignorées dans les pools (les identifiants du tableau restent rejetés) ; l'éditeur affiche une carte « inconnu » supprimable. |
+| La comparaison duo chargeait le pool partenaire sans le rôle, donc le bonus n'était jamais appliqué ; une erreur SQL faisait un 500. | Contexte de compte partagé entre recommandation et comparaison, avec dégradation contrôlée. |
+| Contrôle de migration codé en dur sur `003`. | Tête calculée depuis le répertoire Alembic. |
+| Le modèle ML pouvait être remplacé ou retiré par le watcher au milieu d'une analyse. | Prédicteur capturé une fois par analyse. |
+| Un entraînement planté consommait le jeu de données et interdisait toute nouvelle tentative sur les mêmes matchs. | L'empreinte n'est enregistrée qu'après une évaluation complète. |
+| Le watcher rechargeait le catalogue et vidait les caches au premier passage après chaque démarrage. | Seul un changement de patch réel déclenche ce rechargement. |
+| Stats personnelles : pause morte de 1,2 s tous les quinze matchs et nouvelle requête Riot à chaque analyse après un échec (clé invalide, panne). | Quota confié à `RiotBudget` ; échec mémorisé une minute ; aucune tâche de fond sans clé ou avec cache frais. |
+| Wildcards évalués un par un ; matchups cross-lane chargés séquentiellement. | Lots parallèles de cinq candidats ; préchargement parallèle des pages nécessaires par draft. |
+| Toute modification du tableau (y compris un survol allié transmis par League) annulait l'analyse en cours sans message : en lobby actif, ANALYSER ne rendait jamais de résultat. | Seule une nouvelle session (nouvelle draft, replay, déconnexion) annule une requête ; sinon le résultat est appliqué et marqué « à actualiser ». |
+| Synchronisation League avant l'arrivée du catalogue : « Champion 157 » sans icône figé dans la timeline et les replays enregistrés. | Synchronisation différée jusqu'au catalogue (ou son échec) ; catalogue servi depuis le cache local immédiatement, puis revalidé en arrière-plan, conservé hors ligne. |
+| Un clic sans effet sur un emplacement (vider un slot vide, fermer la recherche) basculait en mode manuel et quittait la synchronisation. | Le passage en manuel n'a lieu que si le slot change. |
+| Quitter un replay par le sélecteur de mode conservait les étapes futures dans la timeline de la nouvelle session. | Sortie de replay = variante tronquée à l'étape visible. |
+| Ajouter un champion suggéré effaçait toutes les suggestions du conseiller de pool. | Les suggestions restent affichées ; celles déjà ajoutées sont signalées. |
+| Le store League publiait un nouvel état toutes les 500 ms même sans changement et réinterrogeait l'identité invocateur à chaque cycle. | Publication uniquement sur changement ; identité réessayée toutes les dix secondes. |
+| Connecteur Rust : côté d'équipe lu sur un champ inexistant (`teamId`), index d'action incrémenté par `ten_bans_reveal`. | Lecture de `team` (1/2) avec repli, seuls bans et picks comptent ; test mis à jour. |
+| Script d'auto-update : le retour arrière laissait le dépôt en HEAD détaché, bloquant toutes les mises à jour suivantes. | `git reset --keep` sur la branche. |
+| Code mort : actions LCU du store sans appelant, intervalle ± jamais renseigné, `data/draft.js` inutilisé, contrôles de rôle redondants, doubles `raise_for_status`. | Supprimés. Erreurs API formatées par un seul helper client. |
+
+Vérifications : 58 tests unitaires serveur (15 nouveaux), 3 tests d'intégration sur PostgreSQL 16 temporaire, 20 tests Vitest (6 nouveaux), test du parser LCU Rust, build Vite, 3 parcours Playwright (navigateur système via `PLAYWRIGHT_CHANNEL=chrome`, ou `npx playwright install chromium`).

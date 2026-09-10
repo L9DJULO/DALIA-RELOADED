@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import defer
 
 from app.auth.deps import get_current_user
 from app.db.models import DraftHistoryDB, UserDB
@@ -44,6 +45,33 @@ class HistoryEntryIn(BaseModel):
     tags: list[str] = Field(default_factory=list, max_length=20)
 
 
+class HistoryEntrySummary(BaseModel):
+    """List view: everything except the replay timeline, which can weigh hundreds of KB per entry."""
+    session_id: Optional[UUID] = None
+    timeline_steps: int = 0
+    id: UUID
+    timestamp: datetime
+    patch: Optional[str]
+    my_team: Optional[str]
+    my_role: Optional[str]
+    my_champion_id: Optional[int]
+    my_champion_key: Optional[str]
+    my_champion_name: Optional[str]
+    ally_picks: list
+    enemy_picks: list
+    ally_bans: list
+    enemy_bans: list
+    recommended_champion: Optional[str]
+    recommendation_score: Optional[float]
+    win_probability: Optional[float]
+    result: Optional[str]
+    notes: Optional[str]
+    tags: list
+
+    class Config:
+        from_attributes = True
+
+
 class HistoryEntryOut(BaseModel):
     session_id: Optional[UUID] = None
     timeline: list = []
@@ -72,7 +100,8 @@ class HistoryEntryOut(BaseModel):
 
 class HistoryResultUpdate(BaseModel):
     result: Result
-    notes: str = Field(default="", max_length=5000)
+    # None keeps the notes already stored; the result selector never sends notes.
+    notes: Optional[str] = Field(default=None, max_length=5000)
 
 
 class HistoryStatsOut(BaseModel):
@@ -91,20 +120,29 @@ class HistoryStatsOut(BaseModel):
 
 
 # ── Routes ───────────────────────────────────────────────────────────────
-@router.get("", response_model=List[HistoryEntryOut])
+@router.get("", response_model=List[HistoryEntrySummary])
 async def get_history(
     limit: int = Query(default=50, ge=1, le=100),
     current_user: UserDB = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Return draft history entries, newest first."""
+    """Return draft history entries, newest first, without their timelines.
+
+    Use GET /history/{entry_id} to load the replay steps of one entry.
+    """
     result = await db.execute(
-        select(DraftHistoryDB)
+        select(DraftHistoryDB, func.jsonb_array_length(DraftHistoryDB.timeline))
+        .options(defer(DraftHistoryDB.timeline))
         .where(DraftHistoryDB.user_id == current_user.id)
         .order_by(DraftHistoryDB.timestamp.desc())
         .limit(limit)
     )
-    return result.scalars().all()
+    summaries = []
+    for entry, steps in result.all():
+        summary = HistoryEntrySummary.model_validate(entry)
+        summary.timeline_steps = steps or 0
+        summaries.append(summary)
+    return summaries
 
 
 @router.post("", response_model=HistoryEntryOut, status_code=201)
@@ -159,7 +197,8 @@ async def update_history_result(
         raise HTTPException(status_code=404, detail="Entrée non trouvée.")
 
     entry.result = body.result
-    entry.notes = body.notes
+    if body.notes is not None:
+        entry.notes = body.notes
     await db.commit()
     await db.refresh(entry)
     return entry
@@ -273,3 +312,23 @@ async def get_history_stats(
         followed_recommendation=followed,
         followed_recommendation_wins=followed_wins,
     )
+
+
+# Declared after /stats so the literal path keeps precedence over the UUID parameter.
+@router.get("/{entry_id}", response_model=HistoryEntryOut)
+async def get_history_entry(
+    entry_id: UUID,
+    current_user: UserDB = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Return one history entry with its full replay timeline."""
+    result = await db.execute(
+        select(DraftHistoryDB).where(
+            DraftHistoryDB.id == entry_id,
+            DraftHistoryDB.user_id == current_user.id,
+        )
+    )
+    entry = result.scalar_one_or_none()
+    if not entry:
+        raise HTTPException(status_code=404, detail="Entrée non trouvée.")
+    return entry

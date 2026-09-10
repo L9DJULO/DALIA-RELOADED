@@ -41,7 +41,10 @@ class PatchWatcher:
         try:
             version = await self._fetcher.get_ddragon_version(force=True)
             patch = ".".join(version.split(".")[:2])
-            changed = patch != self._meta.get("current_patch")
+            previous = self._meta.get("current_patch")
+            # The catalogue was loaded moments ago at startup: only a real patch
+            # change justifies reloading champions and dropping every cache.
+            changed = previous is not None and patch != previous
             self._meta.update(current_patch=patch, needs_retrain=patch != self.last_trained_patch)
             if changed and self.engine:
                 await self.engine.db.initialize()
@@ -82,8 +85,6 @@ class PatchWatcher:
                 self._status = "awaiting_data"
                 self._last_error = "Il faut au moins 2 000 matchs uniques du patch et de nouvelles données depuis la dernière tentative."
                 return
-            self._meta["last_attempt_dataset"] = metadata["dataset_sha256"]
-            self.save()
             self._status, self._last_error, self._started = "training", None, time.time()
             MODEL_DIR.mkdir(parents=True, exist_ok=True)
             flags = subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
@@ -94,6 +95,10 @@ class PatchWatcher:
                 while self._process.poll() is None: await asyncio.sleep(1)
                 if self._process.returncode != 0: raise RuntimeError("Le processus d'entraînement a échoué ; consulter training.log.")
             stats = json.loads((MODEL_DIR / "training_stats.json").read_text(encoding="utf-8"))
+            # Only a completed evaluation consumes the dataset: a crashed run
+            # (missing torch, OOM, bug) must stay retryable after the fix.
+            self._meta["last_attempt_dataset"] = metadata["dataset_sha256"]
+            self.save()
             if not stats.get("accepted"):
                 self._status = "rejected"
                 self._last_error = "Le candidat n'a pas passé les critères de validation ; modèle actif conservé."

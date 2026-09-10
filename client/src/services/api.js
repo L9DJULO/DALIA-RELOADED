@@ -18,6 +18,17 @@ const api = axios.create({
   timeout: 30000,
 });
 
+/** User-facing text for an axios error: FastAPI string detail, pydantic error list, or the fallback. */
+export const apiErrorText = (e, fallback) => {
+  const detail = e?.response?.data?.detail;
+  if (typeof detail === 'string' && detail) return detail;
+  if (Array.isArray(detail)) {
+    const text = detail.map(d => (typeof d === 'string' ? d : d?.msg)).filter(Boolean).join(' · ');
+    if (text) return text;
+  }
+  return fallback;
+};
+
 // ── Auth token interceptor ────────────────────────────
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('dalia_token');
@@ -132,6 +143,10 @@ export const fetchPoolAdvice = (role, championPool, signal) => api.post('/pool/a
 // ═════════════════════════════════════════════════════════════════════════
 export const fetchHistory = (limit = 50) =>
   api.get('/history', { params: { limit } }).then((r) => r.data);
+
+/** One entry with its full replay timeline (the list omits timelines). */
+export const fetchHistoryEntry = (entryId) =>
+  api.get(`/history/${entryId}`).then((r) => r.data);
 
 export const saveHistoryEntry = (entry) =>
   api.post('/history', entry).then((r) => r.data);

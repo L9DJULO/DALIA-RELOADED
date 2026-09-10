@@ -136,9 +136,7 @@ async def update_pool(
         if not champion:
             raise HTTPException(422, "Champion inconnu du catalogue actuel")
         entry.champion_key = champion.key
-    role = body.role.lower()
-    if role not in ("top", "jungle", "mid", "bot", "support"):
-        raise HTTPException(status_code=400, detail=f"Rôle invalide: {role}")
+    role = body.role  # already restricted to the Role literal by validation
 
     # Serialize pool replacements for this account.
     await db.execute(select(UserDB.id).where(UserDB.id == current_user.id).with_for_update())

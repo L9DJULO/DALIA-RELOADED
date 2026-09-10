@@ -146,6 +146,9 @@ class DraftEngine:
         draft = request.draft_state
         pool = request.champion_pool
         role = draft.my_role
+        # The patch watcher may swap or drop the model while this request runs:
+        # score every candidate of one analysis with the same predictor.
+        ml = self.ml
 
         # ── Infer enemy role distributions ──
         # The LCU never reveals enemy positions in ranked. We compute a
@@ -338,21 +341,20 @@ class DraftEngine:
 
         # 3. Score each candidate
         candidate_slots = asyncio.Semaphore(6)
-        async def score_entry(entry):
+        async def score_entry(entry, is_pool=True):
             champ = self.db.get_by_id(entry.champion_id)
             if not champ:
                 return None
             async with candidate_slots:
                 return await self._score_candidate(
                     champ, entry, draft, role, weights, personal_boost_fn,
-                    enemy_archetype=enemy_archetype, is_pool=entry.champion_id in actual_pool_ids,
+                    enemy_archetype=enemy_archetype, is_pool=is_pool, ml=ml,
                 )
-        scored = [r for r in await asyncio.gather(*(score_entry(e) for e in candidates)) if r]
+        scored = [r for r in await asyncio.gather(*(score_entry(e, e.champion_id in actual_pool_ids) for e in candidates)) if r]
 
         # 4. Wild-card suggestions (off-pool)
         wildcards = await self._wild_card_suggestions(
-            draft, role, weights, unavailable, pool_entries,
-            enemy_archetype=enemy_archetype,
+            draft, role, unavailable, pool_entries, score_entry,
         ) if request.enable_wildcard and not candidate_ids else []
         scored.extend(wildcards)
 
@@ -360,7 +362,7 @@ class DraftEngine:
         # A 50% baseline is NOT the WPA of a champion pick.
         eligible = [r for r in scored if r.breakdown.ml_explanation and
                     r.breakdown.ml_explanation.confidence != "low"]
-        if len(eligible) == len(scored) and len(eligible) >= 2:
+        if ml is not None and len(eligible) == len(scored) and len(eligible) >= 2:
             baseline = sum(r.breakdown.ml_explanation.win_probability for r in eligible) / len(eligible)
             for rec in eligible:
                 probability = rec.breakdown.ml_explanation.win_probability
@@ -369,7 +371,7 @@ class DraftEngine:
                 rec.wpa = {"source": "DALIA", "kind": "model_estimate", "delta_pp": round(delta, 2),
                            "baseline_probability": round(baseline * 100, 2),
                            "baseline_champion_ids": [r.champion_id for r in eligible],
-                           "model": {k: self.ml.metadata.get(k) for k in ("schema_version", "patches", "trained_at", "test_metrics", "test_unique_matches", "code_revision")},
+                           "model": {k: ml.metadata.get(k) for k in ("schema_version", "patches", "trained_at", "test_metrics", "test_unique_matches", "code_revision")},
                            "definition": "Écart à la moyenne des choix évalués dans cette draft, même rôle et même côté.",
                            "limitation": "Estimation du modèle, sans preuve causale ; ne provient pas de Coachless."}
                 rec.breakdown.wpa_adjustment = adjustment
@@ -441,7 +443,7 @@ class DraftEngine:
 
         # 6. Win probability from ML model (best recommendation)
         win_prob = None
-        if self.ml is not None and scored:
+        if ml is not None and scored:
             top_rec = scored[0]
             if top_rec.breakdown.ml_explanation and top_rec.breakdown.ml_explanation.win_probability:
                 win_prob = round(top_rec.breakdown.ml_explanation.win_probability * 100, 1)
@@ -475,7 +477,7 @@ class DraftEngine:
                          "meta_collected_at": getattr(self.fetcher, "last_success", {}).get(f"meta:{role}"),
                          "statistics_policy": "current_if_reliable_else_30d",
                          "source_errors": list(self.fetcher.last_errors),
-                         "model_available": self.ml is not None,
+                         "model_available": ml is not None,
                          "wpa_available": any(r.wpa is not None for r in scored),
                          "coachless_connected": False},
         )
@@ -491,6 +493,7 @@ class DraftEngine:
         personal_boost_fn=None,
         enemy_archetype: Optional[ArchetypeResult] = None,
         is_pool: bool = True,
+        ml=None,
     ) -> Recommendation:
         # Sub-scores
         meta_s   = self.meta.score(champ.id, role)
@@ -503,9 +506,9 @@ class DraftEngine:
         # ML prediction (optional — only if model is trained and loaded)
         ml_s = 50.0
         ml_expl = None
-        if self.ml is not None and self.ml.supports(champ.id, role, draft):
+        if ml is not None and ml.supports(champ.id, role, draft):
             try:
-                ml_s, ml_expl_raw = self.ml.score_with_explanation(champ.id, role, draft)
+                ml_s, ml_expl_raw = ml.score_with_explanation(champ.id, role, draft)
                 ml_expl = MLExplanation(**ml_expl_raw)
             except Exception:
                 logger.exception("Prediction unavailable; retaining kit analysis")
@@ -760,28 +763,22 @@ class DraftEngine:
             _bonus_mult *= min(bonus, 1.12)          # individual cap 1.12 (was 1.20)
 
         # ── 3b. MULTI-COUNTER BONUS ──
-        # If the candidate has a meaningful edge against 3+ enemies
-        # simultaneously, this is the strongest situational signal there is
-        # (e.g. Nilah passive vs full auto-attack comp). Boost +8-16 %.
-        # We count every enemy where the per-matchup score crosses a
-        # threshold derived from API data OR archetype tags (auto-attacker,
-        # immobile, engage, etc.), so the bonus fires even when Lolalytics
-        # has no direct head-to-head data.
+        # If the candidate has a meaningful observed edge against 3+ enemies
+        # simultaneously, this is the strongest situational signal there is.
+        # Boost +8-16 %. Only Lolalytics deltas count here: kit interactions
+        # are credited once, by MechanicsAnalyzer below.
         if has_enemies:
             counter_count = sum(
                 1 for d in mu_details_raw
                 if d.get("delta", 0.0) >= 2.5
             )
-            archetype_counters = 0  # Kit interactions are accounted for once, below.
-            effective_counters = max(counter_count, archetype_counters)
-
-            if effective_counters >= 3:
+            if counter_count >= 3:
                 # 3 → +8 %, 4 → +12 %, 5 → +16 % (was 0.05/+25%)
-                multi_bonus = 1.0 + min(0.04 * effective_counters, 0.16)
+                multi_bonus = 1.0 + min(0.04 * counter_count, 0.16)
                 _bonus_mult *= multi_bonus
                 logger.debug(
                     "Multi-counter bonus ×%.2f for %s (%d counters)",
-                    multi_bonus, champ.name, effective_counters,
+                    multi_bonus, champ.name, counter_count,
                 )
 
         # ── 3c. SYNERGY STACK BONUS ──
@@ -1358,16 +1355,18 @@ class DraftEngine:
         self,
         draft: DraftState,
         role: str,
-        weights,
         unavailable: set,
         pool_entries: List[PoolEntry],
-        enemy_archetype: Optional[ArchetypeResult] = None,
+        score_entry,
     ) -> List[Recommendation]:
         """Find champions NOT in the user's pool with exceptionally high scores.
 
         Only suggests champions that are:
         1. Meta-viable in the role (meta score >= 45)
         2. High total score (>= wildcard_min_score)
+
+        Candidates are scored in small parallel batches, best meta first, and
+        the search stops as soon as enough suggestions clear the threshold.
         """
         pool_ids = {pe.champion_id for pe in pool_entries}
         all_for_role = self.db.champions_for_role(role)
@@ -1390,23 +1389,22 @@ class DraftEngine:
 
         wildcards: List[Recommendation] = []
         best_wildcard: Optional[Recommendation] = None
-        for champ in candidates:
-            fake_entry = PoolEntry(champion_id=champ.id, champion_key=champ.key, tier="D")
-            rec = await self._score_candidate(
-                champ, fake_entry, draft, role, weights,
-                enemy_archetype=enemy_archetype,
-                is_pool=False,
-            )
-            rec.tags.append("hors-pool")
-
-            # Track best wildcard regardless of threshold
-            if best_wildcard is None or rec.total_score > best_wildcard.total_score:
-                best_wildcard = rec
-
-            if rec.total_score >= config.wildcard_min_score:
-                wildcards.append(rec)
-                if len(wildcards) >= config.wildcard_max_suggestions:
-                    break
+        BATCH = 5
+        for start in range(0, len(candidates), BATCH):
+            batch = candidates[start:start + BATCH]
+            entries = [PoolEntry(champion_id=c.id, champion_key=c.key, tier="D") for c in batch]
+            results = await asyncio.gather(*(score_entry(entry, False) for entry in entries))
+            for rec in results:
+                if rec is None:
+                    continue
+                rec.tags.append("hors-pool")
+                # Track best wildcard regardless of threshold
+                if best_wildcard is None or rec.total_score > best_wildcard.total_score:
+                    best_wildcard = rec
+                if rec.total_score >= config.wildcard_min_score and len(wildcards) < config.wildcard_max_suggestions:
+                    wildcards.append(rec)
+            if len(wildcards) >= config.wildcard_max_suggestions:
+                break
 
         # Always suggest at least 1 wildcard if pool is under-performing
         if not wildcards and best_wildcard is not None and best_wildcard.total_score >= 35:
@@ -1472,7 +1470,7 @@ class DraftEngine:
         - Quality of matchup data (API data vs heuristic)
         - Sample size of matchup games
         """
-        revealed = len(draft.ally_picks) + len(draft.enemy_picks)
+        revealed = sum(1 for p in draft.ally_picks + draft.enemy_picks if p.champion_id)
         base = 15.0 + revealed * 5.0
 
         # Data quality: matchups with actual API data (games > 0)

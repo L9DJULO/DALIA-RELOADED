@@ -265,13 +265,22 @@ function Board() {
 
   function handleSelect(champ) {
     if (!activeSlot) return;
-    useDraftStore.getState().setMode('manual');
     const { type, team, role, index } = activeSlot;
+    const isAllySide = (team === 'blue' && blueIsAlly) || (team === 'red' && !blueIsAlly);
+    const current = type === 'ban'
+      ? (team === 'blue' ? blueBans : redBans)[index]
+      : isAllySide ? allyPicks[role] : enemyPicks[index];
+    if ((current?.id ?? null) === (champ?.id ?? null)) {
+      // Nothing changes: do not leave live sync or touch the timeline for a no-op click.
+      setActiveSlot(null);
+      return;
+    }
+    useDraftStore.getState().setMode('manual');
 
     if (type === 'ban') {
       setBan(team, index, champ);
     } else if (type === 'pick') {
-      if ((team === 'blue' && blueIsAlly) || (team === 'red' && !blueIsAlly)) {
+      if (isAllySide) {
         setAllyPick(role, champ);
       } else {
         setEnemyPick(index, champ);

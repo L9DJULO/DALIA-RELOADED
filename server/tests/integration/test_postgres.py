@@ -65,8 +65,16 @@ def test_replay_save_is_idempotent_and_private(client):
     assert first.json()['id'] == again.json()['id']
     assert client.get('/api/history', headers=hb).json() == []
     assert client.patch('/api/history/' + first.json()['id'], headers=hb, json={"result": 'win'}).status_code == 404
-    assert len(client.get('/api/history', headers=ha).json()) == 1
+    listed = client.get('/api/history', headers=ha).json()
+    assert len(listed) == 1 and listed[0]['timeline_steps'] == 1 and 'timeline' not in listed[0]
+    detail = client.get('/api/history/' + first.json()['id'], headers=ha)
+    assert detail.status_code == 200 and len(detail.json()['timeline']) == 1
+    assert client.get('/api/history/' + first.json()['id'], headers=hb).status_code == 404
     assert client.get('/api/history?limit=-1', headers=ha).status_code == 422
+    # Changing the result must not erase notes the player wrote earlier.
+    client.post('/api/history', headers=ha, json={**payload, "notes": "garder"})
+    patched = client.patch('/api/history/' + first.json()['id'], headers=ha, json={"result": 'loss'})
+    assert patched.json()['notes'] == 'garder' and patched.json()['result'] == 'loss'
 
 
 def test_concurrent_duo_links_have_one_winner(client):

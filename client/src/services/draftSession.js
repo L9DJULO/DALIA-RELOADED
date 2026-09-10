@@ -7,7 +7,12 @@ export function startDraftSession() {
     const draft = useDraftStore.getState();
     if (draft.mode !== 'live') return;
     if (live.inChampSelect && previous && !previous.inChampSelect) draft.resetDraft('live');
-    const data = live.getDraftSyncData(useChampionsStore.getState().byId);
+    const catalog = useChampionsStore.getState();
+    // Without the catalogue every champion would be recorded as "Champion 157" with a
+    // broken icon, permanently, in the timeline and saved replays. Wait for the names;
+    // the catalogue subscription below re-syncs as soon as they arrive (or fail).
+    if (!catalog.loaded && !catalog.error) return;
+    const data = live.getDraftSyncData(catalog.byId);
     if (data) draft.applyLCU(data);
   };
   const offLive = useLCUStore.subscribe(sync);

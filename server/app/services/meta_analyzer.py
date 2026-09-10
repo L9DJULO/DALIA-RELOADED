@@ -27,27 +27,45 @@ def _clamp(val: float, lo: float = 0.0, hi: float = 100.0) -> float:
 class MetaAnalyzer:
     """Compute a 0-100 meta score for each (champion, role) tuple."""
 
+    # A failed refresh keeps the previous sample and retries after this delay.
+    FAILED_REFRESH_RETRY = 600
+
     def __init__(self, champion_db: ChampionDatabase, fetcher: LolalyticsFetcher):
         self.db = champion_db
         self.fetcher = fetcher
         self._loaded_roles: set = set()
         self._loaded_at = {}
+        self._locks: Dict[str, asyncio.Lock] = {}
+
+    def _is_fresh(self, role: str) -> bool:
+        return role in self._loaded_roles and time.time() - self._loaded_at.get(role, 0) < config.cache_ttl_hours * 3600
 
     # ── Pre-load tier list for a whole role ──────────────────────────────
     async def load_tierlist(self, role: str):
         """Select one observed window; never blend overlapping samples."""
-        if role in self._loaded_roles and time.time() - self._loaded_at.get(role, 0) < config.cache_ttl_hours * 3600:
+        if self._is_fresh(role):
             return
+        lock = self._locks.setdefault(role, asyncio.Lock())
+        async with lock:
+            if self._is_fresh(role):
+                return  # another request refreshed the role while we waited
+            await self._load_tierlist(role)
+
+    async def _load_tierlist(self, role: str):
         raw_current, raw_30d = await asyncio.gather(
             self.fetcher.fetch_tierlist(role=role, patch="current"),
             self.fetcher.fetch_tierlist(role=role, patch="30"))
         current = {e["champion_id"]: e for e in LolalyticsFetcher.parse_tierlist(raw_current)}
         recent = {e["champion_id"]: e for e in LolalyticsFetcher.parse_tierlist(raw_30d)}
         all_ids = current.keys() | recent.keys()
-        self.db.clear_role_stats(role)
         if not all_ids:
-            self._loaded_roles.discard(role)
+            if role in self._loaded_roles:
+                # Source unavailable: keep the previous sample rather than scoring
+                # every champion as unknown, and retry sooner than the normal TTL.
+                logger.warning("Meta refresh for %s returned nothing; keeping the previous sample", role)
+                self._loaded_at[role] = time.time() - config.cache_ttl_hours * 3600 + self.FAILED_REFRESH_RETRY
             return
+        self.db.clear_role_stats(role)
         for cid in all_ids:
             cur = current.get(cid)
             use_current = cur and (cur["games"] >= config.min_games_reliable or cid not in recent)

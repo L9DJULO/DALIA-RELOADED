@@ -1,10 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import useDraftStore from '../stores/draftStore';
 import useUserStore from '../stores/userStore';
 import useChampionsStore from '../stores/championsStore';
 import useLCUStore from '../stores/lcuStore';
 import useDuoStore from '../stores/duoStore';
-import { compareChampions, saveHistoryEntry } from '../services/api';
+import { compareChampions, saveHistoryEntry, apiErrorText } from '../services/api';
 import { historyPayload } from '../lib/replay';
 import '../workshop.css';
 
@@ -21,9 +21,14 @@ export function MechanicsDetails({ rules = [] }) {
 }
 
 export function ComparePanel() {
-  const draft = useDraftStore();
-  const user = useUserStore();
-  const duo = useDuoStore();
+  // Subscribe to the exact inputs of a comparison; whole-store subscriptions made this
+  // panel re-render (and re-sort the catalogue) on every LCU tick and pool autosave.
+  const revision = useDraftStore(s => s.revision);
+  const myRole = useDraftStore(s => s.myRole);
+  const championPool = useUserStore(s => s.championPool);
+  const weightOverrides = useUserStore(s => s.weightOverrides);
+  const duoActive = useDuoStore(s => s.duoActive);
+  const partnerRole = useDuoStore(s => s.partnerRole);
   const champions = useChampionsStore(s => s.champions);
   const [left, setLeft] = useState('');
   const [right, setRight] = useState('');
@@ -31,28 +36,29 @@ export function ComparePanel() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const controller = useRef(null);
-  const unavailable = draft.getAllUnavailableIds();
-  const options = champions.filter(c => !unavailable.has(c.id)).sort((a, b) => a.name.localeCompare(b.name));
+  const unavailable = useMemo(() => useDraftStore.getState().getAllUnavailableIds(), [revision]);
+  const options = useMemo(() => champions.filter(c => !unavailable.has(c.id)).sort((a, b) => a.name.localeCompare(b.name)), [champions, unavailable]);
   useEffect(() => {
     controller.current?.abort(); setData(null); setError(''); setLoading(false);
     return () => controller.current?.abort();
-  }, [draft.revision, user.championPool, user.weightOverrides, duo.duoActive, duo.partnerRole, left, right]);
+  }, [revision, championPool, weightOverrides, duoActive, partnerRole, left, right]);
   async function compare() {
     controller.current?.abort();
     const pending = new AbortController(); controller.current = pending;
     setLoading(true); setError(''); setData(null);
-    const partner = duo.getDuoOptions();
+    const draft = useDraftStore.getState();
+    const user = useUserStore.getState();
+    const partner = useDuoStore.getState().getDuoOptions();
     const summoner = useLCUStore.getState().summoner;
     try {
       const result = await compareChampions({ draft_state: draft.buildDraftState(), champion_pool: user.championPool,
         weight_overrides: user.weightOverrides, champion_ids: [Number(left), Number(right)],
         duo_active: !!partner?.active, duo_partner_role: partner?.partnerRole || null,
-        duo_partner_pool: partner?.partnerPool || null,
         enable_wildcard: user.enableWildcard, enable_off_meta: user.enableOffMeta,
         puuid: summoner?.puuid || null, region: summoner?.region || null }, pending.signal);
       if (!pending.signal.aborted) setData(result);
     } catch (e) {
-      if (!pending.signal.aborted) setError(typeof e.response?.data?.detail === 'string' ? e.response.data.detail : 'Comparaison indisponible. Réessaie.');
+      if (!pending.signal.aborted) setError(apiErrorText(e, 'Comparaison indisponible. Réessaie.'));
     } finally { if (!pending.signal.aborted) setLoading(false); }
   }
   return <section className="workshop">
@@ -61,7 +67,7 @@ export function ComparePanel() {
     <div className="controls">
       {[['Champion A', left, setLeft], ['Champion B', right, setRight]].map(([label, value, setter]) =>
         <label key={label}>{label}<select aria-label={label} value={value} onChange={e => setter(e.target.value)}>
-          <option value="">Choisir…</option>{options.map(c => <option value={c.id} key={c.id}>{c.name}{c.roles?.includes(draft.myRole) ? '' : ' · autre rôle'}</option>)}
+          <option value="">Choisir…</option>{options.map(c => <option value={c.id} key={c.id}>{c.name}{c.roles?.includes(myRole) ? '' : ' · autre rôle'}</option>)}
         </select></label>)}
       <button onClick={compare} disabled={loading || !left || !right || left === right || unavailable.has(Number(left)) || unavailable.has(Number(right))}>{loading ? 'Comparaison…' : 'Comparer'}</button>
     </div>
@@ -91,7 +97,7 @@ export default function DraftWorkshop() {
   async function save() {
     setSaving(true); setMessage('');
     try { await saveHistoryEntry(historyPayload(draft)); setMessage('Draft enregistrée dans Replays.'); }
-    catch { setMessage('Enregistrement impossible. Réessaie.'); }
+    catch (e) { setMessage(apiErrorText(e, 'Enregistrement impossible. Réessaie.')); }
     finally { setSaving(false); }
   }
   return <div className="workshop draft-tools">

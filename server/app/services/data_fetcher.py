@@ -106,6 +106,12 @@ class LolalyticsFetcher:
         self._retry_after = {}
 
     async def _get(self, url, **kwargs):
+        """GET with a per-source circuit breaker.
+
+        Only outages trip the breaker (network errors, timeouts, 429, 5xx). A 4xx
+        for one resource (a champion Lolalytics does not know yet) must not black
+        out every other request to the same source.
+        """
         source = "lolalytics" if url.startswith(self.LOLA) else "ddragon"
         async with self._http_slots:
             if self._retry_after.get(source, 0) > time.monotonic():
@@ -116,6 +122,12 @@ class LolalyticsFetcher:
                 self.last_errors.pop(source, None)
                 self.last_success[source] = time.time()
                 return response
+            except httpx.HTTPStatusError as exc:
+                status = exc.response.status_code
+                if status == 429 or status >= 500:
+                    self._retry_after[source] = time.monotonic() + 30
+                    self.last_errors[source] = "Source indisponible ; nouvelle tentative différée"
+                raise
             except (httpx.HTTPError, ValueError):
                 self._retry_after[source] = time.monotonic() + 30
                 self.last_errors[source] = "Source indisponible ; nouvelle tentative différée"
@@ -137,15 +149,12 @@ class LolalyticsFetcher:
             return self._ddragon_version
         try:
             resp = await self._get(url)
-            resp.raise_for_status()
             versions = resp.json()
             if not isinstance(versions, list) or not versions:
                 raise ValueError("Catalogue de versions vide")
             self._cache.set(cache_key, versions)
             self._ddragon_version = versions[0]
             self._version_checked = time.monotonic()
-            self.last_errors.pop("ddragon", None)
-            self.last_success["ddragon"] = time.time()
         except Exception as exc:
             self.last_errors["ddragon"] = "Source DDragon indisponible"
             logger.warning("Failed to fetch DDragon versions: %s", exc)
@@ -178,7 +187,6 @@ class LolalyticsFetcher:
         url = f"{self.DDRAGON}/cdn/{ver}/data/en_US/champion.json"
         try:
             resp = await self._get(url)
-            resp.raise_for_status()
             data = resp.json()["data"]
             self._cache.set(cache_key, data)
             return data
@@ -215,7 +223,6 @@ class LolalyticsFetcher:
         }
         try:
             resp = await self._get(url, params=params)
-            resp.raise_for_status()
             data = resp.json()
             self.last_success[f"meta:{role}"] = time.time()
             self.last_errors.pop(f"meta:{role}", None)
@@ -270,7 +277,6 @@ class LolalyticsFetcher:
 
         try:
             resp = await self._get(url, params=params)
-            resp.raise_for_status()
             data = resp.json()
             if "counters" not in data:
                 logger.warning("No counters in response for %s %s (vs %s)", champion_slug, lane, vs_lane_api)

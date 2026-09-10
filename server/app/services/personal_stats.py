@@ -43,6 +43,7 @@ LCU_ROLE_MAP = {
 
 CACHE_DIR = Path(config.cache_dir) / "personal"
 CACHE_TTL = 600  # 10 minutes
+FAILURE_TTL = 60  # do not hammer Riot again for a minute after a failed fetch
 
 
 class ChampionPersonalStats:
@@ -86,6 +87,7 @@ class PersonalStatsService:
 
     def __init__(self):
         self._cache: Dict[str, Any] = {}  # puuid → { ts, data }
+        self._failed_at: Dict[str, float] = {}  # cache key → last failed fetch
         self._refresh_tasks = {}
         self._limit = asyncio.Semaphore(2)
         self._budget = RiotBudget()
@@ -125,18 +127,25 @@ class PersonalStatsService:
         if not api_key:
             logger.warning("No RIOT_API_KEY set — cannot fetch personal stats")
             return self._empty_result(puuid)
+        if time.time() - self._failed_at.get(key, 0) < FAILURE_TTL:
+            return self._empty_result(puuid)
 
         try:
             async with self._limit, asyncio.timeout(90):
                 data = await self._fetch_and_compute(puuid, region, api_key, queue, count)
             if not data.get("available", False):
+                self._failed_at[key] = time.time()
                 return data
+            self._failed_at.pop(key, None)
             self._cache[key] = {"ts": time.time(), "data": data}
             while len(self._cache) > 500:
                 self._cache.pop(next(iter(self._cache)))
             self._save_disk_cache(key, data)
             return data
+        except asyncio.CancelledError:
+            raise
         except Exception as exc:
+            self._failed_at[key] = time.time()
             logger.error("Failed to fetch personal stats for %s: %s", puuid, exc)
             return self._empty_result(puuid)
 
@@ -177,11 +186,8 @@ class PersonalStatsService:
             total_games = 0
             total_wins = 0
 
-            for i, mid in enumerate(match_ids):
-                # Basic rate limiting: 1 req per 60ms ≈ 16/s (safe for dev key 20/s)
-                if i > 0 and i % 15 == 0:
-                    await asyncio.sleep(1.2)
-
+            for mid in match_ids:
+                # Quota pacing is handled by RiotBudget inside riot_get.
                 match_url = f"{regional_base}/lol/match/v5/matches/{mid}"
                 try:
                     match_resp = await riot_get(match_url, headers=headers)
@@ -253,7 +259,12 @@ class PersonalStatsService:
             }
 
     def refresh_in_background(self, puuid, region="EUW1"):
+        if not config.riot_api_key:
+            return
         key = cache_key(puuid, region.upper(), "ranked", 50)
+        cached = self._cache.get(key)
+        if cached and time.time() - cached["ts"] < CACHE_TTL:
+            return
         if key in self._refresh_tasks or len(self._refresh_tasks) >= 8:
             return
         async def refresh():

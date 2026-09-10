@@ -2,13 +2,9 @@
  * Zustand store — Authentication state management.
  */
 import { create } from 'zustand';
-import { login, register, fetchMe } from '../services/api';
+import { login, register, fetchMe, apiErrorText as errorText } from '../services/api';
 
 const readUser = () => { try { return JSON.parse(localStorage.getItem('dalia_user') || 'null'); } catch { return null; } };
-const errorText = (e, fallback) => {
-  const detail = e.response?.data?.detail;
-  return typeof detail === 'string' ? detail : Array.isArray(detail) ? detail.map(d => d.msg).join(' · ') : fallback;
-};
 
 const useAuthStore = create((set, get) => ({
   // State

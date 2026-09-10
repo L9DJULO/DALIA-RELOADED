@@ -107,20 +107,19 @@ export function mapRec(rec) {
   const muList = rec.matchup_details || [];
   const probability = bd.ml_explanation?.win_probability;
   const winProb = Number.isFinite(probability) ? probability * 100 : null;
-  const scoreRange = null;
 
   return {
     key:        rec.champion_key,
     name:       rec.champion_name,
     score,
-    scoreRange,
     tier,
     inPool:     rec.is_pool_champion,
     confidence: Math.round(rec.confidence || 0),
     winProb,
     mechanics: rec.mechanics || [],
     wpa: rec.wpa || null,
-    tags:       rec.tags || [],
+    // "hors-pool" is rendered from `inPool` as a dedicated badge, not as a tag chip.
+    tags:       (rec.tags || []).filter(t => t !== 'hors-pool'),
     verdict:    rec.verdict || '',
     reasons:    (rec.reasons || []).map((r) => ({ text: r.text, kind: r.kind || 'info' })),
     breakdown: {
@@ -152,9 +151,9 @@ export function mapRec(rec) {
 // Pas de vrais champions : name vide, score 0, listes vides.
 const _emptyPlaceholder = {
   key: '', name: '—',
-  score: 0, scoreRange: [0, 0],
-  tier: '—', inPool: false, confidence: 0, winProb: 0,
-  tags: [], verdict: '', reasons: [],
+  score: 0,
+  tier: '—', inPool: false, confidence: 0, winProb: null,
+  tags: [], verdict: '', reasons: [], mechanics: [], wpa: null,
   breakdown: { meta: 0, matchup: 0, synergy: 0, comp: 0, mastery: 0, risk: 0 },
   matchups: [], synergies: [],
 };

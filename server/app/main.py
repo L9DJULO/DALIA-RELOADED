@@ -14,7 +14,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import JSONResponse
 from sqlalchemy import text
-from app.config import config, validate_runtime_config
+from app.config import BASE_DIR, config, validate_runtime_config
 from app.middleware import TrafficLimits
 
 from app.api.routes import router as main_router
@@ -34,6 +34,16 @@ from app.ml.patch_watcher import PatchWatcher
 logger = logging.getLogger("dalia.app")
 
 
+def expected_schema_revision() -> str:
+    """Head revision of the versioned migrations shipped with this code."""
+    from alembic.config import Config as AlembicConfig
+    from alembic.script import ScriptDirectory
+
+    alembic_cfg = AlembicConfig(str(BASE_DIR / "alembic.ini"))
+    alembic_cfg.set_main_option("script_location", str(BASE_DIR / "alembic"))
+    return ScriptDirectory.from_config(alembic_cfg).get_current_head()
+
+
 async def _init_services(app: FastAPI) -> None:
     """Initialize all DALIA services in the background.
 
@@ -42,10 +52,11 @@ async def _init_services(app: FastAPI) -> None:
     """
     try:
         # Migrations are applied by run.py before serving traffic.
+        expected = expected_schema_revision()
         async with engine.begin() as conn:
             revision = await conn.scalar(text("SELECT version_num FROM alembic_version"))
-            if revision != "003":
-                raise RuntimeError("Migrations requises : lancer alembic upgrade head")
+            if revision != expected:
+                raise RuntimeError(f"Migrations requises : base en {revision or 'aucune'}, code en {expected}. Lancer alembic upgrade head")
 
         # ── Initialize services ──
         fetcher = LolalyticsFetcher()
@@ -136,6 +147,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.exception_handler(TimeoutError)
+async def _slow_sources(_request, _exc):
+    """Any analysis that exhausts its time budget answers 503, never 500."""
+    return JSONResponse({"detail": "Les sources de données répondent trop lentement. Réessaie dans quelques instants."}, status_code=503)
 
 # ── Register routers ──
 app.include_router(auth_router, prefix="/api")

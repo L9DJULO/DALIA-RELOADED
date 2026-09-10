@@ -30,7 +30,9 @@ rollback() {
   trap - ERR
   set +e
   echo "Deployment failed. Restoring previous code and dependencies; database migration retained."
-  git switch --detach "$old"
+  # Stay on the branch: a detached HEAD would fail the branch guard on every later run
+  # and freeze the service on the old code with no further updates.
+  git reset --keep "$old"
   "$REPO_DIR/server/.venv/bin/python" -m pip install -q -r "$REPO_DIR/server/requirements.txt"
   sudo -n systemctl restart "$SERVICE"
   curl --fail --silent --max-time 5 http://127.0.0.1:8000/ready || echo "Recovery needs operator attention."

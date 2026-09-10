@@ -53,9 +53,11 @@ def _build_database_url() -> str:
 
 class Config(BaseModel):
     environment: str = os.getenv("ENV", "production")
-    allowed_origins: list[str] = os.getenv(
-        "CORS_ORIGINS", "http://localhost:1420,http://tauri.localhost,https://tauri.localhost,tauri://localhost"
-    ).split(",")
+    allowed_origins: list[str] = [
+        origin.strip() for origin in os.getenv(
+            "CORS_ORIGINS", "http://localhost:1420,http://tauri.localhost,https://tauri.localhost,tauri://localhost"
+        ).split(",") if origin.strip()
+    ]
     # ── Database ──
     database_url: str = _build_database_url()
 
