@@ -103,3 +103,13 @@ def test_riot_budget_is_shared_and_does_not_store_secrets(tmp_path):
     assert first.reserve('private-key', now=1010) == 111
     assert first.reserve('another-key', now=1010) == 0
     assert b'private-key' not in (tmp_path / 'quota.sqlite').read_bytes()
+
+
+def test_real_fetcher_accepts_a_tier_on_both_lolalytics_endpoints():
+    """Le faux fetcher des tests accepte tout ; le vrai doit exposer `tier`."""
+    import inspect
+    from app.services.data_fetcher import LolalyticsFetcher
+    for name in ("fetch_tierlist", "fetch_counter_page"):
+        params = inspect.signature(getattr(LolalyticsFetcher, name)).parameters
+        assert "tier" in params, f"{name} doit accepter un tier"
+        assert params["tier"].default is None

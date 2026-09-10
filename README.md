@@ -4,7 +4,7 @@ DALIA compare les champions de ton pool avec la draft visible : matchups, compos
 
 Fonctionnalités accessibles : draft automatique ou manuelle, modification des picks/bans, annulation, comparaison de deux champions, diagnostic du pool, replays étape par étape et variantes, historique/résultats, duo et préférences de scoring.
 
-Le score d'adéquation n'est pas une probabilité de victoire. Les probabilités et le WPA estimé DALIA restent indisponibles sans modèle validé et contexte suffisant. Aucune donnée Coachless n'est actuellement connectée. Voir [la méthode WPA et les interactions](docs/WPA_ET_MECANIQUES.md) et [le bilan des correctifs](REPRISE_PROJET.md).
+Le score affiché est un avantage estimé en points de win rate par rapport à la moyenne de ton pool, avec son incertitude ; ce n'est pas une probabilité de victoire. Deux champions dont l'écart reste sous l'incertitude sont annoncés équivalents. Les probabilités et le WPA estimé DALIA restent indisponibles sans modèle validé et contexte suffisant. Aucune donnée Coachless n'est actuellement connectée. Voir [la méthode WPA et les interactions](docs/WPA_ET_MECANIQUES.md) et [le bilan des correctifs](REPRISE_PROJET.md).
 
 ## Démarrage local Windows
 

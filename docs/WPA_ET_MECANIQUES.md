@@ -2,6 +2,10 @@
 
 ## Ce que DALIA calcule
 
+Depuis septembre 2026, le score d'un champion est une **somme de contributions en points de win rate** : méta, matchup, adversaire à venir, maîtrise, composition, archétype, synergie, mécaniques et modèle. Chaque contribution porte son propre écart-type. L'avantage affiché est ce total moins la moyenne des totaux du pool évalué ; deux champions dont l'écart est inférieur à la racine de la somme de leurs variances sont présentés comme équivalents, sans classement forcé. Le rang du joueur choisit les statistiques Lolalytics de son niveau et pondère le poids du confort. Les constantes vivent dans [`server/app/scoring/config.py`](../server/app/scoring/config.py) ; la conception complète est dans [la spec du 10 septembre 2026](superpowers/specs/2026-09-10-scoring-wr-points-design.md).
+
+Le terme « adversaire à venir » remplace l'ancien score de risque de draft, la liste de champions dangereux en blind et le bonus flex : il calcule l'espérance du matchup sur la distribution des picks adverses encore possibles dans le rôle du joueur, mélange de ce qui est joué (pick rates du rang) et de ce qui counter (deltas de matchup), dans une proportion qui monte avec l'elo.
+
 Le [site Coachless](https://coachless.gg/) présente le WPA pour évaluer la valeur d'une décision, notamment les choix de builds. C'est une piste différente d'un simple win rate observé. Son interface publique ne constitue pas un contrat d'API : aucune API documentée ni donnée autorisée Coachless n'a été connectée pendant cette reprise.
 
 DALIA implémente séparément un **WPA estimé par son modèle**, disponible seulement lorsqu'un modèle valide peut évaluer tous les choix concernés :
@@ -10,7 +14,7 @@ DALIA implémente séparément un **WPA estimé par son modèle**, disponible se
 
 Les alternatives, le rôle, le côté et la draft sont identiques pour le calcul d'une comparaison. Avec A à 56 % et B à 52 %, leur référence commune est 54 % : WPA(A) = +2 points, WPA(B) = −2 points et A − B = +4 points. Ajouter une troisième alternative change la référence moyenne ; les WPA de deux listes différentes ne se comparent pas directement. Ce n'est ni `win rate − 50`, ni une preuve de causalité, ni une statistique provenant de Coachless.
 
-L'API fournit la source `DALIA`, le type `model_estimate`, les IDs des alternatives, la référence et le manifeste du modèle. L'effet dans le score est limité à `2 × WPA`, borné à ±8 points. Le sous-score ML n'est pas ajouté une deuxième fois au score composite. Sans estimation admissible, le champ est `null` et l'interface affiche « WPA indisponible ».
+L'API fournit la source `DALIA`, le type `model_estimate`, les IDs des alternatives, la référence et le manifeste du modèle. Le terme modèle vaut ce WPA borné à ±4 points de win rate, écart-type 2. Le sous-score ML n'est pas ajouté une deuxième fois au score composite. Sans estimation admissible, le champ est `null` et l'interface affiche « WPA indisponible ».
 
 Pour une future source Coachless autorisée : demander un contrat de données précisant définition, référence, contexte de décision, rôle, rang, queue, patch, échantillon et date. Les WPA de builds ne sont pas directement transposables aux picks de champions. Ne pas agréger deux mesures dont les références diffèrent.
 
@@ -26,7 +30,7 @@ Il reste à entraîner sur de vraies données récentes, mesurer les performance
 
 ## Raisonnement sur les compétences
 
-Les règles de [mechanics.py](../server/app/services/mechanics.py) produisent chacune une interaction, ses cibles, son effet stratégique, une limite et une source de kit. Le total de ces règles est borné à ±12 points ; ces points sont des choix heuristiques à calibrer, pas des points de probabilité.
+Les règles de [mechanics.py](../server/app/services/mechanics.py) produisent chacune une interaction, ses cibles, son effet stratégique, une limite et une source de kit. Le total de ces règles est borné à ±12 points internes, convertis en ±3,6 points de win rate ; ces points sont des choix heuristiques à calibrer, pas des points de probabilité.
 
 Exemples couverts :
 
