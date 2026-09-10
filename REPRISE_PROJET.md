@@ -92,3 +92,15 @@ Relecture du commit de reprise avec correctifs. Les points ci-dessous n'apparais
 | Code mort : actions LCU du store sans appelant, intervalle ± jamais renseigné, `data/draft.js` inutilisé, contrôles de rôle redondants, doubles `raise_for_status`. | Supprimés. Erreurs API formatées par un seul helper client. |
 
 Vérifications : 58 tests unitaires serveur (15 nouveaux), 3 tests d'intégration sur PostgreSQL 16 temporaire, 20 tests Vitest (6 nouveaux), test du parser LCU Rust, build Vite, 3 parcours Playwright (navigateur système via `PLAYWRIGHT_CHANNEL=chrome`, ou `npx playwright install chromium`).
+
+## Passage au scoring en points de win rate (10 septembre 2026)
+
+Le score composite 0-100 est remplacé par une somme de contributions exprimées en points de win rate : méta, matchup, adversaire à venir, maîtrise, composition, archétype, synergie, mécaniques et modèle. Chacune porte un écart-type, et le chiffre affiché est l'avantage signé par rapport à la moyenne du pool évalué, par exemple `+3,1 ±1,4`. Quand l'écart entre deux champions reste sous l'incertitude combinée, l'interface les annonce équivalents au lieu de forcer un classement.
+
+Le rang du joueur entre dans le moteur : lu sur le client League, sinon choisi dans le profil. Il sélectionne les statistiques Lolalytics de son niveau, pondère le poids du confort et fixe la part de counter-pick attendue de l'adversaire. La maîtrise s'appuie désormais sur les parties classées réelles et les points de maîtrise Riot quand ils sont disponibles, le palier déclaré servant de repli.
+
+Sont supprimés : les poids normalisés et leurs multiplicateurs par rôle, le remodelage par ordre de pick, le pool de bonus plafonné, le plancher et les bornes 5-97, la normalisation post-classement, la table de maîtrise par palier, la liste de champions dangereux en blind et le score de risque de draft. Le terme « adversaire à venir » les remplace en calculant l'espérance du matchup sur les picks adverses encore possibles. Les préférences de l'utilisateur deviennent des multiplicateurs de ×0,5 à ×1,5 (migration 004, qui ajoute aussi le rang au profil et l'unité de score à l'historique).
+
+Vérifications : 105 tests unitaires serveur, 3 tests d'intégration sur PostgreSQL 16 temporaire, 24 tests Vitest, build Vite, 3 parcours Playwright, 2 tests Rust. La suite de calibration tourne sur données Lolalytics réelles : 33/50 assertions sur les cas historiques contre 35/50 pour l'ancien moteur, avec la catégorie synergie qui passe de 0/2 à 2/2. Les cas restants et deux pistes de conception non appliquées sont décrits dans [le bilan de calibration](server/tests/calibration/README.md).
+
+Conception détaillée : [la spec du scoring](docs/superpowers/specs/2026-09-10-scoring-wr-points-design.md) et [le plan d'implémentation](docs/superpowers/plans/2026-09-10-scoring-wr-points.md).
