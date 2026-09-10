@@ -6,6 +6,7 @@ import useHistoryStore from '../../stores/historyStore';
 import useDuoStore from '../../stores/duoStore';
 import useLCUStore from '../../stores/lcuStore';
 import { ROLES, ROLE_LABELS, getDDragonChampUrl } from '../../lib/constants';
+import { formatAdvantage, formatSd } from '../../lib/scores';
 import DraftSlot from './DraftSlot';
 import BanSlot from './BanSlot';
 import ChampionSelector from './ChampionSelector';
@@ -27,6 +28,8 @@ const TAG_META = {
   'meta-forte':        { label: 'META S',    bg: 'var(--accent-muted)',    color: 'var(--accent)', border: 'var(--border-accent)' },
   'flex':              { label: 'FLEX',       bg: 'rgba(74,200,232,0.10)', color: '#4ac8e8',        border: 'rgba(74,200,232,0.3)' },
   'low-data':          { label: 'PEU DATA',  bg: 'var(--loss-bg)',         color: 'var(--loss)',    border: 'var(--loss-border)' },
+  'risky-blind':       { label: 'BLIND RISQUÉ', bg: 'var(--loss-bg)',      color: 'var(--loss)',    border: 'var(--loss-border)' },
+  'comfort':           { label: 'CONFORT',   bg: 'rgba(156,211,107,0.12)', color: '#9cd36b',        border: 'rgba(156,211,107,0.3)' },
 };
 
 function SETag({ tag }) {
@@ -42,10 +45,9 @@ function SETag({ tag }) {
   );
 }
 
-// META S sanity gate — never let a B/C/D pick render META S even if
-// the backend tagging is inconsistent. The backend should only emit
-// `meta-forte` when meta_score ≥ 75; this is a defensive filter.
-const META_S_MIN_SCORE = 60;
+// META S : le serveur ne pose `meta-forte` qu'à partir de +1,5 point de win
+// rate de contribution méta ; ce filtre reste défensif si la donnée est incohérente.
+const META_S_MIN_SCORE = 1.5;
 function tagAllowed(tag, rec) {
   if (tag === 'off-meta') return false;
   if (tag === 'meta-forte') {
@@ -115,7 +117,7 @@ export default function DraftBoard({ champions }) {
     const topRec = state.recommendations?.[0];
     const myTeamBans = (myTeam==='blue' ? state.blueBans : state.redBans).filter(Boolean).map(b=>({ champion_id:b.id, champion_key:b.key, champion_name:b.name }));
     const enemyTeamBans = (myTeam==='blue' ? state.redBans : state.blueBans).filter(Boolean).map(b=>({ champion_id:b.id, champion_key:b.key, champion_name:b.name }));
-    saveEntry({ my_team:myTeam, my_role:myRole, my_champion_id:myPick?.id||null, my_champion_key:myPick?.key||'', my_champion_name:myPick?.name||'', ally_bans:myTeamBans, enemy_bans:enemyTeamBans, ally_picks:allyP, enemy_picks:enemyP, recommended_champion:topRec?.champion_key||'', recommendation_score:topRec?.total_score||null, win_probability:state.winProbability||null });
+    saveEntry({ my_team:myTeam, my_role:myRole, my_champion_id:myPick?.id||null, my_champion_key:myPick?.key||'', my_champion_name:myPick?.name||'', ally_bans:myTeamBans, enemy_bans:enemyTeamBans, ally_picks:allyP, enemy_picks:enemyP, recommended_champion:topRec?.champion_key||'', recommendation_score:topRec?.total_score ?? null, score_unit:topRec ? 'wr_points' : null, win_probability:state.winProbability||null });
   }, [championPool, weightOverrides, getRecommendations, getDuoOptions, myTeam, myRole, saveEntry]);
 
   const handleHeroSelect = (i) => { setHeroIdx(i); setAnimKey(k => k + 1); };
@@ -253,12 +255,12 @@ export default function DraftBoard({ champions }) {
                 style={{ position:'absolute', bottom:0, left:0, right:0, padding:'12px 18px 16px', zIndex:1, display:'flex', alignItems:'flex-end', gap:20, borderTop:'1.5px solid rgba(244,239,230,0.15)' }}
               >
                 <div style={{ background:'var(--accent)', color:'#000', padding:'8px 18px 10px', fontFamily:'var(--f-display)', textAlign:'center', border:'2px solid #f0ebe0', boxShadow:'4px 4px 0 #000', minWidth:120 }}>
-                  <div style={{ fontSize:56, fontWeight:700, lineHeight:0.85, letterSpacing:'-0.04em' }}>{Math.round(topRec.total_score)}</div>
-                  <div style={{ fontFamily:'var(--f-mono)', fontSize:10, letterSpacing:'0.2em' }}>SCORE</div>
+                  <div style={{ fontSize:46, fontWeight:700, lineHeight:0.85, letterSpacing:'-0.04em' }}>{formatAdvantage(topRec.total_score)}</div>
+                  <div style={{ fontFamily:'var(--f-mono)', fontSize:10, letterSpacing:'0.2em' }}>{formatSd(topRec.score_sd) || 'PTS WR'}</div>
                 </div>
                 <div style={{ display:'flex', flexDirection:'column', gap:5, fontFamily:'var(--f-mono)', fontSize:11 }}>
                   <div style={{ display:'flex', gap:12, color:'var(--text-muted)' }}>
-                    <span>TIER <span style={{ fontFamily:'var(--f-display)', fontSize:13, color:'var(--text-primary)' }}>{topRec.mastery_tier || '—'}</span></span>
+                    <span>INCERTITUDE <span style={{ fontFamily:'var(--f-display)', fontSize:13, color:'var(--text-primary)' }}>{formatSd(topRec.score_sd) || '—'}</span></span>
                     {topRec.confidence != null && <span>FIABLE <span style={{ fontFamily:'var(--f-display)', fontSize:13, color:'var(--text-primary)' }}>{topRec.confidence.toFixed(0)}%</span></span>}
                     {winProbability != null && <span>P(WIN) <span style={{ fontFamily:'var(--f-display)', fontSize:13, color:'var(--win)' }}>{winProbability.toFixed(1)}%</span></span>}
                   </div>
@@ -326,8 +328,8 @@ export default function DraftBoard({ champions }) {
                       </div>
                     </div>
                     <div style={{ textAlign:'right' }}>
-                      <div style={{ fontFamily:'var(--f-display)', fontWeight:700, fontSize: isSel ? 36 : 28, lineHeight:0.9, color: isSel ? 'var(--accent)' : 'var(--text-primary)' }}>{Math.round(rec.total_score)}</div>
-                      {rec.score_range && <div style={{ fontFamily:'var(--f-mono)', fontSize:10, color:'var(--text-muted)' }}>±{Math.round((rec.score_range[1]-rec.score_range[0])/2)}</div>}
+                      <div style={{ fontFamily:'var(--f-display)', fontWeight:700, fontSize: isSel ? 30 : 24, lineHeight:0.9, color: isSel ? 'var(--accent)' : 'var(--text-primary)' }}>{formatAdvantage(rec.total_score)}</div>
+                      <div style={{ fontFamily:'var(--f-mono)', fontSize:10, color:'var(--text-muted)' }}>{formatSd(rec.score_sd)}</div>
                     </div>
                   </button>
                 );

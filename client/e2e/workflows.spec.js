@@ -4,8 +4,10 @@ const champions = [
   { id: 78, key: 'Poppy', name: 'Poppy', roles: ['top', 'jungle', 'support'] },
   { id: 59, key: 'JarvanIV', name: 'Jarvan IV', roles: ['jungle'] }, { id: 75, key: 'Nasus', name: 'Nasus', roles: ['top'] },
 ];
-const recommendation = (champion, score) => ({ champion_id: champion.id, champion_key: champion.key, champion_name: champion.name,
-  total_score: score, score_range: null, confidence: 35, breakdown: { meta: 55, matchup: 60, synergy: 50, composition: 65, mastery: 72, draft_risk: 50, mechanics: 0, wpa_adjustment: 0, ml_explanation: null },
+const recommendation = (champion, score, sd = 1.2, tie = false) => ({ champion_id: champion.id, champion_key: champion.key, champion_name: champion.name,
+  total_score: score, score_sd: sd, score_range: [score - sd, score + sd], tie_with_leader: tie, confidence: 60,
+  breakdown: { meta: 1.1, matchup: 2.0, synergy: 0, composition: 0.5, mastery: -1.5, draft_risk: 0, mechanics: 0, wpa_adjustment: 0, ml_explanation: null,
+    terms: [{ name: 'meta', value: 1.1, sd: 0.8, source: 'observed', sample: 900, note: '' }, { name: 'matchup', value: 2.0, sd: 1.0, source: 'observed', sample: 400, note: '' }, { name: 'mastery', value: -1.5, sd: 1.5, source: 'heuristic', sample: 0, note: 'palier B' }] },
   is_pool_champion: true, matchup_details: [], synergy_details: [], tags: [], reasons: [{ text: 'Exemple de recommandation simulée pour le test.', kind: 'info' }], mechanics: [], verdict: 'Choix à examiner', wpa: null });
 
 test.beforeEach(async ({ page }) => {
@@ -24,10 +26,10 @@ test.beforeEach(async ({ page }) => {
     else if (path === '/api/user/profile') data = { champion_pool: { mid: [{ champion_id: 103, champion_key: 'Ahri', tier: 'A' }] }, preferred_roles: ['mid'] };
     else if (path === '/api/duo/code') data = { duo_code: 'ABCDEF' };
     else if (path === '/api/duo/status') data = { linked: false };
-    else if (path === '/api/draft/recommend') data = { recommendations: [recommendation(champions[0], 72), recommendation(champions[1], 68)], data_status: { patch: '16.17', rank: 'master_plus', meta_available: false, wpa_available: false } };
+    else if (path === '/api/draft/recommend') data = { recommendations: [recommendation(champions[0], 2.1, 1.2, true), recommendation(champions[1], -2.1)], reference_mean: 0, top_group_ids: [103], rank_bucket: null, data_status: { patch: '16.17', rank: 'emerald_plus', meta_available: false, wpa_available: false } };
     else if (path === '/api/draft/compare') {
-      const left = recommendation(champions[0], 72), right = recommendation(champions[1], 68);
-      data = { left, right, score_delta: 4, dimensions: [{ dimension: 'composition', left: 65, right: 60, delta: 5 }], wpa_delta_pp: null, explanation: 'Même contexte pour les deux choix.' };
+      const left = recommendation(champions[0], 2.1), right = recommendation(champions[1], -2.1);
+      data = { left, right, score_delta: 4.2, combined_sd: 1.7, tied: false, dimensions: [{ dimension: 'composition', left: 0.5, right: 0, delta: 0.5 }], wpa_delta_pp: null, explanation: 'Même contexte pour les deux choix.' };
     } else if (path === '/api/pool/advice') data = { covered: ['dégâts magiques'], gaps: ['réponse à la mobilité'], suggestions: [{ champion_id: 61, champion_key: 'Orianna', champion_name: 'Orianna', reason: 'Exemple de complémentarité pour le parcours.', learning_plan: ['Apprendre les échanges.'] }], method: 'Kits', note: 'Test simulé' };
     else if (path === '/api/history' && req.method() === 'POST') { const body = req.postDataJSON(); data = { ...body, id: 'history-1', timestamp: '2026-09-09T10:00:00Z' }; history = [data]; }
     else if (path === '/api/history') data = history.map(({ timeline, ...entry }) => ({ ...entry, timeline_steps: timeline.length }));
@@ -48,12 +50,13 @@ test('manual editing, analysis, comparison and stale results', async ({ page }) 
   const errors = []; page.on('pageerror', e => errors.push(e.message));
   await pick(page, 'red P1 : vide', 'Jarvan IV');
   await page.getByRole('button', { name: 'ANALYSER', exact: true }).click();
+  await expect(page.getByText('+2.1', { exact: false }).first()).toBeVisible();
   await expect(page.getByText('WPA indisponible', { exact: false }).first()).toBeVisible();
   await page.locator('summary').filter({ hasText: 'Comparer deux champions' }).click();
   await page.getByLabel('Champion A', { exact: true }).selectOption('103');
   await page.getByLabel('Champion B', { exact: true }).selectOption('61');
   await page.getByRole('button', { name: 'Comparer', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Ahri est préféré de 4.0 points' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Ahri est préféré de 4.2 points de win rate' })).toBeVisible();
   await page.screenshot({ path: 'test-results/comparaison.png', fullPage: true });
   await page.locator('summary').filter({ hasText: 'Comparer deux champions' }).click();
   await page.getByRole('button', { name: 'red P1 : Jarvan IV', exact: true }).click();

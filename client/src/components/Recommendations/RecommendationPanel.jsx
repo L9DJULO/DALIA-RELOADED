@@ -1,23 +1,9 @@
 import React, { useMemo, useState } from 'react';
 import { AlertTriangle, TrendingUp, Trophy, RefreshCw, ChevronDown, ChevronUp, Crosshair, Users } from 'lucide-react';
 import useDraftStore from '../../stores/draftStore';
-import { getWinProbColor } from '../../lib/scores';
+import { advantageColor, formatAdvantage, formatSd } from '../../lib/scores';
+import { TermBar } from '../Primitives';
 import { getDDragonChampUrl } from '../../lib/constants';
-
-function Bar({ label, value, max = 100 }) {
-  const pct = Math.min(100, (value / max) * 100);
-  return (
-    <div style={{ marginBottom: 7 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
-        <span style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{label}</span>
-        <span style={{ fontFamily: 'var(--f-display)', fontSize: 11, fontWeight: 700, color: 'var(--text-primary)' }}>{Math.round(value)}</span>
-      </div>
-      <div style={{ height: 4, background: 'var(--surface-overlay)', border: '1px solid var(--border-subtle)' }}>
-        <div style={{ height: '100%', width: `${pct}%`, background: 'var(--accent)', transition: 'width 0.5s' }}/>
-      </div>
-    </div>
-  );
-}
 
 function Delta({ value }) {
   if (Math.abs(value) < 0.5) return <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--text-muted)' }}>≈</span>;
@@ -36,6 +22,8 @@ const TAG_META = {
   'meta-forte':        { label: 'META S',    color: 'var(--accent)', bg: 'var(--accent-muted)' },
   'flex':              { label: 'FLEX',       color: '#4ac8e8', bg: 'rgba(74,200,232,0.10)' },
   'low-data':          { label: 'PEU DATA',  color: 'var(--loss)', bg: 'var(--loss-bg)' },
+  'risky-blind':       { label: 'BLIND RISQUÉ', color: 'var(--loss)', bg: 'var(--loss-bg)' },
+  'comfort':           { label: 'CONFORT',  color: '#9cd36b', bg: 'rgba(156,211,107,0.10)' },
 };
 function Tag({ tag }) {
   const m = TAG_META[tag];
@@ -43,11 +31,10 @@ function Tag({ tag }) {
   return <span style={{ padding: '2px 7px', fontFamily: 'var(--f-display)', fontSize: 9, letterSpacing: '0.12em', color: m.color, background: m.bg, border: `1px solid ${m.color}` }}>{m.label}</span>;
 }
 
-// META S must reflect a genuinely top-tier patch winner. The backend
-// adds `meta-forte` when meta_score ≥ 75, but in case the data is
-// inconsistent (low meta, weak winrate) we filter here so a B/C/D
-// pick can never display META S.
-const META_S_MIN_SCORE = 60;
+// META S doit refléter un vrai gagnant du patch. Le serveur pose `meta-forte`
+// quand la contribution méta atteint +1,5 point de win rate ; ce filtre évite
+// qu'une donnée incohérente affiche META S sur un pick faible.
+const META_S_MIN_SCORE = 1.5;
 function tagAllowed(tag, rec) {
   if (tag === 'off-meta') return false;
   if (tag === 'meta-forte') {
@@ -60,8 +47,8 @@ function tagAllowed(tag, rec) {
 function RecommendationCard({ rec, rank, champData, isWildcard }) {
   const [open, setOpen] = useState(rank === 1);
 
-  const matchupScore = rec.breakdown?.matchup ?? 50;
-  const synergyScore = rec.breakdown?.synergy ?? 50;
+  const matchup = rec.breakdown?.matchup ?? 0;
+  const synergy = rec.breakdown?.synergy ?? 0;
   const isBest = rank === 1 && !isWildcard;
 
   return (
@@ -94,13 +81,16 @@ function RecommendationCard({ rec, rank, champData, isWildcard }) {
             <span style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 15, letterSpacing: '0.04em' }}>{rec.champion_name}</span>
             {isWildcard && <span style={{ padding: '1px 6px', fontFamily: 'var(--f-display)', fontSize: 9, letterSpacing: '0.12em', background: 'var(--warn-bg)', color: 'var(--warn)', border: '1px solid var(--warn-border)' }}>SECRET</span>}
             {(rec.tags || []).filter(t => tagAllowed(t, rec)).map(t => <Tag key={t} tag={t}/>)}
+            {rec.tie_with_leader && rank !== 1 && (
+              <span style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--warn)', letterSpacing: '0.08em' }}>ÉQUIVALENT AU 1ER</span>
+            )}
           </div>
           <div style={{ display: 'flex', gap: 10, marginTop: 5, flexWrap: 'wrap', alignItems: 'center' }}>
-            <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: matchupScore >= 60 ? 'var(--win)' : matchupScore < 45 ? 'var(--loss)' : 'var(--text-muted)', letterSpacing: '0.08em' }}>
-              MU {Math.round(matchupScore)}
+            <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: advantageColor(matchup), letterSpacing: '0.08em' }}>
+              MU {formatAdvantage(matchup)}
             </span>
-            <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: synergyScore >= 60 ? 'var(--win)' : 'var(--text-muted)', letterSpacing: '0.08em' }}>
-              SYN {Math.round(synergyScore)}
+            <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: advantageColor(synergy), letterSpacing: '0.08em' }}>
+              SYN {formatAdvantage(synergy)}
             </span>
             {rec.confidence != null && (
               <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: rec.confidence >= 60 ? 'var(--win)' : rec.confidence >= 35 ? 'var(--warn)' : 'var(--loss)', letterSpacing: '0.08em' }}>
@@ -120,12 +110,10 @@ function RecommendationCard({ rec, rank, champData, isWildcard }) {
           minWidth: 72,
           border: isBest ? '2px solid #f0ebe0' : '1px solid var(--border-subtle)',
         }}>
-          <div style={{ fontSize: 36, fontWeight: 700, lineHeight: 0.85, letterSpacing: '-0.04em' }}>{Math.round(rec.total_score)}</div>
-          {rec.score_range && (
-            <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, marginTop: 3, opacity: 0.7 }}>
-              ±{Math.round((rec.score_range[1] - rec.score_range[0]) / 2)}
-            </div>
-          )}
+          <div style={{ fontSize: 30, fontWeight: 700, lineHeight: 0.85, letterSpacing: '-0.04em' }}>{formatAdvantage(rec.total_score)}</div>
+          <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, marginTop: 3, opacity: 0.7 }}>
+            {formatSd(rec.score_sd) || 'pts WR'}
+          </div>
         </div>
 
         <button
@@ -199,11 +187,7 @@ function RecommendationCard({ rec, rank, champData, isWildcard }) {
             <div style={{ marginTop: 14 }}>
               <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--accent)', letterSpacing: '0.18em', marginBottom: 8, paddingBottom: 3, borderBottom: '1.5px solid var(--accent)', textTransform: 'uppercase' }}>Breakdown</div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 20px' }}>
-                {Object.entries({ meta: 'Meta', matchup: 'Matchup', synergy: 'Synergy', composition: 'Comp', mastery: 'Maîtrise', draft_risk: 'Risque', ml_prediction: 'IA' }).map(([k, lbl]) => {
-                  const v = rec.breakdown[k];
-                  if (v == null) return null;
-                  return <Bar key={k} label={lbl} value={v}/>;
-                })}
+                {(rec.breakdown.terms || []).map(t => <TermBar key={t.name} term={t}/>)}
               </div>
             </div>
           )}
@@ -233,7 +217,7 @@ function RecommendationCard({ rec, rank, champData, isWildcard }) {
 }
 
 function WildcardMini({ rec, champData }) {
-  const score = Math.round(rec.total_score);
+  const score = formatAdvantage(rec.total_score);
   return (
     <div style={{
       display: 'flex', alignItems: 'center', gap: 7,
@@ -254,7 +238,7 @@ function WildcardMini({ rec, champData }) {
         </div>
         {rec.matchup_details?.length > 0 && (
           <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--text-muted)' }}>
-            MU {Math.round(rec.breakdown?.matchup ?? 50)}
+            MU {formatAdvantage(rec.breakdown?.matchup ?? 0)}
           </div>
         )}
       </div>
@@ -392,9 +376,14 @@ export default function RecommendationPanel({ champions }) {
 
       {poolRecs.length > 0 && (
         <div>
+          {poolRecs.filter(r => r.tie_with_leader).length > 1 && (
+            <div style={{ padding: '8px 12px', background: 'var(--warn-bg)', border: '1px solid var(--warn-border)', marginBottom: 10, fontFamily: 'var(--f-body)', fontSize: 11, color: 'var(--warn)' }}>
+              {poolRecs.filter(r => r.tie_with_leader).length} options équivalentes : joue ton confort.
+            </div>
+          )}
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 10 }}>
             <span style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 14, letterSpacing: '0.1em' }}>RECOMMANDATIONS</span>
-            <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--text-muted)' }}>{poolRecs.length} champion{poolRecs.length > 1 ? 's' : ''}</span>
+            <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--text-muted)' }}>points de win rate vs moyenne du pool</span>
           </div>
           <div className="stagger-children">
             {poolRecs.map((rec, i) => (

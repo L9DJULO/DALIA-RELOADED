@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { formatAdvantage } from '../../lib/scores';
 import { History, BarChart2, Trash2, RefreshCw, Trophy } from 'lucide-react';
 import useHistoryStore from '../../stores/historyStore';
 import { getDDragonChampUrl } from '../../lib/constants';
@@ -111,7 +112,7 @@ function HistoryTab({ champions }) {
               </div>
               <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                 {entry.win_probability != null && <span>P(WIN) <span style={{ color: entry.win_probability >= 52 ? 'var(--win)' : entry.win_probability <= 48 ? 'var(--loss)' : 'var(--warn)' }}>{entry.win_probability.toFixed(1)}%</span></span>}
-                {entry.recommendation_score != null && <span>SCORE {Math.round(entry.recommendation_score)}</span>}
+                {entry.recommendation_score != null && <span>{entry.score_unit === 'wr_points' ? `AVANTAGE ${formatAdvantage(entry.recommendation_score)}` : `SCORE ${Math.round(entry.recommendation_score)} (ancien barème)`}</span>}
                 {entry.created_at && <span>{new Date(entry.created_at).toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric' })}</span>}
               </div>
             </div>

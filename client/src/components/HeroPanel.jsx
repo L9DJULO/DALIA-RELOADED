@@ -5,10 +5,11 @@
 // ─────────────────────────────────────────────
 import React from 'react';
 import { champLoading, champIcon, SHORTLIST, TAG_CFG, ROLE_LABEL, hasPoolForCurrentRole } from '../data/mock';
-import { Portrait, Tag, TierBadge, SectionLbl, ReasonBullet, Bar, Delta, RoleChip } from './Primitives';
+import { Portrait, Tag, SectionLbl, ReasonBullet, Bar, Delta, RoleChip } from './Primitives';
+import { formatAdvantage, formatSd } from '../lib/scores';
 
 // ── Score box ──────────────────────────────────
-function ScoreBox({ value, accent }) {
+function ScoreBox({ value, sd, accent }) {
   return (
     <div style={{
       background: accent ? 'var(--accent)' : 'var(--ink-2)',
@@ -20,8 +21,8 @@ function ScoreBox({ value, accent }) {
       boxShadow: '4px 4px 0 var(--ink-0)',
       minWidth: 118, flexShrink: 0,
     }}>
-      <div style={{ fontSize: 56, fontWeight: 700, lineHeight: 0.85, letterSpacing: '-0.04em' }}>{value}</div>
-      <div style={{ fontSize: 9, letterSpacing: '0.3em', marginTop: 3, fontWeight: 500, opacity: 0.75 }}>SCORE</div>
+      <div style={{ fontSize: 46, fontWeight: 700, lineHeight: 0.85, letterSpacing: '-0.04em' }}>{formatAdvantage(value)}</div>
+      <div style={{ fontSize: 9, letterSpacing: '0.3em', marginTop: 3, fontWeight: 500, opacity: 0.75 }}>{formatSd(sd) || 'PTS WR'}</div>
     </div>
   );
 }
@@ -72,10 +73,10 @@ function HeroSplash({ pick, idx }) {
 
       {/* foot */}
       <div className="anim-score-enter" style={{ position:'absolute', bottom:0, left:0, right:0, padding:'12px 18px 16px', zIndex:1, display:'flex', alignItems:'flex-end', gap:20, borderTop:'1px solid rgba(244,239,230,0.12)' }}>
-        <ScoreBox value={pick.score} accent/>
+        <ScoreBox value={pick.score} sd={pick.sd} accent/>
         <div style={{ display:'flex', flexDirection:'column', gap:5, fontFamily:'var(--f-mono)', fontSize:11 }}>
           {[
-            ['TIER',   <TierBadge key="t" tier={pick.tier}/>],
+            ['INCERTITUDE', <b key="s" style={{ fontFamily:'var(--f-display)', fontSize:14, color:'var(--bone-0)' }}>{formatSd(pick.sd) || '—'}</b>],
             ['P(WIN) MODÈLE', <b key="w" style={{ fontFamily:'var(--f-display)', fontSize:14, color:'var(--ok)' }}>{pick.winProb == null ? '—' : `${pick.winProb.toFixed(1)}%`}</b>],
             ['CONTEXTE', <b key="f" style={{ fontFamily:'var(--f-display)', fontSize:14, color:'var(--bone-0)' }}>{pick.confidence}/100</b>],
           ].map(([lbl, val]) => (
@@ -123,7 +124,7 @@ const ShortRow = React.memo(function ShortRow({ pick, idx, selected, onSelect })
       <div>
         <div style={{ fontFamily:'var(--f-display)', fontWeight:700, fontSize:15, letterSpacing:'0.03em' }}>{pick.name}</div>
         <div style={{ display:'flex', gap:5, marginTop:3, flexWrap:'wrap', alignItems:'center' }}>
-          <TierBadge tier={pick.tier}/>
+          {pick.tie && <span style={{ fontFamily:'var(--f-mono)', fontSize:9, color:'var(--warn)', letterSpacing:'0.08em' }}>ÉQUIVALENT</span>}
           {!pick.inPool && (
             <span style={{ padding:'1px 5px', background:'var(--ink-3)', color:'var(--bone-3)', border:'1px solid var(--ink-5)', fontFamily:'var(--f-display)', fontSize:9, letterSpacing:'0.15em' }}>HORS POOL</span>
           )}
@@ -131,11 +132,11 @@ const ShortRow = React.memo(function ShortRow({ pick, idx, selected, onSelect })
         </div>
       </div>
       <div style={{ textAlign:'right', flexShrink:0 }}>
-        <div style={{ fontFamily:'var(--f-display)', fontWeight:700, fontSize: isSel ? 36 : 28, lineHeight:0.88, color: isSel ? 'var(--accent)' : 'var(--bone-0)' }}>
-          {pick.score}
+        <div style={{ fontFamily:'var(--f-display)', fontWeight:700, fontSize: isSel ? 30 : 24, lineHeight:0.88, color: isSel ? 'var(--accent)' : 'var(--bone-0)' }}>
+          {formatAdvantage(pick.score)}
         </div>
         <div style={{ fontFamily:'var(--f-mono)', fontSize:10, color:'var(--bone-2)' }}>
-          /100
+          {formatSd(pick.sd) || 'pts WR'}
         </div>
       </div>
     </button>

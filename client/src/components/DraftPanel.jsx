@@ -6,7 +6,7 @@
 // ─────────────────────────────────────────────
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { DRAFT, SHORTLIST, ROLE_LABEL, champIcon } from '../data/mock';
-import { Portrait, SectionLbl, Bar, Delta, RoleChip, ReasonBullet } from './Primitives';
+import { Portrait, SectionLbl, Bar, Delta, RoleChip, ReasonBullet, TermBar } from './Primitives';
 import useDraftStore from '../stores/draftStore';
 import useChampionsStore from '../stores/championsStore';
 import useLCUStore from '../stores/lcuStore';
@@ -525,14 +525,7 @@ function Reasoning({ pick }) {
 
       {tab === 'breakdown' && (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 18px' }}>
-          {Object.entries({
-            meta: 'META', matchup: 'MATCHUP', synergy: 'SYNERGY',
-            comp: 'COMP', mastery: 'MAÎTRISE', risk: 'RISQUE',
-          }).map(([k, lbl]) => {
-            const v = pick.breakdown[k];
-            if (v == null) return null;
-            return <Bar key={k} label={lbl} value={v} />;
-          })}
+          {(pick.terms || []).map(t => <TermBar key={t.name} term={t} />)}
         </div>
       )}
     </div>

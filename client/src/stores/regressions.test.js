@@ -231,11 +231,26 @@ it('rejects malformed replays', () => {
   expect(() => validateReplay({ schema_version: 1, steps: [{ at: 'bad', state: {} }] })).toThrow();
 });
 
-it('never invents P(win), WPA or confidence intervals from scores', () => {
-  const rec = mapRec({ total_score: 90, champion_key: 'Ahri', breakdown: {}, matchup_details: [{ win_rate: 58 }], tags: ['hors-pool', 'flex'] });
-  expect(rec.winProb).toBeNull(); expect(rec).not.toHaveProperty('scoreRange'); expect(rec.wpa).toBeNull();
+it('maps signed advantages, uncertainty and ties without inventing probabilities', () => {
+  const rec = mapRec({ total_score: 2.34, score_sd: 1.2, tie_with_leader: true, champion_key: 'Ahri', breakdown: { meta: 1.1, terms: [{ name: 'meta', value: 1.1, sd: 0.8, source: 'observed', sample: 900, note: '' }] }, matchup_details: [{ win_rate: 58 }], tags: ['hors-pool', 'flex'] });
+  expect(rec.score).toBe(2.3); expect(rec.sd).toBe(1.2); expect(rec.tie).toBe(true);
+  expect(rec.terms[0]).toMatchObject({ name: 'meta', value: 1.1, source: 'observed' });
+  expect(rec).not.toHaveProperty('tier'); expect(rec.winProb).toBeNull(); expect(rec.wpa).toBeNull();
   expect(rec.tags).toEqual(['flex']);
-  expect(mapRec({ total_score: 40, breakdown: { ml_explanation: { win_probability: .531 } } }).winProb).toBeCloseTo(53.1);
+  expect(mapRec({ total_score: -0.4, breakdown: { ml_explanation: { win_probability: .531 } } }).winProb).toBeCloseTo(53.1);
+});
+
+it('formats advantages with sign and uncertainty', async () => {
+  const { formatAdvantage, formatSd } = await import('../lib/scores');
+  expect(formatAdvantage(3.14)).toBe('+3.1'); expect(formatAdvantage(-1.75)).toBe('\u22121.8'); expect(formatAdvantage(0.04)).toBe('0.0');
+  expect(formatSd(1.44)).toBe('\u00b11.4'); expect(formatSd(null)).toBe('');
+});
+
+it('saves history with the win-rate unit and a signed score', async () => {
+  const { historyPayload } = await import('../lib/replay');
+  useDraftStore.setState({ recommendations: [{ champion_key: 'Ahri', total_score: -1.2, breakdown: {} }], stale: false });
+  const payload = historyPayload(useDraftStore.getState());
+  expect(payload.recommendation_score).toBe(-1.2); expect(payload.score_unit).toBe('wr_points');
 });
 
 it('sends the League rank, then the profile rank, as rank_bucket', async () => {
