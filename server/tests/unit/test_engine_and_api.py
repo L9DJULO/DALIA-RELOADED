@@ -21,9 +21,58 @@ async def test_recommendation_preserves_input_and_disables_unavailable_wpa(catal
     assert body.model_dump() == before
     assert len(result.recommendations) == 2
     assert all(r.is_pool_champion for r in result.recommendations)
-    assert all(r.wpa is None and r.score_range is None for r in result.recommendations)
+    assert all(r.wpa is None for r in result.recommendations)
     assert result.win_probability is None
     assert any(r.mechanics for r in result.recommendations)
+
+
+@pytest.mark.asyncio
+async def test_advantages_are_relative_to_pool_mean_with_uncertainty(catalog):
+    engine = DraftEngine(catalog, catalog.fetcher)
+    body = DraftRequest(draft_state={"my_role": "top", "enemy_picks": [{"champion_id": 59, "role": "jungle"}]},
+        champion_pool={"top": [{"champion_id": 78, "tier": "S"}, {"champion_id": 75, "tier": "B"}, {"champion_id": 54, "tier": "D"}]},
+        enable_wildcard=True)
+    result = await engine.recommend(body)
+    pool = [r for r in result.recommendations if r.is_pool_champion]
+    assert abs(sum(r.total_score for r in pool)) < 0.02  # arrondis à deux décimales
+    assert result.recommendations == sorted(result.recommendations, key=lambda r: r.total_score, reverse=True)
+    for r in result.recommendations:
+        assert r.score_sd > 0
+        assert r.score_range == [round(r.total_score - r.score_sd, 2), round(r.total_score + r.score_sd, 2)]
+        assert r.breakdown.terms and {t.name for t in r.breakdown.terms} >= {"meta", "mastery", "mechanics"}
+        assert 8 <= r.confidence <= 95
+    assert result.recommendations[0].tie_with_leader
+    assert result.top_group_ids[0] == result.recommendations[0].champion_id
+    assert result.rank_bucket is None and result.data_status["rank"] == catalog.fetcher.TIER
+
+
+@pytest.mark.asyncio
+async def test_future_opponent_term_only_when_lane_opponent_unknown(catalog):
+    engine = DraftEngine(catalog, catalog.fetcher)
+    blind = await engine.recommend(DraftRequest(draft_state={"my_role": "top"},
+        champion_pool={"top": [{"champion_id": 78}, {"champion_id": 75}]}, enable_wildcard=False))
+    assert all(any(t.name == "future_opponent" for t in r.breakdown.terms) for r in blind.recommendations)
+    known = await engine.recommend(DraftRequest(draft_state={"my_role": "top", "enemy_picks": [{"champion_id": 24, "role": "top"}]},
+        champion_pool={"top": [{"champion_id": 78}, {"champion_id": 75}]}, enable_wildcard=False))
+    assert all(r.breakdown.draft_risk == 0 and all(t.name != "future_opponent" for t in r.breakdown.terms) for r in known.recommendations)
+
+
+@pytest.mark.asyncio
+async def test_preferences_scale_terms_and_rank_reaches_the_source(catalog):
+    engine = DraftEngine(catalog, catalog.fetcher)
+    seen = []
+    async def fetch(role="mid", patch="current", tier=None):
+        seen.append(tier); return {}
+    catalog.fetcher.fetch_tierlist = fetch
+    pool = {"top": [{"champion_id": 78, "tier": "S"}, {"champion_id": 75, "tier": "D"}]}
+    result = await engine.recommend(DraftRequest(draft_state={"my_role": "top"}, champion_pool=pool,
+        enable_wildcard=False, weight_overrides={"mastery": 1.5}, rank_bucket="GOLD"))
+    assert "gold" in seen and result.rank_bucket == "gold" and result.data_status["rank"] == "gold"
+    mastery = {r.champion_id: r.breakdown.mastery for r in result.recommendations}
+    plain = await engine.recommend(DraftRequest(draft_state={"my_role": "top"}, champion_pool=pool,
+        enable_wildcard=False, rank_bucket="gold"))
+    plain_mastery = {r.champion_id: r.breakdown.mastery for r in plain.recommendations}
+    assert mastery[75] == pytest.approx(plain_mastery[75] * 1.5, abs=0.02)
 
 
 @pytest.mark.asyncio
@@ -96,7 +145,9 @@ async def test_wpa_compares_eligible_choices_in_the_same_context(catalog):
                         champion_pool={"top": [{"champion_id": 78}, {"champion_id": 75}]})
     results = {r.champion_id: r for r in (await engine.recommend(body)).recommendations}
     assert results[78].wpa['delta_pp'] == 2 and results[75].wpa['delta_pp'] == -2
-    assert results[78].breakdown.wpa_adjustment == 4
+    assert results[78].breakdown.wpa_adjustment == pytest.approx(2.0)
+    assert results[75].breakdown.wpa_adjustment == pytest.approx(-2.0)
+    assert any(t.name == 'model' for t in results[78].breakdown.terms)
     assert results[78].wpa['baseline_probability'] == 54
     assert results[78].wpa['source'] == 'DALIA'
 
