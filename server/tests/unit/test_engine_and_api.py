@@ -30,7 +30,8 @@ async def test_recommendation_preserves_input_and_disables_unavailable_wpa(catal
 async def test_personal_refresh_does_not_block_draft(catalog):
     from unittest.mock import Mock
     personal = Mock()
-    personal.get_champion_score_boost.return_value = 0
+    personal.get_champion_personal.return_value = None
+    personal.get_mastery_entry.return_value = None
     body = DraftRequest(draft_state={"my_role": "top"}, champion_pool={"top": [{"champion_id": 78}]},
                         enable_wildcard=False, puuid="valid-puuid-123456")
     await DraftEngine(catalog, catalog.fetcher).recommend(body, personal)
