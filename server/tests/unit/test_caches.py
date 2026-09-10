@@ -39,7 +39,7 @@ async def test_version_refresh_bypasses_memory_and_disk(tmp_path):
 async def test_empty_meta_can_recover(catalog):
     meta = MetaAnalyzer(catalog, catalog.fetcher)
     await meta.load_tierlist('mid')
-    assert 'mid' not in meta._loaded_roles
+    assert not meta.is_loaded('mid')
     catalog.fetcher.fetch_tierlist = AsyncMock(return_value={"cid": {"103": {"wr": 52, "games": 1000, "pr": 3, "br": 1}}})
     await meta.load_tierlist('mid')
     assert meta.games(103, 'mid') == 1000
@@ -66,7 +66,7 @@ async def test_personal_background_refresh_closes_cleanly(tmp_path, monkeypatch)
 
 @pytest.mark.asyncio
 async def test_meta_never_blends_overlapping_windows(catalog):
-    async def fetch(role, patch):
+    async def fetch(role, patch, tier=None):
         return {"cid": {"103": {"wr": 60 if patch == "current" else 51,
                                 "games": 6000 if patch == "current" else 40000}}}
     catalog.fetcher.fetch_tierlist = fetch

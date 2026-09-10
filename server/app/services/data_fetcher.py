@@ -199,13 +199,14 @@ class LolalyticsFetcher:
         return f"{self.DDRAGON}/cdn/{ver}/img/champion/{champion_key}.png"
 
     # ── Lolalytics — Tier list (ep=list) ─────────────────────────────────
-    async def fetch_tierlist(self, role: str = "mid", patch: str = "current") -> Dict[str, Any]:
-        """Fetch the tier list for a role. Returns {cid: {wr, pr, br, games, ...}}."""
+    async def fetch_tierlist(self, role: str = "mid", patch: str = "current", tier: Optional[str] = None) -> Dict[str, Any]:
+        """Fetch the tier list for a role at a Lolalytics tier. Returns {cid: {wr, pr, br, games, ...}}."""
         lane = role_to_lane(role)
+        tier = tier or self.TIER
         if patch == "current":
             patch = await self.get_current_patch()
 
-        cache_key = f"lola_list_{lane}_{patch}_{self.TIER}_{self.QUEUE}_{self.REGION}"
+        cache_key = f"lola_list_{lane}_{patch}_{tier}_{self.QUEUE}_{self.REGION}"
         cached = self._cache.get(cache_key)
         if cached:
             self.last_success[f"meta:{role}"] = self._cache.collected_at(cache_key)
@@ -217,7 +218,7 @@ class LolalyticsFetcher:
             "v": "1",
             "patch": patch,
             "lane": lane,
-            "tier": self.TIER,
+            "tier": tier,
             "queue": self.QUEUE,
             "region": self.REGION,
         }
