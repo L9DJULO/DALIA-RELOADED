@@ -48,3 +48,19 @@ def test_jwt_expiry_signature_and_required_subject():
     with pytest.raises(JWTError): decode_access_token(token + "bad")
     with pytest.raises(JWTError): decode_access_token(create_access_token({"sub": "123"}, timedelta(seconds=-1)))
     with pytest.raises(JWTError): decode_access_token(create_access_token({}))
+
+
+def test_weight_overrides_are_multipliers_between_half_and_one_and_half():
+    from app.models.validation import validate_weights
+    assert validate_weights({"meta": 0.5, "draft_risk": 1.5}) == {"meta": 0.5, "draft_risk": 1.5}
+    for bad in ({"meta": 0.2}, {"meta": 2.0}, {"unknown": 1.0}):
+        with pytest.raises(ValueError):
+            validate_weights(bad)
+
+
+def test_rank_bucket_is_normalized_on_the_request():
+    assert DraftRequest(draft_state={}, rank_bucket="EMERALD").rank_bucket == "emerald"
+    assert DraftRequest(draft_state={}, rank_bucket="Challenger").rank_bucket == "master_plus"
+    assert DraftRequest(draft_state={}, rank_bucket="").rank_bucket is None
+    with pytest.raises(ValueError):
+        DraftRequest(draft_state={}, rank_bucket="wood")

@@ -44,6 +44,7 @@ LCU_ROLE_MAP = {
 CACHE_DIR = Path(config.cache_dir) / "personal"
 CACHE_TTL = 600  # 10 minutes
 FAILURE_TTL = 60  # do not hammer Riot again for a minute after a failed fetch
+MASTERY_TTL = 86400  # la maîtrise bouge lentement : un appel par jour et par joueur
 
 
 class ChampionPersonalStats:
@@ -87,6 +88,7 @@ class PersonalStatsService:
 
     def __init__(self):
         self._cache: Dict[str, Any] = {}  # puuid → { ts, data }
+        self._mastery: Dict[str, Any] = {}  # clé → {ts, data}
         self._failed_at: Dict[str, float] = {}  # cache key → last failed fetch
         self._refresh_tasks = {}
         self._limit = asyncio.Semaphore(2)
@@ -263,13 +265,19 @@ class PersonalStatsService:
             return
         key = cache_key(puuid, region.upper(), "ranked", 50)
         cached = self._cache.get(key)
-        if cached and time.time() - cached["ts"] < CACHE_TTL:
+        mastery_fresh = self._mastery.get(cache_key("mastery", puuid, region.upper()))
+        if cached and time.time() - cached["ts"] < CACHE_TTL and mastery_fresh and time.time() - mastery_fresh["ts"] < MASTERY_TTL:
             return
         if key in self._refresh_tasks or len(self._refresh_tasks) >= 8:
             return
+        mastery_key = cache_key("mastery", puuid, region.upper())
+        mastery_cached = self._mastery.get(mastery_key)
+        need_mastery = not mastery_cached or time.time() - mastery_cached["ts"] >= MASTERY_TTL
         async def refresh():
             try:
                 await self.get_personal_stats(puuid, region)
+                if need_mastery:
+                    await self.get_mastery(puuid, region)
             finally:
                 self._refresh_tasks.pop(key, None)
         self._refresh_tasks[key] = asyncio.create_task(refresh())
@@ -281,42 +289,64 @@ class PersonalStatsService:
         await asyncio.gather(*tasks, return_exceptions=True)
         self._refresh_tasks.clear()
 
-    def get_champion_score_boost(
-        self,
-        puuid: str,
-        champion_id: int,
-        role: str,
-        region: str = "EUW1",
-    ) -> float:
-        """Get a personal score multiplier for a champion.
-
-        Returns a value between 0.8 and 1.2 based on personal performance.
-        - 1.0 = neutral (no data or average)
-        - >1.0 = player performs well on this champion
-        - <1.0 = player underperforms on this champion
-        """
+    def get_champion_personal(self, puuid: str, champion_id: int, role: str, region: str = "EUW1") -> Optional[Dict[str, Any]]:
+        """Parties et win rate ranked récents sur (champion, rôle), depuis le cache frais uniquement."""
         cached = self._cache.get(cache_key(puuid, region.upper(), "ranked", 50))
         if not cached or time.time() - cached["ts"] >= CACHE_TTL:
-            return 1.0
+            return None
+        stats = cached["data"].get("champions", {}).get(f"{champion_id}_{role}")
+        if not stats:
+            return None
+        return {"games": int(stats.get("games", 0)), "win_rate": float(stats.get("win_rate", 0.0))}
 
-        data = cached["data"]
-        key = f"{champion_id}_{role}"
-        champ_stats = data.get("champions", {}).get(key)
-        if not champ_stats or champ_stats["games"] < 3:
-            return 1.0
+    def get_mastery_entry(self, puuid: str, champion_id: int, region: str = "EUW1") -> Optional[Dict[str, Any]]:
+        cached = self._mastery.get(cache_key("mastery", puuid, region.upper()))
+        if not cached or time.time() - cached["ts"] >= MASTERY_TTL:
+            return None
+        return cached["data"].get(champion_id)
 
-        # Score based on win rate deviation from 50% and games played
-        wr = champ_stats["win_rate"]
-        games = champ_stats["games"]
-
-        # Win rate component: +/- 10% boost capped
-        wr_boost = (wr - 50) / 100  # -0.5 to +0.5
-        wr_boost = max(-0.15, min(0.15, wr_boost))
-
-        # Confidence from games played (more games = stronger signal)
-        confidence = min(games / 20, 1.0)  # Full confidence at 20+ games
-
-        return 1.0 + (wr_boost * confidence)
+    async def get_mastery(self, puuid: str, region: str = "EUW1") -> Dict[int, Dict[str, Any]]:
+        """Points et date de dernière partie par champion (champion-mastery-v4)."""
+        key = cache_key("mastery", puuid, region.upper())
+        cached = self._mastery.get(key)
+        if cached and time.time() - cached["ts"] < MASTERY_TTL:
+            return cached["data"]
+        disk = self._load_disk_cache(key, ttl=MASTERY_TTL)
+        if disk:
+            data = {int(k): v for k, v in disk.get("mastery", {}).items()}
+            self._mastery[key] = {"ts": time.time(), "data": data}
+            return data
+        api_key = config.riot_api_key
+        if not api_key or time.time() - self._failed_at.get(key, 0) < FAILURE_TTL:
+            return {}
+        platform = region.lower()
+        url = f"https://{platform}.api.riotgames.com/lol/champion-mastery/v4/champion-masteries/by-puuid/{puuid}"
+        try:
+            async with self._limit, asyncio.timeout(20):
+                await self._budget.acquire(api_key)
+                async with httpx.AsyncClient(timeout=15.0) as client:
+                    resp = await client.get(url, headers={"X-Riot-Token": api_key})
+            if resp.status_code == 429:
+                await asyncio.to_thread(self._budget.penalize, api_key, resp.headers.get("Retry-After", 10))
+            if resp.status_code != 200:
+                self._failed_at[key] = time.time()
+                return {}
+            data = {}
+            for entry in resp.json():
+                try:
+                    data[int(entry["championId"])] = {"points": int(entry.get("championPoints", 0)),
+                                                      "last_played": float(entry.get("lastPlayTime", 0)) / 1000.0}
+                except (KeyError, TypeError, ValueError):
+                    continue
+            self._mastery[key] = {"ts": time.time(), "data": data}
+            self._save_disk_cache(key, {"mastery": {str(k): v for k, v in data.items()}})
+            return data
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:
+            self._failed_at[key] = time.time()
+            logger.error("Failed to fetch mastery for %s: %s", puuid[:8], exc)
+            return {}
 
     def _empty_result(self, puuid: str) -> Dict[str, Any]:
         return {
@@ -328,14 +358,14 @@ class PersonalStatsService:
             "overall": {"games": 0, "wins": 0, "win_rate": 0},
         }
 
-    def _load_disk_cache(self, puuid: str) -> Optional[Dict]:
+    def _load_disk_cache(self, puuid: str, ttl: float = CACHE_TTL) -> Optional[Dict]:
         path = CACHE_DIR / f"{cache_key(puuid)}.json"
         if not path.exists():
             return None
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
             # Check TTL (10 min)
-            if time.time() - data.get("_cached_at", 0) > CACHE_TTL:
+            if time.time() - data.get("_cached_at", 0) > ttl:
                 return None
             return data
         except Exception:

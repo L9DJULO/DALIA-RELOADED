@@ -3,6 +3,7 @@
 // ─────────────────────────────────────────────
 import React, { useState, useEffect } from 'react';
 import { champIcon, TAG_CFG, KIND_CFG, ROLE_LABEL } from '../data/mock';
+import { advantageColor, formatAdvantage, formatSd } from '../lib/scores';
 
 // ── Timer ──────────────────────────────────────
 export function useTimer(initial = 28) {
@@ -76,6 +77,35 @@ export function Bar({ label, value, max = 100 }) {
       </div>
       <div className="bar-track">
         <div className="bar-fill" style={{ width: `${pct}%` }}/>
+      </div>
+    </div>
+  );
+}
+
+// ── TermBar : une contribution signée, en points de win rate ──
+export const TERM_LABELS = {
+  meta: 'Méta', matchup: 'Matchup', future_opponent: 'Adversaire à venir', mastery: 'Maîtrise',
+  composition: 'Compo', archetype: 'Archétype', synergy: 'Synergie', mechanics: 'Mécaniques', model: 'Modèle',
+};
+const TERM_SOURCE_COLOR = { observed: 'var(--accent)', model: '#4ac8e8', heuristic: 'var(--text-muted)' };
+
+export function TermBar({ term, max = 4 }) {
+  const half = Math.min(100, (Math.abs(term.value) / max) * 100) / 2;
+  const color = TERM_SOURCE_COLOR[term.source] || TERM_SOURCE_COLOR.heuristic;
+  const side = term.value >= 0 ? { left: '50%' } : { right: '50%' };
+  return (
+    <div style={{ marginBottom: 7 }} title={term.note || ''}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
+        <span style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+          {TERM_LABELS[term.name] || term.name}
+        </span>
+        <span style={{ fontFamily: 'var(--f-display)', fontSize: 11, fontWeight: 700, color: advantageColor(term.value) }}>
+          {formatAdvantage(term.value)} <span style={{ opacity: 0.6, fontWeight: 400 }}>{formatSd(term.sd)}</span>
+        </span>
+      </div>
+      <div style={{ position: 'relative', height: 4, background: 'var(--surface-overlay, var(--ink-2))', border: '1px solid var(--border-subtle, var(--ink-5))' }}>
+        <div style={{ position: 'absolute', left: '50%', top: -2, bottom: -2, width: 1, background: 'var(--border-subtle, var(--ink-5))' }}/>
+        <div style={{ position: 'absolute', top: 0, height: '100%', width: `${half}%`, background: color, ...side }}/>
       </div>
     </div>
   );

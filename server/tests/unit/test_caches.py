@@ -39,7 +39,7 @@ async def test_version_refresh_bypasses_memory_and_disk(tmp_path):
 async def test_empty_meta_can_recover(catalog):
     meta = MetaAnalyzer(catalog, catalog.fetcher)
     await meta.load_tierlist('mid')
-    assert 'mid' not in meta._loaded_roles
+    assert not meta.is_loaded('mid')
     catalog.fetcher.fetch_tierlist = AsyncMock(return_value={"cid": {"103": {"wr": 52, "games": 1000, "pr": 3, "br": 1}}})
     await meta.load_tierlist('mid')
     assert meta.games(103, 'mid') == 1000
@@ -48,11 +48,11 @@ async def test_empty_meta_can_recover(catalog):
 @pytest.mark.asyncio
 async def test_expired_cross_lane_cache_refetches(catalog):
     matchup = MatchupAnalyzer(catalog, catalog.fetcher)
-    matchup._matchup_cache[(78, 'top', 'jungle')] = {59: (60., 100, 5., 5.)}
-    matchup._loaded_at[(78, 'top', 'jungle')] = 0
+    matchup._matchup_cache[(78, 'top', 'jungle', catalog.fetcher.TIER)] = {59: (60., 100, 5., 5.)}
+    matchup._loaded_at[(78, 'top', 'jungle', catalog.fetcher.TIER)] = 0
     catalog.fetcher.fetch_counter_page = AsyncMock(return_value={"counters": [{"cid": 59, "vsWr": 48., "n": 100, "d1": -2, "d2": -2}]})
     await matchup.load_matchups(78, 'top', 'jungle')
-    assert matchup._matchup_cache[(78, 'top', 'jungle')][59][0] == 48
+    assert matchup._matchup_cache[(78, 'top', 'jungle', catalog.fetcher.TIER)][59][0] == 48
 
 
 @pytest.mark.asyncio
@@ -66,7 +66,7 @@ async def test_personal_background_refresh_closes_cleanly(tmp_path, monkeypatch)
 
 @pytest.mark.asyncio
 async def test_meta_never_blends_overlapping_windows(catalog):
-    async def fetch(role, patch):
+    async def fetch(role, patch, tier=None):
         return {"cid": {"103": {"wr": 60 if patch == "current" else 51,
                                 "games": 6000 if patch == "current" else 40000}}}
     catalog.fetcher.fetch_tierlist = fetch
@@ -79,9 +79,9 @@ async def test_meta_never_blends_overlapping_windows(catalog):
 @pytest.mark.asyncio
 async def test_cross_lane_does_not_use_same_lane_population(catalog):
     matchup = MatchupAnalyzer(catalog, catalog.fetcher)
-    matchup._matchup_cache[(78, 'top', None)] = {59: (65, 100, 10, 10)}
-    matchup._loaded_at[(78, 'top', None)] = time.time()
-    assert await matchup._get_matchup_data(78, 'top', 59, 'jungle') is None
+    matchup._matchup_cache[(78, 'top', None, catalog.fetcher.TIER)] = {59: (65, 100, 10, 10)}
+    matchup._loaded_at[(78, 'top', None, catalog.fetcher.TIER)] = time.time()
+    assert await matchup.matchup_data(78, 'top', 59, 'jungle') is None
 
 
 def test_malformed_source_rows_never_become_scores():
@@ -103,3 +103,13 @@ def test_riot_budget_is_shared_and_does_not_store_secrets(tmp_path):
     assert first.reserve('private-key', now=1010) == 111
     assert first.reserve('another-key', now=1010) == 0
     assert b'private-key' not in (tmp_path / 'quota.sqlite').read_bytes()
+
+
+def test_real_fetcher_accepts_a_tier_on_both_lolalytics_endpoints():
+    """Le faux fetcher des tests accepte tout ; le vrai doit exposer `tier`."""
+    import inspect
+    from app.services.data_fetcher import LolalyticsFetcher
+    for name in ("fetch_tierlist", "fetch_counter_page"):
+        params = inspect.signature(getattr(LolalyticsFetcher, name)).parameters
+        assert "tier" in params, f"{name} doit accepter un tier"
+        assert params["tier"].default is None

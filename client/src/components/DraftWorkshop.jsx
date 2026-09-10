@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { formatAdvantage, formatSd } from '../lib/scores';
 import useDraftStore from '../stores/draftStore';
 import useUserStore from '../stores/userStore';
 import useChampionsStore from '../stores/championsStore';
@@ -8,7 +9,8 @@ import { compareChampions, saveHistoryEntry, apiErrorText } from '../services/ap
 import { historyPayload } from '../lib/replay';
 import '../workshop.css';
 
-const DIMENSIONS = { meta: 'Méta', matchup: 'Matchups', synergy: 'Synergies', composition: 'Composition', mastery: 'Maîtrise', draft_risk: 'Sécurité du pick', mechanics: 'Interactions de kits', wpa_adjustment: 'Ajustement WPA' };
+const DIMENSIONS = { meta: 'Méta', matchup: 'Matchup', future_opponent: 'Adversaire à venir', mastery: 'Maîtrise',
+  composition: 'Composition', archetype: 'Archétype', synergy: 'Synergie', mechanics: 'Mécaniques', model: 'Modèle' };
 const signed = value => `${value > 0 ? '+' : ''}${value.toFixed(1)}`;
 
 export function MechanicsDetails({ rules = [] }) {
@@ -55,7 +57,8 @@ export function ComparePanel() {
         weight_overrides: user.weightOverrides, champion_ids: [Number(left), Number(right)],
         duo_active: !!partner?.active, duo_partner_role: partner?.partnerRole || null,
         enable_wildcard: user.enableWildcard, enable_off_meta: user.enableOffMeta,
-        puuid: summoner?.puuid || null, region: summoner?.region || null }, pending.signal);
+        puuid: summoner?.puuid || null, region: summoner?.region || null,
+        rank_bucket: summoner?.rankTier || user.rankTier || null }, pending.signal);
       if (!pending.signal.aborted) setData(result);
     } catch (e) {
       if (!pending.signal.aborted) setError(apiErrorText(e, 'Comparaison indisponible. Réessaie.'));
@@ -73,10 +76,10 @@ export function ComparePanel() {
     </div>
     {error && <p role="alert">{error}</p>}
     {data && <div aria-live="polite">
-      <h4>{Math.abs(data.score_delta) < 0.1 ? 'Choix équivalents au score affiché' : `${data.score_delta > 0 ? data.left.champion_name : data.right.champion_name} est préféré de ${Math.abs(data.score_delta).toFixed(1)} points`}</h4>
+      <h4>{data.tied ? 'Choix équivalents : l\u2019écart est sous l\u2019incertitude' : `${data.score_delta > 0 ? data.left.champion_name : data.right.champion_name} est préféré de ${Math.abs(data.score_delta).toFixed(1)} points de win rate`}</h4>
       <table><thead><tr><th>Critère</th><th>{data.left.champion_name}</th><th>{data.right.champion_name}</th><th>A − B</th></tr></thead><tbody>
         {data.dimensions.map(d => <tr key={d.dimension}><th>{DIMENSIONS[d.dimension]}</th><td>{d.left.toFixed(1)}</td><td>{d.right.toFixed(1)}</td><td>{signed(d.delta)}</td></tr>)}
-        <tr><th>Score final</th><td>{data.left.total_score}</td><td>{data.right.total_score}</td><td>{signed(data.score_delta)}</td></tr>
+        <tr><th>Avantage</th><td>{formatAdvantage(data.left.total_score)} {formatSd(data.left.score_sd)}</td><td>{formatAdvantage(data.right.total_score)} {formatSd(data.right.score_sd)}</td><td>{signed(data.score_delta)} (incertitude {formatSd(data.combined_sd)})</td></tr>
       </tbody></table>
       <p className="muted">{data.explanation}</p>
       <p>{data.wpa_delta_pp == null ? 'WPA indisponible : pas de modèle validé ou trop peu de contexte.' : `WPA estimé DALIA : ${signed(data.wpa_delta_pp)} points de probabilité pour A par rapport à B. Ce n'est pas une mesure Coachless.`}</p>

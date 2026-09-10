@@ -427,15 +427,18 @@ def generate_verdict(
     cand: Champion,
     draft: DraftState,
     db,
-    match_s: float,
-    syn_s: float,
-    comp_s: float,
-    risk_s: float,
+    matchup: float,
+    synergy: float,
+    composition: float,
+    future: float,
     tags: Optional[List[str]] = None,
     is_pool: bool = True,
 ) -> str:
     """Produce a 1-2 clause verdict line that mentions the concrete
     lane opponent / top synergy ally when relevant.
+
+    matchup, synergy, composition, future : contributions en points de WR
+    (0 quand le terme est absent).
 
     Shape: "<main phrase>[. <secondary caution>]" — secondary is added
     only when it adds new information (e.g. strong first pick is safe,
@@ -485,35 +488,35 @@ def generate_verdict(
     main: str
     if not is_pool:
         # Off-pool / "secret" pick — surface it clearly
-        if match_s >= 60 and lane_opp_name:
+        if matchup >= 2.0 and lane_opp_name:
             main = f"Secret pick — punit {lane_opp_name}."
-        elif match_s >= 60:
+        elif matchup >= 2.0:
             main = "Secret pick — matchup en ta faveur."
         elif "meta-forte" in tags:
             main = "Secret pick — meta-S hors pool."
         else:
             main = "Secret pick — écart de score notable."
-    elif is_last_pick and match_s >= 62 and lane_opp_name:
+    elif is_last_pick and matchup >= 2.5 and lane_opp_name:
         main = f"Counter direct en last pick sur {lane_opp_name}."
     elif is_last_pick:
         main = "Last pick informé — exploite la draft ennemie."
-    elif match_s >= 65 and lane_opp_name:
+    elif matchup >= 3.0 and lane_opp_name:
         main = f"Counter direct {lane_opp_name}."
-    elif match_s >= 65 and enemies_filled:
+    elif matchup >= 3.0 and enemies_filled:
         main = "Matchup très favorable sur la comp ennemie."
-    elif is_first_pick and risk_s >= 72:
-        main = "Safe blind — peu counter-prone, flex."
+    elif is_first_pick and future >= 0.0:
+        main = "Safe blind — peu exposé aux counters."
     elif is_first_pick:
         main = "Blind pick — attention au counter."
-    elif syn_s >= 64 and top_ally_name:
+    elif synergy >= 1.5 and top_ally_name:
         main = f"Synergie forte avec {top_ally_name}."
-    elif syn_s >= 64 and allies_filled:
+    elif synergy >= 1.5 and allies_filled:
         main = "Synergie d'équipe au-dessus de la moyenne."
     elif "meta-forte" in tags:
         main = "Meta-S du patch."
-    elif comp_s >= 72:
+    elif composition >= 1.5:
         main = "Équilibre la compo."
-    elif match_s < 42 and lane_opp_name:
+    elif matchup <= -1.5 and lane_opp_name:
         main = f"Matchup difficile contre {lane_opp_name}."
     else:
         main = "Pick solide."
@@ -521,13 +524,13 @@ def generate_verdict(
     # ── Secondary caution — only add when it adds info ──
     secondary: Optional[str] = None
     # Hard counter warning when main is positive
-    if match_s < 42 and enemies_filled and "Counter" not in main and "Matchup difficile" not in main:
+    if matchup <= -1.5 and enemies_filled and "Counter" not in main and "Matchup difficile" not in main:
         secondary = "Matchup tendu."
     # Risky blind but main wasn't about blind
-    elif risk_s < 40 and enemies_filled and "blind" not in main.lower() and "Counter" not in main:
+    elif future <= -2.0 and enemies_filled and "blind" not in main.lower() and "Counter" not in main:
         secondary = "Exposition aux counters."
     # Great synergy bonus when the main phrase is about matchup
-    elif syn_s >= 62 and top_ally_name and top_ally_name not in main and "Counter" in main:
+    elif synergy >= 1.25 and top_ally_name and top_ally_name not in main and "Counter" in main:
         secondary = f"Bonus synergie avec {top_ally_name}."
 
     return f"{main} {secondary}" if secondary else main

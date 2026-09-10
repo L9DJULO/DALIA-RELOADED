@@ -57,6 +57,9 @@ pub struct SummonerInfo {
     pub summoner_level: i64,
     pub profile_icon_id: i64,
     pub region: String,
+    /// Tier ranked solo ("EMERALD", "GOLD", …), vide si non classé.
+    #[serde(default)]
+    pub rank_tier: String,
 }
 
 fn cell_to_role(cell_id: i64) -> &'static str {
@@ -763,6 +766,11 @@ pub fn parse_champ_select(session: serde_json::Value, mut state: LiveDraftState)
     state
 }
 
+/// Tier ranked solo ("EMERALD", "GOLD", …) ou chaîne vide si non classé.
+pub fn parse_rank_tier(stats: &serde_json::Value) -> String {
+    stats["queueMap"]["RANKED_SOLO_5x5"]["tier"].as_str().unwrap_or("").trim().to_string()
+}
+
 /// Fetch the current summoner's identity from LCU.
 pub async fn fetch_summoner_info(creds: &LcuCredentials) -> SummonerInfo {
     let client = create_lcu_client();
@@ -806,12 +814,33 @@ pub async fn fetch_summoner_info(creds: &LcuCredentials) -> SummonerInfo {
         }
     }
 
+    let ranked_url = format!("{}/lol-ranked/v1/current-ranked-stats", base);
+    if let Ok(resp) = client
+        .get(&ranked_url)
+        .header("Authorization", format!("Basic {}", auth))
+        .send()
+        .await
+    {
+        if let Ok(stats) = resp.json::<serde_json::Value>().await {
+            info.rank_tier = parse_rank_tier(&stats);
+        }
+    }
+
     info
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn rank_tier_reads_solo_queue_and_tolerates_unranked() {
+        let stats = serde_json::json!({"queueMap": {"RANKED_SOLO_5x5": {"tier": "EMERALD", "division": "II"}}});
+        assert_eq!(parse_rank_tier(&stats), "EMERALD");
+        let unranked = serde_json::json!({"queueMap": {"RANKED_SOLO_5x5": {"tier": "", "division": "NA"}}});
+        assert_eq!(parse_rank_tier(&unranked), "");
+        assert_eq!(parse_rank_tier(&serde_json::json!({})), "");
+    }
 
     #[test]
     fn late_snapshot_preserves_pick_order_and_traded_champions() {

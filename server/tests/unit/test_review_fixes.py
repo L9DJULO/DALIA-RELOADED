@@ -49,12 +49,12 @@ async def test_failed_meta_refresh_keeps_previous_sample(catalog):
     catalog.fetcher.fetch_tierlist = AsyncMock(return_value={"cid": {"103": {"wr": 52, "games": 8000, "pr": 3, "br": 1}}})
     await meta.load_tierlist("mid")
     assert meta.games(103, "mid") == 8000
-    meta._loaded_at["mid"] = 0  # TTL expired
+    meta._loaded_at[("mid", catalog.fetcher.TIER)] = 0  # TTL expired
     catalog.fetcher.fetch_tierlist = AsyncMock(return_value={})
     await meta.load_tierlist("mid")
     assert meta.games(103, "mid") == 8000, "an outage must not erase the last good sample"
-    assert "mid" in meta._loaded_roles
-    assert time.time() - meta._loaded_at["mid"] < 6 * 3600, "retry is scheduled sooner than the normal TTL"
+    assert ("mid", catalog.fetcher.TIER) in meta._loaded_roles
+    assert time.time() - meta._loaded_at[("mid", catalog.fetcher.TIER)] < 6 * 3600, "retry is scheduled sooner than the normal TTL"
 
 
 @pytest.mark.asyncio

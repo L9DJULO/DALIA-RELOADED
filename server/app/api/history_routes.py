@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timezone
-from typing import List, Optional
+from typing import List, Literal, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -38,7 +38,8 @@ class HistoryEntryIn(BaseModel):
     ally_bans: list[HistoryPick] = Field(default_factory=list, max_length=5)
     enemy_bans: list[HistoryPick] = Field(default_factory=list, max_length=5)
     recommended_champion: Optional[str] = Field(default=None, max_length=50)
-    recommendation_score: Optional[float] = Field(default=None, ge=0, le=100)
+    recommendation_score: Optional[float] = Field(default=None, ge=-50, le=50)  # points de WR (nouveau barème)
+    score_unit: Optional[Literal["wr_points"]] = None
     win_probability: Optional[float] = Field(default=None, ge=0, le=100)
     result: Optional[Result] = None
     notes: Optional[str] = Field(default=None, max_length=5000)
@@ -63,6 +64,7 @@ class HistoryEntrySummary(BaseModel):
     enemy_bans: list
     recommended_champion: Optional[str]
     recommendation_score: Optional[float]
+    score_unit: Optional[str] = None
     win_probability: Optional[float]
     result: Optional[str]
     notes: Optional[str]
@@ -89,6 +91,7 @@ class HistoryEntryOut(BaseModel):
     enemy_bans: list
     recommended_champion: Optional[str]
     recommendation_score: Optional[float]
+    score_unit: Optional[str] = None
     win_probability: Optional[float]
     result: Optional[str]
     notes: Optional[str]
@@ -289,7 +292,7 @@ async def get_history_stats(
     scores = []
     probs = []
     for e in entries:
-        if e.recommendation_score:
+        if e.recommendation_score is not None and e.score_unit == "wr_points":
             scores.append(e.recommendation_score)
         if e.win_probability:
             probs.append(e.win_probability)

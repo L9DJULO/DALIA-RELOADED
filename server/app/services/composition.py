@@ -10,7 +10,8 @@ Checks for:
   7. Utility coverage
   8. Split-push option
 
-Score 0-100 starts at 100 (perfect) and deductions are applied for imbalances.
+Le score 0-100 a disparu : le terme composition marginale (app.scoring.composition_term)
+utilise `team_warnings` et la couverture d'outils.
 """
 from __future__ import annotations
 
@@ -45,42 +46,9 @@ class CompositionAnalyzer:
         team.append(candidate)
         return team
 
-    def score(self, candidate: Champion, draft: DraftState) -> float:
-        """Return 0-100 composition score."""
-        team = self._resolve_team(draft, candidate)
-
-        if len(team) <= 1:
-            return 60.0  # not enough info for real analysis
-
-        score = 82.0  # start at 82 — a perfect comp earns up to 95
-        warnings = self._warnings(team)
-        for w in warnings:
-            if w.severity == "critical":
-                score -= 22
-            else:
-                score -= 13
-
-        # ── Context-aware penalties ──
-        has_immobile_carry = any(
-            "Marksman" in c.tags and c.ratings.tankiness <= 2 for c in team
-        )
-        has_peel = any(
-            c.ratings.utility >= 4
-            or (c.ratings.cc >= 4 and c.ratings.tankiness >= 3)
-            for c in team
-        )
-        has_tank = any(c.ratings.tankiness >= 4 for c in team)
-
-        if has_immobile_carry and not has_peel and len(team) >= 3:
-            score -= 10  # carry with no peel = exploitable
-        if has_immobile_carry and not has_tank and len(team) >= 3:
-            score -= 8   # carry with no frontline = extremely vulnerable
-
-        # ── Bonus for well-rounded comp ──
-        if len(warnings) == 0 and len(team) >= 4:
-            score += 10  # bonus for clean comp
-
-        return round(_clamp(score, 8.0, 95.0), 1)
+    def team_warnings(self, team: List[Champion]) -> List[CompositionWarning]:
+        """Avertissements de composition pour une équipe donnée (sans candidat implicite)."""
+        return self._warnings(team)
 
     def warnings(self, candidate: Champion, draft: DraftState) -> List[CompositionWarning]:
         """Generate composition warnings for the UI."""

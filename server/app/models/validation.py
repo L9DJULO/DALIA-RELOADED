@@ -31,13 +31,35 @@ Region = Annotated[
 ]
 WEIGHT_NAMES = {"meta", "matchup", "synergy", "composition", "mastery", "draft_risk"}
 
+
 def validate_weights(weights):
+    """Préférences : multiplicateurs par terme, entre 0,5 et 1,5."""
     import math
     if weights is not None:
         if set(weights) - WEIGHT_NAMES:
-            raise ValueError("Poids inconnu")
-        if any(not math.isfinite(v) or not 0 <= v <= 1 for v in weights.values()):
-            raise ValueError("Les poids doivent être finis et compris entre 0 et 1")
-        if weights and not any(weights.values()):
-            raise ValueError("Au moins un poids doit être positif")
+            raise ValueError("Préférence inconnue")
+        if any(not math.isfinite(v) or not 0.5 <= v <= 1.5 for v in weights.values()):
+            raise ValueError("Chaque préférence est un multiplicateur entre 0,5 et 1,5")
     return weights
+
+
+RANK_BUCKETS = ("iron", "bronze", "silver", "gold", "platinum", "emerald", "diamond", "master_plus")
+_RANK_ALIASES = {"master": "master_plus", "grandmaster": "master_plus", "challenger": "master_plus"}
+
+
+def normalize_rank_bucket(value):
+    """Accepte les tiers du client League ("EMERALD"), du profil ("emerald") et les alias Maître+."""
+    if value is None:
+        return None
+    if isinstance(value, str):
+        cleaned = value.strip().lower()
+        if not cleaned:
+            return None
+        return _RANK_ALIASES.get(cleaned, cleaned)
+    return value
+
+
+RankBucket = Annotated[
+    Literal["iron", "bronze", "silver", "gold", "platinum", "emerald", "diamond", "master_plus"] | None,
+    BeforeValidator(normalize_rank_bucket),
+]

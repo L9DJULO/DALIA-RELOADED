@@ -3,7 +3,7 @@ from datetime import datetime
 from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
-from app.models.validation import Role, validate_weights
+from app.models.validation import RankBucket, Role, validate_weights
 
 
 # ── Requests ──
@@ -29,6 +29,7 @@ class UserResponse(BaseModel):
     preferred_roles: list
     enable_wildcard: bool
     enable_off_meta: bool
+    rank_tier: str | None = None
     duo_code: str | None = None
 
     class Config:
@@ -46,6 +47,7 @@ class UpdateMeRequest(BaseModel):
     enable_wildcard: bool | None = None
     enable_off_meta: bool | None = None
     weight_overrides: dict[str, float] | None = None
+    rank_tier: RankBucket = None
     _weights_valid = field_validator("weight_overrides")(validate_weights)
 
 

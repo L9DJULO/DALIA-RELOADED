@@ -93,16 +93,10 @@ export const DRAFT = {
 //
 // Adapt API fields without inventing probabilities or uncertainty intervals.
 export function mapRec(rec) {
-  const score = Math.round(rec.total_score);
+  // Avantage signé en points de win rate vs la moyenne du pool — pas une note sur 100.
+  const score = Math.round((rec.total_score || 0) * 10) / 10;
   const bd = rec.breakdown || {};
-
-  // Derive tier from total_score: ≥80→S, 70-79→A, 60-69→B, 50-59→C, <50→D
-  let tier;
-  if      (score >= 80) tier = 'S';
-  else if (score >= 70) tier = 'A';
-  else if (score >= 60) tier = 'B';
-  else if (score >= 50) tier = 'C';
-  else                  tier = 'D';
+  const round1 = v => Math.round((v || 0) * 10) / 10;
 
   const muList = rec.matchup_details || [];
   const probability = bd.ml_explanation?.win_probability;
@@ -112,7 +106,9 @@ export function mapRec(rec) {
     key:        rec.champion_key,
     name:       rec.champion_name,
     score,
-    tier,
+    sd:         rec.score_sd ?? null,
+    tie:        !!rec.tie_with_leader,
+    terms:      (bd.terms || []).map(t => ({ name: t.name, value: t.value, sd: t.sd, source: t.source, sample: t.sample || 0, note: t.note || '' })),
     inPool:     rec.is_pool_champion,
     confidence: Math.round(rec.confidence || 0),
     winProb,
@@ -123,12 +119,12 @@ export function mapRec(rec) {
     verdict:    rec.verdict || '',
     reasons:    (rec.reasons || []).map((r) => ({ text: r.text, kind: r.kind || 'info' })),
     breakdown: {
-      meta:    Math.round(bd.meta      || 0),
-      matchup: Math.round(bd.matchup   || 0),
-      synergy: Math.round(bd.synergy   || 0),
-      comp:    Math.round(bd.composition || 0),  // API: 'composition'
-      mastery: Math.round(bd.mastery   || 0),
-      risk:    Math.round(bd.draft_risk || 0),   // API: 'draft_risk'
+      meta:    round1(bd.meta),
+      matchup: round1(bd.matchup),
+      synergy: round1(bd.synergy),
+      comp:    round1(bd.composition),  // API: 'composition'
+      mastery: round1(bd.mastery),
+      risk:    round1(bd.draft_risk),   // API: 'draft_risk' = adversaire à venir
     },
     matchups: muList.map((m) => ({
       name:   m.opponent_name,
@@ -152,7 +148,7 @@ export function mapRec(rec) {
 const _emptyPlaceholder = {
   key: '', name: '—',
   score: 0,
-  tier: '—', inPool: false, confidence: 0, winProb: null,
+  sd: null, tie: false, terms: [], inPool: false, confidence: 0, winProb: null,
   tags: [], verdict: '', reasons: [], mechanics: [], wpa: null,
   breakdown: { meta: 0, matchup: 0, synergy: 0, comp: 0, mastery: 0, risk: 0 },
   matchups: [], synergies: [],
@@ -193,6 +189,8 @@ export const TAG_CFG = {
   'niche-counter':     { label: 'NICHE',     cls: 'tag-neutral' },
   'off-meta':          { label: 'OFF META',  cls: 'tag-neutral' },
   'low-data':          { label: 'LOW DATA',  cls: 'tag-neutral' },
+  'risky-blind':       { label: 'BLIND RISQUÉ', cls: 'tag-neutral' },
+  'comfort':           { label: 'CONFORT',  cls: 'tag-ok'      },
 };
 
 export const KIND_CFG = {

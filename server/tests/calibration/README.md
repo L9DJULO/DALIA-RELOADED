@@ -3,7 +3,14 @@
 Regression tests for the recommendation engine. Loads scenarios from
 `cases.json`, calls `DraftEngine.recommend` directly (no HTTP), and verifies
 that the rankings meet the expected assertions. Useful to detect regressions
-when you tune weights or scoring logic in `app/services/draft_engine.py`.
+when you tune the scoring terms in `app/scoring/` or the orchestration in
+`app/services/draft_engine.py`.
+
+Depuis septembre 2026 le moteur renvoie un **avantage signé en points de win
+rate** par rapport à la moyenne du pool, assorti d'un écart-type. Le rapport
+affiche `+2.10 ±1.20`. Un cas dont l'écart est inférieur à l'incertitude
+combinée n'est pas départageable : utiliser `must_be_tied` plutôt qu'un
+`must_rank_higher_than` dans ce cas.
 
 ## How to run
 
@@ -82,7 +89,8 @@ Append an object to `cases.json` with this shape:
 | `must_be_in_top_5` | `champion` | Champion must be in indices 0..4 |
 | `must_not_be_top_3` | `champion` | Champion must be absent from indices 0..2 (absent from top 15 also passes) |
 | `must_rank_higher_than` | `champion_a`, `champion_b` | `a` must rank strictly higher than `b`. If `b` is absent from the top 15 entirely, this passes. If `a` is absent, this fails. |
-| `must_have_score_above` | `champion`, `min_score` | Champion's `total_score` must be ≥ `min_score` |
+| `must_have_advantage_above` | `champion`, `min_advantage` | L'avantage du champion (points de win rate vs moyenne du pool) doit être ≥ `min_advantage` |
+| `must_be_tied` | `champion_a`, `champion_b` | L'écart entre les deux doit rester sous la racine de la somme de leurs variances : le moteur les déclare équivalents |
 
 When in doubt about an expectation, prefer `must_rank_higher_than` between two
 contrasted champions over an absolute "must be top 1" — relative claims are
@@ -124,9 +132,9 @@ Global: 26/33 assertions passed (78.8%)
 ## Workflow for tuning weights
 
 1. **Baseline** — run the suite, note the global score and per-category breakdown.
-2. **Edit** — change a weight or rule in `app/services/draft_engine.py`
-   (e.g. bump `HIGH_RISK_BLIND_PENALTY`, tweak the pick-order weight shaping,
-   adjust the multi-counter bonus thresholds).
+2. **Edit** — change a scoring constant or rule in `app/scoring/`
+   ou, plus souvent, une constante de `app/scoring/config.py` (`k_matchup`,
+   `counter_lambda`, bornes de maîtrise ou de composition).
 3. **Compare** — re-run, compare the new global + per-category scores.
 4. **Iterate** — keep the change if the global went up *and* no category
    collapsed. Drop it if any category lost more than it gained — local
@@ -138,3 +146,62 @@ Global: 26/33 assertions passed (78.8%)
 The first run will be slow (network fetches); after that the cache makes
 each iteration take a few seconds, which is the whole point of bypassing
 HTTP.
+
+
+## Cas à revoir après le passage en points de win rate
+
+Exécution du 10 septembre 2026, données Lolalytics réelles au tier `emerald`,
+32 cas / 52 assertions. Les cas ci-dessous échouent **sans erreur réseau** :
+ce sont des attentes écrites pour l'ancien moteur 0-100, à réévaluer une par
+une plutôt qu'à faire passer de force.
+
+| Résultat | Ancien moteur (30 cas) | Nouveau moteur (mêmes 30 cas) |
+|---|---|---|
+| Assertions réussies | 35/50 (70,0 %) | 33/50 (66,0 %) |
+| `synergy` | 0/2 | 2/2 |
+| `counter` | 7/8 | 6/8 |
+| `blind_pick` | 7/10 | 5/10 |
+| `anti_engage` | 3/6 | 2/6 |
+| `edge_case` | 4/9 | 4/9 |
+
+Les deux moteurs sont au même niveau global sur une suite calibrée pour
+l'ancien ; la catégorie `synergy` passe de 0 % à 100 %.
+
+**1. Les mids en blind sont réellement à égalité.** Sur
+`blind_pick_mid_no_zed_akali`, les avantages vont de +0,87 à −1,41 avec des
+écarts-types de ±2,68 à ±3,14. Les assertions d'ordre strict demandent une
+précision que la donnée ne porte pas. Ces cas devraient devenir `must_be_tied`.
+
+**2. Le risque de Yasuo est dans la variance, pas dans la moyenne.** Sur
+`blind_pick_mid_no_yasuo`, au tier emerald :
+
+```
+Yasuo    +1.82 ±3.29   meta +0.28  future_opponent +0.03 ±2.52  mastery +1.40
+Lux      +1.06 ±2.68   meta +2.87  future_opponent -0.42 ±1.64  mastery -1.50
+Syndra   +0.87 ±3.03   meta +1.78  future_opponent -1.02 ±2.17  mastery  0.00
+Orianna  -3.34 ±3.00   meta -2.53  future_opponent -0.93 ±2.12  mastery  0.00
+```
+
+Yasuo porte bien l'écart-type le plus élevé du groupe (±2,52 sur le terme
+adversaire, contre ±1,64 pour Lux) : le modèle voit la dispersion. Mais son
+espérance reste neutre, et le palier S déclaré par le joueur (+1,40) le place
+en tête. Deux pistes, à trancher avant de retoucher les cas :
+
+- La distribution de counter-pick est proportionnelle à `max(0, −d2)` sur tous
+  les adversaires plausibles. Avec une cinquantaine de candidats, la masse se
+  disperse au lieu de se concentrer sur les deux ou trois pires matchups. Un
+  vrai counter-picker prend le meilleur counter, pas une loterie pondérée.
+  Concentrer cette distribution (exposant, ou top-k) rendrait `λ` réellement
+  mordant.
+- Le classement pourrait trier sur une borne basse (`avantage − σ`) plutôt que
+  sur la moyenne, ce qui pénaliserait mécaniquement les choix dispersés.
+
+Aucun des deux n'est appliqué ici : ce sont des changements de conception, pas
+des correctifs.
+
+**3. `edge_case` échoue à l'identique sur les deux moteurs** (4/9). Ces cas
+étaient déjà rouges avant la refonte ; ils ne constituent pas une régression.
+
+**4. `no_tie_hard_counter` échoue** : Vayne sort 3e derrière Malphite alors que
+le cas attend le counter direct en tête. À instruire avec le détail des termes
+avant de conclure.

@@ -115,6 +115,8 @@ async def update_me(
         current_user.enable_off_meta = body.enable_off_meta
     if "weight_overrides" in body.model_fields_set:
         current_user.weight_overrides = body.weight_overrides
+    if "rank_tier" in body.model_fields_set:
+        current_user.rank_tier = body.rank_tier
 
     await db.commit()
     await db.refresh(current_user)

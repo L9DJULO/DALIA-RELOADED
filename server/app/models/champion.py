@@ -30,6 +30,7 @@ class Champion(BaseModel):
     key: str                          # Riot string key (e.g. "Aatrox")
     name: str                         # Display name
     title: str = ""
+    difficulty: int = Field(5, ge=1, le=10)  # Data Dragon info.difficulty
     tags: List[str] = []              # Riot tags: Fighter, Tank, Mage, Assassin, Marksman, Support
     roles: List[str] = []             # Playable lanes: top, jungle, mid, bot, support
     damage: DamageProfile = DamageProfile()

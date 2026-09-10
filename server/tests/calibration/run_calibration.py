@@ -137,7 +137,7 @@ def build_request(setup: Dict[str, Any], db: ChampionDatabase) -> DraftRequest:
         ally_picks=ally_picks,
         enemy_picks=enemy_picks,
     )
-    return DraftRequest(draft_state=state, champion_pool=pool)
+    return DraftRequest(draft_state=state, champion_pool=pool, rank_bucket=setup.get("rank_bucket"))
 
 
 def find_rank(recs: List, name: str) -> Tuple[Optional[int], Optional[Any]]:
@@ -198,14 +198,25 @@ def evaluate_assertion(a: Dict[str, Any], recs: List) -> Tuple[bool, str]:
             return True, f"{a['champion_a']} #{rank_a + 1} > {a['champion_b']} #{rank_b + 1}"
         return False, f"{a['champion_a']} #{rank_a + 1} <= {a['champion_b']} #{rank_b + 1}"
 
-    if t == "must_have_score_above":
+    if t == "must_have_advantage_above":
         _, rec = find_rank(recs, a["champion"])
         if rec is None:
             return False, f"{a['champion']} not in recommendations"
-        threshold = a["min_score"]
+        threshold = a["min_advantage"]
         if rec.total_score >= threshold:
-            return True, f"{a['champion']} score={rec.total_score} >= {threshold}"
-        return False, f"{a['champion']} score={rec.total_score} < {threshold}"
+            return True, f"{a['champion']} advantage={rec.total_score:+.2f} >= {threshold:+.2f}"
+        return False, f"{a['champion']} advantage={rec.total_score:+.2f} < {threshold:+.2f}"
+
+    if t == "must_be_tied":
+        _, ra = find_rank(recs, a["champion_a"])
+        _, rb = find_rank(recs, a["champion_b"])
+        if ra is None or rb is None:
+            return False, "one of the champions is not in recommendations"
+        combined = (ra.score_sd ** 2 + rb.score_sd ** 2) ** 0.5
+        gap = abs(ra.total_score - rb.total_score)
+        if gap < combined:
+            return True, f"gap {gap:.2f} < combined sd {combined:.2f}"
+        return False, f"gap {gap:.2f} >= combined sd {combined:.2f}"
 
     if t == "must_not_have_reason_containing":
         # Asserts a specific recommendation has no reason whose text contains
@@ -254,7 +265,7 @@ def print_case_report(case: Dict[str, Any], recs: List, results: List[Tuple], ve
         print(f"  {C.DIM}Top 5:{C.RESET}")
         for i, r in enumerate(recs[:5]):
             wildcard = " (wildcard)" if not r.is_pool_champion else ""
-            print(f"    {i + 1}. {r.champion_name:<18} {r.total_score:>5.1f}{wildcard}")
+            print(f"    {i + 1}. {r.champion_name:<18} {r.total_score:>+6.2f} ±{r.score_sd:.2f}{wildcard}")
     print()
 
 

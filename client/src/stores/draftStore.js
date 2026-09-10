@@ -94,7 +94,8 @@ const useDraftStore = create((set, get) => ({
         weightOverrides && Object.keys(weightOverrides).length ? weightOverrides : user.weightOverrides,
         duoOptions === undefined ? useDuoStore.getState().getDuoOptions() : duoOptions,
         summoner?.puuid ? { puuid: summoner.puuid, region: summoner.region } : null,
-        { signal, enableWildcard: user.enableWildcard, enableOffMeta: user.enableOffMeta });
+        { signal, enableWildcard: user.enableWildcard, enableOffMeta: user.enableOffMeta,
+          rankBucket: summoner?.rankTier || user.rankTier || null });
       if (session !== sessionNumber || signal.aborted) return null;
       set({ recommendations: data.recommendations || [], banSuggestions: data.ban_suggestions || [], banImpact: data.ban_impact || [],
         compSummary: data.team_composition_summary || {}, warnings: data.warnings || [], winProbability: data.win_probability ?? null,
@@ -123,7 +124,7 @@ const useDraftStore = create((set, get) => ({
 }));
 window.addEventListener('dalia:logout', () => useDraftStore.getState().resetDraft('manual'));
 useUserStore.subscribe((next, before) => {
-  if (['championPool', 'weightOverrides', 'enableWildcard', 'enableOffMeta'].some(k => next[k] !== before[k])) useDraftStore.getState().invalidateResults();
+  if (['championPool', 'weightOverrides', 'enableWildcard', 'enableOffMeta', 'rankTier'].some(k => next[k] !== before[k])) useDraftStore.getState().invalidateResults();
 });
 useDuoStore.subscribe((next, before) => {
   if (['duoActive', 'partnerRole', 'partnerPool', 'linked'].some(k => next[k] !== before[k])) useDraftStore.getState().invalidateResults();

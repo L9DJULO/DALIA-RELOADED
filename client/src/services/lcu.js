@@ -94,6 +94,7 @@ export const lcuSummonerInfo = async () => {
       summoner_level: 0,
       profile_icon_id: 0,
       region: '',
+      rank_tier: '',
     };
   }
   try {

@@ -19,7 +19,7 @@ function cache(id, pool) {
 }
 const useUserStore = create((set, get) => ({
   ownerId: null, championPool: emptyPool(), preferredRoles: ['mid'],
-  enableWildcard: true, enableOffMeta: true, weightOverrides: null,
+  enableWildcard: true, enableOffMeta: true, weightOverrides: null, rankTier: null,
   loading: false, profileAvailable: false, saveStatus: 'idle', error: null,
   loadProfile: async (ownerId) => {
     if (!ownerId) return;
@@ -32,7 +32,7 @@ const useUserStore = create((set, get) => ({
       const pool = { ...emptyPool(), ...data.champion_pool };
       set({ championPool: pool, preferredRoles: data.preferred_roles || ['mid'],
         enableWildcard: data.enable_wildcard ?? true, enableOffMeta: data.enable_off_meta ?? true,
-        weightOverrides: data.weight_overrides || null, loading: false, profileAvailable: true });
+        weightOverrides: data.weight_overrides || null, rankTier: data.rank_tier || null, loading: false, profileAvailable: true });
       cache(ownerId, pool);
     } catch {
       if (epoch !== generation) return;
@@ -89,13 +89,14 @@ const useUserStore = create((set, get) => ({
       if (epoch !== generation) return;
       set({ ...(settings.preferred_roles ? { preferredRoles: settings.preferred_roles } : {}),
         ...(settings.weight_overrides !== undefined ? { weightOverrides: settings.weight_overrides } : {}),
+        ...(settings.rank_tier !== undefined ? { rankTier: settings.rank_tier } : {}),
         ...(settings.enable_wildcard !== undefined ? { enableWildcard: settings.enable_wildcard } : {}),
         ...(settings.enable_off_meta !== undefined ? { enableOffMeta: settings.enable_off_meta } : {}), error: null });
     } catch { if (epoch === generation) set({ error: 'Paramètres non enregistrés.' }); }
   },
   setPreferredRoles: roles => get().updatePreferences({ preferred_roles: roles }),
   setWeightOverrides: weights => get().updatePreferences({ weight_overrides: weights }),
-  resetPool: () => { cancelSaves(); set({ ownerId: null, championPool: emptyPool(), preferredRoles: ['mid'], enableWildcard: true, enableOffMeta: true, weightOverrides: null, loading: false, profileAvailable: false, saveStatus: 'idle', error: null }); },
+  resetPool: () => { cancelSaves(); set({ ownerId: null, championPool: emptyPool(), preferredRoles: ['mid'], enableWildcard: true, enableOffMeta: true, weightOverrides: null, rankTier: null, loading: false, profileAvailable: false, saveStatus: 'idle', error: null }); },
   logout: () => window.dispatchEvent(new Event('dalia:logout')),
 }));
 window.addEventListener('dalia:logout', () => useUserStore.getState().resetPool());

@@ -199,13 +199,14 @@ class LolalyticsFetcher:
         return f"{self.DDRAGON}/cdn/{ver}/img/champion/{champion_key}.png"
 
     # ── Lolalytics — Tier list (ep=list) ─────────────────────────────────
-    async def fetch_tierlist(self, role: str = "mid", patch: str = "current") -> Dict[str, Any]:
-        """Fetch the tier list for a role. Returns {cid: {wr, pr, br, games, ...}}."""
+    async def fetch_tierlist(self, role: str = "mid", patch: str = "current", tier: Optional[str] = None) -> Dict[str, Any]:
+        """Fetch the tier list for a role at a Lolalytics tier. Returns {cid: {wr, pr, br, games, ...}}."""
         lane = role_to_lane(role)
+        tier = tier or self.TIER
         if patch == "current":
             patch = await self.get_current_patch()
 
-        cache_key = f"lola_list_{lane}_{patch}_{self.TIER}_{self.QUEUE}_{self.REGION}"
+        cache_key = f"lola_list_{lane}_{patch}_{tier}_{self.QUEUE}_{self.REGION}"
         cached = self._cache.get(cache_key)
         if cached:
             self.last_success[f"meta:{role}"] = self._cache.collected_at(cache_key)
@@ -217,7 +218,7 @@ class LolalyticsFetcher:
             "v": "1",
             "patch": patch,
             "lane": lane,
-            "tier": self.TIER,
+            "tier": tier,
             "queue": self.QUEUE,
             "region": self.REGION,
         }
@@ -236,7 +237,7 @@ class LolalyticsFetcher:
     # ── Lolalytics — Champion matchups (ep=counter) ─────────────────────
     async def fetch_counter_page(
         self, champion_slug: str, role: str, patch: str = "counter_default",
-        vs_lane: Optional[str] = None,
+        vs_lane: Optional[str] = None, tier: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Fetch matchup (counter) data for a specific champion + role.
 
@@ -245,10 +246,12 @@ class LolalyticsFetcher:
             role: our champion's role (e.g. 'bot')
             patch: patch id, 'current', or 'counter_default' (uses config.counter_patch = '30')
             vs_lane: if set, fetch cross-lane counters (e.g. 'top' to get bot-vs-top matchups)
+            tier: Lolalytics tier (rank bucket); defaults to config.rank_tier
 
         Returns: {stats: {...}, counters: [{cid, vsWr, n, d1, d2, allWr, defaultLane}, ...]}
         """
         lane = role_to_lane(role)
+        tier = tier or self.TIER
         if patch == "counter_default":
             patch = config.counter_patch  # "30" = last 30 days for more data
         elif patch == "current":
@@ -256,7 +259,7 @@ class LolalyticsFetcher:
 
         vs_lane_api = role_to_lane(vs_lane) if vs_lane else None
         cache_suffix = f"_vs{vs_lane_api}" if vs_lane_api else ""
-        cache_key = f"lola_counter_{champion_slug}_{lane}{cache_suffix}_{patch}_{self.TIER}_{self.QUEUE}_{self.REGION}"
+        cache_key = f"lola_counter_{champion_slug}_{lane}{cache_suffix}_{patch}_{tier}_{self.QUEUE}_{self.REGION}"
         cached = self._cache.get(cache_key)
         if cached:
             return cached
@@ -268,7 +271,7 @@ class LolalyticsFetcher:
             "patch": patch,
             "c": champion_slug.lower(),
             "lane": lane,
-            "tier": self.TIER,
+            "tier": tier,
             "queue": self.QUEUE,
             "region": self.REGION,
         }

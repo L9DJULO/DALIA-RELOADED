@@ -1,28 +1,17 @@
-"""Draft engine — the brain of DALIA.
+"""Draft engine — orchestre les termes du scoring en points de win rate.
 
-Combines all sub-analyzers to produce ranked champion recommendations.
-
-Scoring formula (non-linear):
-  1. Compute weighted sum of sub-scores
-  2. Apply multiplicative penalties for critically bad sub-scores
-     (bad matchups / bad comp / risky blind pick tank the total)
-
-Sub-scores (each 0-100):
-  • meta        – current patch strength (WR, PR, BR)
-  • matchup     – performance vs revealed enemies (lane opponent weighted ×3)
-  • synergy     – performance with revealed allies
-  • composition – team balance (AD/AP, tank, CC, engage …)
-  • mastery     – user's self-rated comfort / tier
-  • draft_risk  – safety of picking now (counter exposure)
-
-Also produces "wild-card" suggestions outside the user's pool.
+Chaque candidat reçoit une liste de termes (méta, matchup, adversaire futur,
+maîtrise, composition, archétype, synergie, mécaniques, modèle), chacun en
+points de WR avec un écart-type. Le total est la somme ; l'avantage affiché est
+le total moins la moyenne des totaux du pool. Voir
+docs/superpowers/specs/2026-09-10-scoring-wr-points-design.md.
 """
 from __future__ import annotations
 
-import json
-import logging
 import asyncio
-from pathlib import Path
+import logging
+import math
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from app.config import config
@@ -38,27 +27,27 @@ from app.models.draft import (
     PoolEntry,
     Recommendation,
     ScoreBreakdown,
+    ScoreTerm,
     SynergyDetail,
 )
+from app.scoring.aggregate import apply_preferences, confidence_from_sd, reference_mean, top_group
+from app.scoring.composition_term import archetype_term, composition_term
+from app.scoring.heuristic_terms import mechanics_term, model_term, synergy_term
+from app.scoring.mastery_term import MasteryInputs, mastery_term
+from app.scoring.matchup_term import matchup_term
+from app.scoring.meta_term import meta_term
+from app.scoring.opponent_model import future_opponent_term
+from app.scoring.rank import lolalytics_tier
+from app.scoring.types import Estimate, Term
 from app.services.champion_data import ChampionDatabase
 from app.services.composition import CompositionAnalyzer
-from app.services.composition_archetype import (
-    Archetype,
-    ArchetypeResult,
-    archetype_counter_adjust,
-    detect_archetype,
-    summarise as summarise_archetype,
-)
+from app.services.composition_archetype import Archetype, ArchetypeResult, detect_archetype
 from app.services.data_fetcher import LolalyticsFetcher
 from app.services.mechanics import MechanicsAnalyzer
 from app.services.matchup import MatchupAnalyzer
 from app.services.meta_analyzer import MetaAnalyzer
 from app.services.reasons import generate_reasons, generate_verdict
-from app.services.role_inference import (
-    MONO_ROLE_THRESHOLD,
-    infer_enemy_roles,
-    most_likely_role,
-)
+from app.services.role_inference import infer_enemy_roles, most_likely_role
 from app.services.synergy import SynergyAnalyzer
 
 # ML predictor — optional, loads silently if model not available
@@ -68,48 +57,6 @@ except ImportError:
     MLPredictor = None  # type: ignore
 
 logger = logging.getLogger("dalia.engine")
-
-TIER_TO_MASTERY = {"S": 90, "A": 72, "B": 55, "C": 38, "D": 10}
-
-# Champions that are catastrophic to blind-pick: they lose hard to specific
-# counters that the enemy can simply lock in once they see the pick. They
-# may still be S-tier in matchup rolls, but in blind they're a coin flip
-# at best. Penalised by -20 on total score when <2 enemies are visible.
-# Combined with any per-champion blind_pick_penalty from champion_overrides.json
-# (we look it up per-candidate inside _score_candidate).
-HIGH_RISK_BLIND = {
-    "Yasuo", "Yone", "Katarina", "Zed", "Akali",
-    "Fizz", "Qiyana", "Nidalee", "Kindred",
-}
-HIGH_RISK_BLIND_PENALTY = 20.0
-
-# Path to the same overrides file used by ChampionDatabase. Looked up here
-# (additionally to roles/damage/ratings consumption in champion_data.py) so
-# we can read optional blind_pick_penalty entries without round-tripping
-# through the Champion model. Lazy-loaded and cached at module level.
-_OVERRIDES_PATH = Path(__file__).resolve().parent.parent / "data" / "champion_overrides.json"
-_overrides_cache: Optional[Dict[str, Any]] = None
-
-
-def _load_overrides_lower() -> Dict[str, Any]:
-    """Load champion_overrides.json once, keyed by lowercase champion key."""
-    global _overrides_cache
-    if _overrides_cache is not None:
-        return _overrides_cache
-    try:
-        if _OVERRIDES_PATH.exists():
-            raw = json.loads(_OVERRIDES_PATH.read_text(encoding="utf-8"))
-            _overrides_cache = {k.lower(): v for k, v in raw.items() if isinstance(v, dict)}
-        else:
-            _overrides_cache = {}
-    except Exception as exc:
-        logger.warning("Failed to load champion_overrides.json: %s", exc)
-        _overrides_cache = {}
-    return _overrides_cache
-
-
-def _clamp(v: float, lo: float = 0.0, hi: float = 100.0) -> float:
-    return max(lo, min(hi, v))
 
 
 class DraftEngine:
@@ -231,41 +178,20 @@ class DraftEngine:
                         champ_name, pp.role,
                     )
 
-        # ── Pre-load personal stats if puuid available ──
-        personal_boost_fn = None
+        # ── Stats personnelles (rafraîchies en arrière-plan, lues depuis le cache) ──
+        personal = None
         if personal_svc and request.puuid:
-            personal_svc.refresh_in_background(
-                puuid=request.puuid,
-                region=request.region or "EUW1",
-            )
-            personal_boost_fn = lambda cid, r: personal_svc.get_champion_score_boost(
-                request.puuid, cid, r, request.region or "EUW1"
-            )
+            personal_svc.refresh_in_background(puuid=request.puuid, region=request.region or "EUW1")
+            personal = (personal_svc, request.puuid, request.region or "EUW1")
 
-        # Merge weight overrides
-        weights = config.weights.model_copy()
-        if request.weight_overrides:
-            for k, v in request.weight_overrides.items():
-                if hasattr(weights, k):
-                    setattr(weights, k, v)
-
-        # ── DuoQ synergy boost ──
-        # When DuoQ is active, massively increase synergy weight (0.05 → 0.18)
-        # and reduce meta slightly to compensate
+        # ── DuoQ : injection du champion probable du partenaire ──
         duo_active = request.duo_active and request.duo_partner_role
         duo_partner_role = request.duo_partner_role
         duo_partner_pool = request.duo_partner_pool or {}
         duo_injected = False
 
         if duo_active:
-            weights.synergy = max(weights.synergy, 0.18)
-            # Slightly reduce meta to keep total near 1.0
-            weights.meta = max(weights.meta - 0.05, 0.05)
-            logger.info(
-                f"DuoQ active — synergy boosted to {weights.synergy}, "
-                f"partner role: {duo_partner_role}"
-            )
-
+            logger.info("DuoQ active — partner role: %s", duo_partner_role)
             # If the partner's role slot is empty in ally picks,
             # inject the partner's top champion as a virtual ally pick
             # so synergy is calculated against their likely pick
@@ -297,11 +223,11 @@ class DraftEngine:
                 logger.warning("DuoQ partner injection failed: %s", exc)
                 # Continue without injection — don't crash recommendations
 
-        # 1. Pre-load meta for the relevant role
-        weight_total = sum(weights.model_dump().values())
-        for name, value in weights.model_dump().items():
-            setattr(weights, name, value / weight_total)
-        await self.meta.load_tierlist(role)
+        # 1. Rang du joueur → tier Lolalytics, méta du rôle, préférences
+        rank = request.rank_bucket
+        tier = lolalytics_tier(rank, self.fetcher.TIER)
+        await self.meta.load_tierlist(role, tier)
+        prefs = request.weight_overrides
 
         # ── Detect enemy composition archetype (poke / engage / kite / …) ──
         # Done once here, then passed into _score_candidate so every candidate
@@ -339,7 +265,7 @@ class DraftEngine:
         if not request.enable_off_meta and not candidate_ids:
             candidates = [pe for pe in candidates if (c := self.db.get_by_id(pe.champion_id)) and role in c.roles]
 
-        # 3. Score each candidate
+        # 3. Score each candidate (total absolu en points de WR)
         candidate_slots = asyncio.Semaphore(6)
         async def score_entry(entry, is_pool=True):
             champ = self.db.get_by_id(entry.champion_id)
@@ -347,79 +273,51 @@ class DraftEngine:
                 return None
             async with candidate_slots:
                 return await self._score_candidate(
-                    champ, entry, draft, role, weights, personal_boost_fn,
+                    champ, entry, draft, role, prefs, rank, personal,
                     enemy_archetype=enemy_archetype, is_pool=is_pool, ml=ml,
+                    duo_partner_role=duo_partner_role if duo_active else None,
                 )
         scored = [r for r in await asyncio.gather(*(score_entry(e, e.champion_id in actual_pool_ids) for e in candidates)) if r]
 
-        # 4. Wild-card suggestions (off-pool)
+        # 4. Wild-cards, filtrés sur une référence provisoire (avant le terme modèle)
+        provisional_reference = reference_mean([r.total_score for r in scored if r.is_pool_champion])
         wildcards = await self._wild_card_suggestions(
-            draft, role, unavailable, pool_entries, score_entry,
+            draft, role, unavailable, pool_entries, score_entry, provisional_reference,
         ) if request.enable_wildcard and not candidate_ids else []
         scored.extend(wildcards)
 
-        # Conditional decision value, relative to the same eligible alternatives.
-        # A 50% baseline is NOT the WPA of a champion pick.
+        # Terme modèle : WPA conditionnel, même référence pour toutes les alternatives évaluées.
+        # Une probabilité absolue n'est jamais un bonus indépendant.
         eligible = [r for r in scored if r.breakdown.ml_explanation and
                     r.breakdown.ml_explanation.confidence != "low"]
         if ml is not None and len(eligible) == len(scored) and len(eligible) >= 2:
             baseline = sum(r.breakdown.ml_explanation.win_probability for r in eligible) / len(eligible)
             for rec in eligible:
-                probability = rec.breakdown.ml_explanation.win_probability
-                delta = (probability - baseline) * 100
-                adjustment = round(_clamp(delta * 2, -8, 8), 2)
+                delta = (rec.breakdown.ml_explanation.win_probability - baseline) * 100
+                term = model_term(delta)
+                rec.breakdown.terms.append(ScoreTerm(**term.__dict__))
+                rec.breakdown.wpa_adjustment = round(term.value, 2)
+                rec.total_score = rec.total_score + term.value
+                rec.score_sd = math.sqrt(rec.score_sd ** 2 + term.sd ** 2)
                 rec.wpa = {"source": "DALIA", "kind": "model_estimate", "delta_pp": round(delta, 2),
                            "baseline_probability": round(baseline * 100, 2),
                            "baseline_champion_ids": [r.champion_id for r in eligible],
                            "model": {k: ml.metadata.get(k) for k in ("schema_version", "patches", "trained_at", "test_metrics", "test_unique_matches", "code_revision")},
                            "definition": "Écart à la moyenne des choix évalués dans cette draft, même rôle et même côté.",
                            "limitation": "Estimation du modèle, sans preuve causale ; ne provient pas de Coachless."}
-                rec.breakdown.wpa_adjustment = adjustment
-                rec.total_score = round(_clamp(rec.total_score + adjustment, 5, 97), 1)
 
-        # Sort descending by total score
+        # Avantage relatif au pool, intervalle, confiance, groupe de tête.
+        reference = reference_mean([r.total_score for r in scored if r.is_pool_champion])
+        for rec in scored:
+            rec.total_score = round(rec.total_score - reference, 2)
+            rec.score_sd = round(rec.score_sd, 2)
+            rec.score_range = [round(rec.total_score - rec.score_sd, 2), round(rec.total_score + rec.score_sd, 2)]
+            rec.confidence = confidence_from_sd(rec.score_sd)
         scored.sort(key=lambda r: r.total_score, reverse=True)
-
-        # ── Post-scoring normalization: prevent late-draft score inflation ──
-        # When all enemies are visible (≥ 4 picks revealed or is_last_pick),
-        # every pool champion benefits from high matchup + synergy scores,
-        # and the bonus cap still allows good picks to reach 85-92. But if
-        # several picks simultaneously score 90-95, the shortlist looks flat
-        # (97/96/95/95/94 — meaningless). Apply a shift-and-compress so the
-        # winner sits at ≤ TARGET_CEIL and the spread is readable.
-        #
-        # The algorithm:
-        #   1. Shift the whole distribution down so the best pick = TARGET_CEIL.
-        #      (preserves all relative distances — no false precision.)
-        #   2. Only fires when the top is genuinely over-inflated (> INFLATE_THRESH)
-        #      AND there's enough enemy info to justify the normalization.
-        #
-        # This is intentionally conservative: we only nudge, never fan out.
-        # If champions are genuinely close (72 vs 74 vs 75), they stay close
-        # — the shift just moves 75→ TARGET_CEIL, 74→TARGET_CEIL-1, 72→TARGET_CEIL-3.
-        if scored:
-            n_enemy_visible = sum(1 for e in draft.enemy_picks if e.champion_id)
-            # Choose ceiling based on how much info we have
-            if draft.is_last_pick or n_enemy_visible >= 4:
-                target_ceil   = 92.0
-                inflate_thresh = 92.0
-            elif n_enemy_visible >= 2:
-                target_ceil   = 95.0
-                inflate_thresh = 95.0
-            else:
-                target_ceil   = 98.0   # no normalization when mostly blind
-                inflate_thresh = 99.0
-
-            s_top = scored[0].total_score
-            if s_top > inflate_thresh:
-                shift = s_top - target_ceil
-                logger.info(
-                    "Score normalization: shifting shortlist down by %.1f "
-                    "(top was %.1f → %.1f, %d enemies visible)",
-                    shift, s_top, target_ceil, n_enemy_visible,
-                )
-                for rec in scored:
-                    rec.total_score = round(_clamp(rec.total_score - shift, 5.0, 98.0), 1)
+        group = top_group([(r.total_score, r.score_sd) for r in scored])
+        for i in group:
+            scored[i].tie_with_leader = True
+        top_group_ids = [scored[i].champion_id for i in group]
 
         # 5. Team composition summary (from current allies only, without candidate)
         comp_summary: Dict[str, float] = {}
@@ -470,10 +368,16 @@ class DraftEngine:
             duo_synergy_boost=duo_active,
             ban_suggestions=ban_suggestions,
             ban_impact=ban_impact,
-            data_status={"patch": await self.fetcher.get_current_patch(), "rank": self.fetcher.TIER,
+            reference_mean=round(reference, 2),
+            top_group_ids=top_group_ids,
+            rank_bucket=rank,
+            data_status={"patch": await self.fetcher.get_current_patch(), "rank": tier,
+                         "rank_requested": rank,
+                         "rank_fallback": tier in self.meta.rank_fallback or tier in self.matchup.rank_fallback,
                          "region": self.fetcher.REGION, "queue": self.fetcher.QUEUE,
                          "statistics_source": "Lolalytics", "mechanics_source": "Riot kits + règles DALIA",
-                         "meta_available": role in self.meta._loaded_roles,
+                         "score_unit": "wr_points",
+                         "meta_available": self.meta.is_loaded(role, tier),
                          "meta_collected_at": getattr(self.fetcher, "last_success", {}).get(f"meta:{role}"),
                          "statistics_policy": "current_if_reliable_else_30d",
                          "source_errors": list(self.fetcher.last_errors),
@@ -482,30 +386,36 @@ class DraftEngine:
                          "coachless_connected": False},
         )
 
-    # ── Scoring pipeline (non-linear) ────────────────────────────────────
-    async def _score_candidate(
-        self,
-        champ: Champion,
-        entry: PoolEntry,
-        draft: DraftState,
-        role: str,
-        weights,
-        personal_boost_fn=None,
-        enemy_archetype: Optional[ArchetypeResult] = None,
-        is_pool: bool = True,
-        ml=None,
-    ) -> Recommendation:
-        # Sub-scores
-        meta_s   = self.meta.score(champ.id, role)
-        match_s  = await self.matchup.score(champ.id, role, draft)
-        syn_s    = await self.synergy.score(champ.id, role, draft)
-        comp_s   = self.composition.score(champ, draft)
-        mast_s   = float(TIER_TO_MASTERY.get(entry.tier, 50))
-        risk_s   = await self._draft_risk(champ, role, draft)
+    # ── Scoring : somme de termes en points de WR ─────────────────────────
+    async def _score_candidate(self, champ: Champion, entry: PoolEntry, draft: DraftState, role: str, prefs, rank,
+                               personal, enemy_archetype: Optional[ArchetypeResult] = None, is_pool: bool = True,
+                               ml=None, duo_partner_role: Optional[str] = None) -> Recommendation:
+        """total_score et score_sd renvoyés ici sont ABSOLUS ; _recommend les rend relatifs au pool."""
+        tier = lolalytics_tier(rank, self.fetcher.TIER)
+        has_enemies = any(e.champion_id for e in draft.enemy_picks)
+        allies = [c for a in draft.ally_picks if a.champion_id and (c := self.db.get_by_id(a.champion_id))]
+        terms: List[Term] = [meta_term(self.meta.stats(champ.id, role, tier))]
 
-        # ML prediction (optional — only if model is trained and loaded)
-        ml_s = 50.0
-        ml_expl = None
+        mu = await matchup_term(self.matchup, champ.id, role, draft, tier)
+        if mu:
+            terms.append(mu)
+        future = await future_opponent_term(self.matchup, self.meta, self.db, champ, role, draft, rank)
+        if future:
+            terms.append(future)
+        terms.append(mastery_term(self._mastery_inputs(champ, entry, role, rank, personal)))
+        comp = composition_term(champ, allies, self.mechanics, self.composition)
+        if comp:
+            terms.append(comp)
+        arch = archetype_term(champ, enemy_archetype) if has_enemies else None
+        if arch:
+            terms.append(arch)
+        if allies:
+            duo_bonus = bool(duo_partner_role) and any(a.role == duo_partner_role and a.champion_id for a in draft.ally_picks)
+            terms.append(synergy_term(await self.synergy.score(champ.id, role, draft), duo_bonus))
+        mechanics_delta, mechanics = self.mechanics.evaluate(champ, draft)
+        terms.append(mechanics_term(mechanics_delta))
+
+        ml_s, ml_expl = None, None
         if ml is not None and ml.supports(champ.id, role, draft):
             try:
                 ml_s, ml_expl_raw = ml.score_with_explanation(champ.id, role, draft)
@@ -513,501 +423,62 @@ class DraftEngine:
             except Exception:
                 logger.exception("Prediction unavailable; retaining kit analysis")
 
-        # ── Determine draft context early (needed for weight adjustment) ──
-        has_enemies = len([e for e in draft.enemy_picks if e.champion_id]) > 0
-        has_allies  = len([a for a in draft.ally_picks if a.champion_id]) > 0
+        est = Estimate(apply_preferences(terms, prefs))
+        by_name = {t.name: t for t in est.terms}
 
-        # ── Dynamic weight redistribution for blind pick ──
-        # When no enemies/allies are visible, matchup/synergy return a
-        # flat neutral 50 for ALL champions → zero differentiation.
-        # Without redistribution, mastery tier dominates the ranking
-        # (Tier S = 90 vs Tier A = 72 → +3.6 pts) and champions like
-        # Nilah (S tier, 14 k games) beat Jinx (A tier, Meta S, 100 k games).
-        #
-        # Fix: redistribute the "dead" matchup/synergy weight toward the
-        # sub-scores that actually differentiate in blind-pick scenarios:
-        #   • meta   — is the champion strong right now?
-        #   • risk   — is the champion safe to blind-pick?
-        w_meta    = weights.meta
-        w_matchup = weights.matchup
-        w_synergy = weights.synergy
-        w_comp    = weights.composition
-        w_mastery = weights.mastery
-        w_risk    = weights.draft_risk
-
-        if not has_enemies:
-            # Matchup is uninformative (50 for everyone) — redistribute
-            # 60 % → meta (champion strength matters most)
-            # 40 % → draft_risk (blind-pick safety)
-            w_meta    += w_matchup * 0.60
-            w_risk    += w_matchup * 0.40
-            w_matchup  = 0.0
-
-        if not has_allies:
-            # Synergy is uninformative (50 for everyone) — redistribute
-            # 50 % → meta, 50 % → composition
-            w_meta    += w_synergy * 0.50
-            w_comp    += w_synergy * 0.50
-            w_synergy  = 0.0
-
-        # ═════════════════════════════════════════════════════════════════════
-        # ── Pick-order weight shaping ──
-        # The engine's job changes dramatically depending on WHERE in the
-        # draft we are picking. Same champion, same sub-scores — the *right*
-        # answer differs. We reshape weights on top of the blind-pick
-        # redistribution above.
-        #
-        # my_pick_order ∈ {1..5} is the 1-indexed position of this pick
-        # inside the user's team. Draft phase 1 pick order (20-action
-        # sequence) puts:
-        #   • pick_order 1      = 1st overall pick (blue side) — hardest blind
-        #   • pick_order 2/3    = middle, some info but not all
-        #   • pick_order 5      = LAST pick = full info, free counter
-        #
-        # is_last_pick is the authoritative flag for "I see everything" — it
-        # holds when my pick is the final one in the sequence AND my lane
-        # opponent is already revealed. my_pick_order alone doesn't catch
-        # e.g. a red-side 5th that's still being counter-picked by blue's
-        # 5th; `is_last_pick` does.
-        # ═════════════════════════════════════════════════════════════════════
-        is_first_pick = draft.my_pick_order == 1 and not has_enemies
-        is_last_pick  = draft.is_last_pick
-
-        # Track these for the multiplicative bonuses/penalties below
-        flex_bonus_active = False
-        niche_counter_bonus_active = False
-        situational_penalty_active = False
-
-        if is_first_pick:
-            # ── FIRST PICK: blind, high counter exposure, high value on flex ──
-            # No enemy to counter, no lane opponent revealed. Champions that
-            # are counter-proof (flex roles, tanks, high draft_risk safety)
-            # are worth a LOT. Champions that only shine in specific matchups
-            # are a trap — the enemy will simply pick their counter.
-            #
-            # Weight changes (documented deltas relative to baseline):
-            #   • meta        ×1.15   — meta strength matters more (no matchup signal)
-            #   • draft_risk  ×1.40   — safety is the #1 concern blind
-            #   • mastery     ×0.85   — a comfort D-tier that gets countered is worse
-            #                           than a B-tier flex; de-emphasise tier
-            w_meta    *= 1.15
-            w_risk    *= 1.40
-            w_mastery *= 0.85
-
-            # Flex bonus: a champion playable in ≥ 2 roles is harder to counter
-            # because the enemy can't lock a single lane counter. We flag it
-            # here; the multiplicative bonus is applied after base is computed.
-            if len(champ.roles) >= 2:
-                flex_bonus_active = True
-
-            # Situational penalty: single-role + low safety = the champ only
-            # works in specific matchups. On 1st pick that's a liability.
-            if len(champ.roles) <= 1 and risk_s < 55:
-                situational_penalty_active = True
-
-        elif is_last_pick:
-            # ── LAST PICK: full info, free counter-pick ──
-            # We see every enemy and we know our lane opponent. Meta strength
-            # barely matters — a "D-tier" champion that hard-counters their
-            # lane opponent can be worth the pick. Flex is useless (no
-            # ambiguity to exploit). Safety is also less interesting since
-            # there are no more enemy picks coming.
-            #
-            # Weight changes:
-            #   • matchup    ×1.35   — primary signal, we know exactly who we face
-            #   • synergy    ×1.10   — full team known, synergy calls are reliable
-            #   • meta       ×0.80   — a meta-S champ with bad matchup is worse
-            #                          than a B champ with good matchup
-            #   • draft_risk ×0.70   — no one left to counter us
-            w_matchup *= 1.35
-            w_synergy *= 1.10
-            w_meta    *= 0.80
-            w_risk    *= 0.70
-
-            # Niche counter: match_s very high → reward heavily below
-            if match_s >= 62:
-                niche_counter_bonus_active = True
-
-        elif draft.my_pick_order >= 4 and has_enemies:
-            # ── LATE PICK (4th/5th but not fully last, e.g. red side 3rd) ──
-            # We see most of the enemy team. Lean toward matchup, away from
-            # pure meta. Lighter than the last-pick shift.
-            w_matchup *= 1.15
-            w_meta    *= 0.92
-
-        elif draft.my_pick_order <= 2 and has_enemies:
-            # ── EARLY-MIDDLE PICK: partial info ──
-            # 2nd pick (red P1 / blue P2): see 1 enemy at most. Still a
-            # relative blind — keep leaning on meta and risk, but not as
-            # hard as a true 1st.
-            w_meta *= 1.05
-            w_risk *= 1.10
-
-        # ── Role-specific weight multipliers ──
-        # Applied last in the weight-shaping pipeline so they compound with
-        # (not compete against) blind-pick redistribution and pick-order
-        # adjustments. Reflect how the role's strategic context shifts the
-        # relative importance of each sub-score:
-        #   TOP     — long 1v1 lane, few team interactions → matchup + comp
-        #   JUNGLE  — team enabler, global influence → synergy + comp
-        #   MID     — short lane + roaming → matchup slightly boosted
-        #   BOT     — ADC scales with team; duo-lane is everything → synergy
-        #   SUPPORT — pure team role; lane matchup much less relevant
-        _rwm = config.role_weight_multipliers.get(role)
-        if _rwm:
-            w_matchup *= _rwm.matchup
-            w_synergy *= _rwm.synergy
-            w_comp    *= _rwm.composition
-            logger.debug(
-                "Role multipliers for %s: matchup×%.2f synergy×%.2f comp×%.2f",
-                role, _rwm.matchup, _rwm.synergy, _rwm.composition,
-            )
-
-        # ── Bot / Support duo-lane synergy bonus ──
-        # When both halves of the duo lane are confirmed allies, the pairwise
-        # bot↔support synergy — already computed by the synergy module —
-        # deserves extra weight because that duo is the strongest co-ordinated
-        # unit in League. Apply an additional ×1.10 on w_synergy so picking
-        # the right bot or support given a known partner is meaningfully
-        # rewarded over a random pool champion.
-        _COMPLEMENTARY: Dict[str, str] = {"bot": "support", "support": "bot"}
-        if role in _COMPLEMENTARY and w_synergy > 0:
-            _partner_role = _COMPLEMENTARY[role]
-            _partner_confirmed = any(
-                a.role == _partner_role and a.champion_id
-                for a in draft.ally_picks
-            )
-            if _partner_confirmed:
-                w_synergy *= 1.10
-                logger.debug(
-                    "Duo-lane bonus: w_synergy ×1.10 (%s confirmed as partner)",
-                    _partner_role,
-                )
-
-        # ── 1. Weighted base ──
-        base = (
-            w_meta    * meta_s +
-            w_matchup * match_s +
-            w_synergy * syn_s +
-            w_comp    * comp_s +
-            w_mastery * mast_s +
-            w_risk    * risk_s
-        )
-
-        # Blend ML score if available (replaces part of the base)
-        # Weight adapts to confidence: high=25%, medium=18%, low=10%
-        # Increased weights to give ML more influence on final score
-        # Model influence is applied once through conditional WPA after scoring
-        # the alternatives. An absolute predicted WR is not an independent bonus.
-
-        # ── Personal stats boost ──
-        # Adjusts score ±15% based on the player's actual ranked
-        # performance on this champion (win rate, games played)
-        if personal_boost_fn is not None:
-            personal_mult = personal_boost_fn(champ.id, role)
-            base *= personal_mult
-
-        # ── 2. Multiplicative penalties for critical weaknesses ──
-
-        # Bad matchups tank the score — only penalise genuinely bad matchups
-        if match_s < 42 and has_enemies:
-            penalty = 0.55 + (match_s / 100.0) * 0.45  # match=40→×0.73, match=30→×0.685
-            base *= penalty
-            # Catastrophic matchups get a second penalty layer
-            if match_s < 28:
-                base *= 0.80  # total ×0.55 at match=25
-
-        # Risky blind pick — softer penalty, and exempt when no enemies visible
-        # (first pick scenario should not be heavily punished)
-        if risk_s < 35 and has_enemies:
-            penalty = 0.70 + (risk_s / 100.0) * 0.30  # risk=20 → ×0.76
-            base *= penalty
-
-        # ── First pick floor ──
-        # When no enemies are visible, scores should stay reasonable.
-        # Opponents realistically can't pick 5 counters, so first pick
-        # isn't as bad as pure counter analysis suggests.
-        if not has_enemies:
-            base = max(base, 38.0)  # floor: never below 38 on first pick
-
-        # ── Pre-fetch details once (reused by bonus checks AND the UI output) ──
-        # Avoids two separate async round-trips per candidate later.
-        mu_details_raw  = await self.matchup.details(champ.id, role, draft) if has_enemies else []
-        syn_details_raw = await self.synergy.details(champ.id, role, draft) if has_allies  else []
-
-        # ═══════════════════════════════════════════════════════════════════
-        # ── Bonus multiplier pool ──
-        # ALL positive multipliers are accumulated in _bonus_mult and capped
-        # before being applied to base. This prevents the "bonus cascade"
-        # where matchup × multi-counter × synergy × niche-counter × archetype
-        # stack to ×1.97+ and push every decent pool champion to 95-98 in
-        # last pick. Negative multipliers (situational penalty, archetype
-        # counter-penalty) are still applied directly to base so bad picks
-        # stay bad regardless of the cap.
-        #
-        # Per-phase caps (rationale):
-        #   is_last_pick  → all sub-scores are informative, so genuine
-        #                    differentiation is already in the base; bonuses
-        #                    should fine-tune, not inflate. Cap 1.20.
-        #   otherwise     → partial info; bonuses fill the information gap.
-        #                    Cap 1.28.
-        # ═══════════════════════════════════════════════════════════════════
-        _bonus_mult = 1.0
-        _bonus_cap  = 1.20 if is_last_pick else 1.28
-
-        # ── 3. Good-fit bonus ──
-        if match_s >= 55 and has_enemies:
-            bonus = 1.0 + (match_s - 50) * 0.007   # was 0.008
-            if comp_s >= 70:
-                bonus += (comp_s - 70) * 0.002      # was 0.003
-            _bonus_mult *= min(bonus, 1.12)          # individual cap 1.12 (was 1.20)
-
-        # ── 3b. MULTI-COUNTER BONUS ──
-        # If the candidate has a meaningful observed edge against 3+ enemies
-        # simultaneously, this is the strongest situational signal there is.
-        # Boost +8-16 %. Only Lolalytics deltas count here: kit interactions
-        # are credited once, by MechanicsAnalyzer below.
-        if has_enemies:
-            counter_count = sum(
-                1 for d in mu_details_raw
-                if d.get("delta", 0.0) >= 2.5
-            )
-            if counter_count >= 3:
-                # 3 → +8 %, 4 → +12 %, 5 → +16 % (was 0.05/+25%)
-                multi_bonus = 1.0 + min(0.04 * counter_count, 0.16)
-                _bonus_mult *= multi_bonus
-                logger.debug(
-                    "Multi-counter bonus ×%.2f for %s (%d counters)",
-                    multi_bonus, champ.name, counter_count,
-                )
-
-        # ── 3c. SYNERGY STACK BONUS ──
-        # 2+ strong synergies with allies → meaningful bonus.
-        if has_allies:
-            strong_syn = sum(
-                1 for d in syn_details_raw
-                if d.get("delta", 0.0) >= 2.0
-            )
-            if strong_syn >= 2:
-                # 2 → +5 %, 3+ → +8 % cap (was 0.03/+10%)
-                syn_bonus = 1.0 + min(0.025 * strong_syn, 0.08)
-                _bonus_mult *= syn_bonus
-
-        # ── 4. Enemy-archetype counter adjustment ──
-        # archetype_counter_adjust returns ~[0.88, 1.15]. We scale that down
-        # by the detection confidence so a shaky read (e.g. 2 picks revealed)
-        # doesn't steer the ranking as hard as a locked-in 5-pick read.
-        # When no archetype is detected (MIXED) the function returns 1.0 and
-        # this is a no-op. Only applied when enemies are actually visible.
-        if enemy_archetype is not None and has_enemies and enemy_archetype.primary != Archetype.MIXED:
-            raw_adj = archetype_counter_adjust(champ, enemy_archetype.primary)
-            adj = 1.0 + (raw_adj - 1.0) * enemy_archetype.confidence
-            if adj > 1.0:
-                _bonus_mult *= adj   # positive: pooled (subject to cap)
-            else:
-                base *= adj          # negative: applied directly (bypass cap)
-
-        # ── 5. Pick-order multiplicative bonuses/penalties ──
-        if flex_bonus_active:
-            _bonus_mult *= 1.05     # was 1.08; flex advantage already in weight shaping
-
-        if situational_penalty_active:
-            base *= 0.92            # penalty: not pooled
-
-        if niche_counter_bonus_active:
-            # Last pick × strong matchup = archetypal counter-pick use case.
-            # Caps at +10 % (was +18 %).
-            bonus = 1.0 + min((match_s - 62) * 0.005, 0.10)
-            _bonus_mult *= bonus
-
-        # Apply the capped bonus multiplier to base
-        base *= min(_bonus_mult, _bonus_cap)
-
-        # ── 6. HIGH-RISK BLIND PENALTY ──
-        # Penalise champions known to fold to common counters they can't
-        # avoid. Scaling is role-aware: penalty is gated by how much of the
-        # threat we can already see in MY role (direct counter risk) and
-        # adjacent roles (ganks, lane swaps).
-        #   0 enemies in my role        → ×1.0 (full)
-        #   1 enemy in my role          → ×0.5
-        #   2+ adjacent or full info    → ×0.3
-        # Stacks with any per-champion blind_pick_penalty configured in
-        # champion_overrides.json.
-        ADJACENT_ROLES = {
-            "top":     {"jungle"},
-            "jungle":  {"top", "mid", "bot", "support"},
-            "mid":     {"jungle"},
-            "bot":     {"jungle", "support"},
-            "support": {"jungle", "bot"},
-        }
-        my_role = draft.my_role
-        in_my_role = sum(
-            1 for e in draft.enemy_picks
-            if e.champion_id and e.role == my_role
-        )
-        adj_set = ADJACENT_ROLES.get(my_role, set())
-        in_adjacent = sum(
-            1 for e in draft.enemy_picks
-            if e.champion_id and e.role in adj_set
-        )
-        total_visible = sum(1 for e in draft.enemy_picks if e.champion_id)
-
-        if in_my_role >= 1:
-            blind_scale = 0.5
-        elif total_visible >= 4 or in_adjacent >= 2:
-            blind_scale = 0.3
-        else:
-            blind_scale = 1.0
-
-        raw_blind_penalty = 0.0
-        if champ.key in HIGH_RISK_BLIND:
-            raw_blind_penalty += HIGH_RISK_BLIND_PENALTY
-        override_pen = self._get_blind_penalty_override(champ.key)
-        if override_pen:
-            raw_blind_penalty += override_pen
-        if raw_blind_penalty > 0:
-            scaled = raw_blind_penalty * blind_scale
-            base -= scaled
-            logger.debug(
-                "Blind-pick penalty -%.1f (raw %.1f × %.2f) on %s "
-                "[my_role=%d, adj=%d, total=%d]",
-                scaled, raw_blind_penalty, blind_scale, champ.name,
-                in_my_role, in_adjacent, total_visible,
-            )
-
-        # ── 7. STRATEGIC EDGE-CASE BONUS ──
-        # Curated rules from data/edge_cases.json (e.g. Olaf vs 3+ hard CC,
-        # Malphite vs 80%+ AD comp, Yasuo with knock-up ally). Only the
-        # single highest-bonus matching rule fires per candidate.
-        mechanics_delta, mechanics = self.mechanics.evaluate(champ, draft)
-        base += mechanics_delta
-
-        total = round(_clamp(base, 5.0, 97.0), 1)
+        def val(name: str) -> float:
+            return round(by_name[name].value, 2) if name in by_name else 0.0
 
         breakdown = ScoreBreakdown(
-            meta=round(meta_s, 1),
-            matchup=round(match_s, 1),
-            synergy=round(syn_s, 1),
-            composition=round(comp_s, 1),
-            mastery=round(mast_s, 1),
-            draft_risk=round(risk_s, 1),
-            ml_prediction=round(ml_s, 1) if ml_expl is not None else None,
-            ml_explanation=ml_expl,
-            mechanics=mechanics_delta,
+            meta=val("meta"), matchup=val("matchup"), synergy=val("synergy"), composition=val("composition"),
+            mastery=val("mastery"), draft_risk=val("future_opponent"), mechanics=val("mechanics"),
+            ml_prediction=round(ml_s, 1) if ml_s is not None else None, ml_explanation=ml_expl,
+            terms=[ScoreTerm(**t.__dict__) for t in est.terms],
         )
 
-        # Details for UI (reuse pre-fetched results from bonus section)
-        mu_details = mu_details_raw
-        matchup_details = [
-            MatchupDetail(
-                opponent_name=d["opponent_name"],
-                opponent_role=d["opponent_role"],
-                win_rate=d["win_rate"] if d.get("games", 0) > 0 else None,
-                delta=d["delta"],
-                is_lane_opponent=d["is_lane_opponent"],
-                games=d.get("games", 0),
-                source="Lolalytics" if d.get("games", 0) > 0 else "heuristic",
-                lane_probability=d.get("lane_probability", 0),
-            )
-            for d in mu_details
-        ]
-
-        synergy_details = [
-            SynergyDetail(ally_name=d["ally_name"], ally_role=d["ally_role"], delta=d["delta"])
-            for d in syn_details_raw
-        ]
-
+        mu_details_raw = await self.matchup.details(champ.id, role, draft, tier) if has_enemies else []
+        syn_details_raw = await self.synergy.details(champ.id, role, draft) if allies else []
+        matchup_details = [MatchupDetail(opponent_name=d["opponent_name"], opponent_role=d["opponent_role"],
+                                         win_rate=d["win_rate"] if d.get("games", 0) > 0 else None, delta=d["delta"],
+                                         is_lane_opponent=d["is_lane_opponent"], games=d.get("games", 0),
+                                         source="Lolalytics" if d.get("games", 0) > 0 else "heuristic",
+                                         lane_probability=d.get("lane_probability", 0)) for d in mu_details_raw]
+        synergy_details = [SynergyDetail(ally_name=d["ally_name"], ally_role=d["ally_role"], delta=d["delta"]) for d in syn_details_raw]
         comp_warnings = self.composition.warnings(champ, draft)
+        tags = self._assign_tags(champ, draft, by_name)
 
-        # Tags (context-aware)
-        tags = self._assign_tags(champ, draft, match_s, risk_s, comp_s, total)
-
-        # Confidence (data-quality aware)
-        confidence = self._compute_confidence(draft, mu_details, syn_details_raw)
-
-        # Game count for this champion in this role (sample size info)
-        meta_games = self.meta.games(champ.id, role)
-
-        # Confidence interval from ML model (±X range)
-        score_range = None
-
-        # Contextual reasons + verdict — mention the concrete ally/enemy
-        # champions from the draft. No recomputation — we pass in the
-        # matchup / synergy details already built above and an ally-only
-        # comp summary so "AD-heavy / missing front" fillers compare
-        # against the team as it is, not with the candidate added.
-        allies_only = [
-            self.db.get_by_id(ap.champion_id)
-            for ap in draft.ally_picks
-            if ap.champion_id is not None
-        ]
-        allies_only = [a for a in allies_only if a]
-        comp_summary_allies = (
-            self.composition.team_summary_from_list(allies_only, draft)
-            if allies_only
-            else None
-        )
-        reasons = generate_reasons(
-            cand=champ,
-            role=role,
-            draft=draft,
-            db=self.db,
-            matchup_details=mu_details,
-            synergy_details=syn_details_raw,
-            comp_summary=comp_summary_allies,
-            max_reasons=3,
-        )
+        comp_summary_allies = self.composition.team_summary_from_list(allies, draft) if allies else None
+        reasons = generate_reasons(cand=champ, role=role, draft=draft, db=self.db, matchup_details=mu_details_raw,
+                                   synergy_details=syn_details_raw, comp_summary=comp_summary_allies, max_reasons=3)
         if mechanics:
             strongest = max(mechanics, key=lambda r: abs(r["score_delta"]))
-            edge_reason = {
-                "text": strongest["text"],
-                "kind": strongest["kind"],
-                "champions": strongest["champions"],
-            }
-            reasons = [edge_reason] + [r for r in reasons if r["text"] != edge_reason["text"]]
-            reasons = reasons[:3]
-        verdict = generate_verdict(
-            cand=champ,
-            draft=draft,
-            db=self.db,
-            match_s=match_s,
-            syn_s=syn_s,
-            comp_s=comp_s,
-            risk_s=risk_s,
-            tags=tags,
-            is_pool=is_pool,
-        )
-
+            edge_reason = {"text": strongest["text"], "kind": strongest["kind"], "champions": strongest["champions"]}
+            reasons = ([edge_reason] + [r for r in reasons if r["text"] != edge_reason["text"]])[:3]
+        verdict = generate_verdict(cand=champ, draft=draft, db=self.db, matchup=val("matchup"), synergy=val("synergy"),
+                                   composition=val("composition"), future=val("future_opponent"), tags=tags, is_pool=is_pool)
+        stats = self.meta.stats(champ.id, role, tier)
         return Recommendation(
-            champion_id=champ.id,
-            champion_key=champ.key,
-            champion_name=champ.name,
-            total_score=total,
-            score_range=score_range,
-            breakdown=breakdown,
-            matchup_details=matchup_details,
-            synergy_details=synergy_details,
-            composition_warnings=comp_warnings,
-            is_pool_champion=is_pool,
-            tags=tags,
-            confidence=confidence,
-            meta_games=meta_games,
-            meta_window=(self.db.get_stats(champ.id, role).patch if self.db.get_stats(champ.id, role) else None),
-            verdict=verdict,
-            reasons=reasons,
-            mechanics=mechanics,
+            champion_id=champ.id, champion_key=champ.key, champion_name=champ.name,
+            total_score=est.total, score_sd=est.sd, breakdown=breakdown,
+            matchup_details=matchup_details, synergy_details=synergy_details, composition_warnings=comp_warnings,
+            is_pool_champion=is_pool, tags=tags, confidence=confidence_from_sd(est.sd),
+            meta_games=stats.games if stats else 0, meta_window=stats.patch if stats else None,
+            verdict=verdict, reasons=reasons, mechanics=mechanics,
         )
 
-    # ── Blind-pick penalty override lookup ───────────────────────────────
-    def _get_blind_penalty_override(self, champion_key: str) -> float:
-        """Return any per-champion `blind_pick_penalty` configured in
-        champion_overrides.json. 0.0 when absent. Stacks additively with
-        the HIGH_RISK_BLIND list."""
-        ov = _load_overrides_lower().get(champion_key.lower(), {})
-        try:
-            return float(ov.get("blind_pick_penalty", 0.0))
-        except (TypeError, ValueError):
-            return 0.0
+    def _mastery_inputs(self, champ: Champion, entry: PoolEntry, role: str, rank, personal) -> MasteryInputs:
+        inputs = MasteryInputs(tier=entry.tier, difficulty=champ.difficulty, rank=rank, now=datetime.now(timezone.utc))
+        if personal:
+            svc, puuid, region = personal
+            stats = svc.get_champion_personal(puuid, champ.id, role, region)
+            if stats:
+                inputs.personal_games, inputs.personal_wr = stats["games"], stats["win_rate"]
+            mastery = svc.get_mastery_entry(puuid, champ.id, region)
+            if mastery:
+                inputs.mastery_points = int(mastery.get("points", 0))
+                if mastery.get("last_played"):
+                    inputs.last_played = datetime.fromtimestamp(float(mastery["last_played"]), tz=timezone.utc)
+        return inputs
 
     # ── Archetype counter count (mechanical kit matchups) ────────────────
     async def _compute_ban_impact(
@@ -1289,67 +760,6 @@ class DraftEngine:
             "no_dps":       "DPS manquant",
         }.get(gap, "Gap composition")
 
-    # ── Draft risk (counter-pick exposure) ───────────────────────────────
-    async def _draft_risk(self, champ: Champion, role: str, draft: DraftState) -> float:
-        """Higher score = safer to pick now. Lower = risky blind pick.
-
-        Considers champion archetype: immobile carries are inherently risky.
-        Also accounts for the practical reality that opponents can't draft
-        5 counters without ruining their own team composition.
-        """
-        # Archetype vulnerability modifier
-        vuln = 0
-        if "Marksman" in champ.tags and champ.ratings.tankiness <= 2:
-            vuln = 28  # ADCs are extremely counter-prone
-        elif "Assassin" in champ.tags and champ.ratings.tankiness <= 2:
-            vuln = 15  # Assassins somewhat counter-prone
-        elif "Mage" in champ.tags and champ.ratings.tankiness <= 2:
-            vuln = 10  # Squishy mages
-        elif champ.ratings.tankiness >= 4:
-            vuln = -12  # Tanks are safe blind picks
-        elif "Fighter" in champ.tags and champ.ratings.tankiness >= 3:
-            vuln = -5   # Bruisers are fairly safe
-
-        if draft.is_last_pick:
-            return _clamp(82.0 - vuln * 0.3, 50.0, 90.0)  # last pick is always safer
-
-        if draft.my_lane_opponent_revealed:
-            return _clamp(72.0 - vuln * 0.5, 25.0, 82.0)
-
-        # Check how many counters are still available
-        champion_id = champ.id
-        await self.matchup.load_matchups(champion_id, role)
-        counters = self.matchup.get_top_counters(champion_id, role, n=8)
-
-        if not counters:
-            return _clamp(50.0 - vuln, 15.0, 65.0)  # no data → moderate, adjusted by vuln
-
-        unavail = draft.all_unavailable_ids
-        available_counters = [(cid, delta) for cid, delta in counters if cid not in unavail]
-
-        if not available_counters:
-            return _clamp(78.0 - vuln * 0.3, 40.0, 85.0)  # all counters banned
-
-        # Worst accessible counter
-        worst_delta = min(d for _, d in available_counters)
-        # Number of dangerous counters still available
-        dangerous = sum(1 for _, d in available_counters if d < -2.0)
-
-        picks_left = draft.remaining_enemy_picks
-
-        # Realistic counter exposure: opponents can realistically dedicate
-        # at most 1-2 picks to counter you without ruining their own comp.
-        # So we cap the picks_left impact and reduce density penalty.
-        effective_picks = min(picks_left, 2)  # max 2 realistic counter picks
-        base_safety = 60.0 - effective_picks * 6 - vuln * 0.7
-
-        counter_penalty = max(0, -worst_delta) * 2.0
-        # Density matters less — they can't pick all counters
-        density_penalty = min(dangerous, 3) * 2
-
-        safety = base_safety - counter_penalty - density_penalty
-        return round(_clamp(safety, 15.0, 85.0), 1)
-
     # ── Wild-card / off-meta suggestions ─────────────────────────────────
     async def _wild_card_suggestions(
         self,
@@ -1358,12 +768,13 @@ class DraftEngine:
         unavailable: set,
         pool_entries: List[PoolEntry],
         score_entry,
+        reference: float,
     ) -> List[Recommendation]:
-        """Find champions NOT in the user's pool with exceptionally high scores.
+        """Find champions NOT in the user's pool with a clear advantage over the pool mean.
 
         Only suggests champions that are:
         1. Meta-viable in the role (meta score >= 45)
-        2. High total score (>= wildcard_min_score)
+        2. Ahead of the pool reference by at least wildcard_min_advantage points
 
         Candidates are scored in small parallel batches, best meta first, and
         the search stops as soon as enough suggestions clear the threshold.
@@ -1401,91 +812,39 @@ class DraftEngine:
                 # Track best wildcard regardless of threshold
                 if best_wildcard is None or rec.total_score > best_wildcard.total_score:
                     best_wildcard = rec
-                if rec.total_score >= config.wildcard_min_score and len(wildcards) < config.wildcard_max_suggestions:
+                if rec.total_score - reference >= config.scoring.wildcard_min_advantage and len(wildcards) < config.wildcard_max_suggestions:
                     wildcards.append(rec)
             if len(wildcards) >= config.wildcard_max_suggestions:
                 break
 
         # Always suggest at least 1 wildcard if pool is under-performing
-        if not wildcards and best_wildcard is not None and best_wildcard.total_score >= 35:
+        if not wildcards and best_wildcard is not None and best_wildcard.total_score - reference >= 0:
             wildcards.append(best_wildcard)
 
         return wildcards
 
-    # ── Tag assignment (context-aware) ───────────────────────────────────
-    def _assign_tags(
-        self, champ: Champion, draft: DraftState,
-        match_s: float, risk_s: float, comp_s: float,
-        total: float = 0.0,
-    ) -> List[str]:
+    # ── Tags (à partir des termes en points de WR) ─────────────────────────
+    def _assign_tags(self, champ: Champion, draft: DraftState, terms: Dict[str, Term]) -> List[str]:
         tags: List[str] = []
-
-        # Low-data warning: champion has very few games → stats unreliable
         games = self.meta.games(champ.id, draft.my_role)
         if 0 < games < config.min_games_reliable:
             tags.append("low-data")
-
-        # Safe blind: high safety + not a vulnerable archetype + decent matchups
-        # NOT relevant if lane opponent is already revealed OR majority of enemies visible
-        is_vulnerable_carry = ("Marksman" in champ.tags or "Assassin" in champ.tags) and champ.ratings.tankiness <= 2
-        enemies_revealed_count = len([e for e in draft.enemy_picks if e.champion_id])
-        # "Safe blind" only makes sense when picking blind (few or no enemies visible)
-        is_truly_blind = enemies_revealed_count <= 1 and not draft.my_lane_opponent_revealed
-        matchup_ok = match_s >= 50 or enemies_revealed_count == 0
-        if risk_s >= 72 and not is_vulnerable_carry and comp_s >= 55 and matchup_ok and is_truly_blind:
+        matchup = terms.get("matchup")
+        future = terms.get("future_opponent")
+        if future is not None and future.value >= -0.5 and future.sd <= 2.0:
             tags.append("safe-blind")
-
-        # Counter-pick: only if we have meaningful enemy data and score is high
-        enemies_revealed = len([e for e in draft.enemy_picks if e.champion_id]) >= 2
-        if match_s >= 62 and enemies_revealed:
+        if future is not None and future.value <= -2.0:
+            tags.append("risky-blind")
+        if matchup is not None and matchup.value >= 2.0 and draft.my_lane_opponent_revealed:
             tags.append("counter-pick")
-
-        # Flex: truly flexible (2+ roles) — but useless on last pick (no ambiguity)
         if len(champ.roles) >= 2 and not draft.is_last_pick:
             tags.append("flex")
-            # Extra visibility: on 1st pick, flex is the whole point
-            if draft.my_pick_order == 1 and risk_s >= 55:
-                tags.append("first-pick-safe")
-
-        # Last-pick counter
-        if draft.is_last_pick and match_s >= 58:
+        if draft.is_last_pick and matchup is not None and matchup.value >= 1.5:
             tags.append("last-pick-counter")
-            # Niche but devastating last-pick counter (low meta, high matchup)
-            if match_s >= 68 and self.meta.score(champ.id, draft.my_role) < 55:
-                tags.append("niche-counter")
-
-        # Strong meta pick — require derived tier ≥ A (total ≥ 70) AND meta_score ≥ 65
-        meta_score = self.meta.score(champ.id, draft.my_role)
-        if meta_score >= 65 and total >= 70:
+        meta = terms.get("meta")
+        if meta is not None and meta.value >= 1.5:
             tags.append("meta-forte")
-
+        mastery = terms.get("mastery")
+        if mastery is not None and mastery.value >= 0.5:
+            tags.append("comfort")
         return tags
-
-    # ── Confidence (data-quality aware) ──────────────────────────────────
-    def _compute_confidence(self, draft: DraftState, mu_details: List[Dict], syn_details: List[Dict]) -> float:
-        """How reliable is this recommendation?
-
-        Factors:
-        - Number of revealed picks (more info = higher)
-        - Quality of matchup data (API data vs heuristic)
-        - Sample size of matchup games
-        """
-        revealed = sum(1 for p in draft.ally_picks + draft.enemy_picks if p.champion_id)
-        base = 15.0 + revealed * 5.0
-
-        # Data quality: matchups with actual API data (games > 0)
-        total_mu = len(mu_details)
-        if total_mu > 0:
-            with_data = sum(1 for d in mu_details if d.get("games", 0) > 30)
-            data_ratio = with_data / total_mu
-            base += data_ratio * 25.0  # up to +25 for full data coverage
-
-            # Heavy penalty for mostly heuristic data
-            if data_ratio < 0.3:
-                base -= 30  # almost no real data
-            elif data_ratio < 0.5:
-                base -= 20  # most matchups are estimated = very uncertain
-        else:
-            base -= 10  # no enemies = less confident
-
-        return round(_clamp(base, 8.0, 85.0), 1)

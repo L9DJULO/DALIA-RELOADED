@@ -32,6 +32,7 @@ export function historyPayload(draft) {
     ally_bans: (draft.myTeam === 'blue' ? draft.blueBans : draft.redBans).filter(Boolean).map(c => pick(c)),
     enemy_bans: (draft.myTeam === 'blue' ? draft.redBans : draft.blueBans).filter(Boolean).map(c => pick(c)),
     recommended_champion: best?.champion_key || null, recommendation_score: best?.total_score ?? null,
+    score_unit: best ? 'wr_points' : null,
     win_probability: best?.breakdown?.ml_explanation?.win_probability != null ? best.breakdown.ml_explanation.win_probability * 100 : null };
 }
 
