@@ -2,7 +2,7 @@
 from __future__ import annotations
 from typing import Annotated, Dict, List, Optional
 from pydantic import BaseModel, Field, field_validator, model_validator
-from app.models.validation import Role, Team, Tier, ChampionId, Puuid, Region, validate_weights
+from app.models.validation import Role, Team, Tier, ChampionId, Puuid, Region, RankBucket, validate_weights
 
 
 ROLES = ["top", "jungle", "mid", "bot", "support"]
@@ -132,8 +132,18 @@ class MLExplanation(BaseModel):
     reasons: List[str] = Field(default_factory=list)
 
 
+class ScoreTerm(BaseModel):
+    """Contribution d'un facteur, en points de win rate, avec son incertitude."""
+    name: str
+    value: float
+    sd: float
+    source: str = "heuristic"     # "observed" | "heuristic" | "model"
+    sample: int = 0
+    note: str = ""
+
+
 class ScoreBreakdown(BaseModel):
-    """Detailed score breakdown for a champion recommendation."""
+    """Contributions signées (points de WR) par facteur ; draft_risk = adversaire futur."""
     meta: float = 0.0
     matchup: float = 0.0
     synergy: float = 0.0
@@ -144,6 +154,7 @@ class ScoreBreakdown(BaseModel):
     ml_explanation: Optional[MLExplanation] = None
     mechanics: float = 0.0
     wpa_adjustment: float = 0.0
+    terms: List[ScoreTerm] = Field(default_factory=list)
 
 
 class MatchupDetail(BaseModel):
@@ -190,8 +201,10 @@ class Recommendation(BaseModel):
     champion_id: int
     champion_key: str
     champion_name: str
-    total_score: float
-    score_range: Optional[List[float]] = None   # [low, high] confidence interval (±X)
+    total_score: float                          # avantage en points de WR vs moyenne du pool (signé)
+    score_range: Optional[List[float]] = None   # [total_score − sd, total_score + sd]
+    score_sd: float = 0.0
+    tie_with_leader: bool = False
     breakdown: ScoreBreakdown
     matchup_details: List[MatchupDetail] = Field(default_factory=list)
     synergy_details: List[SynergyDetail] = Field(default_factory=list)
@@ -230,6 +243,8 @@ class DraftRequest(BaseModel):
     # ── Personal stats (from LCU link) ──
     puuid: Optional[Puuid] = None
     region: Optional[Region] = None
+    # ── Rang du joueur (League, profil ou inconnu) ──
+    rank_bucket: RankBucket = None
 
     _weights_valid = field_validator("weight_overrides")(validate_weights)
 
@@ -272,6 +287,9 @@ class DraftResponse(BaseModel):
     ban_suggestions: List[BanSuggestion] = Field(default_factory=list)
     ban_impact: List[BanImpact] = Field(default_factory=list)
     data_status: dict = Field(default_factory=dict)
+    reference_mean: float = 0.0                  # moyenne des totaux du pool (points de WR)
+    top_group_ids: List[int] = Field(default_factory=list)
+    rank_bucket: Optional[str] = None
 
 
 class CompareRequest(DraftRequest):
