@@ -6,12 +6,13 @@ while draft/recommend uses the auth'd user's pool when available.
 from __future__ import annotations
 
 import logging
+import math
 from typing import Dict, List, Optional, Literal
 # UserDB used as Optional type hint in route signatures
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field
-from app.models.validation import Role, Puuid, Region, ChampionId
+from app.models.validation import Role, Puuid, Region, ChampionId, RANK_BUCKETS, normalize_rank_bucket
 from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import config
@@ -212,6 +213,9 @@ async def _apply_account_context(body: DraftRequest, current_user: Optional[User
     Anonymous users must send their pool in the body. DuoQ needs an active link and
     a partner role; when either is missing the boost is disabled rather than half-applied.
     """
+    if current_user is not None and body.rank_bucket is None and getattr(current_user, "rank_tier", None):
+        normalized = normalize_rank_bucket(current_user.rank_tier)
+        body.rank_bucket = normalized if normalized in RANK_BUCKETS else None
     if current_user and _pool_is_empty(body.champion_pool):
         body.champion_pool = await _get_user_pool(current_user, db)
 
@@ -273,15 +277,23 @@ async def compare_champions(body: CompareRequest, request: Request,
     if any(cid not in indexed for cid in body.champion_ids):
         raise HTTPException(422, "Un des deux champions ne peut pas être évalué dans cette draft")
     left, right = (indexed[cid] for cid in body.champion_ids)
-    dimensions = ["meta", "matchup", "synergy", "composition", "mastery", "draft_risk", "mechanics", "wpa_adjustment"]
-    deltas = [{"dimension": key, "left": getattr(left.breakdown, key), "right": getattr(right.breakdown, key),
-               "delta": round(getattr(left.breakdown, key) - getattr(right.breakdown, key), 2)} for key in dimensions]
+    names = {t.name for t in left.breakdown.terms} | {t.name for t in right.breakdown.terms}
+
+    def term_value(rec, name):
+        return next((t.value for t in rec.breakdown.terms if t.name == name), 0.0)
+
+    order = ["meta", "matchup", "future_opponent", "mastery", "composition", "archetype", "synergy", "mechanics", "model"]
+    deltas = [{"dimension": name, "left": round(term_value(left, name), 2), "right": round(term_value(right, name), 2),
+               "delta": round(term_value(left, name) - term_value(right, name), 2)} for name in order if name in names]
+    combined_sd = round(math.sqrt(left.score_sd ** 2 + right.score_sd ** 2), 2)
+    score_delta = round(left.total_score - right.total_score, 2)
     delta_pp = None
     if left.wpa and right.wpa:
         delta_pp = round((left.breakdown.ml_explanation.win_probability - right.breakdown.ml_explanation.win_probability) * 100, 2)
-    return {"left": left, "right": right, "score_delta": round(left.total_score - right.total_score, 1),
-            "dimensions": deltas, "wpa_delta_pp": delta_pp, "data_status": result.data_status,
-            "explanation": "Même draft, mêmes préférences. Les sous-scores sont des diagnostics ; le score final applique aussi des pondérations et des ajustements de contexte."}
+    return {"left": left, "right": right, "score_delta": score_delta, "combined_sd": combined_sd,
+            "tied": abs(score_delta) < combined_sd, "dimensions": deltas, "wpa_delta_pp": delta_pp,
+            "data_status": result.data_status,
+            "explanation": "Même draft, mêmes préférences. Chaque ligne est une contribution en points de win rate ; l'écart final est comparé à l'incertitude combinée."}
 
 
 @router.post("/pool/advice")
@@ -317,6 +329,9 @@ async def recommend_bans(
         raise HTTPException(422, "Champion inconnu du catalogue actuel")
 
     # Load pool from DB if not provided (requires auth)
+    if current_user is not None and body.rank_bucket is None and getattr(current_user, "rank_tier", None):
+        normalized = normalize_rank_bucket(current_user.rank_tier)
+        body.rank_bucket = normalized if normalized in RANK_BUCKETS else None
     if current_user and _pool_is_empty(body.champion_pool):
         body.champion_pool = await _get_user_pool(current_user, db)
     for role, entries in body.champion_pool.items():

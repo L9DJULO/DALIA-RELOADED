@@ -59,6 +59,7 @@ class ProfileResponse(BaseModel):
     enable_wildcard: bool
     enable_off_meta: bool
     weight_overrides: dict | None
+    rank_tier: str | None = None
 
 
 # ── Routes ───────────────────────────────────────────────────────────────
@@ -92,6 +93,7 @@ async def get_profile(
         enable_wildcard=current_user.enable_wildcard,
         enable_off_meta=current_user.enable_off_meta,
         weight_overrides=current_user.weight_overrides,
+        rank_tier=current_user.rank_tier,
     )
 
 

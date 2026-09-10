@@ -164,3 +164,25 @@ async def test_failed_inference_cannot_be_shown_as_fifty_percent(catalog):
     assert result.recommendations[0].breakdown.ml_explanation is None
     assert result.recommendations[0].wpa is None
     assert result.win_probability is None
+
+
+def test_compare_reports_terms_and_tie(client):
+    response = client.post('/api/draft/compare', json={"draft_state": {"my_role": "top", "enemy_picks": [{"champion_id": 59}]}, "champion_ids": [78, 75], "rank_bucket": "SILVER"})
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert "combined_sd" in data and isinstance(data["tied"], bool)
+    assert {d["dimension"] for d in data["dimensions"]} >= {"meta", "mastery", "mechanics"}
+    assert data["data_status"]["rank"] == "silver"
+
+
+@pytest.mark.asyncio
+async def test_profile_rank_is_used_when_request_has_none(catalog):
+    from app.api.routes import _apply_account_context
+    from types import SimpleNamespace
+    body = DraftRequest(draft_state={"my_role": "top"}, champion_pool={"top": [{"champion_id": 78}]})
+    user = SimpleNamespace(rank_tier="DIAMOND", id=None)
+    await _apply_account_context(body, user, None)
+    assert body.rank_bucket == "diamond"
+    explicit = DraftRequest(draft_state={"my_role": "top"}, champion_pool={"top": [{"champion_id": 78}]}, rank_bucket="gold")
+    await _apply_account_context(explicit, user, None)
+    assert explicit.rank_bucket == "gold"

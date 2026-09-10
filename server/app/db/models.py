@@ -56,6 +56,7 @@ class UserDB(Base):
     weight_overrides = Column(JSONB, nullable=True)
     enable_wildcard = Column(Boolean, default=True)
     enable_off_meta = Column(Boolean, default=True)
+    rank_tier = Column(String(20), nullable=True)  # iron … master_plus, NULL = inconnu
 
     # ── DuoQ ──
     duo_code = Column(String(10), unique=True, nullable=True, index=True, default=_generate_duo_code)
@@ -142,6 +143,7 @@ class DraftHistoryDB(Base):
     recommended_champion = Column(String(50), nullable=True)
     recommendation_score = Column(Float, nullable=True)
     win_probability = Column(Float, nullable=True)
+    score_unit = Column(String(20), nullable=True)  # "wr_points" ; NULL = ancien barème 0-100
 
     # ── Result ──
     result = Column(String(10), nullable=True)  # "win" | "loss" | "remake" | null

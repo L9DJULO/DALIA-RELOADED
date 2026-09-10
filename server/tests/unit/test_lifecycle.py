@@ -24,7 +24,7 @@ async def test_cancelled_initialization_closes_network_client(monkeypatch):
     class Connection:
         async def __aenter__(self): return self
         async def __aexit__(self, *args): pass
-        async def scalar(self, *args): return '003'
+        async def scalar(self, *args): return main.expected_schema_revision()
     fetcher = SimpleNamespace(close=AsyncMock())
     monkeypatch.setattr(main, 'engine', SimpleNamespace(begin=lambda: Connection()))
     monkeypatch.setattr(main, 'LolalyticsFetcher', lambda: fetcher)
