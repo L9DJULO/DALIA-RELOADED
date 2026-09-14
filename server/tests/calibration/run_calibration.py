@@ -15,9 +15,10 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import math
 import sys
 import traceback
-from collections import defaultdict
+from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -244,6 +245,54 @@ def evaluate_assertion(a: Dict[str, Any], recs: List) -> Tuple[bool, str]:
     return False, f"Unknown assertion type: {t}"
 
 
+# Index du slot frontière testé par chaque assertion de position.
+_BOUNDARY_SLOT = {"must_be_top_1": 0, "must_be_in_top_3": 2,
+                  "must_be_in_top_5": 4, "must_not_be_top_3": 2}
+
+
+def assertion_separation(a: Dict[str, Any], recs: List) -> Optional[Tuple[float, float, str]]:
+    """Écart observé et incertitude combinée pour une assertion d'ordre.
+
+    Sert au triage : une assertion dont l'écart reste sous l'incertitude
+    combinée pose une question que la donnée ne tranche pas, quel que soit le
+    moteur. Retourne None pour les assertions qui ne portent pas sur un ordre
+    (raisons, égalité explicite) et quand un champion est absent du top 15.
+    """
+    t = a["type"]
+
+    if t == "must_rank_higher_than":
+        _, ra = find_rank(recs, a["champion_a"])
+        _, rb = find_rank(recs, a["champion_b"])
+        if ra is None or rb is None:
+            return None
+        gap = abs(ra.total_score - rb.total_score)
+        combined = math.sqrt(ra.score_sd ** 2 + rb.score_sd ** 2)
+        return gap, combined, f"{a['champion_a']} vs {a['champion_b']}"
+
+    if t in _BOUNDARY_SLOT:
+        slot = _BOUNDARY_SLOT[t]
+        rank, rec = find_rank(recs, a["champion"])
+        if rec is None or len(recs) <= slot:
+            return None
+        # Le champion occupe deja le slot frontiere : on le compare au suivant.
+        other = slot if rank != slot else min(slot + 1, len(recs) - 1)
+        if other == rank:
+            return None
+        boundary = recs[other]
+        gap = abs(rec.total_score - boundary.total_score)
+        combined = math.sqrt(rec.score_sd ** 2 + boundary.score_sd ** 2)
+        return gap, combined, f"{a['champion']} vs #{other + 1} {boundary.champion_name}"
+
+    if t == "must_have_advantage_above":
+        _, rec = find_rank(recs, a["champion"])
+        if rec is None:
+            return None
+        return (abs(rec.total_score - a["min_advantage"]), rec.score_sd,
+                f"{a['champion']} vs seuil {a['min_advantage']:+.2f}")
+
+    return None
+
+
 def print_case_report(case: Dict[str, Any], recs: List, results: List[Tuple], verbose: bool) -> None:
     n_pass = sum(1 for _, p, _ in results if p)
     n_total = len(results)
@@ -269,6 +318,31 @@ def print_case_report(case: Dict[str, Any], recs: List, results: List[Tuple], ve
     print()
 
 
+def print_case_diagnosis(case: Dict[str, Any], recs: List, results: List[Tuple]) -> List[str]:
+    """Affiche la decidabilite de chaque assertion. Retourne un verdict par assertion."""
+    verdicts: List[str] = []
+    print(f"{C.BOLD}{case['id']}{C.RESET} {C.DIM}[{case.get('category', '?')}]{C.RESET}")
+    for (a, passed, message) in results:
+        sep = assertion_separation(a, recs)
+        if sep is None:
+            verdicts.append("hors_ordre")
+            print(f"  {C.DIM}·{C.RESET} {a['type']}: hors perimetre du triage")
+            continue
+        gap, combined, label = sep
+        if gap < combined:
+            verdicts.append("indecidable")
+            print(f"  {C.YELLOW}~{C.RESET} {label}: ecart {gap:.2f} < incertitude {combined:.2f} "
+                  f"{C.YELLOW}INDECIDABLE -> must_be_tied{C.RESET}")
+        elif passed:
+            verdicts.append("decidable_ok")
+            print(f"  {C.GREEN}✓{C.RESET} {label}: ecart {gap:.2f} >= {combined:.2f} — conservee")
+        else:
+            verdicts.append("decidable_ko")
+            print(f"  {C.RED}✗{C.RESET} {label}: ecart {gap:.2f} >= {combined:.2f} "
+                  f"{C.RED}ARBITRAGE{C.RESET} — {message}")
+    return verdicts
+
+
 async def run_case(case: Dict[str, Any], engine: DraftEngine, db: ChampionDatabase) -> Tuple[List, List[Tuple]]:
     request = build_request(case["setup"], db)
     response = await engine.recommend(request)
@@ -286,6 +360,10 @@ async def main() -> int:
         default=str(Path(__file__).parent / "cases.json"),
         help="Path to cases JSON file (default: cases.json next to this script)",
     )
+    parser.add_argument("--rank", help="Rang joueur applique a tous les cas sans rank_bucket explicite "
+                                       "(iron, bronze, silver, gold, platinum, emerald, diamond, master_plus)")
+    parser.add_argument("--diagnose", action="store_true",
+                        help="Trie les assertions d'ordre par decidabilite au lieu de juger reussite/echec")
     args = parser.parse_args()
 
     cases_path = Path(args.cases)
@@ -299,6 +377,10 @@ async def main() -> int:
         if not cases:
             print(f"{C.YELLOW}No cases match category '{args.filter}'{C.RESET}")
             return 1
+
+    if args.rank:
+        for case in cases:
+            case.setdefault("setup", {}).setdefault("rank_bucket", args.rank)
 
     print(f"{C.CYAN}{C.BOLD}DALIA Calibration Suite{C.RESET}")
     print(f"{C.DIM}Loading champion data (first run hits DDragon, subsequent runs use cache)...{C.RESET}\n")
@@ -317,6 +399,7 @@ async def main() -> int:
     by_category: Dict[str, Dict[str, int]] = defaultdict(lambda: {"pass": 0, "total": 0})
     total_pass = 0
     total_assertions = 0
+    diagnosis: List[str] = []
 
     try:
         for case in cases:
@@ -331,7 +414,10 @@ async def main() -> int:
                 print(f"{C.DIM}{traceback.format_exc()}{C.RESET}")
                 continue
 
-            print_case_report(case, recs, results, args.verbose)
+            if args.diagnose:
+                diagnosis.extend(print_case_diagnosis(case, recs, results))
+            else:
+                print_case_report(case, recs, results, args.verbose)
 
             for _, passed, _ in results:
                 by_category[cat]["total"] += 1
@@ -341,6 +427,15 @@ async def main() -> int:
                     total_pass += 1
     finally:
         await fetcher.close()
+
+    if args.diagnose:
+        counts = Counter(diagnosis)
+        print(f"\n{C.BOLD}Triage des assertions{C.RESET}")
+        print(f"  indecidables (-> must_be_tied) : {counts['indecidable']}")
+        print(f"  decidables reussies (conservees) : {counts['decidable_ok']}")
+        print(f"  {C.RED}decidables echouees (arbitrage) : {counts['decidable_ko']}{C.RESET}")
+        print(f"  hors perimetre du triage        : {counts['hors_ordre']}")
+        return 0
 
     pct = (total_pass / total_assertions * 100.0) if total_assertions else 0.0
 
