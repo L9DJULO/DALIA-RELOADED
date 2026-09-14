@@ -755,7 +755,8 @@ from app.scoring.aggregate import top_group
 
 def _reorder_head_by_risk(scored):
     """Reproduit le departage du moteur sur une liste deja triee par esperance."""
-    group = top_group([(r.total_score, r.score_sd) for r in scored])
+    # Depuis la vague 0,5, top_group prend les termes et non le sigma absolu.
+    group = top_group([(r.total_score, r.breakdown.terms) for r in scored])
     if len(group) > 1:
         head = sorted((scored[i] for i in group), key=lambda r: r.outcome_sd)
         for slot, rec in zip(group, head):
@@ -819,7 +820,7 @@ Dans `server/app/services/draft_engine.py`, remplacer le bloc de tri (lignes ~31
 
 ```python
         scored.sort(key=lambda r: r.total_score, reverse=True)
-        group = top_group([(r.total_score, r.score_sd) for r in scored])
+        group = top_group([(r.total_score, r.breakdown.terms) for r in scored])
         if len(group) > 1:
             # À égalité statistique, le plus sûr passe devant. Seul le risque
             # subi départage : l'incertitude d'estimation dit qu'on manque de

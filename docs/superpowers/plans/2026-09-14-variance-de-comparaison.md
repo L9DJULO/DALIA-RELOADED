@@ -411,7 +411,7 @@ def test_shared_terms_no_longer_inflate_the_separation():
     assert gap > combined, "decidable : les termes partages s'annulent"
 ```
 
-Les six tests existants du fichier continuent d'utiliser `rec()` avec sa valeur par défaut et restent valides sans modification de leurs assertions — leur `combined` était déjà `sqrt(sd_a² + sd_b²)` sur un unique terme observé, ce que la nouvelle formule reproduit exactement.
+Les sept tests existants qui appellent `rec()` continuent de l'utiliser avec sa valeur par défaut et restent valides sans modification de leurs assertions (le huitième, `test_unknown_rank_is_rejected_with_accepted_values_listed`, n'appelle pas `rec()`) — leur `combined` était déjà `sqrt(sd_a² + sd_b²)` sur un unique terme observé, ce que la nouvelle formule reproduit exactement.
 
 - [ ] **Step 2: Lancer les tests, vérifier l'échec**
 
