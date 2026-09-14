@@ -159,8 +159,11 @@ secours. Il n'est **pas** ajouté d'avance.
 
 ### 5.6 Conséquences hors moteur
 
-Aucune. Le frontend affiche les recommandations dans l'ordre reçu et marque déjà `tie_with_leader`. Aucun
-changement client, aucun changement de schéma d'API, aucune migration.
+Le frontend affiche les recommandations dans l'ordre reçu et marque déjà `tie_with_leader` : **aucun changement
+client, aucune migration**.
+
+Une seule modification de schéma, **additive** : `Recommendation` gagne `outcome_sd: float = 0.0`, que le
+moteur doit lire pour départager le groupe. Le client l'ignore, comme tout champ qu'il ne connaît pas.
 
 Point d'attention à l'implémentation : `scored[0]` sert aussi aux avertissements de composition et à
 `win_probability`. Ces deux valeurs suivront le nouveau leader, ce qui est le comportement voulu.
