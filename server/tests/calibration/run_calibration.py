@@ -28,6 +28,7 @@ if str(SERVER_DIR) not in sys.path:
     sys.path.insert(0, str(SERVER_DIR))
 
 from app.models.draft import DraftPick, DraftRequest, DraftState, PoolEntry  # noqa: E402
+from app.scoring.aggregate import comparison_sd  # noqa: E402
 from app.scoring.types import RANKS  # noqa: E402
 from app.services.champion_data import ChampionDatabase  # noqa: E402
 from app.services.data_fetcher import LolalyticsFetcher  # noqa: E402
@@ -256,8 +257,12 @@ def assertion_separation(a: Dict[str, Any], recs: List) -> Optional[Tuple[float,
 
     Used for triage: an assertion whose gap stays within the combined
     uncertainty poses a question the data cannot decide, regardless of the
-    engine. Returns None for assertions that are not about ordering (reasons,
-    explicit tie) and when a champion is absent from the top 15.
+    engine. The uncertainty is that of the comparison between the two
+    champions' terms (`comparison_sd`), not the sum of their absolute
+    uncertainties — shared heuristic error cancels between two champions
+    instead of being double-counted. Returns None for assertions that are
+    not about ordering (reasons, explicit tie) and when a champion is
+    absent from the top 15.
     """
     t = a["type"]
 
@@ -267,7 +272,7 @@ def assertion_separation(a: Dict[str, Any], recs: List) -> Optional[Tuple[float,
         if ra is None or rb is None:
             return None
         gap = abs(ra.total_score - rb.total_score)
-        combined = math.sqrt(ra.score_sd ** 2 + rb.score_sd ** 2)
+        combined = comparison_sd(ra.breakdown.terms, rb.breakdown.terms)
         return gap, combined, f"{a['champion_a']} vs {a['champion_b']}"
 
     if t in _BOUNDARY_SLOT:
@@ -281,7 +286,7 @@ def assertion_separation(a: Dict[str, Any], recs: List) -> Optional[Tuple[float,
             return None
         boundary = recs[other]
         gap = abs(rec.total_score - boundary.total_score)
-        combined = math.sqrt(rec.score_sd ** 2 + boundary.score_sd ** 2)
+        combined = comparison_sd(rec.breakdown.terms, boundary.breakdown.terms)
         return gap, combined, f"{a['champion']} vs #{other + 1} {boundary.champion_name}"
 
     if t == "must_have_advantage_above":

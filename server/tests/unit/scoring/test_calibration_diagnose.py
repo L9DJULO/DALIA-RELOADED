@@ -4,6 +4,8 @@ import math
 from pathlib import Path
 from types import SimpleNamespace
 
+from app.scoring.types import Term
+
 # run_calibration.py est un script hors package : chargement par chemin.
 _PATH = Path(__file__).resolve().parents[2] / "calibration" / "run_calibration.py"
 _spec = importlib.util.spec_from_file_location("run_calibration", _PATH)
@@ -13,13 +15,26 @@ assertion_separation = run_calibration.assertion_separation
 validate_rank = run_calibration.validate_rank
 
 
-def rec(name, score, sd):
-    return SimpleNamespace(champion_name=name, champion_key=name,
-                           total_score=score, score_sd=sd)
+def rec(name, score, sd, terms=None):
+    return SimpleNamespace(champion_name=name, champion_key=name, total_score=score,
+                           score_sd=sd, breakdown=SimpleNamespace(
+                               terms=terms if terms is not None else [Term("meta", score, sd, "observed")]))
 
 
 RECS = [rec("Caitlyn", 3.0, 1.0), rec("Jinx", 2.5, 1.0),
         rec("Ezreal", 0.0, 1.0), rec("Yasuo", -4.0, 1.0)]
+
+
+def test_shared_terms_no_longer_inflate_the_separation():
+    """Deux champions ne differant que par meta : le seuil ne doit venir que de meta."""
+    shared = [Term("composition", 2.0, 0.0, rel_sd=0.5), Term("synergy", 3.0, 0.0, rel_sd=0.5)]
+    recs = [rec("A", 8.0, 0.0, shared + [Term("meta", 3.0, 0.3, "observed")]),
+            rec("B", 6.0, 0.0, shared + [Term("meta", 1.0, 0.3, "observed")])]
+    gap, combined, _ = assertion_separation(
+        {"type": "must_rank_higher_than", "champion_a": "A", "champion_b": "B"}, recs)
+    assert math.isclose(gap, 2.0)
+    assert math.isclose(combined, math.sqrt(0.3 ** 2 + 0.3 ** 2))
+    assert gap > combined, "decidable : les termes partages s'annulent"
 
 
 def test_pair_assertion_reports_gap_and_combined_uncertainty():
