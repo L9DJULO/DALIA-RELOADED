@@ -205,3 +205,85 @@ des correctifs.
 **4. `no_tie_hard_counter` échoue** : Vayne sort 3e derrière Malphite alors que
 le cas attend le counter direct en tête. À instruire avec le détail des termes
 avant de conclure.
+
+## Variance de comparaison (vague 0,5)
+
+Mesuré le 14 septembre 2026 sur le cas réel `counter_pick_adc_full_info`, tier
+`d2_plus` (Jinx / Xayah / Caitlyn). Le triage de la vague 0 classait 31 des
+38 assertions d'ordre comme indécidables — pas une propriété de la donnée,
+mais un défaut de calcul du seuil. Termes réels observés sur les trois
+candidats :
+
+| Terme | Jinx | Xayah | Caitlyn | σ | Part de la variance |
+|---|---|---|---|---|---|
+| `meta` (observé) | +3,59 | +3,37 | +0,41 | 0,23–0,41 | 0,4–1,2 % |
+| `matchup` (observé) | −0,11 | +0,64 | −1,26 | 0,77–1,41 | 4,5–13,6 % |
+| `mastery` | −1,30 | −4,00 | 0,00 | 1,50 | ~17 % |
+| `composition` | **+2,00** | **+2,00** | **+2,00** | 2,00 | ~30 % |
+| `synergy` | **+3,00** | **+3,00** | **+3,00** | 2,00 | ~30 % |
+| `mechanics` | **0,00** | **0,00** | **0,00** | 1,50 | ~17 % |
+
+Les données observées (`meta`, `matchup`) pesaient 5 % de la variance ; les
+constantes heuristiques codées en dur, 95 %. `mechanics` valait +0,00 pour
+les trois candidats et facturait à lui seul 17 % de l'incertitude ;
+`composition` (+2,00) et `synergy` (+3,00) étaient identiques sur les trois
+candidats et en portaient 60 % à elles deux. Le seuil de décidabilité
+(`sqrt(sd_a² + sd_b²)`) traitait ces σ comme des erreurs indépendantes qui
+s'additionnent, alors que `composition` et `synergy` appliquent la **même**
+constante de conversion aux trois candidats : la même erreur de modèle, qui
+doit s'annuler dans un écart plutôt que s'ajouter. Le seuil calculé avoisinait
+5,3 points de win rate — au-dessus de l'écart entre la plupart des paires de
+candidats — donc presque tout finissait déclaré équivalent.
+
+**Formule retenue.** Chaque terme porte désormais deux composantes
+d'incertitude au lieu d'une seule σ globale :
+
+```
+sd = sqrt((rel_sd · valeur)² + abs_sd²)
+```
+
+- `rel_sd` — erreur sur la constante de conversion heuristique
+  (`composition`, `synergy`, `archetype`, `mechanics`, `model`, palier de
+  maîtrise déclaré). **Partagée** par tous les candidats du rôle : elle
+  s'annule quand deux candidats portent la même valeur pour ce terme.
+- `abs_sd` — échantillonnage ou ignorance (`meta`/`matchup` observés,
+  absence de données, maîtrise mesurée sur parties réelles). **Propre** à
+  chaque candidat : elle ne s'annule jamais.
+
+La comparaison entre deux champions consomme la somme, terme à terme, de ces
+deux comportements :
+
+```
+comparison_sd(termes_a, termes_b)
+    = sqrt( Σ rel_sd² · (valeur_a − valeur_b)²  +  Σ (abs_sd_a² + abs_sd_b²) )
+```
+
+`top_group` (groupe de tête) et le triage de calibration (`assertion_separation`
+dans `run_calibration.py`) utilisent tous les deux `comparison_sd` désormais.
+`Estimate.sd` — l'incertitude affichée sur un champion pris seul — n'a pas
+changé de définition : elle reste la racine de la somme des variances de tous
+ses termes.
+
+Effet vérifié sur le cas mesuré : le seuil Jinx–Caitlyn tombe de 5,14 à
+**1,29** (devient décidable, écart réel 3,03), Jinx–Xayah de 5,27 à **1,99**
+(décidable, écart 2,17) ; Xayah–Caitlyn reste indécidable à juste titre
+(seuil 2,34 contre écart 0,86 — ces deux-là sont réellement proches).
+
+**Triage avant / après**, `run_calibration.py --rank master_plus --diagnose`,
+52 assertions d'ordre :
+
+| Compteur | Avant | Après |
+|---|---|---|
+| Indécidable (`must_be_tied`) | 31 | 20 |
+| Décidable, passe (conservé) | 2 | 10 |
+| Décidable, échoue (arbitrage) | 5 | 8 |
+| Hors périmètre du triage | 14 | 14 |
+
+Les deux colonnes totalisent 52 : `hors périmètre` ne bouge pas, aucune
+assertion n'a changé de type, seul le seuil de décidabilité s'est resserré.
+Score global de calibration après la vague : **33/52 assertions (63,5 %)**
+(`run_calibration.py --rank master_plus`, sans `--diagnose`).
+
+**Ce qu'il faut retenir** : `Estimate.sd` répond à « que vaut ce champion
+dans l'absolu », `comparison_sd` répond à « celui-ci est-il meilleur que
+celui-là » — c'est la confusion des deux qui était le défaut.
