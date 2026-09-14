@@ -20,7 +20,7 @@ def test_reference_mean_is_pool_mean_and_zero_when_empty():
 
 def test_top_group_is_contiguous_and_uses_combined_sd():
     # écart 1.0 < sqrt(1²+1²)=1.41 → lié ; écart 3.0 > sqrt(1²+1²) → hors groupe ; le 4e est proche du 3e mais pas du leader
-    # Incertitude propre a chaque champion (abs_sd), qui ne s'annule jamais : on retrouve la combinaison quadratique d'origine.
+    # Incertitude propre à chaque champion (abs_sd), qui ne s'annule jamais : on retrouve la combinaison quadratique d'origine.
     own_sd = [Term("meta", 0.0, 1.0)]
     items = [(5.0, own_sd), (4.0, own_sd), (2.0, own_sd), (1.9, own_sd)]
     assert top_group(items) == [0, 1]
