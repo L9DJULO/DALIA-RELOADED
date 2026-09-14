@@ -10,12 +10,26 @@ RANKS = ("iron", "bronze", "silver", "gold", "platinum", "emerald", "diamond", "
 
 @dataclass
 class Term:
+    """Contribution d'un facteur en points de win rate, avec ses deux incertitudes.
+
+    `abs_sd` est propre au champion : échantillonnage, ou ignorance quand la
+    donnée manque. Elle ne s'annule jamais face à un autre candidat.
+
+    `rel_sd` porte sur la constante qui convertit ce facteur en points de win
+    rate. C'est la même erreur pour tous les candidats : elle s'annule dans la
+    différence entre deux champions, et disparaît quand le terme vaut zéro.
+    """
     name: str
     value: float
-    sd: float
+    abs_sd: float = 0.0
     source: str = "heuristic"
     sample: int = 0
     note: str = ""
+    rel_sd: float = 0.0
+
+    @property
+    def sd(self) -> float:
+        return math.sqrt((self.rel_sd * self.value) ** 2 + self.abs_sd ** 2)
 
 
 @dataclass

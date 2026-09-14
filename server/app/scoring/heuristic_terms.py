@@ -8,15 +8,17 @@ def synergy_term(score_0_100: float, duo_bonus: bool) -> Term:
     value = max(-c.synergy_cap, min(c.synergy_cap, (score_0_100 - 50.0) * c.synergy_scale))
     if duo_bonus:
         value *= c.synergy_duo_factor
-    return Term("synergy", value, c.synergy_sd, "heuristic", 0, "synergie de kit" + (", duo" if duo_bonus else ""))
+    return Term("synergy", value, 0.0, "heuristic", 0,
+                "synergie de kit" + (", duo" if duo_bonus else ""), rel_sd=c.synergy_rel)
 
 
 def mechanics_term(delta: float) -> Term:
     c = config.scoring
-    return Term("mechanics", delta * c.mechanics_scale, c.mechanics_sd, "heuristic", 0, "règles d'interactions de kits")
+    return Term("mechanics", delta * c.mechanics_scale, 0.0, "heuristic", 0,
+                "règles d'interactions de kits", rel_sd=c.mechanics_rel)
 
 
 def model_term(delta_pp: float) -> Term:
     c = config.scoring
-    return Term("model", max(-c.model_cap, min(c.model_cap, delta_pp)), c.model_sd, "model", 0,
-                "WPA estimé DALIA, écart à la moyenne des alternatives")
+    return Term("model", max(-c.model_cap, min(c.model_cap, delta_pp)), 0.0, "model", 0,
+                "WPA estimé DALIA, écart à la moyenne des alternatives", rel_sd=c.model_rel)

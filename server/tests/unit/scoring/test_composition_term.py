@@ -12,7 +12,8 @@ def test_marginal_value_counts_new_tools_only(catalog):
     with_poppy = composition_term(poppy, [malphite, ahri], mech, comp)
     with_malphite_first = composition_term(malphite, [ahri], mech, comp)
     assert with_malphite_first.value > with_poppy.value
-    assert with_poppy.sd == 2.0 and with_poppy.source == "heuristic"
+    # comp_rel = 0.5, with_poppy.value = 0.25 -> sd = 0.5 * 0.25 = 0.125
+    assert math.isclose(with_poppy.sd, 0.125) and with_poppy.source == "heuristic"
 
 
 def test_attenuated_by_known_allies_and_absent_without_ally(catalog):
@@ -37,6 +38,7 @@ def test_archetype_term_scales_with_confidence(catalog):
     result = ArchetypeResult(Archetype.ENGAGE, {}, 0.5, 3)
     term = archetype_term(poppy, result)
     expected = (archetype_counter_adjust(poppy, Archetype.ENGAGE) - 1.0) * 15.0 * 0.5
-    assert term is not None and math.isclose(term.value, expected) and term.sd == 1.5
+    # archetype_rel = 0.5, expected ~= 0.6 -> sd = 0.5 * 0.6 = 0.3
+    assert term is not None and math.isclose(term.value, expected) and math.isclose(term.sd, 0.5 * abs(expected))
     assert archetype_term(poppy, ArchetypeResult(Archetype.MIXED, {}, 0.9, 5)) is None
     assert archetype_term(poppy, None) is None

@@ -25,7 +25,8 @@ def composition_term(candidate: Champion, allies: List[Champion], mechanics, com
     raw = team_value(allies + [candidate], mechanics, composition) - team_value(allies, mechanics, composition)
     bounded = max(-c.comp_cap, min(c.comp_cap, raw))
     value = bounded * min(1.0, len(allies) / 4.0)
-    return Term("composition", value, c.comp_sd, "heuristic", 0, f"apport marginal avec {len(allies)} allié(s) connu(s)")
+    return Term("composition", value, 0.0, "heuristic", 0,
+                f"apport marginal avec {len(allies)} allié(s) connu(s)", rel_sd=c.comp_rel)
 
 
 def archetype_term(candidate: Champion, archetype: Optional[ArchetypeResult]) -> Optional[Term]:
@@ -33,5 +34,5 @@ def archetype_term(candidate: Champion, archetype: Optional[ArchetypeResult]) ->
         return None
     c = config.scoring
     value = (archetype_counter_adjust(candidate, archetype.primary) - 1.0) * c.archetype_scale * archetype.confidence
-    return Term("archetype", value, c.archetype_sd, "heuristic", archetype.picks_revealed,
-                f"réponse à une composition {archetype.primary.value}")
+    return Term("archetype", value, 0.0, "heuristic", archetype.picks_revealed,
+                f"réponse à une composition {archetype.primary.value}", rel_sd=c.archetype_rel)

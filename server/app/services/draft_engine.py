@@ -295,7 +295,7 @@ class DraftEngine:
             for rec in eligible:
                 delta = (rec.breakdown.ml_explanation.win_probability - baseline) * 100
                 term = model_term(delta)
-                rec.breakdown.terms.append(ScoreTerm(**term.__dict__))
+                rec.breakdown.terms.append(ScoreTerm(**term.__dict__, sd=term.sd))
                 rec.breakdown.wpa_adjustment = round(term.value, 2)
                 rec.total_score = rec.total_score + term.value
                 rec.score_sd = math.sqrt(rec.score_sd ** 2 + term.sd ** 2)
@@ -433,7 +433,7 @@ class DraftEngine:
             meta=val("meta"), matchup=val("matchup"), synergy=val("synergy"), composition=val("composition"),
             mastery=val("mastery"), draft_risk=val("future_opponent"), mechanics=val("mechanics"),
             ml_prediction=round(ml_s, 1) if ml_s is not None else None, ml_explanation=ml_expl,
-            terms=[ScoreTerm(**t.__dict__) for t in est.terms],
+            terms=[ScoreTerm(**t.__dict__, sd=t.sd) for t in est.terms],
         )
 
         mu_details_raw = await self.matchup.details(champ.id, role, draft, tier) if has_enemies else []

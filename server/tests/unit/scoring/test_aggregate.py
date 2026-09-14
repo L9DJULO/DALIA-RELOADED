@@ -1,7 +1,7 @@
 import math
 import pytest
 from app.scoring.aggregate import PREF_KEY_BY_TERM, apply_preferences, confidence_from_sd, reference_mean, top_group
-from app.scoring.types import Term
+from app.scoring.types import Estimate, Term
 
 
 def test_preferences_scale_values_not_sd_and_map_future_opponent_to_draft_risk():
@@ -30,3 +30,24 @@ def test_confidence_is_bounded():
     assert confidence_from_sd(0.0) == 95.0
     assert confidence_from_sd(3.0) == pytest.approx(50.0)
     assert confidence_from_sd(100.0) == 8.0
+
+
+def test_term_sd_combines_relative_and_absolute_components():
+    # sqrt((0.5*4.0)^2 + 1.5^2) = sqrt(4 + 2.25) = 2.5
+    t = Term("composition", 4.0, 1.5, rel_sd=0.5)
+    assert math.isclose(t.sd, 2.5)
+
+
+def test_relative_only_term_at_zero_value_carries_no_uncertainty():
+    """Le defaut central : mechanics a 0.00 facturait 1.5 de sigma."""
+    assert Term("mechanics", 0.0, 0.0, rel_sd=0.5).sd == 0.0
+
+
+def test_absolute_only_term_keeps_its_sd_whatever_its_value():
+    """Ignorance propre au champion : meta sans donnees vaut 0 mais reste incertain."""
+    assert math.isclose(Term("meta", 0.0, 3.0).sd, 3.0)
+
+
+def test_estimate_sd_sums_derived_term_variances():
+    est = Estimate(terms=[Term("meta", 0.0, 3.0), Term("composition", 4.0, 0.0, rel_sd=0.5)])
+    assert math.isclose(est.sd, math.sqrt(9.0 + 4.0))

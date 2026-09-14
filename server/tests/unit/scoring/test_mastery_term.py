@@ -9,7 +9,8 @@ NOW = datetime(2026, 9, 10, tzinfo=timezone.utc)
 def test_declared_tier_scaled_by_difficulty_and_rank():
     t = mastery_term(MasteryInputs(tier="D", difficulty=10, rank="silver", now=NOW))
     assert math.isclose(t.value, -5.0 * (0.6 + 0.8) * 1.3)
-    assert t.sd == 1.5 and t.source == "heuristic"
+    # mastery_rel = 0.4, t.value = -9.1 -> sd = 0.4 * 9.1 = 3.64
+    assert math.isclose(t.sd, 3.64) and t.source == "heuristic"
     assert mastery_term(MasteryInputs(tier="A", difficulty=5, rank=None, now=NOW)).value == 0.0
     assert math.isclose(mastery_term(MasteryInputs(tier="S", difficulty=5, rank="diamond", now=NOW)).value, 0.8)
 

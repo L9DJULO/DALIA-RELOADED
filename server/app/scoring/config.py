@@ -42,7 +42,6 @@ class ScoringConstants(BaseModel):
     mastery_recency_max_months: int = 3
     mastery_points_familiar: int = 100_000
     mastery_sd_observed: float = 1.0
-    mastery_sd_declared: float = 1.5
     mastery_rank_factor: Dict[str, float] = {
         "iron": 1.3, "bronze": 1.3, "silver": 1.3, "gold": 1.0, "platinum": 1.0,
         "emerald": 1.0, "diamond": 0.8, "master_plus": 0.8,
@@ -54,20 +53,24 @@ class ScoringConstants(BaseModel):
     }
     comp_warning_penalty: Dict[str, float] = {"critical": 2.0, "warning": 1.0}
     comp_cap: float = 4.0
-    comp_sd: float = 2.0
     archetype_scale: float = 15.0
-    archetype_sd: float = 1.5
     # Synergie, mécaniques, modèle
     synergy_scale: float = 0.12
     synergy_cap: float = 3.0
     synergy_duo_factor: float = 1.5
-    synergy_sd: float = 2.0
     mechanics_scale: float = 0.3
-    mechanics_sd: float = 1.5
     model_cap: float = 4.0
-    model_sd: float = 2.0
     # Agrégation
     confidence_sd_scale: float = 6.0
     wildcard_min_advantage: float = 1.5
     pref_min: float = 0.5
     pref_max: float = 1.5
+    # Incertitudes relatives : erreur sur la constante qui convertit chaque
+    # facteur en points de win rate. Partagée par tous les candidats, donc
+    # elle s'annule dans la comparaison de deux champions.
+    mastery_rel: float = 0.4
+    comp_rel: float = 0.5
+    archetype_rel: float = 0.5
+    synergy_rel: float = 0.5
+    mechanics_rel: float = 0.5
+    model_rel: float = 0.5

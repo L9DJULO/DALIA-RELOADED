@@ -30,12 +30,12 @@ def mastery_term(inp: MasteryInputs) -> Term:
         raw = shrink(inp.personal_wr - 50.0, g, c.mastery_personal_k)
         personal = max(-c.mastery_personal_cap, min(c.mastery_personal_cap, raw))
     if personal is not None and g >= c.mastery_personal_min_games:
-        base, sd, source = personal, c.mastery_sd_observed, "observed"
+        base, abs_sd, rel_sd, source = personal, c.mastery_sd_observed, 0.0, "observed"
     elif personal is not None:
         base = (g * personal + c.mastery_personal_min_games * declared) / (g + c.mastery_personal_min_games)
-        sd, source = c.mastery_sd_declared, "heuristic"
+        abs_sd, rel_sd, source = 0.0, c.mastery_rel, "heuristic"
     else:
-        base, sd, source = declared, c.mastery_sd_declared, "heuristic"
+        base, abs_sd, rel_sd, source = declared, 0.0, c.mastery_rel, "heuristic"
 
     penalty = 0.0
     if inp.last_played is not None:
@@ -47,4 +47,4 @@ def mastery_term(inp: MasteryInputs) -> Term:
     f_diff = 0.6 + 0.08 * max(1, min(10, inp.difficulty))
     value = (base - penalty) * f_diff * mastery_rank_factor(inp.rank)
     note = f"palier {inp.tier}, difficulté {inp.difficulty}" + (f", {g} parties" if g else "")
-    return Term("mastery", value, sd, source, g, note)
+    return Term("mastery", value, abs_sd, source, g, note, rel_sd=rel_sd)

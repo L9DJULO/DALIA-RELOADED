@@ -137,6 +137,8 @@ class ScoreTerm(BaseModel):
     name: str
     value: float
     sd: float
+    abs_sd: float = 0.0
+    rel_sd: float = 0.0
     source: str = "heuristic"     # "observed" | "heuristic" | "model"
     sample: int = 0
     note: str = ""
