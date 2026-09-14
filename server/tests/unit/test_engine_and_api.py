@@ -67,7 +67,7 @@ async def test_preferences_scale_terms_and_rank_reaches_the_source(catalog):
     pool = {"top": [{"champion_id": 78, "tier": "S"}, {"champion_id": 75, "tier": "D"}]}
     result = await engine.recommend(DraftRequest(draft_state={"my_role": "top"}, champion_pool=pool,
         enable_wildcard=False, weight_overrides={"mastery": 1.5}, rank_bucket="GOLD"))
-    assert "gold" in seen and result.rank_bucket == "gold" and result.data_status["rank"] == "gold"
+    assert "gold_plus" in seen and result.rank_bucket == "gold" and result.data_status["rank"] == "gold_plus"
     mastery = {r.champion_id: r.breakdown.mastery for r in result.recommendations}
     plain = await engine.recommend(DraftRequest(draft_state={"my_role": "top"}, champion_pool=pool,
         enable_wildcard=False, rank_bucket="gold"))

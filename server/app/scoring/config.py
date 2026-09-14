@@ -21,6 +21,17 @@ class ScoringConstants(BaseModel):
     counter_lambda_unknown: float = 0.30
     future_sd_floor: float = 1.0
     future_no_data_sd: float = 4.0
+    # Rang → tier Lolalytics. Buckets vérifiés le 14/09/2026 : Lolalytics ne
+    # fournit de bucket `_plus` qu'à partir de gold (silver_plus, bronze_plus
+    # et iron_plus répondent 200 avec zéro champion), d'où les buckets exacts
+    # en bas de ladder. master_plus est servi par d2_plus : 2,1× plus de
+    # parties, population toujours de haut niveau.
+    rank_tier_map: Dict[str, str] = {
+        "iron": "iron", "bronze": "bronze", "silver": "silver",
+        "gold": "gold_plus", "platinum": "platinum_plus",
+        "emerald": "emerald_plus", "diamond": "diamond_plus",
+        "master_plus": "d2_plus",
+    }
     # Maîtrise
     mastery_tier_base: Dict[str, float] = {"S": 1.0, "A": 0.0, "B": -1.5, "C": -3.0, "D": -5.0}
     mastery_personal_min_games: int = 10

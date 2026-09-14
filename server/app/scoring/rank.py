@@ -16,7 +16,8 @@ def normalize_rank(value) -> Optional[str]:
 
 def lolalytics_tier(rank: Optional[str], default: Optional[str] = None) -> str:
     """Tier Lolalytics pour un rang ; `default` = tier du fetcher (config.rank_tier sinon)."""
-    return rank if rank in RANKS else (default or config.rank_tier)
+    mapped = config.scoring.rank_tier_map.get(rank) if rank else None
+    return mapped or default or config.rank_tier
 
 
 def counter_lambda(rank: Optional[str]) -> float:
