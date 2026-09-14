@@ -237,3 +237,157 @@ calibrer la préférence sur du risque résiduel réel.
 Le jugement du joueur, recueilli par arbitrage (§6.4), fait foi. Le score de la suite de calibration est un
 indicateur de régression, pas l'objectif : une hausse obtenue en cassant une catégorie est un
 sur-apprentissage, pas une amélioration.
+
+---
+
+# Addendum — variance de comparaison (14 septembre 2026, après mesure)
+
+Ajouté après la vague 0, sur constat d'exécution. Cet addendum **amende §5 et §6** : il s'insère avant
+l'arbitrage, en « vague 0,5 ». La conception de §4 (distribution adverse) n'est pas touchée.
+
+## A.1 Constat
+
+Le triage de la vague 0 classe **31 des 38 assertions d'ordre comme indécidables**. Ce n'est pas une
+propriété de la donnée. Termes réels de `counter_pick_adc_full_info` au tier `d2_plus` :
+
+| Terme | Jinx | Xayah | Caitlyn | σ | Part de la variance |
+|---|---|---|---|---|---|
+| `meta` (observé) | +3,59 | +3,37 | +0,41 | 0,23–0,41 | 0,4–1,2 % |
+| `matchup` (observé) | −0,11 | +0,64 | −1,26 | 0,77–1,41 | 4,5–13,6 % |
+| `mastery` | −1,30 | −4,00 | 0,00 | 1,50 | ~17 % |
+| `composition` | **+2,00** | **+2,00** | **+2,00** | 2,00 | ~30 % |
+| `synergy` | **+3,00** | **+3,00** | **+3,00** | 2,00 | ~30 % |
+| `mechanics` | **0,00** | **0,00** | **0,00** | 1,50 | ~17 % |
+
+Les données observées pèsent 5 % de la variance, les constantes heuristiques 95 %.
+`sqrt(2² + 1,5² + 2² + 1,5² + 1,5²) = 3,84` : c'est le plancher de σ observé partout (3,6–4,2).
+
+Deux défauts distincts :
+
+1. **Les σ heuristiques ignorent leur propre valeur.** `mechanics` vaut 0,00 et facture 1,5 de σ
+   ([heuristic_terms.py:16](../../../server/app/scoring/heuristic_terms.py#L16)). `composition` divise sa
+   valeur par 4 quand un seul allié est connu et garde σ = 2,0
+   ([composition_term.py:27-28](../../../server/app/scoring/composition_term.py#L27-L28)). `archetype`
+   multiplie sa valeur par sa confiance et garde σ entier
+   ([composition_term.py:35-36](../../../server/app/scoring/composition_term.py#L35-L36)).
+2. **`top_group` et `assertion_separation` calculent `sqrt(σ_a² + σ_b²)`**, ce qui suppose deux erreurs
+   indépendantes. Or `composition` et `synergy` valent la même chose pour les trois candidats : c'est la
+   **même erreur de modèle** appliquée aux trois. Elle doit se soustraire dans la différence, pas
+   s'additionner.
+
+## A.2 Le modèle correct
+
+Un terme heuristique vaut `k · g`, où `g` est le score heuristique du candidat et `k` la constante de
+conversion vers des points de win rate. L'incertitude porte sur `k`, pas sur `g`. Donc pour deux
+candidats :
+
+```
+différence      = k · (g_a − g_b) = valeur_a − valeur_b
+var(différence) = (σ_k / k)² · (valeur_a − valeur_b)²
+```
+
+D'où la règle, par terme :
+
+| Nature du terme | Contribution à la variance de comparaison |
+|---|---|
+| **Observé** (`meta`, `matchup`) — erreur d'échantillonnage, indépendante par champion | `σ_a² + σ_b²` |
+| **Heuristique / modèle** — même erreur de conversion appliquée aux deux | `(rel · (valeur_a − valeur_b))²` |
+
+Propriétés obtenues : deux valeurs identiques ne coûtent rien ; deux valeurs opposées (+2 / −2) coûtent
+cher ; un terme inactif des deux côtés (mechanics à 0) ne coûte rien. Les trois sont fausses aujourd'hui.
+
+## A.3 Deux composantes d'incertitude par terme
+
+Une incertitude relative seule ne suffit pas. Contre-exemple mesuré : `meta_term` renvoie valeur 0,0 avec
+σ = 3,0 quand le champion n'a **aucune** statistique ([meta_term.py:12](../../../server/app/scoring/meta_term.py#L12)).
+Ce n'est pas une erreur de conversion partagée entre candidats — c'est de l'ignorance propre à ce
+champion-là, et elle ne doit pas s'annuler face à un candidat également inconnu. La même remarque vaut
+pour le repli de `matchup_term` et la branche sans données de `future_opponent`.
+
+`Term` porte donc **deux** composantes, et `sd` devient une grandeur dérivée :
+
+```python
+sd = sqrt((rel_sd · valeur)² + abs_sd²)
+```
+
+| Composante | Nature | Comportement en comparaison |
+|---|---|---|
+| `rel_sd` | Erreur sur la constante de conversion du terme, **partagée** par tous les candidats | `rel_sd² · (valeur_a − valeur_b)²` — s'annule à valeurs égales |
+| `abs_sd` | Échantillonnage ou ignorance, **propre** à chaque candidat | `abs_sd_a² + abs_sd_b²` — ne s'annule jamais |
+
+Contribution totale d'un terme à la variance de comparaison :
+
+```python
+rel_sd² · (valeur_a − valeur_b)² + abs_sd_a² + abs_sd_b²
+```
+
+Affectation par terme :
+
+| Terme | `rel_sd` | `abs_sd` | Raison |
+|---|---|---|---|
+| `meta` observé | 0 | `shrink_sd(games, k_meta)` | Erreur d'échantillonnage pure. |
+| `meta` sans données | 0 | `no_meta_sd` | Ignorance propre au champion. |
+| `matchup` observé | 0 | `sqrt(variance)` existante | Erreur d'échantillonnage pure. |
+| `matchup` estimé | 0 | `heuristic_matchup_sd` | Ignorance propre au champion. |
+| `mastery` observé | 0 | `mastery_sd_observed` | Adossé aux parties réelles du joueur. |
+| `mastery` déclaré | `mastery_rel` | 0 | Table palier → points de WR, partagée. |
+| `future_opponent` avec données | 0 | dispersion calculée | Variance de résultat, propre au champion (et §5.4 : `outcome_sd`). |
+| `future_opponent` sans données | 0 | `future_no_data_sd` | Ignorance propre au champion. |
+| `composition`, `synergy`, `archetype`, `mechanics`, `model` | constante ci-dessous | 0 | Conversion heuristique vers des points de WR, partagée. |
+
+Les constantes absolues `synergy_sd`, `comp_sd`, `archetype_sd`, `mechanics_sd`, `model_sd` et
+`mastery_sd_declared` sont remplacées par des incertitudes **relatives**, exprimées en fraction de la
+valeur du terme :
+
+| Terme | `rel` de départ | Lecture |
+|---|---|---|
+| `mastery` | 0,4 | Adossé à des parties réelles et aux points de maîtrise Riot : le plus fiable des heuristiques. |
+| `composition` | 0,5 | Conversion d'un décompte d'outils d'équipe en points de WR, jamais validée. |
+| `synergy` | 0,5 | Idem, sur un score de synergie de kit. |
+| `archetype` | 0,5 | Idem. |
+| `mechanics` | 0,5 | Idem, sur des règles d'interaction écrites à la main. |
+| `model` | 0,5 | Sortie ML non validée. |
+
+Ces valeurs sont des points de départ, calibrés comme `counter_alpha` : balayage, score global et par
+catégorie, on retient ce qui monte sans casser de catégorie.
+
+Pas de plancher sur la composante relative : un terme heuristique qui n'apporte rien à la valeur
+n'apporte pas non plus d'incertitude. `Estimate.sd` conserve sa définition — racine de la somme des
+variances de tous les termes, `sd` de chaque terme étant désormais la grandeur dérivée ci-dessus.
+
+## A.4 Ce qui consomme la variance de comparaison
+
+- `top_group` (`aggregate.py`) : le seuil d'appartenance au groupe de tête devient `comparison_sd(leader, candidat)`.
+- `assertion_separation` (`run_calibration.py`) : l'incertitude combinée devient la même grandeur.
+
+`confidence_from_sd` et l'affichage continuent de consommer `Estimate.sd`, qui reste l'incertitude
+absolue sur le champion pris seul. Les deux grandeurs répondent à deux questions différentes, et c'est
+leur confusion qui est le défaut corrigé ici.
+
+## A.5 Effet mesuré de la formulation
+
+Vérifié sur les termes réels du tableau A.1, avec les `rel` de A.3 :
+
+| Paire | Écart | Seuil actuel | Verdict | Seuil proposé | Verdict |
+|---|---|---|---|---|---|
+| Jinx vs Caitlyn | 3,03 | 5,14 | indécidable | **1,29** | **décidable** |
+| Jinx vs Xayah | 2,17 | 5,27 | indécidable | **1,99** | **décidable** |
+| Xayah vs Caitlyn | 0,86 | 5,28 | indécidable | 2,34 | indécidable |
+
+σ affiché de Jinx : 3,63 → 2,04.
+
+Les seuils ne s'effondrent pas uniformément : Xayah vs Caitlyn reste indécidable à juste titre. La
+discrimination est désormais portée par la donnée et non par des constantes.
+
+## A.6 Conséquence sur §5
+
+Le départage du groupe de tête reste la conception retenue, mais il ne devient exploitable qu'après cet
+addendum. Avec un seuil de ~5,3 points de win rate, le groupe de tête contenait quasiment toute la liste,
+et « ordonner l'intérieur du groupe par le risque » revenait à trier l'ensemble par le risque — exactement
+l'inversion d'affichage que §5.2 écarte.
+
+## A.7 Conséquence sur §6
+
+Le Step 2 de la vague 0 (conversion mécanique des indécidables en `must_be_tied`) est **suspendu** jusqu'à
+l'application de cet addendum. Appliqué sur le seuil actuel, il aurait converti 31 assertions légitimes et
+verrouillé l'artefact dans la suite. Le triage est rejoué après, et l'arbitrage porte sur son résultat.
