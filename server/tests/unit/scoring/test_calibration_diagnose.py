@@ -10,6 +10,7 @@ _spec = importlib.util.spec_from_file_location("run_calibration", _PATH)
 run_calibration = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(run_calibration)
 assertion_separation = run_calibration.assertion_separation
+validate_rank = run_calibration.validate_rank
 
 
 def rec(name, score, sd):
@@ -64,3 +65,10 @@ def test_non_ordering_assertions_have_no_separation():
 def test_absent_champion_has_no_separation():
     assert assertion_separation(
         {"type": "must_rank_higher_than", "champion_a": "Caitlyn", "champion_b": "Zeri"}, RECS) is None
+
+
+def test_unknown_rank_is_rejected_with_accepted_values_listed():
+    message = validate_rank("diamnod")
+    assert message is not None and "diamnod" in message, "une faute de frappe doit etre signalee, pas absorbee"
+    for rank in run_calibration.RANKS:
+        assert rank in message, f"{rank} doit figurer parmi les valeurs acceptees"

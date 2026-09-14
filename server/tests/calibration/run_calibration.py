@@ -28,6 +28,7 @@ if str(SERVER_DIR) not in sys.path:
     sys.path.insert(0, str(SERVER_DIR))
 
 from app.models.draft import DraftPick, DraftRequest, DraftState, PoolEntry  # noqa: E402
+from app.scoring.types import RANKS  # noqa: E402
 from app.services.champion_data import ChampionDatabase  # noqa: E402
 from app.services.data_fetcher import LolalyticsFetcher  # noqa: E402
 from app.services.draft_engine import DraftEngine  # noqa: E402
@@ -245,18 +246,18 @@ def evaluate_assertion(a: Dict[str, Any], recs: List) -> Tuple[bool, str]:
     return False, f"Unknown assertion type: {t}"
 
 
-# Index du slot frontière testé par chaque assertion de position.
+# Boundary slot index tested by each position assertion.
 _BOUNDARY_SLOT = {"must_be_top_1": 0, "must_be_in_top_3": 2,
                   "must_be_in_top_5": 4, "must_not_be_top_3": 2}
 
 
 def assertion_separation(a: Dict[str, Any], recs: List) -> Optional[Tuple[float, float, str]]:
-    """Écart observé et incertitude combinée pour une assertion d'ordre.
+    """Observed gap and combined uncertainty for an ordering assertion.
 
-    Sert au triage : une assertion dont l'écart reste sous l'incertitude
-    combinée pose une question que la donnée ne tranche pas, quel que soit le
-    moteur. Retourne None pour les assertions qui ne portent pas sur un ordre
-    (raisons, égalité explicite) et quand un champion est absent du top 15.
+    Used for triage: an assertion whose gap stays within the combined
+    uncertainty poses a question the data cannot decide, regardless of the
+    engine. Returns None for assertions that are not about ordering (reasons,
+    explicit tie) and when a champion is absent from the top 15.
     """
     t = a["type"]
 
@@ -274,7 +275,7 @@ def assertion_separation(a: Dict[str, Any], recs: List) -> Optional[Tuple[float,
         rank, rec = find_rank(recs, a["champion"])
         if rec is None or len(recs) <= slot:
             return None
-        # Le champion occupe deja le slot frontiere : on le compare au suivant.
+        # The champion already occupies the boundary slot: compare it to the next one.
         other = slot if rank != slot else min(slot + 1, len(recs) - 1)
         if other == rank:
             return None
@@ -288,7 +289,7 @@ def assertion_separation(a: Dict[str, Any], recs: List) -> Optional[Tuple[float,
         if rec is None:
             return None
         return (abs(rec.total_score - a["min_advantage"]), rec.score_sd,
-                f"{a['champion']} vs seuil {a['min_advantage']:+.2f}")
+                f"{a['champion']} vs threshold {a['min_advantage']:+.2f}")
 
     return None
 
@@ -319,27 +320,27 @@ def print_case_report(case: Dict[str, Any], recs: List, results: List[Tuple], ve
 
 
 def print_case_diagnosis(case: Dict[str, Any], recs: List, results: List[Tuple]) -> List[str]:
-    """Affiche la decidabilite de chaque assertion. Retourne un verdict par assertion."""
+    """Prints the decidability of each assertion. Returns one verdict per assertion."""
     verdicts: List[str] = []
     print(f"{C.BOLD}{case['id']}{C.RESET} {C.DIM}[{case.get('category', '?')}]{C.RESET}")
     for (a, passed, message) in results:
         sep = assertion_separation(a, recs)
         if sep is None:
             verdicts.append("hors_ordre")
-            print(f"  {C.DIM}·{C.RESET} {a['type']}: hors perimetre du triage")
+            print(f"  {C.DIM}·{C.RESET} {a['type']}: out of triage scope")
             continue
         gap, combined, label = sep
         if gap < combined:
             verdicts.append("indecidable")
-            print(f"  {C.YELLOW}~{C.RESET} {label}: ecart {gap:.2f} < incertitude {combined:.2f} "
-                  f"{C.YELLOW}INDECIDABLE -> must_be_tied{C.RESET}")
+            print(f"  {C.YELLOW}~{C.RESET} {label}: gap {gap:.2f} < uncertainty {combined:.2f} "
+                  f"{C.YELLOW}UNDECIDABLE -> must_be_tied{C.RESET}")
         elif passed:
             verdicts.append("decidable_ok")
-            print(f"  {C.GREEN}✓{C.RESET} {label}: ecart {gap:.2f} >= {combined:.2f} — conservee")
+            print(f"  {C.GREEN}✓{C.RESET} {label}: gap {gap:.2f} >= {combined:.2f} — kept")
         else:
             verdicts.append("decidable_ko")
-            print(f"  {C.RED}✗{C.RESET} {label}: ecart {gap:.2f} >= {combined:.2f} "
-                  f"{C.RED}ARBITRAGE{C.RESET} — {message}")
+            print(f"  {C.RED}✗{C.RESET} {label}: gap {gap:.2f} >= {combined:.2f} "
+                  f"{C.RED}ARBITRATION{C.RESET} — {message}")
     return verdicts
 
 
@@ -351,6 +352,13 @@ async def run_case(case: Dict[str, Any], engine: DraftEngine, db: ChampionDataba
     return recs, results
 
 
+def validate_rank(rank: str) -> Optional[str]:
+    """None if rank is a value the engine recognises, else an error message listing the accepted ones."""
+    if rank in RANKS:
+        return None
+    return f"Unknown rank {rank!r}. Accepted values: {', '.join(RANKS)}"
+
+
 async def main() -> int:
     parser = argparse.ArgumentParser(description="DALIA draft engine calibration suite.")
     parser.add_argument("--verbose", "-v", action="store_true", help="Show top 5 of each case + passed assertions")
@@ -360,11 +368,17 @@ async def main() -> int:
         default=str(Path(__file__).parent / "cases.json"),
         help="Path to cases JSON file (default: cases.json next to this script)",
     )
-    parser.add_argument("--rank", help="Rang joueur applique a tous les cas sans rank_bucket explicite "
+    parser.add_argument("--rank", help="Player rank applied to all cases without an explicit rank_bucket "
                                        "(iron, bronze, silver, gold, platinum, emerald, diamond, master_plus)")
     parser.add_argument("--diagnose", action="store_true",
-                        help="Trie les assertions d'ordre par decidabilite au lieu de juger reussite/echec")
+                        help="Sort ordering assertions by decidability instead of judging pass/fail")
     args = parser.parse_args()
+
+    if args.rank:
+        error = validate_rank(args.rank)
+        if error:
+            print(f"{C.RED}{error}{C.RESET}")
+            return 1
 
     cases_path = Path(args.cases)
     if not cases_path.exists():
@@ -430,11 +444,11 @@ async def main() -> int:
 
     if args.diagnose:
         counts = Counter(diagnosis)
-        print(f"\n{C.BOLD}Triage des assertions{C.RESET}")
-        print(f"  indecidables (-> must_be_tied) : {counts['indecidable']}")
-        print(f"  decidables reussies (conservees) : {counts['decidable_ok']}")
-        print(f"  {C.RED}decidables echouees (arbitrage) : {counts['decidable_ko']}{C.RESET}")
-        print(f"  hors perimetre du triage        : {counts['hors_ordre']}")
+        print(f"\n{C.BOLD}Assertion triage{C.RESET}")
+        print(f"  undecidable (-> must_be_tied)   : {counts['indecidable']}")
+        print(f"  decidable passing (kept)        : {counts['decidable_ok']}")
+        print(f"  {C.RED}decidable failing (arbitration) : {counts['decidable_ko']}{C.RESET}")
+        print(f"  out of triage scope             : {counts['hors_ordre']}")
         return 0
 
     pct = (total_pass / total_assertions * 100.0) if total_assertions else 0.0
