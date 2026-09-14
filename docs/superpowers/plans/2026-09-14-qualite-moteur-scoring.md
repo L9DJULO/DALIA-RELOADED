@@ -749,7 +749,7 @@ git commit -m "Scoring : distinguer le risque subi de l'incertitude d'estimation
 Ajouter à `server/tests/unit/test_engine_and_api.py` :
 
 ```python
-from app.models.draft import Recommendation
+from app.models.draft import Recommendation, ScoreBreakdown
 from app.scoring.aggregate import top_group
 
 
@@ -764,8 +764,10 @@ def _reorder_head_by_risk(scored):
 
 
 def _rec(cid, name, score, sd, outcome_sd):
+    # `breakdown` est le seul champ requis sans defaut ; ScoreBreakdown() suffit.
     return Recommendation(champion_id=cid, champion_name=name, champion_key=name,
-                          total_score=score, score_sd=sd, outcome_sd=outcome_sd)
+                          total_score=score, score_sd=sd, outcome_sd=outcome_sd,
+                          breakdown=ScoreBreakdown())
 
 
 def test_safest_candidate_leads_a_statistical_tie():
