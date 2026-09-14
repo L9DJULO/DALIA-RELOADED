@@ -314,7 +314,7 @@ class DraftEngine:
             rec.score_range = [round(rec.total_score - rec.score_sd, 2), round(rec.total_score + rec.score_sd, 2)]
             rec.confidence = confidence_from_sd(rec.score_sd)
         scored.sort(key=lambda r: r.total_score, reverse=True)
-        group = top_group([(r.total_score, r.score_sd) for r in scored])
+        group = top_group([(r.total_score, r.breakdown.terms) for r in scored])
         for i in group:
             scored[i].tie_with_leader = True
         top_group_ids = [scored[i].champion_id for i in group]

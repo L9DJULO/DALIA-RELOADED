@@ -32,19 +32,45 @@ def reference_mean(totals: Sequence[float]) -> float:
     return sum(totals) / len(totals) if totals else 0.0
 
 
-def top_group(items: Sequence[Tuple[float, float]]) -> List[int]:
-    """items = [(avantage, sd)] déjà triés par avantage décroissant.
+def comparison_sd(terms_a: Sequence, terms_b: Sequence) -> float:
+    """Incertitude sur la DIFFÉRENCE entre deux estimations.
 
-    Le groupe de tête est contigu : on avance tant que l'écart au leader
-    reste inférieur à la racine de la somme des variances.
+    Distincte de `Estimate.sd`, qui est l'incertitude sur un champion pris
+    seul. Un terme heuristique porte la même erreur de conversion pour les
+    deux candidats : elle s'annule dans la différence et ne coûte que l'écart
+    de valeur. Un terme observé porte une erreur d'échantillonnage propre à
+    chaque champion : les variances s'additionnent.
+
+    Accepte indifféremment des `Term` ou des `ScoreTerm` : seuls les attributs
+    `name`, `value`, `rel_sd` et `abs_sd` sont lus.
+    """
+    by_a = {t.name: t for t in terms_a}
+    by_b = {t.name: t for t in terms_b}
+    var = 0.0
+    for name in by_a.keys() | by_b.keys():
+        ta, tb = by_a.get(name), by_b.get(name)
+        va = ta.value if ta else 0.0
+        vb = tb.value if tb else 0.0
+        rel = max(ta.rel_sd if ta else 0.0, tb.rel_sd if tb else 0.0)
+        var += (rel * (va - vb)) ** 2
+        var += (ta.abs_sd if ta else 0.0) ** 2 + (tb.abs_sd if tb else 0.0) ** 2
+    return math.sqrt(var)
+
+
+def top_group(items: Sequence[Tuple[float, Sequence]]) -> List[int]:
+    """items = [(avantage, termes)] déjà triés par avantage décroissant.
+
+    Le groupe de tête est contigu : on avance tant que l'écart au leader reste
+    sous l'incertitude de leur comparaison — pas sous la somme de leurs
+    incertitudes absolues, qui compte deux fois l'erreur de modèle partagée.
     """
     if not items:
         return []
-    lead_adv, lead_sd = items[0]
+    lead_adv, lead_terms = items[0]
     group = [0]
     for i in range(1, len(items)):
-        adv, sd = items[i]
-        if lead_adv - adv < math.sqrt(lead_sd * lead_sd + sd * sd):
+        adv, terms = items[i]
+        if lead_adv - adv < comparison_sd(lead_terms, terms):
             group.append(i)
         else:
             break
