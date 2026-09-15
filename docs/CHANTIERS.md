@@ -4,7 +4,7 @@ Tout ce qu'on a identifié et volontairement mis de côté, avec ce qui le bloqu
 pas le faire. Tenu à jour au fil des découvertes : rien ne doit disparaître dans l'historique de
 conversation.
 
-Dernière mise à jour : 15 septembre 2026.
+Dernière mise à jour : 15 septembre 2026, après la notation du bot lane et le chargement de la portée.
 
 ---
 
@@ -73,18 +73,53 @@ identiques rend des sorties identiques.
 
 ---
 
-## 4. Notes de champions — les 99 hors bot lane
+## 4. Notes de champions — les 102 hors bot lane
 
-`champion_overrides.json` contient 170 champions, dont **zéro** avec `ratings`. Toutes les notes
-viennent de `_auto_ratings`, qui ne lit que les tags Riot. Deux champions aux mêmes tags sont
-numériquement identiques : 29 ADC se réduisent à 7 vecteurs, 10 supports à 2.
+Toutes les notes venaient de `_auto_ratings`, qui ne lit que les tags Riot : deux champions aux mêmes
+tags étaient numériquement identiques. 29 ADC se réduisaient à 7 vecteurs, 47 supports à 2.
 
-**En cours** : les 29 ADC sont notés à la main avec le joueur (son rôle). Les 47 supports seront
-dérivés de la taxonomie officielle des sous-classes (Enchanter / Catcher / Vanguard / Warden), qui
-les sépare réellement.
+**Fait le 15/09** : les **71 champions de bot lane** (29 ADC + 47 supports, 5 en commun) sont notés à la
+main, arbitrés avec le joueur en sept paquets. Résultat : 29 vecteurs distincts sur 29 ADC, 46 sur 47
+supports. La taxonomie des sous-classes a servi de point de départ sourcé, mais **elle ne suffit pas** :
+à l'intérieur d'une sous-classe tous les champions restent identiques, donc la notation à la main est
+incontournable.
 
-**Reste** : top, jungle et mid, soit ~99 champions. La sous-classe y aide aussi (Juggernaut, Diver,
-Burst, Battlemage, Artillery, Assassin, Skirmisher, Specialist).
+**Reste : 102 champions** (top, jungle, mid). Sur l'ensemble du catalogue on est à 84 vecteurs distincts
+pour 173 champions. Les trois plus gros paquets encore identiques : 24 champions sur un même vecteur de
+combattant, 18 sur un vecteur d'assassin, 12 sur un vecteur de mage.
+
+**Collision résiduelle en bot lane** : Brand et Vel'Koz sortent identiques (`3 1 5 1 5 2 5 2 1`).
+Défendable — même métier d'artillerie — mais à trancher si une différence réelle existe.
+
+**La grille de notation n'est écrite nulle part.** Elle n'existe que pour `cc`, et seulement dans
+l'historique de conversation : « combien de lockdown fiable ce champion apporte réellement », avec
+l'arbitrage du joueur sur Blitzcrank (« même si compliqué à toucher, ça a beaucoup de value, et y'a
+plein de manières d'être sûr de jouer les grabs ») qui la fixe sur l'impact accessible et non sur la
+difficulté d'exécution. Les huit autres dimensions n'ont aucune définition écrite. À rédiger avant de
+noter les 102 restants, sinon les notes dériveront d'un paquet à l'autre.
+
+---
+
+## 4bis. Le fichier d'overrides n'a pas suivi les sorties récentes
+
+**Quatre champions sont totalement absents de `champion_overrides.json`** : Ambessa, Locke, Wukong et
+Zaahen. Pas d'entrée du tout, donc pas de `roles` non plus : leurs lanes sont devinées par
+`_default_roles` depuis les tags Riot. Yunara était dans le même cas jusqu'au 15/09.
+
+Conséquence : un champion récent peut être conseillé dans la mauvaise lane, ou absent de la bonne, sans
+aucun signal.
+
+---
+
+## 4ter. Les notes sont par champion, pas par rôle
+
+Un champion porte un seul vecteur quel que soit le poste où il est joué. Malphite support et Malphite
+top sont notés pareil, alors qu'ils ne remplissent pas le même office.
+
+Le joueur a par ailleurs signalé que la liste des supports est trop permissive : « Malphite, le pick
+existe pas vraiment, c'est super rare quand on monte dans les elos », idem pour Gragas, et Shaco,
+Heimerdinger et Sett ne se jouent pas vraiment support à master+. Ces champions sont proposés sur un
+poste où ils ne se jouent plus.
 
 ---
 
@@ -153,6 +188,11 @@ Tant que le cache de calibration n'est pas figé, l'effet d'une vague est **indi
 des données**.
 
 Corollaire : le `README.md` de la calibration annonce 20/10/8/14 et doit être corrigé.
+
+**Second corollaire, ajouté le 15/09** : les notes des 71 champions de bot lane viennent de changer, et
+quatre termes du moteur consomment `ratings` (synergie, composition, mécaniques, archétype). Le
+baseline mesuré avant ce changement ne décrit plus le moteur actuel. **Il faut le rejouer avant toute
+mesure des vagues 1 et 2**, une fois le cache figé — dans cet ordre, sinon on re-mesure sur du sable.
 
 ---
 
