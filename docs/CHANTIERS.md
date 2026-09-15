@@ -22,6 +22,10 @@ dimension agrège au moins deux propriétés :
 
 - `cc` = puissance du contrôle **×** fiabilité d'application
 - `utility` = existence d'un sort utilitaire **×** son impact réel sur une teamfight
+- `tankiness` = survie personnelle **×** tankiness apportée à l'équipe. Relevé par le joueur sur Yuumi :
+  « le perso a une bonne survivabilité, il va mourir tout seul 20 % du temps et après son porteur 80 %
+  du temps, où un Naut, une Leona est réellement tank, c'est pas pareil ». Yuumi et Nautilus sortent
+  tous deux à 5 en disant des choses opposées.
 - probablement `engage`, `poke` et `teamfight` de la même façon
 
 **Correctif** : séparer chaque dimension en ses composantes, et faire consommer les composantes par
@@ -161,3 +165,27 @@ Corollaire : le `README.md` de la calibration annonce 20/10/8/14 et doit être c
 - La branche « blend » de `mastery_term` (peu de parties personnelles) n'a pas de test sur son σ.
 - Le docstring de `champion_data.py` affirme « hand-tuned overrides in champion_overrides.json refine
   the most impactful » — c'est faux, aucun `ratings` n'y est surchargé. À corriger ou à rendre vrai.
+
+---
+
+## 11. La portée des champions est absente du modèle
+
+Soulevé par le joueur le 15/09 : « que le champ proposé soit un melee ou un range, ça peut être utile
+dans certains cas de last pick, genre si on a que des range parfois c'est pas ouf ».
+
+Vérifié : le modèle `Champion` (`app/models/champion.py`) **n'a aucun champ de portée**. Data Dragon la
+fournit pourtant (`stats.attackrange`, ~125-175 en mêlée, ~500-650 à distance) et le projet appelle
+déjà cet endpoint.
+
+Faute de donnée, le code utilise deux approximations, dont une est fausse :
+
+- `mechanics.py:117` — `if r.poke >= 4: result.add("range")`. La couverture « portée » d'une équipe est
+  déduite de la note de poke, pas de la portée réelle.
+- `synergy.py:108` — `is_melee_carry = is_adc and ratings.tankiness <= 2 and damage.physical >= 60`.
+  Devine « carry mêlée » depuis la tankiness et le type de dégâts. Avec les notes arbitrées du 15/09,
+  cela classe **Ashe, Draven, Kalista, Lucian, Twitch et Miss Fortune** comme carries mêlée, et rate
+  **Nilah et Yasuo** qui le sont vraiment. Le bloc applique ensuite +6 ou −8 à la synergie.
+
+Le correctif est petit — charger un champ déjà disponible, ajouter `is_melee`, remplacer les deux
+approximations — et il débloque en plus un vrai besoin de draft : l'équilibre mêlée/distance d'une
+composition, que le joueur arbitre en last pick.
