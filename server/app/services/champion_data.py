@@ -121,6 +121,12 @@ class ChampionDatabase:
             tags = info.get("tags", [])
             name = info.get("name", key)
 
+            # Portée réelle fournie par Data Dragon ; 550 en repli (valeur ADC courante).
+            try:
+                attack_range = int(info.get("stats", {}).get("attackrange") or 550)
+            except (TypeError, ValueError):
+                attack_range = 550
+
             # Base classification
             damage = _auto_damage(tags)
             ratings = _auto_ratings(tags)
@@ -153,6 +159,7 @@ class ChampionDatabase:
                 roles=roles,
                 damage=damage,
                 ratings=ratings,
+                attack_range=attack_range,
                 image_url=self.fetcher.champion_image_url(key),
             )
             by_id[cid] = champ

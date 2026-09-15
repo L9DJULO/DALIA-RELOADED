@@ -35,7 +35,17 @@ class Champion(BaseModel):
     roles: List[str] = []             # Playable lanes: top, jungle, mid, bot, support
     damage: DamageProfile = DamageProfile()
     ratings: ChampionRatings = ChampionRatings()
+    attack_range: int = 550           # Data Dragon stats.attackrange : 125-225 en mêlée, 450+ à distance
     image_url: str = ""
+
+    @property
+    def is_melee(self) -> bool:
+        """Portée réelle, pas une déduction depuis la tankiness ou le type de dégâts.
+
+        La coupure tombe dans un vide : aucun champion ne se situe entre 225 et 450.
+        Samira (500) est à distance malgré un kit qui la force au contact.
+        """
+        return self.attack_range <= 350
 
     @property
     def is_ad(self) -> bool:

@@ -168,7 +168,7 @@ Corollaire : le `README.md` de la calibration annonce 20/10/8/14 et doit être c
 
 ---
 
-## 11. La portée des champions est absente du modèle
+## 11. La portée des champions — donnée et bug corrigés, équilibre mêlée/distance restant
 
 Soulevé par le joueur le 15/09 : « que le champ proposé soit un melee ou un range, ça peut être utile
 dans certains cas de last pick, genre si on a que des range parfois c'est pas ouf ».
@@ -186,6 +186,15 @@ Faute de donnée, le code utilise deux approximations, dont une est fausse :
   cela classe **Ashe, Draven, Kalista, Lucian, Twitch et Miss Fortune** comme carries mêlée, et rate
   **Nilah et Yasuo** qui le sont vraiment. Le bloc applique ensuite +6 ou −8 à la synergie.
 
-Le correctif est petit — charger un champ déjà disponible, ajouter `is_melee`, remplacer les deux
-approximations — et il débloque en plus un vrai besoin de draft : l'équilibre mêlée/distance d'une
-composition, que le joueur arbitre en last pick.
+**Fait le 15/09** : `Champion.attack_range` chargé depuis Data Dragon (173/173 champions) et propriété
+`is_melee` (seuil 350 — aucun champion entre 225 et 450). `synergy.py` déduit désormais le carry mêlée
+de la portée réelle : seuls Nilah et Yasuo sont classés mêlée parmi les ADC, contre six ADC à distance
+faussement flaggés avant. 4 tests ajoutés, fixture `catalog` dotée des portées réelles.
+
+**Non fait** : `mechanics.py:117` garde `if r.poke >= 4: result.add("range")`. Volontaire — l'outil
+`range` désigne « portée / poke » (`pool_advisor.py:6`), pas le corps-à-corps. Le brancher sur la portée
+d'attaque changerait sa sémantique et fausserait le conseiller de pool.
+
+**Reste à faire** : l'équilibre mêlée/distance d'une composition, qui est le besoin initialement exprimé
+— « si on a que des range parfois c'est pas ouf ». C'est un **nouvel outil de composition**, distinct de
+`range`, pas un correctif. Il touche le scoring de composition, donc à mesurer comme une vague.

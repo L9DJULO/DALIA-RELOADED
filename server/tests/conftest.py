@@ -27,10 +27,15 @@ def catalog():
             (54, "Malphite", ["top"]), (40, "Janna", ["support"]), (24, "Jax", ["top"]),
             (895, "Nilah", ["bot"]), (69, "Cassiopeia", ["mid", "top"]), (157, "Yasuo", ["mid"]),
             (25, "Morgana", ["support"]), (67, "Vayne", ["bot", "top"]), (22, "Ashe", ["bot"])]
+    # Portées réelles de Data Dragon : la fixture doit classer mêlée/distance comme le vrai catalogue.
+    ranges = {"Poppy": 125, "Nasus": 125, "Ahri": 550, "Orianna": 525, "Jinx": 525, "Ezreal": 550,
+              "JarvanIV": 175, "Vi": 125, "Malphite": 125, "Janna": 550, "Jax": 125, "Nilah": 225,
+              "Cassiopeia": 550, "Yasuo": 175, "Morgana": 450, "Vayne": 550, "Ashe": 600}
     for cid, key, roles in rows:
         tank = key in {"Poppy", "Malphite", "JarvanIV"}
         champion = Champion(id=cid, key=key, name=key, roles=roles, tags=["Tank"] if tank else ["Mage"],
             ratings=ChampionRatings(tankiness=5 if tank else 2, cc=4 if tank else 3, engage=4 if tank else 2),
+            attack_range=ranges[key],
             damage=DamageProfile(physical=10 if "mid" in roles else 80, magical=85 if "mid" in roles else 15))
         db._by_id[cid] = champion; db._by_key[key] = champion
     return db

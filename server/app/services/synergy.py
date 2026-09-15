@@ -105,7 +105,7 @@ class SynergyAnalyzer:
                 score += 3
 
         # 5. Melee carry (Nilah, Yasuo ADC) needs extra peel
-        is_melee_carry = is_adc and candidate.ratings.tankiness <= 2 and candidate.damage.physical >= 60
+        is_melee_carry = is_adc and candidate.is_melee
         if is_melee_carry:
             has_peel = any(c.ratings.utility >= 4 or (c.ratings.cc >= 4 and c.ratings.tankiness >= 3) for c, _ in allies)
             if has_peel:
