@@ -315,6 +315,14 @@ class DraftEngine:
             rec.confidence = confidence_from_sd(rec.score_sd)
         scored.sort(key=lambda r: r.total_score, reverse=True)
         group = top_group([(r.total_score, r.breakdown.terms) for r in scored])
+        if len(group) > 1:
+            # À égalité statistique, le plus sûr passe devant. Seul le risque
+            # subi départage : l'incertitude d'estimation dit qu'on manque de
+            # données, pas que le pick est risqué. En last pick, future_opponent
+            # est absent, outcome_sd est nul partout et ce départage est inerte.
+            head = sorted((scored[i] for i in group), key=lambda r: r.outcome_sd)
+            for slot, rec in zip(group, head):
+                scored[slot] = rec
         for i in group:
             scored[i].tie_with_leader = True
         top_group_ids = [scored[i].champion_id for i in group]
@@ -459,7 +467,7 @@ class DraftEngine:
         stats = self.meta.stats(champ.id, role, tier)
         return Recommendation(
             champion_id=champ.id, champion_key=champ.key, champion_name=champ.name,
-            total_score=est.total, score_sd=est.sd, breakdown=breakdown,
+            total_score=est.total, score_sd=est.sd, outcome_sd=est.outcome_sd, breakdown=breakdown,
             matchup_details=matchup_details, synergy_details=synergy_details, composition_warnings=comp_warnings,
             is_pool_champion=is_pool, tags=tags, confidence=confidence_from_sd(est.sd),
             meta_games=stats.games if stats else 0, meta_window=stats.patch if stats else None,

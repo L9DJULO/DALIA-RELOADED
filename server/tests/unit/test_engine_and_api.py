@@ -7,7 +7,8 @@ from app.api.routes import router
 from app.auth.deps import get_optional_user
 from app.db.session import get_db
 from app.middleware import TrafficLimits
-from app.models.draft import DraftRequest
+from app.models.draft import DraftRequest, Recommendation, ScoreBreakdown, ScoreTerm
+from app.scoring.aggregate import top_group
 from app.services.draft_engine import DraftEngine
 
 
@@ -186,3 +187,50 @@ async def test_profile_rank_is_used_when_request_has_none(catalog):
     explicit = DraftRequest(draft_state={"my_role": "top"}, champion_pool={"top": [{"champion_id": 78}]}, rank_bucket="gold")
     await _apply_account_context(explicit, user, None)
     assert explicit.rank_bucket == "gold"
+
+
+def _reorder_head_by_risk(scored):
+    """Reproduit le departage du moteur sur une liste deja triee par esperance."""
+    # Depuis la vague 0,5, top_group prend les termes et non le sigma absolu.
+    group = top_group([(r.total_score, r.breakdown.terms) for r in scored])
+    if len(group) > 1:
+        head = sorted((scored[i] for i in group), key=lambda r: r.outcome_sd)
+        for slot, rec in zip(group, head):
+            scored[slot] = rec
+    return scored, group
+
+
+def _rec(cid, name, score, sd, outcome_sd):
+    """Une reco portant un terme observe dont l'abs_sd est son sigma.
+
+    Depuis la vague 0,5 `top_group` calcule son seuil avec `comparison_sd` sur les
+    TERMES : un `ScoreBreakdown()` vide donnerait un seuil nul et un groupe de tete
+    toujours reduit au leader. Avec un seul terme observe par candidat, le seuil vaut
+    sqrt(abs_a**2 + abs_b**2), soit 4.24 pour 3.29 et 2.68.
+    """
+    return Recommendation(champion_id=cid, champion_name=name, champion_key=name,
+                          total_score=score, score_sd=sd, outcome_sd=outcome_sd,
+                          breakdown=ScoreBreakdown(terms=[
+                              ScoreTerm(name="future_opponent", value=score, sd=sd, abs_sd=sd)]))
+
+
+def test_safest_candidate_leads_a_statistical_tie():
+    """Yasuo +1.82 ±3.29 (risque 2.52) contre Lux +1.06 ±2.68 (risque 1.64)."""
+    scored = [_rec(157, "Yasuo", 1.82, 3.29, 2.52), _rec(99, "Lux", 1.06, 2.68, 1.64)]
+    scored, group = _reorder_head_by_risk(scored)
+    assert len(group) == 2, "l'ecart 0.76 reste sous l'incertitude combinee 4.24"
+    assert scored[0].champion_name == "Lux"
+
+
+def test_clear_favourite_is_never_demoted_by_its_risk():
+    """Hors groupe de tete, l'esperance seule classe : le risque ne renverse rien."""
+    scored = [_rec(1, "Fort", 9.0, 0.5, 0.5), _rec(2, "Sur", 1.0, 0.5, 0.0)]
+    scored, group = _reorder_head_by_risk(scored)
+    assert group == [0] and scored[0].champion_name == "Fort"
+
+
+def test_tiebreak_is_inert_when_no_candidate_carries_outcome_risk():
+    """En last pick, future_opponent est absent : outcome_sd nul partout."""
+    scored = [_rec(1, "A", 2.0, 3.0, 0.0), _rec(2, "B", 1.5, 3.0, 0.0)]
+    scored, _ = _reorder_head_by_risk(scored)
+    assert [r.champion_name for r in scored] == ["A", "B"], "ordre de l'esperance conserve"

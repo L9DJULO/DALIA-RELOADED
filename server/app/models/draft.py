@@ -206,6 +206,7 @@ class Recommendation(BaseModel):
     total_score: float                          # avantage en points de WR vs moyenne du pool (signé)
     score_range: Optional[List[float]] = None   # [total_score − sd, total_score + sd]
     score_sd: float = 0.0
+    outcome_sd: float = 0.0                     # part du σ qui est un risque subi (adversaire futur)
     tie_with_leader: bool = False
     breakdown: ScoreBreakdown
     matchup_details: List[MatchupDetail] = Field(default_factory=list)
