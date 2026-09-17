@@ -72,7 +72,7 @@ async def future_opponent_term(matchup, meta, db, champion: Champion, role: str,
                     "aucune page de counters ou de pick rates pour ce rôle")
     unfilled = set(ROLES) - draft.ally_roles_filled
     lam_q = counter_lambda(rank) * role_identification_probability(champion, role, unfilled)
-    dist = opponent_distribution(candidates, lam_q)
+    dist = opponent_distribution(candidates, lam_q, c.counter_alpha)
     value, sd = expected_delta(dist, deltas)
     return Term("future_opponent", value, sd, "observed", sum(counters[cid][1] for cid in dist if cid in counters),
                 f"{len(dist)} adversaires possibles, λ={lam_q:.2f}")

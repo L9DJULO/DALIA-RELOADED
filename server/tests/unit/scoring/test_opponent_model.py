@@ -45,6 +45,33 @@ def test_uniform_pick_rates_keep_counter_mass_proportional_to_threat():
     assert math.isclose(d[1], 0.75) and math.isclose(d[2], 0.25) and d[3] == 0.0
 
 
+def test_alpha_concentrates_mass_on_the_worst_matchup():
+    cands = [(1, 10.0, -6.0), (2, 10.0, -3.0), (3, 10.0, -1.0)]
+    flat = opponent_distribution(cands, 1.0, 1.0)
+    sharp = opponent_distribution(cands, 1.0, 3.0)
+    assert sharp[1] > flat[1], "le pire matchup capte plus de masse"
+    assert sharp[3] < flat[3], "le matchup le plus doux en capte moins"
+    assert math.isclose(sum(sharp.values()), 1.0)
+
+
+def test_alpha_is_monotonic_on_the_worst_matchup():
+    cands = [(1, 10.0, -6.0), (2, 10.0, -3.0), (3, 10.0, -1.0)]
+    shares = [opponent_distribution(cands, 1.0, a)[1] for a in (1.0, 1.5, 2.0, 3.0)]
+    assert shares == sorted(shares), "la concentration croît avec alpha"
+
+
+def test_alpha_never_breaks_the_no_threat_fallback():
+    cands = [(1, 10.0, 2.0), (2, 10.0, None)]
+    assert opponent_distribution(cands, 0.5, 3.0) == opponent_distribution(cands, 0.0, 3.0)
+
+
+def test_counter_alpha_is_a_rank_independent_scalar():
+    """counter_lambda encode deja le rang : y redoubler alpha serait du double comptage."""
+    from app.config import config
+    assert isinstance(config.scoring.counter_alpha, float)
+    assert config.scoring.counter_alpha >= 1.0
+
+
 def test_expected_delta_and_variance():
     value, sd = expected_delta({1: 0.5, 2: 0.5}, {1: -2.0, 2: 2.0})
     assert value == 0.0 and math.isclose(sd, 2.0)

@@ -19,6 +19,17 @@ class ScoringConstants(BaseModel):
         "emerald": 0.35, "diamond": 0.35, "master_plus": 0.50,
     }
     counter_lambda_unknown: float = 0.30
+    # Concentration du bras counter. 1.0 = masse proportionnelle à la menace ;
+    # au-dessus, la masse se resserre sur les pires matchups. Volontairement
+    # indépendant du rang : counter_lambda encode déjà le rang.
+    #
+    # Balayé sur 1,0 / 1,5 / 2,0 / 2,5 / 3,0 le 17/09/2026, cache gelé, master_plus :
+    # score global ET détail par catégorie identiques aux cinq valeurs. La constante
+    # est pourtant bien lue — 28 des 38 comparaisons du diagnostic bougent entre 1,0
+    # et 3,0 — mais la suite n'a aucun pouvoir de résolution sur ce paramètre. D'où
+    # 1,0 : à égalité de preuve, la valeur qui suppose le moins. À rejuger quand la
+    # suite saura trancher ces cas.
+    counter_alpha: float = 1.0
     future_sd_floor: float = 1.0
     future_no_data_sd: float = 4.0
     # Rang → tier Lolalytics. Buckets vérifiés le 14/09/2026 : Lolalytics ne
