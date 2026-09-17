@@ -104,3 +104,25 @@ Sont supprimés : les poids normalisés et leurs multiplicateurs par rôle, le r
 Vérifications : 105 tests unitaires serveur, 3 tests d'intégration sur PostgreSQL 16 temporaire, 24 tests Vitest, build Vite, 3 parcours Playwright, 2 tests Rust. La suite de calibration tourne sur données Lolalytics réelles : 33/50 assertions sur les cas historiques contre 35/50 pour l'ancien moteur, avec la catégorie synergie qui passe de 0/2 à 2/2. Les cas restants et deux pistes de conception non appliquées sont décrits dans [le bilan de calibration](server/tests/calibration/README.md).
 
 Conception détaillée : [la spec du scoring](docs/superpowers/specs/2026-09-10-scoring-wr-points-design.md) et [le plan d'implémentation](docs/superpowers/plans/2026-09-10-scoring-wr-points.md).
+
+## Qualité du moteur de scoring (17 septembre 2026)
+
+Trois vagues sur le moteur de scoring, plus la condition qui les rendait mesurables.
+
+**Le cache de calibration est gelé.** Le cache vivant a un TTL de six heures : entre le 14 et le 15 septembre, les compteurs de triage ont bougé de 20/10/8/14 à 21/9/8/14 sans un changement de code. `run_calibration.py --freeze-cache` copie le cache dans `server/app/data/cache-frozen/` avec un manifeste daté ; la calibration l'utilise ensuite par défaut, réseau interdit, `--live-cache` pour en sortir. Une entrée absente lève `FrozenCacheMiss`, qui hérite de `BaseException` parce que les fetchers avalent tout `Exception` et renverraient `{}`.
+
+**Vague 1 — le biais de la distribution adverse.** Le bras counter répartissait sa masse au prorata de la seule menace : un counter très dur mais rare pesait autant qu'un counter moyen massivement joué. La masse devient `pick_rate × menace`. `counter_alpha` concentre cette masse sur les pires matchups, hors du rang.
+
+**Vague 2 — le risque subi départage le groupe de tête.** Un écart-type mélangeait ce que le joueur ne peut pas savoir (quel adversaire sera pické) et ce que le moteur ne sait pas estimer. `Term.outcome_sd` isole la part subie ; à égalité statistique, le candidat le plus sûr passe devant. Le groupe reste déterminé par l'espérance, l'ordre à l'intérieur par le risque.
+
+**Chiffres de vérification** : 154 tests unitaires serveur, 24 tests Vitest, build Vite. Calibration sur cache gelé, `master_plus` : 33/52 au baseline, **34/52 (65,4 %)** après les deux vagues, le gain étant dans `blind_pick` (5/10 → 6/10), aucune catégorie en régression.
+
+**Résultat de référence** : Yasuo passe de n°1 à n°3 du blind pick mid. Il garde la meilleure espérance mais porte le plus gros risque subi. Cela rejoint l'arbitrage du joueur du 14/09 — « Yasuo c'est du bait, pas un bon pick à blind ».
+
+**Ce qui reste ouvert** :
+
+- **La vague 1 n'est pas mesurable par la suite.** Ni le pick rate ni α ne déplacent une seule assertion, alors que 28 des 38 comparaisons du diagnostic bougent. Avec 19 assertions réellement discriminantes sur 52, la suite n'a pas le pouvoir de résolution nécessaire pour départager un paramètre continu. `counter_alpha` vaut 1,0 faute de preuve, pas au vu d'une preuve. Voir le chantier 12.
+- La décision sur les buckets `_plus` de gold à diamond (spec §3) n'est pas prise.
+- **Le jugement du joueur n'a porté que sur le rôle ADC/bot.** Les 102 champions de top, jungle et mid ne sont toujours pas notés à la main, et la grille de notation n'est écrite pour aucune dimension sauf `cc`.
+
+Conception détaillée : [la spec](docs/superpowers/specs/2026-09-14-qualite-moteur-scoring-design.md), [le plan](docs/superpowers/plans/2026-09-14-qualite-moteur-scoring.md), [le bilan de calibration](server/tests/calibration/README.md) et [les chantiers ouverts](docs/CHANTIERS.md).

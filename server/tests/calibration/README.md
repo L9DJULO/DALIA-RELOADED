@@ -385,3 +385,71 @@ devra le porter entièrement.**
 égalité de preuve ; la règle de départage du plan — « préférer la valeur la plus basse :
 moins de concentration, moins d'hypothèse » — tranche pour 1,0. À rejuger le jour où la
 suite saura discriminer ces cas.
+
+
+## Bilan des trois vagues
+
+Toutes les colonnes mesurées sur le **même snapshot gelé** du 17/09/2026,
+`--rank master_plus`. Sans ce gel, aucune de ces comparaisons ne voudrait dire quoi
+que ce soit : les compteurs bougeaient seuls d'un jour à l'autre.
+
+| Catégorie | Baseline verrouillé | + pick rate (v1) | + α (v1) | + départage (v2) |
+|---|---|---|---|---|
+| anti_autoattack | 4/4 | 4/4 | 4/4 | 4/4 |
+| anti_engage | 3/6 | 3/6 | 3/6 | 3/6 |
+| blind_pick | 5/10 | 5/10 | 5/10 | **6/10** |
+| counter | 7/8 | 7/8 | 7/8 | 7/8 |
+| edge_case | 2/9 | 2/9 | 2/9 | 2/9 |
+| pick_order | 2/3 | 2/3 | 2/3 | 2/3 |
+| pool_restricted | 3/3 | 3/3 | 3/3 | 3/3 |
+| role_inference | 5/5 | 5/5 | 5/5 | 5/5 |
+| synergy | 2/2 | 2/2 | 2/2 | 2/2 |
+| ties | 0/2 | 0/2 | 0/2 | 0/2 |
+| **Global** | **33/52 (63,5 %)** | 33/52 | 33/52 | **34/52 (65,4 %)** |
+
+Triage : 19/9/10/14 au baseline, inchangé après la vague 1, **18/9/11/14** après le
+départage — une assertion quitte l'indécidable pour l'arbitrage.
+
+### La vague 1 ne déplace aucune assertion
+
+Ni le pick rate ni α ne font bouger un seul compteur. Ce n'est pas un défaut de
+câblage : 28 des 38 comparaisons du `--diagnose` bougent entre α = 1,0 et α = 3,0.
+Les changements déplacent les estimations sans franchir de seuil. Voir le chantier 12
+pour ce que cela dit du pouvoir de résolution de la suite.
+
+### `counter_alpha` retenu à 1,0
+
+Balayage sur 1,0 / 1,5 / 2,0 / 2,5 / 3,0 : **score global et détail par catégorie
+identiques aux cinq valeurs**. Aucune n'est écartée par une mesure — elles sont
+toutes indiscernables. La règle de départage du plan (« à égalité, préférer la valeur
+la plus basse : moins de concentration, moins d'hypothèse ») tranche pour 1,0, et non
+pour le 2,0 que le plan proposait a priori.
+
+### Yasuo : il a fallu le départage
+
+**Non, la vague 1 ne suffit pas.** Yasuo reste n°1 du blind pick mid à toutes les
+valeurs de α, et monter α l'éloigne encore (écart Orianna–Yasuo 5,75 → 6,17). La
+concentration aggrave ce cas.
+
+C'est le départage de la vague 2 qui le fait reculer, de **n°1 à n°3**, derrière Lux
+et Syndra. Il garde la meilleure espérance (+2,62) mais porte le plus gros risque
+subi, donc il perd sa place à l'intérieur du groupe d'égalité statistique. Une des
+trois assertions du cas passe désormais (`Syndra > Yasuo`).
+
+### `γ` n'a pas été activé
+
+La spec (§5.5) gardait en réserve un coefficient `γ` sur `total − γ · outcome_sd`
+« si la mesure montre le départage trop faible ». Le départage seul a produit le sens
+attendu et un gain net sans régression de catégorie : **`γ` n'a pas été nécessaire**,
+ce qui était le résultat espéré.
+
+Reste ouvert : Yasuo est n°3 et l'assertion en demande mieux que top 3. Savoir si ce
+résidu appelle `γ` ou relève du chantier 5 — le matchup de lane qui prime sur l'apport
+à la partie — n'est pas tranché par cette mesure. Ne pas activer `γ` pour forcer ce
+cas sans avoir répondu à la question.
+
+### Assertions redevenues décidables
+
+**Aucune après la vague 1** : le triage reste à 19/9/10/14. Après le départage, une
+assertion passe d'indécidable à arbitrage. L'hypothèse du plan — que la concentration
+de la vague 1 rendrait des assertions décidables — n'est **pas** vérifiée.
