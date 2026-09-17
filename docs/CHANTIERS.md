@@ -4,7 +4,7 @@ Tout ce qu'on a identifié et volontairement mis de côté, avec ce qui le bloqu
 pas le faire. Tenu à jour au fil des découvertes : rien ne doit disparaître dans l'historique de
 conversation.
 
-Dernière mise à jour : 15 septembre 2026, après la notation du bot lane et le chargement de la portée.
+Dernière mise à jour : 17 septembre 2026, après le gel du cache de calibration et le rejeu du baseline.
 
 ---
 
@@ -177,7 +177,7 @@ Kog'Maw AD n'ont ni le même profil de dégâts, ni la même portée effective, 
 
 ## 9. Reproductibilité de la calibration
 
-**À faire avant la vague 1 — ce n'est pas du report, c'est la condition de validité des mesures.**
+**Fait le 17/09. C'était la condition de validité des mesures des vagues 1 et 2.**
 
 Les compteurs de triage ont bougé entre le 14 et le 15 septembre **sans aucun changement de code** :
 20/10/8/14 puis 21/9/8/14. Cause identifiée : `comp_engage_adc_kite` (Caitlyn vs Samira) a un écart de
@@ -193,6 +193,32 @@ Corollaire : le `README.md` de la calibration annonce 20/10/8/14 et doit être c
 quatre termes du moteur consomment `ratings` (synergie, composition, mécaniques, archétype). Le
 baseline mesuré avant ce changement ne décrit plus le moteur actuel. **Il faut le rejouer avant toute
 mesure des vagues 1 et 2**, une fois le cache figé — dans cet ordre, sinon on re-mesure sur du sable.
+
+**Fait le 17/09, dans cet ordre.**
+
+- `--freeze-cache` copie le cache vivant dans `server/app/data/cache-frozen/` avec un manifeste
+  daté. Dès qu'un snapshot existe la calibration l'utilise **par défaut**, sans TTL et réseau
+  interdit ; `--live-cache` est l'échappatoire. Il faut demander pour sortir du gel, jamais pour
+  y entrer. Chaque run affiche son mode et la date du snapshot en tête.
+- Une entrée absente du gel lève `FrozenCacheMiss`, qui hérite de `BaseException` à dessein :
+  `fetch_tierlist` et `fetch_counter_page` avalent tout `Exception` et renvoient `{}`. Sans cela
+  un trou dans le snapshot ferait tourner la mesure sur une méta vide en silence.
+- **Nouveau baseline, snapshot du 17/09** (1250 entrées, Data Dragon 16.18.1, tier `master_plus`) :
+  **19 indécidables / 9 décidables conservées / 10 en arbitrage / 14 hors périmètre**, score global
+  33/52 (63,5 %). Vérifié identique sur deux runs consécutifs.
+- Le `README.md` de la calibration porte les trois colonnes (avant, après, baseline gelé) et
+  documente le gel.
+
+**Ce que le rejeu révèle** : le triage a bougé de 20/10/8/14 à 19/9/10/14 alors qu'aucune ligne du
+moteur de scoring n'a changé depuis la vague 0,5. Deux causes cumulées, et il faut les tenir
+séparées — les notes des 71 champions de bot lane réécrites le 15/09, et la dérive des données sur
+laquelle les colonnes « avant / après » avaient été mesurées. **Deux arbitrages de plus** sont
+apparus : ce sont des cas à instruire, pas une régression.
+
+**Reste ouvert** : le snapshot est local et non versionné (choix assumé — 15 Mo, projet solo). Un
+`git clean -x` ou une autre machine oblige à le reprendre, et le baseline ci-dessus ne sera alors
+plus rejouable à l'identique. Si ça devient gênant, versionner les seules entrées que la suite lit
+réellement.
 
 ---
 

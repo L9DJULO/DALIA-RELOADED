@@ -1,10 +1,11 @@
 import json
+import os
 import time
 from unittest.mock import AsyncMock
 import pytest
 import httpx
 from app.services.storage import cache_key
-from app.services.data_fetcher import FileCache, LolalyticsFetcher
+from app.services.data_fetcher import FileCache, FrozenCacheMiss, LolalyticsFetcher
 from app.services.personal_stats import PersonalStatsService
 from app.services.meta_analyzer import MetaAnalyzer
 from app.services.matchup import MatchupAnalyzer
@@ -113,3 +114,26 @@ def test_real_fetcher_accepts_a_tier_on_both_lolalytics_endpoints():
         params = inspect.signature(getattr(LolalyticsFetcher, name)).parameters
         assert "tier" in params, f"{name} doit accepter un tier"
         assert params["tier"].default is None
+
+
+def test_frozen_cache_never_expires_an_old_entry(tmp_path):
+    """Un snapshot gelé reste lisible quel que soit son âge ; avec un TTL il périmerait."""
+    for ttl, expected in ((None, {"cid": {}}), (6 * 3600, None)):
+        cache = FileCache(str(tmp_path), ttl_seconds=ttl)
+        cache.set('lola_list_middle', {"cid": {}})
+        stale = time.time() - 10 * 86400
+        os.utime(cache._path('lola_list_middle'), (stale, stale))
+        assert cache.get('lola_list_middle') == expected
+
+
+@pytest.mark.asyncio
+async def test_frozen_calibration_never_silently_fetches_fresh_data(tmp_path):
+    """Une entrée absente du gel doit être bruyante : la mesure est invalide, pas dégradée.
+
+    `fetch_tierlist` avale toute exception et renvoie {} ; sans garde, une entrée manquante
+    ferait tourner la calibration sur une méta vide sans un mot.
+    """
+    fetcher = LolalyticsFetcher(cache_dir=str(tmp_path), cache_ttl_hours=None, offline=True)
+    with pytest.raises(FrozenCacheMiss):
+        await fetcher.fetch_tierlist(role='mid', patch='16.17', tier='master_plus')
+    await fetcher.close()

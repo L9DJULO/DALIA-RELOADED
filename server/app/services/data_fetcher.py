@@ -26,6 +26,15 @@ from app.services.storage import cache_key as hash_key, write_json
 
 logger = logging.getLogger("dalia.fetcher")
 
+# Volontairement une BaseException : `fetch_tierlist` et `fetch_counter_page` avalent
+# tout `Exception` et renvoient {} ou []. Une entrée absente du cache gelé passerait
+# donc en silence et la calibration mesurerait une méta vide. Ce cri doit traverser.
+class FrozenCacheMiss(BaseException):
+    """Le cache gelé n'a pas l'entrée demandée et le réseau est interdit."""
+
+
+_FROM_CONFIG = object()  # sentinelle : « prends la valeur de config », distincte de None
+
 # Lolalytics uses "middle"/"bottom" — our app uses "mid"/"bot"
 _ROLE_TO_LANE = {"mid": "middle", "bot": "bottom", "top": "top", "jungle": "jungle", "support": "support"}
 _LANE_TO_ROLE = {v: k for k, v in _ROLE_TO_LANE.items()}
@@ -45,10 +54,10 @@ def lane_to_role(lane: str) -> str:
 class FileCache:
     """Simple file-system JSON cache with TTL."""
 
-    def __init__(self, directory: str, ttl_seconds: int = 6 * 3600):
+    def __init__(self, directory: str, ttl_seconds: Optional[int] = 6 * 3600):
         self.dir = Path(directory)
         self.dir.mkdir(parents=True, exist_ok=True)
-        self.ttl = ttl_seconds
+        self.ttl = ttl_seconds  # None = jamais périmé (snapshot gelé)
 
     def _path(self, key: str) -> Path:
         safe = hash_key(key)
@@ -58,8 +67,7 @@ class FileCache:
         p = self._path(key)
         if not p.exists():
             return None
-        age = time.time() - p.stat().st_mtime
-        if age > self.ttl:
+        if self.ttl is not None and time.time() - p.stat().st_mtime > self.ttl:
             return None
         try:
             return json.loads(p.read_text(encoding="utf-8"))
@@ -87,7 +95,9 @@ class LolalyticsFetcher:
     QUEUE = config.queue
     REGION = config.region
 
-    def __init__(self):
+    def __init__(self, cache_dir: Optional[str] = None, cache_ttl_hours=_FROM_CONFIG,
+                 offline: bool = False):
+        self.offline = offline
         self._client = httpx.AsyncClient(
             timeout=6.0,
             headers={
@@ -97,7 +107,9 @@ class LolalyticsFetcher:
             },
             follow_redirects=True,
         )
-        self._cache = FileCache(config.cache_dir, ttl_seconds=config.cache_ttl_hours * 3600)
+        ttl = config.cache_ttl_hours if cache_ttl_hours is _FROM_CONFIG else cache_ttl_hours
+        self._cache = FileCache(cache_dir or config.cache_dir,
+                                ttl_seconds=None if ttl is None else ttl * 3600)
         self._ddragon_version: Optional[str] = None
         self._version_checked = 0.0
         self.last_errors = {}
@@ -112,6 +124,8 @@ class LolalyticsFetcher:
         for one resource (a champion Lolalytics does not know yet) must not black
         out every other request to the same source.
         """
+        if self.offline:
+            raise FrozenCacheMiss(f"Absent du cache gelé : {url} {kwargs.get('params', '')}")
         source = "lolalytics" if url.startswith(self.LOLA) else "ddragon"
         async with self._http_slots:
             if self._retry_after.get(source, 0) > time.monotonic():

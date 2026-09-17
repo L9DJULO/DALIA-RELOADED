@@ -28,12 +28,44 @@ Useful flags:
 | `-v`, `--verbose` | Show the top 5 recommendations of each case + every passed assertion |
 | `-f <category>`, `--filter <category>` | Run only cases of a given category (`blind_pick`, `counter`, `anti_autoattack`, `anti_engage`, `synergy`, `pool_restricted`, `pick_order`) |
 | `--cases <path>` | Use a custom cases JSON file |
+| `--rank <rank>` | Player rank applied to cases without an explicit `rank_bucket` |
+| `--diagnose` | Sort ordering assertions by decidability instead of judging pass/fail |
+| `--freeze-cache` | Snapshot the live cache into `cache-frozen/` and exit |
+| `--live-cache` | Ignore the snapshot and read the live cache (data may drift) |
 
 The script returns exit code **0** when every assertion passes, **1** otherwise
 (plug it into CI later when the suite is stable).
 
 > ⚠️ The first run hits Data Dragon + Lolalytics over the network. Subsequent
 > runs read from the on-disk cache in `server/app/data/cache/`.
+
+## Le cache gelé — condition de validité des mesures
+
+Le cache vivant a un TTL de six heures. Entre le 14 et le 15 septembre 2026, les
+compteurs de triage sont passés de 20/10/8/14 à 21/9/8/14 **sans une ligne de code
+changée** : le TTL avait expiré et Lolalytics avait resservi des statistiques fraîches
+au milieu d'une mesure. Tant que les données bougent, l'effet d'une vague de scoring est
+indiscernable de la dérive.
+
+D'où le gel :
+
+```bash
+python tests/calibration/run_calibration.py --freeze-cache --rank master_plus
+```
+
+Le cache vivant est **copié** dans `server/app/data/cache-frozen/` (une copie, pas un gel
+sur place : le cache vivant est réécrit dès que l'application tourne), avec un
+`MANIFEST.json` qui date le snapshot. Le dossier n'est pas versionné — il se régénère.
+
+**Dès qu'un snapshot existe, la calibration l'utilise par défaut**, sans TTL et réseau
+interdit. Chaque run affiche en tête le mode et la date du gel. Il faut demander
+`--live-cache` pour en sortir, jamais pour y entrer : une mesure faite par inadvertance
+sur des données mouvantes est exactement le défaut qu'on vient de corriger.
+
+Une entrée absente du snapshot lève `FrozenCacheMiss`, qui hérite de `BaseException` à
+dessein : `fetch_tierlist` et `fetch_counter_page` avalent tout `Exception` et renvoient
+`{}`. Sans cela, un trou dans le gel ferait tourner la calibration sur une méta vide sans
+un mot.
 
 ## Adding a new case
 
@@ -272,16 +304,26 @@ Effet vérifié sur le cas mesuré : le seuil Jinx–Caitlyn tombe de 5,14 à
 **Triage avant / après**, `run_calibration.py --rank master_plus --diagnose`,
 52 assertions d'ordre :
 
-| Compteur | Avant | Après |
-|---|---|---|
-| Indécidable (`must_be_tied`) | 31 | 20 |
-| Décidable, passe (conservé) | 2 | 10 |
-| Décidable, échoue (arbitrage) | 5 | 8 |
-| Hors périmètre du triage | 14 | 14 |
+| Compteur | Avant | Après | **Baseline gelé (17/09)** |
+|---|---|---|---|
+| Indécidable (`must_be_tied`) | 31 | 20 | **19** |
+| Décidable, passe (conservé) | 2 | 10 | **9** |
+| Décidable, échoue (arbitrage) | 5 | 8 | **10** |
+| Hors périmètre du triage | 14 | 14 | **14** |
 
-Les deux colonnes totalisent 52 : `hors périmètre` ne bouge pas, aucune
+Les colonnes totalisent 52 : `hors périmètre` ne bouge pas, aucune
 assertion n'a changé de type, seul le seuil de décidabilité s'est resserré.
-Score global de calibration après la vague : **33/52 assertions (63,5 %)**
+
+La troisième colonne est le **baseline de référence**, rejoué le 17 septembre 2026 sur
+cache gelé (snapshot du 17/09, 1250 entrées, Data Dragon 16.18.1, tier `master_plus`).
+Elle diffère des deux premières pour deux raisons cumulées, et non à cause d'un
+changement du moteur de scoring : les notes des 71 champions de bot lane ont été
+réécrites à la main le 15/09 sous quatre termes qui consomment `ratings`, et les colonnes
+« avant / après » avaient été mesurées sur des données qui dérivaient. **C'est cette
+troisième colonne qui sert de point de comparaison aux vagues 1 et 2**, et elle est
+reproductible à l'identique d'un run à l'autre.
+
+Score global de calibration : **33/52 assertions (63,5 %)**
 (`run_calibration.py --rank master_plus`, sans `--diagnose`).
 
 **Ce qu'il faut retenir** : `Estimate.sd` répond à « que vaut ce champion

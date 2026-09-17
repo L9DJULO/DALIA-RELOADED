@@ -62,6 +62,8 @@ server/app/data/models/
 # ── Cache (regenerated at runtime) ──
 server/app/data/cache/
 !server/app/data/cache/.gitkeep
+# Snapshot gelé du cache pour la calibration : local, régénérable par --freeze-cache
+server/app/data/cache-frozen/
 
 # ── User data ──
 server/app/data/users/

@@ -22,17 +22,33 @@ from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+# Le rapport utilise des symboles hors cp1252 (OK, KO, ~) : sans cela, un run Windows
+# meurt d'UnicodeEncodeError au premier cas qui echoue.
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8")
+    except (AttributeError, OSError):
+        pass
+
 # ── Bootstrap: make the `app` package importable ─────────────────────────
 SERVER_DIR = Path(__file__).resolve().parent.parent.parent
 if str(SERVER_DIR) not in sys.path:
     sys.path.insert(0, str(SERVER_DIR))
+if str(Path(__file__).resolve().parent) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+import frozen_cache  # noqa: E402
+
+from app.config import config  # noqa: E402
 from app.models.draft import DraftPick, DraftRequest, DraftState, PoolEntry  # noqa: E402
 from app.scoring.aggregate import comparison_sd  # noqa: E402
 from app.scoring.types import RANKS  # noqa: E402
 from app.services.champion_data import ChampionDatabase  # noqa: E402
 from app.services.data_fetcher import LolalyticsFetcher  # noqa: E402
 from app.services.draft_engine import DraftEngine  # noqa: E402
+
+# Le snapshot gelé vit à côté du cache vivant, et n'est pas versionné.
+FROZEN_DIR = SERVER_DIR / "app" / "data" / "cache-frozen"
 
 ROLE_ALIASES = {
     "adc": "bot",
@@ -364,6 +380,29 @@ def validate_rank(rank: str) -> Optional[str]:
     return f"Unknown rank {rank!r}. Accepted values: {', '.join(RANKS)}"
 
 
+def build_fetcher(frozen_dir: Path, live: bool = False):
+    """Le fetcher du run, plus le mode qui l'a produit (pour le bandeau)."""
+    mode = frozen_cache.resolve(frozen_dir, live=live)
+    return LolalyticsFetcher(**mode.fetcher_kwargs()), mode
+
+
+async def freeze_live_cache(frozen_dir: Path, tier: Optional[str]) -> int:
+    """Prend le snapshot du cache vivant et sort. Le baseline devient rejouable."""
+    fetcher = LolalyticsFetcher()
+    try:
+        version = await fetcher.get_ddragon_version()
+    except Exception:
+        version = ""
+    finally:
+        await fetcher.close()
+    manifest = frozen_cache.freeze(Path(config.cache_dir), frozen_dir,
+                                   ddragon_version=version, tier=tier or fetcher.TIER)
+    print(f"{C.GREEN}Cache gelé : {manifest['entries']} entrées copiées vers {frozen_dir}{C.RESET}")
+    print(f"{C.DIM}Data Dragon {version or '?'}, tier {manifest['tier']}. "
+          f"Les runs suivants l'utiliseront par défaut.{C.RESET}")
+    return 0
+
+
 async def main() -> int:
     parser = argparse.ArgumentParser(description="DALIA draft engine calibration suite.")
     parser.add_argument("--verbose", "-v", action="store_true", help="Show top 5 of each case + passed assertions")
@@ -377,7 +416,14 @@ async def main() -> int:
                                        "(iron, bronze, silver, gold, platinum, emerald, diamond, master_plus)")
     parser.add_argument("--diagnose", action="store_true",
                         help="Sort ordering assertions by decidability instead of judging pass/fail")
+    parser.add_argument("--freeze-cache", action="store_true",
+                        help="Snapshot the live cache into cache-frozen/ and exit")
+    parser.add_argument("--live-cache", action="store_true",
+                        help="Ignore the frozen snapshot and read the live cache (data may drift)")
     args = parser.parse_args()
+
+    if args.freeze_cache:
+        return await freeze_live_cache(FROZEN_DIR, args.rank)
 
     if args.rank:
         error = validate_rank(args.rank)
@@ -402,9 +448,11 @@ async def main() -> int:
             case.setdefault("setup", {}).setdefault("rank_bucket", args.rank)
 
     print(f"{C.CYAN}{C.BOLD}DALIA Calibration Suite{C.RESET}")
-    print(f"{C.DIM}Loading champion data (first run hits DDragon, subsequent runs use cache)...{C.RESET}\n")
+    fetcher, cache_mode = build_fetcher(FROZEN_DIR, live=args.live_cache)
+    colour = C.GREEN if cache_mode.offline else C.YELLOW
+    print(f"{colour}{cache_mode.banner()}{C.RESET}")
+    print(f"{C.DIM}Loading champion data...{C.RESET}\n")
 
-    fetcher = LolalyticsFetcher()
     db = ChampionDatabase(fetcher)
     try:
         await db.initialize()
