@@ -23,6 +23,28 @@ def test_distribution_without_counter_signal_falls_back_to_meta():
     assert opponent_distribution(cands, 0.5) == opponent_distribution(cands, 0.0)
 
 
+def test_counter_mass_follows_pick_rate_at_equal_threat():
+    """Un counter deux fois plus joué pèse deux fois plus dans la distribution."""
+    cands = [(1, 10.0, -4.0), (2, 5.0, -4.0), (3, 10.0, 1.0)]
+    d = opponent_distribution(cands, 1.0)
+    assert math.isclose(d[1], 2 * d[2])
+    assert d[3] == 0.0, "un matchup favorable n'est pas une menace"
+
+
+def test_rare_hard_counter_weighs_less_than_common_soft_counter():
+    """Vel'Koz bot counter fort mais rare ; le pick rate doit le ramener a sa place."""
+    cands = [(1, 0.6, -7.0), (2, 12.0, -2.0)]
+    d = opponent_distribution(cands, 1.0)
+    assert d[2] > d[1]
+
+
+def test_uniform_pick_rates_keep_counter_mass_proportional_to_threat():
+    """Garde anti-regression : a pick rates egaux, on retrouve le comportement d'avant."""
+    cands = [(1, 10.0, -6.0), (2, 10.0, -2.0), (3, 10.0, 0.0)]
+    d = opponent_distribution(cands, 1.0)
+    assert math.isclose(d[1], 0.75) and math.isclose(d[2], 0.25) and d[3] == 0.0
+
+
 def test_expected_delta_and_variance():
     value, sd = expected_delta({1: 0.5, 2: 0.5}, {1: -2.0, 2: 2.0})
     assert value == 0.0 and math.isclose(sd, 2.0)

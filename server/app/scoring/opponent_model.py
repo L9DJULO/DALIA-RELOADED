@@ -16,14 +16,19 @@ from app.scoring.types import Term
 Candidate = Tuple[int, float, Optional[float]]  # (champion_id, pick_rate, d2 rétréci ou None)
 
 
-def opponent_distribution(candidates: Sequence[Candidate], lam_q: float) -> Dict[int, float]:
+def opponent_distribution(candidates: Sequence[Candidate], lam_q: float, alpha: float = 1.0) -> Dict[int, float]:
+    """Mélange d'un bras méta (ce qui se joue) et d'un bras counter (ce qui punit).
+
+    Le bras counter pondère la menace par le pick rate : l'adversaire prend un
+    counter qu'il joue. `alpha` concentre la masse sur les pires matchups.
+    """
     total_pr = sum(pr for _, pr, _ in candidates)
     if not candidates or total_pr <= 0:
         return {}
     p_meta = {cid: pr / total_pr for cid, pr, _ in candidates}
-    threat = {cid: max(0.0, -(d2 or 0.0)) for cid, _, d2 in candidates}
-    total_threat = sum(threat.values())
-    p_counter = {cid: t / total_threat for cid, t in threat.items()} if total_threat > 0 else p_meta
+    weight = {cid: pr * max(0.0, -(d2 or 0.0)) ** alpha for cid, pr, d2 in candidates}
+    total_weight = sum(weight.values())
+    p_counter = {cid: w / total_weight for cid, w in weight.items()} if total_weight > 0 else p_meta
     return {cid: (1 - lam_q) * p_meta[cid] + lam_q * p_counter[cid] for cid in p_meta}
 
 
