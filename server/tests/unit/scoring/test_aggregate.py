@@ -101,3 +101,28 @@ def test_top_group_uses_pairwise_comparison():
              (2.9, shared + [Term("meta", 2.9, 0.2, "observed")]),
              (-5.0, shared + [Term("meta", -5.0, 0.2, "observed")])]
     assert top_group(items) == [0, 1], "le 3e est nettement derriere"
+
+
+def test_outcome_sd_defaults_to_zero_and_never_exceeds_total_sd():
+    assert Term("meta", 1.0, 2.0).outcome_sd == 0.0
+    assert Term("future_opponent", 0.0, 2.0, outcome_sd=5.0).outcome_sd == 2.0, "invariant outcome_sd <= sd"
+
+
+def test_estimate_composes_outcome_sd_in_quadrature_without_touching_sd():
+    est = Estimate(terms=[Term("meta", 1.0, 3.0),
+                          Term("future_opponent", 0.0, 4.0, outcome_sd=4.0)])
+    assert math.isclose(est.sd, 5.0), "sd inchange : tous les termes comptent"
+    assert math.isclose(est.outcome_sd, 4.0), "seul le risque subi compte"
+
+
+def test_estimate_without_outcome_risk_has_zero_outcome_sd():
+    est = Estimate(terms=[Term("meta", 1.0, 3.0), Term("mastery", 2.0, 1.5)])
+    assert est.outcome_sd == 0.0 and est.sd > 0.0
+
+
+def test_preferences_never_drop_the_outcome_risk():
+    """Garde : `apply_preferences` reconstruit les termes ; perdre outcome_sd ici
+    rendrait le departage du groupe de tete inerte sans qu'aucun test ne tombe."""
+    terms = [Term("future_opponent", -2.0, 1.5, outcome_sd=1.5)]
+    scaled = apply_preferences(terms, {"draft_risk": 1.5})
+    assert scaled[0].value == -3.0 and scaled[0].outcome_sd == 1.5

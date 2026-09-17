@@ -118,3 +118,16 @@ async def test_future_term_without_counter_page_is_neutral_and_wide(catalog):
     catalog.fetcher.fetch_counter_page = AsyncMock(return_value={})
     term = await future_opponent_term(matchup, meta, catalog, catalog.get_by_id(78), "top", DraftState(my_role="top"), None)
     assert term.value == 0.0 and term.sd == 4.0 and term.source == "heuristic"
+
+
+@pytest.mark.asyncio
+async def test_future_term_without_data_carries_no_outcome_risk(catalog):
+    """Branche « aucune page de counters » : c'est de l'ignorance, pas du risque."""
+    matchup, meta = MatchupAnalyzer(catalog, catalog.fetcher), MetaAnalyzer(catalog, catalog.fetcher)
+    matchup.counters = lambda *a, **k: {}
+    meta.load_tierlist = AsyncMock()
+    matchup.load_matchups = AsyncMock()
+    draft = DraftState(my_role="top", enemy_picks=[{"champion_id": 103}])
+    term = await future_opponent_term(matchup, meta, catalog, catalog.get_by_id(78), "top", draft, None)
+    assert term is not None and term.sd > 0.0
+    assert term.outcome_sd == 0.0

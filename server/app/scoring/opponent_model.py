@@ -74,5 +74,8 @@ async def future_opponent_term(matchup, meta, db, champion: Champion, role: str,
     lam_q = counter_lambda(rank) * role_identification_probability(champion, role, unfilled)
     dist = opponent_distribution(candidates, lam_q, c.counter_alpha)
     value, sd = expected_delta(dist, deltas)
+    # La dispersion sur les adversaires possibles est exactement un risque subi :
+    # le joueur ne peut pas savoir qui sera pické. La branche sans données, elle,
+    # garde outcome_sd à 0 — c'est de l'ignorance, pas du risque.
     return Term("future_opponent", value, sd, "observed", sum(counters[cid][1] for cid in dist if cid in counters),
-                f"{len(dist)} adversaires possibles, λ={lam_q:.2f}")
+                f"{len(dist)} adversaires possibles, λ={lam_q:.2f}", outcome_sd=sd)
