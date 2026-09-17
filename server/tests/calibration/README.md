@@ -329,3 +329,59 @@ Score global de calibration : **33/52 assertions (63,5 %)**
 **Ce qu'il faut retenir** : `Estimate.sd` répond à « que vaut ce champion
 dans l'absolu », `comparison_sd` répond à « celui-ci est-il meilleur que
 celui-là » — c'est la confusion des deux qui était le défaut.
+
+
+## Biais de la distribution adverse (vague 1)
+
+Deux changements sur le bras counter de `opponent_model.opponent_distribution`, mesurés
+le 17 septembre 2026 sur le snapshot gelé du 17/09, `--rank master_plus`.
+
+**Le pick rate pondère la menace.** Le bras counter répartissait la masse au prorata de
+la seule menace : un counter très dur mais rare pesait autant qu'un counter moyen et
+massivement joué. L'adversaire prend un counter qu'il joue — la masse devient
+`pick_rate × menace`.
+
+**`counter_alpha` concentre la masse** sur les pires matchups, hors du rang :
+`counter_lambda` encode déjà le rang, l'y redoubler serait du double comptage.
+
+### Ce que la mesure dit — et ne dit pas
+
+| α | Global | Détail par catégorie |
+|---|---|---|
+| 1,0 | 33/52 (63,5 %) | identique au baseline |
+| 1,5 | 33/52 (63,5 %) | identique |
+| 2,0 | 33/52 (63,5 %) | identique |
+| 2,5 | 33/52 (63,5 %) | identique |
+| 3,0 | 33/52 (63,5 %) | identique |
+
+**Aucun des deux changements ne fait basculer une assertion.** Le baseline 19/9/10/14 et
+le score 33/52 sont inchangés.
+
+Ce n'est pourtant pas un défaut de câblage, et c'est important de ne pas confondre les
+deux. Le plan prévoyait un contrôle — « si α = 1,0 et α = 3,0 donnent le même score, la
+constante n'est pas lue » — qui donne ici une **fausse alerte**, parce qu'il ne regarde
+que des compteurs pass/fail. Vérifié sur les écarts continus du diagnostic, **28 des 38
+comparaisons bougent** entre les deux valeurs (Caitlyn vs Kog'Maw : écart 0,29 → 0,03,
+incertitude 2,40 → 2,14). Les deux changements déplacent réellement les estimations ;
+ils ne franchissent simplement aucun seuil d'assertion.
+
+**Leçon pour les vagues suivantes** : juger un changement sur le seul score de
+calibration, c'est ne rien voir tant qu'une assertion ne bascule pas. Comparer les
+écarts du `--diagnose` entre deux états du moteur — ce que le cache gelé rend possible.
+
+### Contrôle de la spec : Yasuo
+
+Le cas de référence était : le terme d'adversaire futur doit empêcher Yasuo de dominer
+le blind pick mid. **Yasuo reste n°1 à toutes les valeurs de α**, et monter α l'éloigne
+encore (écart Orianna–Yasuo 5,75 → 6,17 entre α = 1,0 et α = 3,0). La concentration
+aggrave ce cas au lieu de le corriger.
+
+Conséquence pour le dimensionnement : **la vague 1 ne touche pas le cas Yasuo, la vague 2
+devra le porter entièrement.**
+
+### Valeur retenue
+
+`counter_alpha = 1,0`, et non 2,0 comme le plan le proposait. Les cinq valeurs sont à
+égalité de preuve ; la règle de départage du plan — « préférer la valeur la plus basse :
+moins de concentration, moins d'hypothèse » — tranche pour 1,0. À rejuger le jour où la
+suite saura discriminer ces cas.

@@ -4,7 +4,7 @@ Tout ce qu'on a identifié et volontairement mis de côté, avec ce qui le bloqu
 pas le faire. Tenu à jour au fil des découvertes : rien ne doit disparaître dans l'historique de
 conversation.
 
-Dernière mise à jour : 17 septembre 2026, après le gel du cache de calibration et le rejeu du baseline.
+Dernière mise à jour : 17 septembre 2026, après la vague 1 (pick rate et concentration du bras counter).
 
 ---
 
@@ -264,3 +264,34 @@ d'attaque changerait sa sémantique et fausserait le conseiller de pool.
 **Reste à faire** : l'équilibre mêlée/distance d'une composition, qui est le besoin initialement exprimé
 — « si on a que des range parfois c'est pas ouf ». C'est un **nouvel outil de composition**, distinct de
 `range`, pas un correctif. Il touche le scoring de composition, donc à mesurer comme une vague.
+
+---
+
+## 12. La suite de calibration ne résout pas ce qu'on lui demande de mesurer
+
+Découvert en mesurant la vague 1, le 17/09.
+
+Les deux changements de la vague — le pick rate qui pondère le bras counter, puis
+`counter_alpha` qui le concentre — laissent le score global **et** le détail par catégorie
+strictement inchangés, à α = 1,0 comme à α = 3,0. Sur les écarts continus du `--diagnose`,
+**28 des 38 comparaisons bougent**. Les changements mordent ; ils ne franchissent aucun
+seuil d'assertion.
+
+Deux conséquences, à ne pas confondre :
+
+1. **Méthodologique.** Juger un changement sur le seul score de calibration, c'est ne rien
+   voir tant qu'une assertion ne bascule pas. Le contrôle de câblage prévu par le plan
+   (« même score à α = 1,0 et α = 3,0 ⇒ constante non lue ») a d'ailleurs donné une fausse
+   alerte pour cette raison. Il faut comparer les écarts du `--diagnose` entre deux états du
+   moteur — ce que le cache gelé (chantier 9) rend possible.
+2. **Sur le fond.** 52 assertions dont 19 indécidables et 14 hors périmètre, cela laisse
+   19 assertions réellement discriminantes. C'est trop peu pour départager un paramètre
+   continu. `counter_alpha` est donc fixé à 1,0 faute de preuve, pas au vu d'une preuve.
+
+**Correctif** : des cas dont l'assertion porte sur une quantité plutôt que sur un rang, ou
+un nombre de cas assez grand pour qu'un déplacement d'estimation finisse par basculer
+quelque chose. Rejoint le chantier 6 (cas de calibration à ajouter).
+
+**Constat associé** : la vague 1 ne touche pas le cas Yasuo du blind pick mid — il reste
+n°1 à toutes les valeurs de α, et monter α l'éloigne encore. La vague 2 devra le porter
+entièrement.
