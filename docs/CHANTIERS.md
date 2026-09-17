@@ -4,7 +4,7 @@ Tout ce qu'on a identifié et volontairement mis de côté, avec ce qui le bloqu
 pas le faire. Tenu à jour au fil des découvertes : rien ne doit disparaître dans l'historique de
 conversation.
 
-Dernière mise à jour : 17 septembre 2026, après la vague 1 (pick rate et concentration du bras counter).
+Dernière mise à jour : 18 septembre 2026, après la vague 2 et l'outil de comparaison de la calibration.
 
 ---
 
@@ -288,9 +288,21 @@ Deux conséquences, à ne pas confondre :
    19 assertions réellement discriminantes. C'est trop peu pour départager un paramètre
    continu. `counter_alpha` est donc fixé à 1,0 faute de preuve, pas au vu d'une preuve.
 
-**Correctif** : des cas dont l'assertion porte sur une quantité plutôt que sur un rang, ou
-un nombre de cas assez grand pour qu'un déplacement d'estimation finisse par basculer
-quelque chose. Rejoint le chantier 6 (cas de calibration à ajouter).
+**Correctif appliqué le 18/09 : `--snapshot` et `--compare`.** Plutôt que de rendre les
+assertions continues — ce qui aurait demandé de fixer des marges en points de win rate
+que personne ne sait dire — la suite enregistre le classement complet de chaque cas et
+compare deux états du moteur. Le rapport va des assertions basculées aux changements de
+rang puis aux déplacements de score. Refus de comparer hors d'un cache gelé commun.
+
+**Ce que l'outil a révélé immédiatement** : porter `counter_alpha` de 1,0 à 3,0, changement
+que la vague 1 déclarait sans effet, produit **4 changements de rang** et 47 déplacements de
+score. La suite ne ratait pas seulement des mouvements continus — elle ratait des inversions
+de classement, dans des cas dont l'assertion portait sur d'autres champions que ceux qui
+bougeaient.
+
+**Reste ouvert.** L'outil rend le mouvement *visible* ; il ne dit pas s'il est *bon*. Juger
+un déplacement demande toujours un arbitrage, donc des cas supplémentaires — chantier 6, et
+la question des assertions quantitatives reste entière si on veut un jugement automatique.
 
 **Constat associé** : la vague 1 ne touche pas le cas Yasuo du blind pick mid — il reste
 n°1 à toutes les valeurs de α, et monter α l'éloigne encore. La vague 2 devra le porter

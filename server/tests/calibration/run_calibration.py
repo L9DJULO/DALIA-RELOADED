@@ -38,6 +38,7 @@ if str(Path(__file__).resolve().parent) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import frozen_cache  # noqa: E402
+import snapshot  # noqa: E402
 
 from app.config import config  # noqa: E402
 from app.models.draft import DraftPick, DraftRequest, DraftState, PoolEntry  # noqa: E402
@@ -420,6 +421,10 @@ async def main() -> int:
                         help="Snapshot the live cache into cache-frozen/ and exit")
     parser.add_argument("--live-cache", action="store_true",
                         help="Ignore the frozen snapshot and read the live cache (data may drift)")
+    parser.add_argument("--snapshot", metavar="PATH",
+                        help="Record every case's full ranking and assertion verdicts to PATH")
+    parser.add_argument("--compare", metavar="PATH",
+                        help="Replay and report what moved since the snapshot at PATH")
     args = parser.parse_args()
 
     if args.freeze_cache:
@@ -467,6 +472,7 @@ async def main() -> int:
     total_pass = 0
     total_assertions = 0
     diagnosis: List[str] = []
+    snapshot_cases: Dict[str, Any] = {}
 
     try:
         for case in cases:
@@ -486,6 +492,9 @@ async def main() -> int:
             else:
                 print_case_report(case, recs, results, args.verbose)
 
+            if args.snapshot or args.compare:
+                snapshot_cases[case["id"]] = snapshot.case_entry(recs, results)
+
             for _, passed, _ in results:
                 by_category[cat]["total"] += 1
                 total_assertions += 1
@@ -494,6 +503,20 @@ async def main() -> int:
                     total_pass += 1
     finally:
         await fetcher.close()
+
+    if args.snapshot or args.compare:
+        taken = snapshot.build(args.rank, cache_mode.manifest, snapshot_cases)
+        if args.snapshot:
+            snapshot.write(Path(args.snapshot), taken)
+            print()
+            print(f"{C.GREEN}Snapshot écrit : {args.snapshot} "
+                  f"({len(snapshot_cases)} cas){C.RESET}")
+        if args.compare:
+            diff = snapshot.compare(snapshot.read(Path(args.compare)), taken)
+            colour = C.RED if diff["cache_mismatch"] else C.CYAN
+            print()
+            print(f"{C.BOLD}Comparaison avec {args.compare}{C.RESET}")
+            print(f"{colour}{snapshot.format_report(diff)}{C.RESET}")
 
     if args.diagnose:
         counts = Counter(diagnosis)

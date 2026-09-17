@@ -453,3 +453,57 @@ cas sans avoir répondu à la question.
 **Aucune après la vague 1** : le triage reste à 19/9/10/14. Après le départage, une
 assertion passe d'indécidable à arbitrage. L'hypothèse du plan — que la concentration
 de la vague 1 rendrait des assertions décidables — n'est **pas** vérifiée.
+
+
+## Comparer deux états du moteur
+
+46 des 52 assertions portent sur un rang, et un rang est une fonction en escalier :
+il ne dit rien tant qu'un seuil n'est pas franchi. La vague 1 l'a montré en grand —
+28 comparaisons déplacées sur 38, zéro compteur bougé.
+
+```bash
+# avant de toucher au moteur
+python tests/calibration/run_calibration.py --rank master_plus     --snapshot tests/calibration/snapshots/base.json
+
+# apres le changement
+python tests/calibration/run_calibration.py --rank master_plus     --compare tests/calibration/snapshots/base.json
+```
+
+Le snapshot enregistre, pour chaque cas, le **classement complet** — pas seulement le
+top 5, un déplacement peut naître n'importe où — avec `total_score`, `score_sd`,
+`outcome_sd`, et le verdict de chaque assertion.
+
+Le rapport va du plus fort au plus faible :
+
+| Niveau | Ce que c'est |
+|---|---|
+| Assertions basculées | ce que la suite voyait déjà |
+| Changements de rang | ce qu'elle rate quand le rang bouge hors d'un seuil testé |
+| Déplacements de score | ce qu'elle ne voit jamais |
+
+Exemple réel, `counter_alpha` porté de 1,0 à 3,0 — le changement que la vague 1
+déclarait sans effet :
+
+```
+Assertions basculées : 0
+Changements de rang : 4
+  Fiora    #4 -> #3   (blind_pick_top_flex_priority)
+  Ornn     #3 -> #4   (blind_pick_top_flex_priority)
+  Caitlyn  #2 -> #3   (synergy_senna_tahmkench)
+  Senna    #3 -> #2   (synergy_senna_tahmkench)
+Déplacements de score : 47
+```
+
+**Quatre inversions de classement passaient inaperçues.** La suite ne ratait pas
+seulement des mouvements continus, elle ratait des changements d'ordre — dans des cas
+dont l'assertion portait sur d'autres champions que ceux qui bougeaient.
+
+### Le refus qui compte
+
+Le snapshot embarque le manifeste du cache gelé. **Comparer deux runs pris sur des
+caches différents, ou hors gel, est refusé.** Sans ce garde-fou l'outil attribuerait
+au changement de code ce qui n'est qu'une dérive de données — exactement ce qui s'est
+produit le 15/09 et qui a motivé le gel.
+
+Les snapshots vivent dans `snapshots/`, non versionné : ils se régénèrent, et ils ne
+valent que pour le cache gelé qui les a produits.
