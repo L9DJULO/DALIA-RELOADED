@@ -151,10 +151,6 @@ Le compte porte sur les picks **adverses** seuls, pas sur les alliés. Un allié
 candidat a été observé — ce que l'amortissement corrige, c'est la confrontation à l'équipe d'en
 face.
 
-L'amortissement porte sur la **valeur** du terme, pas sur son incertitude. Réduire `abs_sd` en
-même temps ferait croire à une observation plus précise, alors qu'on affirme l'inverse : la
-moyenne devient moins pertinente, pas mieux mesurée.
-
 ### 6.2 Le raisonnement
 
 Le win rate brut est une moyenne **sur tous les contextes**, y compris ceux où le champion a été
@@ -166,7 +162,24 @@ L'amortissement est **symétrique** : il ramène un champion fort vers zéro com
 faible. Ce n'est pas une pénalité des champions forts, c'est un aveu que la moyenne devient moins
 informative à mesure que le particulier se précise.
 
-### 6.3 Ce que l'amortissement ne fera pas
+### 6.3 L'incertitude est amortie avec la valeur
+
+L'amortissement multiplie **la valeur et l'`abs_sd` ensemble**. Même règle que pour le poids du
+matchup (§5).
+
+Une première rédaction de cette spec disait le contraire — amortir la valeur seule, au motif que
+réduire l'`abs_sd` ferait croire à une observation plus précise. C'est faux, et la contradiction
+est apparue en écrivant le plan. L'amortissement n'est pas un aveu d'imprécision, c'est un
+**rééchelonnement** : on affirme que l'écart de win rate compte pour 65 % dans ce contexte. La
+quantité estimée devient 0,65·X, et l'incertitude d'une quantité rééchelonnée est 0,65·σ.
+
+Garder σ intact tout en réduisant la valeur reviendrait à attacher l'incertitude de X à la
+quantité 0,65·X. L'incertitude *relative* gonflerait, le groupe de tête s'élargirait sans raison,
+et le départage par risque subi de la vague 2 se déclencherait sur des égalités fabriquées par
+cette incohérence. C'est un effet de bord silencieux, et exactement le genre que ce projet
+cherche à éviter.
+
+### 6.4 Ce que l'amortissement ne fera pas
 
 Le cas de référence **ne basculera pas** à des magnitudes défendables :
 
