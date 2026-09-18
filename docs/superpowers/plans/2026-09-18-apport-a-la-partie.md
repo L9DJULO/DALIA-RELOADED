@@ -365,7 +365,7 @@ def test_meta_damping_is_neutral_by_default():
     """Neutre par defaut : le cablage se commite sans changer le comportement."""
     from app.models.champion import ChampionStats
     from app.scoring.meta_term import meta_term
-    stats = ChampionStats(win_rate=54.0, games=5000)
+    stats = ChampionStats(champion_id=61, role="mid", win_rate=54.0, games=5000)
     assert meta_term(stats, 1.0).value == pytest.approx(meta_term(stats, 0.0).value)
 
 
@@ -376,7 +376,7 @@ def test_meta_is_intact_while_the_enemy_team_is_unknown(monkeypatch):
     from app.scoring.meta_term import meta_term
     from app.scoring.shrink import shrink
     monkeypatch.setattr(config.scoring, "meta_context_damping", 0.4)
-    stats = ChampionStats(win_rate=54.0, games=5000)
+    stats = ChampionStats(champion_id=61, role="mid", win_rate=54.0, games=5000)
     intact = shrink(4.0, 5000, config.scoring.k_meta)
     assert meta_term(stats, 0.0).value == pytest.approx(intact), "zero pick revele : rien n'est amorti"
     assert meta_term(stats, 0.0).value > meta_term(stats, 0.6).value > meta_term(stats, 1.0).value > 0.0
@@ -389,8 +389,8 @@ def test_meta_damping_is_symmetric(monkeypatch):
     from app.models.champion import ChampionStats
     from app.scoring.meta_term import meta_term
     monkeypatch.setattr(config.scoring, "meta_context_damping", 0.5)
-    strong = meta_term(ChampionStats(win_rate=54.0, games=5000), 1.0)
-    weak = meta_term(ChampionStats(win_rate=46.0, games=5000), 1.0)
+    strong = meta_term(ChampionStats(champion_id=61, role="mid", win_rate=54.0, games=5000), 1.0)
+    weak = meta_term(ChampionStats(champion_id=61, role="mid", win_rate=46.0, games=5000), 1.0)
     assert strong.value == pytest.approx(-weak.value)
 
 
@@ -401,7 +401,7 @@ def test_meta_damping_scales_uncertainty_with_the_value(monkeypatch):
     from app.models.champion import ChampionStats
     from app.scoring.meta_term import meta_term
     monkeypatch.setattr(config.scoring, "meta_context_damping", 0.5)
-    stats = ChampionStats(win_rate=54.0, games=5000)
+    stats = ChampionStats(champion_id=61, role="mid", win_rate=54.0, games=5000)
     full, damped = meta_term(stats, 0.0), meta_term(stats, 1.0)
     assert damped.value == pytest.approx(full.value * 0.5)
     assert damped.abs_sd == pytest.approx(full.abs_sd * 0.5)
@@ -416,7 +416,7 @@ def test_meta_damping_never_touches_the_no_data_branch(monkeypatch):
     assert term.value == 0.0 and term.abs_sd == config.scoring.no_meta_sd
 ```
 
-Vérifier que `import pytest` est présent en tête du fichier, et la forme exacte du constructeur `ChampionStats` — le test doit utiliser les mêmes champs que les tests existants du fichier.
+Vérifier que `import pytest` est présent en tête du fichier ; l'ajouter sinon. `ChampionStats` exige `champion_id` et `role`, qui n'ont pas de valeur par défaut — vérifié le 18/09, les appels ci-dessus les fournissent.
 
 - [ ] **Step 2: Lancer les tests, vérifier l'échec**
 
