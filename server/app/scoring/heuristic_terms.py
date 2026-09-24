@@ -18,6 +18,23 @@ def mechanics_term(delta: float) -> Term:
                 "règles d'interactions de kits", rel_sd=c.mechanics_rel)
 
 
+def teamfight_term(ratings) -> Term:
+    """Ce que le champion pese quand les dix sont groupes.
+
+    Inconditionnel : ni les allies connus, ni les picks adverses, ni le rang
+    n'entrent ici. `composition` mesure la couverture d'outils manquants et
+    `archetype` la reponse au plan de jeu adverse ; aucun des deux ne dit cela.
+
+    Limite connue : sur 59 champions mid il n'existe que 29 vecteurs de notes
+    distincts. Le terme separe Orianna (4) de Zed (2) mais reste aveugle entre
+    Syndra, Lissandra et Veigar, identiques. C'est le chantier 4.
+    """
+    c = config.scoring
+    value = (ratings.teamfight - c.teamfight_reference) * c.teamfight_scale
+    return Term("teamfight", value, 0.0, "heuristic", 0,
+                "impact en combat groupé", rel_sd=c.teamfight_rel)
+
+
 def model_term(delta_pp: float) -> Term:
     c = config.scoring
     return Term("model", max(-c.model_cap, min(c.model_cap, delta_pp)), 0.0, "model", 0,

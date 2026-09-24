@@ -1,4 +1,5 @@
 import math
+import pytest
 from app.config import config
 from app.scoring.heuristic_terms import mechanics_term, model_term, synergy_term
 
@@ -31,3 +32,43 @@ def test_synergy_uncertainty_is_relative_to_its_value():
     assert t.value == 0.0 and t.sd == 0.0
     strong = synergy_term(100.0, duo_bonus=False)
     assert math.isclose(strong.sd, config.scoring.synergy_rel * abs(strong.value))
+
+
+def test_teamfight_term_is_neutral_until_its_scale_is_set():
+    """Neutre par defaut : le cablage se commite sans changer le comportement."""
+    from app.models.champion import ChampionRatings
+    from app.scoring.heuristic_terms import teamfight_term
+    assert teamfight_term(ChampionRatings(teamfight=5)).value == 0.0
+    assert teamfight_term(ChampionRatings(teamfight=1)).value == 0.0
+
+
+def test_teamfight_term_separates_a_teamfighter_from_an_assassin(monkeypatch):
+    """Orianna (4) doit passer devant Zed (2) sur ce terme, une fois l'echelle posee."""
+    from app.config import config
+    from app.models.champion import ChampionRatings
+    from app.scoring.heuristic_terms import teamfight_term
+    monkeypatch.setattr(config.scoring, "teamfight_scale", 0.5)
+    orianna = teamfight_term(ChampionRatings(teamfight=4))
+    zed = teamfight_term(ChampionRatings(teamfight=2))
+    assert orianna.value == pytest.approx(0.5)
+    assert zed.value == pytest.approx(-0.5)
+    assert orianna.value - zed.value == pytest.approx(1.0), "amplitude visee : ~1 point"
+
+
+def test_teamfight_term_carries_its_uncertainty_as_rel_sd(monkeypatch):
+    """abs_sd elargirait le groupe de tete sans raison et diluerait le departage v2."""
+    from app.config import config
+    from app.models.champion import ChampionRatings
+    from app.scoring.heuristic_terms import teamfight_term
+    monkeypatch.setattr(config.scoring, "teamfight_scale", 0.5)
+    term = teamfight_term(ChampionRatings(teamfight=5))
+    assert term.abs_sd == 0.0 and term.rel_sd > 0.0
+    assert term.outcome_sd == 0.0, "ce n'est pas un risque subi : rien n'est ignore ici"
+
+
+def test_the_engine_actually_appends_the_teamfight_term():
+    """Piege deja rencontre deux fois : une fonction juste, appelee nulle part."""
+    import inspect
+    from app.services.draft_engine import DraftEngine
+    source = inspect.getsource(DraftEngine)
+    assert "teamfight_term(" in source

@@ -10,7 +10,7 @@ import { historyPayload } from '../lib/replay';
 import '../workshop.css';
 
 const DIMENSIONS = { meta: 'Méta', matchup: 'Matchup', future_opponent: 'Adversaire à venir', mastery: 'Maîtrise',
-  composition: 'Composition', archetype: 'Archétype', synergy: 'Synergie', mechanics: 'Mécaniques', model: 'Modèle' };
+  composition: 'Composition', archetype: 'Archétype', synergy: 'Synergie', mechanics: 'Mécaniques', teamfight: 'Teamfight', model: 'Modèle' };
 const signed = value => `${value > 0 ? '+' : ''}${value.toFixed(1)}`;
 
 export function MechanicsDetails({ rules = [] }) {

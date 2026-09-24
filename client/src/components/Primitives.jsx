@@ -85,7 +85,7 @@ export function Bar({ label, value, max = 100 }) {
 // ── TermBar : une contribution signée, en points de win rate ──
 export const TERM_LABELS = {
   meta: 'Méta', matchup: 'Matchup', future_opponent: 'Adversaire à venir', mastery: 'Maîtrise',
-  composition: 'Compo', archetype: 'Archétype', synergy: 'Synergie', mechanics: 'Mécaniques', model: 'Modèle',
+  composition: 'Compo', archetype: 'Archétype', synergy: 'Synergie', mechanics: 'Mécaniques', teamfight: 'Teamfight', model: 'Modèle',
 };
 const TERM_SOURCE_COLOR = { observed: 'var(--accent)', model: '#4ac8e8', heuristic: 'var(--text-muted)' };
 

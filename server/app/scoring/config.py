@@ -65,6 +65,13 @@ class ScoringConstants(BaseModel):
     comp_warning_penalty: Dict[str, float] = {"critical": 2.0, "warning": 1.0}
     comp_cap: float = 4.0
     archetype_scale: float = 15.0
+    # Impact en teamfight. Terme permanent et de faible amplitude : un champion
+    # qui pese lourd en combat groupe vaut quelque chose dans toutes les parties,
+    # pas seulement dans celles qui s'annoncent groupees (arbitrage du joueur,
+    # 18/09/2026). Neutre par defaut, active a la mesure.
+    teamfight_reference: float = 3.0
+    teamfight_scale: float = 0.0
+    teamfight_rel: float = 0.5
     # Synergie, mécaniques, modèle
     synergy_scale: float = 0.12
     synergy_cap: float = 3.0

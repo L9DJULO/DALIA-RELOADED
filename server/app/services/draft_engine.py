@@ -32,7 +32,7 @@ from app.models.draft import (
 )
 from app.scoring.aggregate import apply_preferences, confidence_from_sd, reference_mean, top_group
 from app.scoring.composition_term import archetype_term, composition_term
-from app.scoring.heuristic_terms import mechanics_term, model_term, synergy_term
+from app.scoring.heuristic_terms import mechanics_term, model_term, synergy_term, teamfight_term
 from app.scoring.mastery_term import MasteryInputs, mastery_term
 from app.scoring.matchup_term import matchup_term
 from app.scoring.meta_term import meta_term
@@ -422,6 +422,7 @@ class DraftEngine:
             terms.append(synergy_term(await self.synergy.score(champ.id, role, draft), duo_bonus))
         mechanics_delta, mechanics = self.mechanics.evaluate(champ, draft)
         terms.append(mechanics_term(mechanics_delta))
+        terms.append(teamfight_term(champ.ratings))
 
         ml_s, ml_expl = None, None
         if ml is not None and ml.supports(champ.id, role, draft):

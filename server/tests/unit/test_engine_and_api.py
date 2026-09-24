@@ -176,6 +176,15 @@ def test_compare_reports_terms_and_tie(client):
     assert data["data_status"]["rank"] == "silver"
 
 
+def test_compare_lists_every_term_the_engine_produced(client):
+    """Une liste de dimensions écrite en dur masque tout terme ajouté après elle (teamfight)."""
+    response = client.post('/api/draft/compare', json={"draft_state": {"my_role": "top", "enemy_picks": [{"champion_id": 59}]}, "champion_ids": [78, 75], "rank_bucket": "SILVER"})
+    data = response.json()
+    produced = {t["name"] for side in ("left", "right") for t in data[side]["breakdown"]["terms"]}
+    assert "teamfight" in produced
+    assert {d["dimension"] for d in data["dimensions"]} == produced
+
+
 @pytest.mark.asyncio
 async def test_profile_rank_is_used_when_request_has_none(catalog):
     from app.api.routes import _apply_account_context
