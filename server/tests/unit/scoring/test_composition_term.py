@@ -42,3 +42,28 @@ def test_archetype_term_scales_with_confidence(catalog):
     assert term is not None and math.isclose(term.value, expected) and math.isclose(term.sd, 0.5 * abs(expected))
     assert archetype_term(poppy, ArchetypeResult(Archetype.MIXED, {}, 0.9, 5)) is None
     assert archetype_term(poppy, None) is None
+
+
+def _melee_warnings(comp, team):
+    return [w for w in comp.team_warnings(team) if "corps à corps" in w.message]
+
+
+def test_an_all_ranged_team_is_warned(catalog):
+    """« Si on a que des range parfois c'est pas ouf » — le joueur, 15/09."""
+    comp = CompositionAnalyzer(catalog)
+    ahri, jinx, janna, cassio = (catalog.get_by_id(i) for i in (103, 222, 40, 69))
+    assert all(not c.is_melee for c in (ahri, jinx, janna, cassio))
+    warns = _melee_warnings(comp, [ahri, jinx, janna, cassio])
+    assert len(warns) == 1 and warns[0].severity == "warning"
+
+
+def test_one_melee_champion_lifts_the_range_warning(catalog):
+    comp = CompositionAnalyzer(catalog)
+    team = [catalog.get_by_id(i) for i in (103, 222, 40, 54)]  # Malphite au contact
+    assert _melee_warnings(comp, team) == []
+
+
+def test_range_balance_is_not_judged_on_three_champions(catalog):
+    """À trois, le quatrième pick peut encore rééquilibrer : trop tôt pour avertir."""
+    comp = CompositionAnalyzer(catalog)
+    assert _melee_warnings(comp, [catalog.get_by_id(i) for i in (103, 222, 40)]) == []

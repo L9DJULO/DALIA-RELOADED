@@ -285,6 +285,15 @@ d'attaque changerait sa sémantique et fausserait le conseiller de pool.
 — « si on a que des range parfois c'est pas ouf ». C'est un **nouvel outil de composition**, distinct de
 `range`, pas un correctif. Il touche le scoring de composition, donc à mesurer comme une vague.
 
+**Fait le 24/09** : un avertissement de composition « aucun champion au corps à corps » quand au
+moins quatre champions connus de l'équipe sont tous à distance (`Champion.is_melee`). Il passe par
+`team_warnings`, donc pèse dans `composition` (pénalité `warning`) et s'affiche dans l'interface.
+Seul le cas exprimé par le joueur est traité — rien pour une équipe entièrement mêlée.
+
+Mesure : **aucun mouvement** en calibration (les cas ont rarement trois alliés connus), et rang
+moyen 13,69 contre 13,70 sur les 5 250 décisions de la concordance pro. Inoffensif, et de portée
+faible : à réévaluer si le joueur trouve qu'il se déclenche trop rarement.
+
 ---
 
 ## 12. La suite de calibration ne résout pas ce qu'on lui demande de mesurer

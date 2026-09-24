@@ -129,6 +129,15 @@ class CompositionAnalyzer:
                 message="Trop de carries — pas assez de peel/utility pour les protéger.",
             ))
 
+        # ── 7. Aucun champion au corps à corps ───────────────────────────
+        # Portée réelle de Data Dragon (chantier 11). À quatre, le cinquième
+        # pick ne suffit plus à donner à l'équipe quelqu'un qui tienne le contact.
+        if n >= 4 and not any(c.is_melee for c in team):
+            warns.append(CompositionWarning(
+                severity="warning",
+                message="Aucun champion au corps à corps — personne pour tenir le contact face à l'engage.",
+            ))
+
         return warns
 
     # Role-based damage weight: carries contribute more than supports
