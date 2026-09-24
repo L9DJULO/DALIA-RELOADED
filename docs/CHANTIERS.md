@@ -4,7 +4,7 @@ Tout ce qu'on a identifié et volontairement mis de côté, avec ce qui le bloqu
 pas le faire. Tenu à jour au fil des découvertes : rien ne doit disparaître dans l'historique de
 conversation.
 
-Dernière mise à jour : 18 septembre 2026, après la vague 2 et l'outil de comparaison de la calibration.
+Dernière mise à jour : 24 septembre 2026, après le premier baseline de concordance pro.
 
 ---
 
@@ -307,3 +307,34 @@ la question des assertions quantitatives reste entière si on veut un jugement a
 **Constat associé** : la vague 1 ne touche pas le cas Yasuo du blind pick mid — il reste
 n°1 à toutes les valeurs de α, et monter α l'éloigne encore. La vague 2 devra le porter
 entièrement.
+
+---
+
+## 13. Le signal méta classe à l'envers de ce que choisissent les bons drafteurs
+
+Mesuré le 22/09 par la suite de concordance pro (`server/tests/pro_concordance/`, détail et
+chiffres dans son `README.md`) : 5 250 décisions de pick reconstruites depuis 525 drafts LCK, LPL,
+LEC et LCS, contemporaines des statistiques que le moteur consomme.
+
+| Règle de classement | Top-3 | Top-10 |
+|---|---|---|
+| Pick rate soloqueue | 12,6 % | 44,5 % |
+| Hasard | 6,6 % | 22,2 % |
+| **Moteur DALIA** | **5,6 %** | **19,0 %** |
+| Win rate soloqueue | 0,5 % | 5,9 % |
+
+**Le moteur est significativement sous le hasard** (−3,0 écarts-types en top-3, −5,6 en top-10).
+Une concordance basse était attendue — pool ouvert, maîtrise neutre, les pros ne jouent pas la
+soloqueue. Être *sous le hasard* ne l'était pas : cela veut dire un classement activement
+anti-corrélé avec la préférence d'un bon drafteur.
+
+**Cause identifiée** : `meta_term` ne consomme que le win rate, et classer par win rate soloqueue
+est le pire des quatre témoins. Le win rate d'un champion peu joué mesure surtout la compétence de
+ses joueurs dédiés. Le pick rate n'entre nulle part dans la notation d'un candidat — seulement dans
+la distribution adverse. Les n°1 du moteur le trahissent : Amumu support, Karthus bot, Warwick top.
+
+**Lien avec le chantier 5** : sa Task 3 (amortissement de la méta par le contexte) règle le poids
+d'un terme dont le signal est lui-même en cause. À trancher avant de l'implémenter.
+
+**Limite de la mesure** : elle ne juge pas le conseil rendu à un joueur sur son pool déclaré, mais
+le signal de fond sur lequel tout le reste s'empile.

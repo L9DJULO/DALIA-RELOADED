@@ -30,6 +30,7 @@ import argparse
 import hashlib
 import json
 import logging
+import os
 import sys
 import time
 from datetime import datetime, timedelta, timezone
@@ -54,9 +55,14 @@ USER_AGENT = (
 # The wiki uses "League" (full name) — short names work via OverviewPage matching.
 LEAGUES_TO_SCRAPE = ["LEC", "LCK", "LCS", "LPL"]
 
-# Politeness: seconds between API calls. Fandom's MediaWiki host rate-limits
-# anonymous clients aggressively (~1 req/s sustained); 2.0s gives us headroom.
-REQUEST_DELAY_S = 2.0
+# Politeness: seconds between API calls. Measured against Cargo on 22/09/2026
+# with an authenticated session: five queries spaced 3s apart all succeed, the
+# sixth is refused, and queries issued while throttled come back as a
+# server-side MWException rather than a clean `ratelimited`. The binding
+# constraint is request frequency, not query size — the same query that fails
+# under throttle returns 106 rows and 56KB when spaced out. 10s sustains the
+# run; --delay overrides it.
+REQUEST_DELAY_S = 10.0
 
 # Retry policy for transient failures (rate limits, timeouts).
 MAX_RETRIES = 8
@@ -201,6 +207,79 @@ def _is_ratelimited(data: Any) -> Tuple[bool, Optional[str]]:
             elif isinstance(payload, str) and "ratelimit" in payload.lower():
                 return True, f"warnings.{key}: {payload}"
     return False, None
+
+
+# ─── Authentication ──────────────────────────────────────────────────────
+# Fandom throttles `action=cargoquery` for anonymous clients: on 22/09/2026 a
+# two-field query with limit=2 was refused with `ratelimited` while a plain
+# `action=query&meta=siteinfo` on the same host answered 200. The limit is on
+# Cargo specifically, not on request size, so backing off does not help — an
+# authenticated session is the only way through at volume.
+#
+# Credentials come from the environment, never from the command line: an
+# argument lands in shell history and in the process table.
+ENV_USERNAME = "FANDOM_USERNAME"
+ENV_PASSWORD = "FANDOM_BOT_PASSWORD"
+
+
+def credentials_from_env() -> Tuple[Optional[str], Optional[str]]:
+    """The bot-password pair, or (None, None) when the run stays anonymous."""
+    user = (os.environ.get(ENV_USERNAME) or "").strip() or None
+    password = (os.environ.get(ENV_PASSWORD) or "").strip() or None
+    return user, password
+
+
+def login(client: httpx.Client, username: str, password: str) -> str:
+    """Log the session in with a bot password. Returns the authenticated name.
+
+    Two steps, as MediaWiki requires: fetch a login token, then post it back
+    with the credentials. Cookies persist on the client, so every later Cargo
+    query rides the same session.
+
+    Raises RuntimeError on any failure — a run that silently fell back to
+    anonymous would spend an hour backing off before telling us why.
+    """
+    token_response = client.get(
+        API_URL,
+        params={"action": "query", "format": "json", "meta": "tokens", "type": "login"},
+        timeout=30.0,
+    )
+    token_response.raise_for_status()
+    token = (token_response.json().get("query", {}).get("tokens", {}) or {}).get("logintoken")
+    if not token:
+        raise RuntimeError(f"No login token in response: {token_response.text[:200]!r}")
+
+    login_response = client.post(
+        API_URL,
+        data={
+            "action": "login",
+            "format": "json",
+            "lgname": username,
+            "lgpassword": password,
+            "lgtoken": token,
+        },
+        timeout=30.0,
+    )
+    login_response.raise_for_status()
+    result = (login_response.json().get("login", {}) or {})
+    if result.get("result") != "Success":
+        # `reason` carries the actionable part (wrong password, bot password
+        # revoked, account not confirmed). Never log the password itself.
+        raise RuntimeError(
+            f"Login refused: result={result.get('result')!r} reason={result.get('reason')!r}"
+        )
+    return result.get("lgusername") or username
+
+
+def whoami(client: httpx.Client) -> Dict[str, Any]:
+    """Ask the wiki who it thinks we are. Anonymous sessions report anon=True."""
+    r = client.get(
+        API_URL,
+        params={"action": "query", "format": "json", "meta": "userinfo", "uiprop": "rights|groups"},
+        timeout=30.0,
+    )
+    r.raise_for_status()
+    return (r.json().get("query", {}) or {}).get("userinfo", {}) or {}
 
 
 def _cargo_query(
@@ -410,17 +489,24 @@ def fetch_picks_and_bans_by_overview(
     """Pull picks/bans grouped by OverviewPage (one query per wiki page).
 
     Why not Tournament filter: `PicksAndBansS7.Tournament = '...'` consistently
-    returns `db_error` from Fandom's Cargo backend. OverviewPage is the
-    canonical join field used elsewhere on the wiki.
+    returns `db_error` from Fandom's Cargo backend, and merely *selecting* that
+    column raises MWException. OverviewPage is the canonical join field used
+    elsewhere on the wiki, and it works in both positions.
     Why not GameId IN(...): an 80-ID IN clause produces an 8KB+ URL that
     MediaWiki silently truncates → empty results.
 
     With `state`, marks each OverviewPage as processed after success so
     --resume skips it on the next invocation.
     """
+    # `PicksAndBansS7.Tournament` is left out on purpose. Measured 22/09/2026,
+    # one overview page, same session, 14s apart: the field list below returns
+    # 93 rows, and adding `Tournament` — nothing else — returns
+    # `Caught exception of type MWException`. The column breaks this table
+    # server-side in the SELECT exactly as it does in the WHERE (see the
+    # docstring). ScoreboardGames carries the tournament name anyway, and
+    # _build_draft already reads it from there first.
     fields_parts = [
         "PicksAndBansS7.GameId=GameId",
-        "PicksAndBansS7.Tournament=Tournament",
         "PicksAndBansS7.OverviewPage=OverviewPage",
         "PicksAndBansS7.Winner=Winner",
         "PicksAndBansS7.Team1=Team1",
@@ -564,6 +650,21 @@ def parse_args() -> argparse.Namespace:
         help="Resume from scrape_state.json instead of starting fresh.",
     )
     ap.add_argument("--output", default=str(OUTPUT_PATH))
+    ap.add_argument(
+        "--delay", type=float, default=REQUEST_DELAY_S,
+        help=f"Seconds between API calls (default {REQUEST_DELAY_S}). Lower it "
+             f"and Cargo starts refusing after ~5 queries.",
+    )
+    ap.add_argument(
+        "--check-auth", action="store_true",
+        help=f"Log in, report who the wiki thinks we are, and exit. Reads "
+             f"${ENV_USERNAME} / ${ENV_PASSWORD}.",
+    )
+    ap.add_argument(
+        "--allow-anonymous", action="store_true",
+        help="Run without credentials. Cargo is throttled for anonymous "
+             "clients, so expect the run to stall on backoff.",
+    )
     return ap.parse_args()
 
 
@@ -620,14 +721,51 @@ def main() -> int:
     )
 
     use_cache = not args.no_cache
-    logger.info(
-        "Fetching ScoreboardGames for %s since %s (cache=%s, UA=%r)",
-        leagues, since.date(), use_cache, USER_AGENT,
-    )
+    global REQUEST_DELAY_S
+    REQUEST_DELAY_S = args.delay
 
     sb_complete = True
     pb_complete = True
-    with httpx.Client(headers={"User-Agent": USER_AGENT}) as client:
+    with httpx.Client(headers={"User-Agent": USER_AGENT}, follow_redirects=True) as client:
+        username, password = credentials_from_env()
+        if username and password:
+            try:
+                account = login(client, username, password)
+            except (RuntimeError, httpx.HTTPError) as exc:
+                # A traceback here says nothing the message does not already
+                # say, and the fix is on Special:BotPasswords, not in the code.
+                logger.error("Cannot authenticate: %s", exc)
+                return 1
+            info = whoami(client)
+            logger.info(
+                "Logged in as %s (groups=%s)", account,
+                ",".join(info.get("groups") or []) or "—",
+            )
+            if info.get("anon") is not None:
+                raise RuntimeError(
+                    "Login reported success but the session is still anonymous."
+                )
+        elif args.allow_anonymous:
+            logger.warning(
+                "No credentials (%s / %s): running anonymously. Fandom throttles "
+                "Cargo for anonymous clients — expect long backoffs.",
+                ENV_USERNAME, ENV_PASSWORD,
+            )
+        else:
+            logger.error(
+                "No credentials. Set %s and %s (Special:BotPasswords), or pass "
+                "--allow-anonymous to try anyway.", ENV_USERNAME, ENV_PASSWORD,
+            )
+            return 1
+
+        if args.check_auth:
+            logger.info("Auth check only — not scraping. Exiting.")
+            return 0
+
+        logger.info(
+            "Fetching ScoreboardGames for %s since %s (cache=%s, UA=%r)",
+            leagues, since.date(), use_cache, USER_AGENT,
+        )
         sb_rows, sb_complete = fetch_scoreboard_games(client, leagues, since, use_cache=use_cache)
         logger.info("Got %d scoreboard rows (complete=%s)", len(sb_rows), sb_complete)
         if sb_rows:
