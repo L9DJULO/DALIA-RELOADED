@@ -15,7 +15,6 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
-import math
 import sys
 import traceback
 from collections import Counter, defaultdict

@@ -2,7 +2,7 @@
 from __future__ import annotations
 import math
 from dataclasses import replace
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Dict, List, Optional, Protocol, Sequence, Tuple
 from app.config import config
 from app.scoring.types import Term
 
@@ -32,7 +32,15 @@ def reference_mean(totals: Sequence[float]) -> float:
     return sum(totals) / len(totals) if totals else 0.0
 
 
-def comparison_sd(terms_a: Sequence, terms_b: Sequence) -> float:
+class _SdTerm(Protocol):
+    """Ce que `comparison_sd` lit d'un terme — satisfait par `Term` comme par `ScoreTerm`."""
+    name: str
+    value: float
+    rel_sd: float
+    abs_sd: float
+
+
+def comparison_sd(terms_a: Sequence[_SdTerm], terms_b: Sequence[_SdTerm]) -> float:
     """Incertitude sur la DIFFÉRENCE entre deux estimations.
 
     Distincte de `Estimate.sd`, qui est l'incertitude sur un champion pris
@@ -41,8 +49,8 @@ def comparison_sd(terms_a: Sequence, terms_b: Sequence) -> float:
     de valeur. Un terme observé porte une erreur d'échantillonnage propre à
     chaque champion : les variances s'additionnent.
 
-    Accepte indifféremment des `Term` ou des `ScoreTerm` : seuls les attributs
-    `name`, `value`, `rel_sd` et `abs_sd` sont lus.
+    Accepte indifféremment des `Term` ou des `ScoreTerm`, par typage
+    structurel (`_SdTerm`), sans que l'un dépende de l'autre.
     """
     by_a = {t.name: t for t in terms_a}
     by_b = {t.name: t for t in terms_b}

@@ -1,8 +1,8 @@
 """Champion database — loads champion data from Data Dragon + applies overrides.
 
-Auto-classification rules based on Riot's tags give a reasonable baseline;
-hand-tuned overrides in champion_overrides.json refine the most impactful
-champions for composition analysis.
+Roles come from champion_overrides.json. Ratings are hand-arbitrated there for
+the bot-lane champions (ADC and supports); every other champion still falls
+back to _auto_ratings, derived from Riot's tags alone (see docs/CHANTIERS.md, 4).
 """
 from __future__ import annotations
 

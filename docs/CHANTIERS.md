@@ -224,13 +224,10 @@ réellement.
 
 ## 10. Dette mineure
 
-- `import math` devenu mort dans `run_calibration.py` (les deux `math.sqrt` ont été remplacés par
-  `comparison_sd`).
-- `comparison_sd` est annoté `Sequence` nu — conséquence voulue du duck-typing entre `Term` et
-  `ScoreTerm`. Un `Protocol` rendrait le typage statique sans recréer le couplage.
-- La branche « blend » de `mastery_term` (peu de parties personnelles) n'a pas de test sur son σ.
-- Le docstring de `champion_data.py` affirme « hand-tuned overrides in champion_overrides.json refine
-  the most impactful » — c'est faux, aucun `ratings` n'y est surchargé. À corriger ou à rendre vrai.
+**Soldée le 24/09.** `import math` mort retiré de `run_calibration.py` ; `comparison_sd` typé par un
+`Protocol` (`_SdTerm`) sans recoupler `Term` et `ScoreTerm` ; σ de la branche « blend » de
+`mastery_term` testé ; docstring de `champion_data.py` aligné sur la réalité — les `ratings` des 71
+champions de bot lane sont bien dans `champion_overrides.json`, les 102 autres retombent sur les tags.
 
 ---
 

@@ -38,3 +38,11 @@ def test_recency_penalty_capped_and_halved_by_mastery_points():
 
 def test_champion_has_default_difficulty():
     assert Champion(id=1, key="X", name="X").difficulty == 5
+
+
+def test_blend_carries_a_relative_uncertainty_not_an_absolute_one():
+    """Entre 3 et 9 parties, la note reste une conversion heuristique : σ relatif, pas d'échantillonnage."""
+    t = mastery_term(MasteryInputs(tier="B", difficulty=5, rank=None, personal_games=5, personal_wr=70.0, now=NOW))
+    assert t.abs_sd == 0.0
+    assert math.isclose(t.rel_sd, 0.4)
+    assert math.isclose(t.sd, 0.4 * abs(t.value))
