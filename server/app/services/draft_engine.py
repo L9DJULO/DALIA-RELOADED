@@ -403,7 +403,11 @@ class DraftEngine:
         has_enemies = any(e.champion_id for e in draft.enemy_picks)
         allies = [c for a in draft.ally_picks if a.champion_id and (c := self.db.get_by_id(a.champion_id))]
         stats = self.meta.stats(champ.id, role, tier)
-        terms: List[Term] = [meta_term(stats)]
+        # Picks ADVERSES seuls : un allié connu informe composition et synergy, mais
+        # il ne dit rien sur le contexte dans lequel le win rate moyen a été observé.
+        revealed = len([e for e in draft.enemy_picks if e.champion_id])
+        context_fraction = min(1.0, revealed / 5.0)
+        terms: List[Term] = [meta_term(stats, context_fraction)]
         popularity = popularity_term(stats)
         if popularity:
             terms.append(popularity)

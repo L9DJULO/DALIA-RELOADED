@@ -7,11 +7,13 @@ from app.scoring.shrink import shrink, shrink_sd
 from app.scoring.types import Term
 
 
-def meta_term(stats: Optional[ChampionStats]) -> Term:
+def meta_term(stats: Optional[ChampionStats], context_fraction: float = 0.0) -> Term:
     c = config.scoring
     if stats is None or stats.games <= 0:
         return Term("meta", 0.0, c.no_meta_sd, "heuristic", 0, "aucune statistique méta")
-    w = c.meta_wr_weight
+    # Symétrique : ramène un champion fort vers zéro comme un champion faible.
+    damping = 1.0 - c.meta_context_damping * min(1.0, max(0.0, context_fraction))
+    w = c.meta_wr_weight * damping
     return Term("meta", shrink(stats.win_rate - 50.0, stats.games, c.k_meta) * w,
                 shrink_sd(stats.games, c.k_meta) * w, "observed", stats.games, stats.patch or "")
 

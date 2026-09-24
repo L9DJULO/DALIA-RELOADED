@@ -23,6 +23,13 @@ class ScoringConstants(BaseModel):
     popularity_ref: float = 2.0       # pick rate de référence, en % ; s'annule entre candidats d'un même poste
     popularity_floor: float = 0.05    # pick rate plancher, en % : borne ln() pour un pick jamais joué
     popularity_rel: float = 0.5
+    # Amortissement de la meta par le contexte. Le win rate brut est une moyenne
+    # SUR TOUS LES CONTEXTES, y compris ceux ou le champion a ete pique dans une
+    # situation favorable. Tant que le contexte reel est inconnu, cette moyenne est
+    # la meilleure information disponible ; quand il est connu, continuer a la
+    # compter a plein revient a la compter deux fois contre les termes qui, eux,
+    # decrivent CETTE partie. Neutre par defaut, active a la mesure.
+    meta_context_damping: float = 0.0
     # Matchup
     offlane_weight: float = 0.5
     heuristic_matchup_scale: float = 0.2

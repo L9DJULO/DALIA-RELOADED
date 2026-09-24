@@ -119,3 +119,57 @@ def test_the_meta_preference_also_weighs_popularity():
     from app.scoring.types import Term
     out = apply_preferences([Term("popularity", 2.0)], {"meta": 0.5})
     assert out[0].value == pytest.approx(1.0)
+
+
+def test_meta_damping_is_neutral_by_default():
+    """Neutre par defaut : le cablage se commite sans changer le comportement."""
+    stats = ChampionStats(champion_id=61, role="mid", win_rate=54.0, games=5000)
+    assert meta_term(stats, 1.0).value == pytest.approx(meta_term(stats, 0.0).value)
+
+
+def test_meta_is_intact_while_the_enemy_team_is_unknown(monkeypatch):
+    """Sans contexte, la moyenne est la meilleure information disponible."""
+    from app.config import config
+    monkeypatch.setattr(config.scoring, "meta_context_damping", 0.4)
+    stats = ChampionStats(champion_id=61, role="mid", win_rate=54.0, games=5000)
+    intact = shrink(4.0, 5000, config.scoring.k_meta) * config.scoring.meta_wr_weight
+    assert meta_term(stats, 0.0).value == pytest.approx(intact), "zero pick revele : rien n'est amorti"
+    assert meta_term(stats, 0.0).value > meta_term(stats, 0.6).value > meta_term(stats, 1.0).value > 0.0
+
+
+def test_meta_damping_is_symmetric(monkeypatch):
+    """Ce n'est pas une penalite des champions forts : la moyenne devient moins
+    pertinente dans les deux sens."""
+    from app.config import config
+    monkeypatch.setattr(config.scoring, "meta_context_damping", 0.5)
+    strong = meta_term(ChampionStats(champion_id=61, role="mid", win_rate=54.0, games=5000), 1.0)
+    weak = meta_term(ChampionStats(champion_id=61, role="mid", win_rate=46.0, games=5000), 1.0)
+    assert strong.value == pytest.approx(-weak.value)
+
+
+def test_meta_damping_scales_uncertainty_with_the_value(monkeypatch):
+    """Meme regle que le poids du matchup : un terme reechelonne garde une
+    incertitude proportionnelle."""
+    from app.config import config
+    monkeypatch.setattr(config.scoring, "meta_context_damping", 0.5)
+    stats = ChampionStats(champion_id=61, role="mid", win_rate=54.0, games=5000)
+    full, damped = meta_term(stats, 0.0), meta_term(stats, 1.0)
+    assert damped.value == pytest.approx(full.value * 0.5)
+    assert damped.abs_sd == pytest.approx(full.abs_sd * 0.5)
+
+
+def test_meta_damping_never_touches_the_no_data_branch(monkeypatch):
+    """Aucune statistique : c'est de l'ignorance, l'amortir n'a pas de sens."""
+    from app.config import config
+    monkeypatch.setattr(config.scoring, "meta_context_damping", 0.9)
+    term = meta_term(None, 1.0)
+    assert term.value == 0.0 and term.abs_sd == config.scoring.no_meta_sd
+
+
+def test_the_engine_actually_passes_the_context_fraction():
+    """Piege deja rencontre deux fois : un parametre juste, jamais transmis."""
+    import inspect
+    from app.services.draft_engine import DraftEngine
+    source = inspect.getsource(DraftEngine)
+    assert "context_fraction" in source
+    assert "meta_term(stats, context_fraction)" in source
