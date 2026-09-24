@@ -250,3 +250,21 @@ anti-corrélé avec la préférence d'un bon drafteur — pas qu'il est ignorant
 La suite ne mesure donc pas la qualité du conseil rendu à un joueur. Elle
 mesure la qualité du **signal de fond** sur lequel tout le reste s'empile, et
 sur ce point elle est sans appel.
+
+## Après le signal méta hybride — 24 septembre 2026
+
+Chantier 13 (`docs/CHANTIERS.md`) : le win rate compte pour un quart, un terme de popularité
+par poste s'ajoute. Mêmes 5 250 cas, cache vivant du 24/09.
+
+| Règle | Top-1 | Top-3 | Top-10 | Rang moyen |
+|---|---|---|---|---|
+| Moteur, avant | 1,8 % | 5,9 % | 19,4 % | 13,69 |
+| **Moteur, après** | **5,6 %** | **15,0 %** | **37,0 %** | **11,47** |
+| Pick rate soloqueue | 5,5 % | 12,9 % | 42,1 % | 11,16 |
+| Hasard | 2,2 % | 6,6 % | 22,1 % | — |
+
+Le moteur passe du dessous du hasard au-dessus du témoin « pick rate » en top-3. Il reste
+derrière lui en top-10 : le reste du classement dépend encore de termes que ce témoin ignore.
+Réserve : la soloqueue copie les pros, donc un moteur qui écoute la popularité est avantagé
+ici par construction — c'est pourquoi le réglage a été choisi sur la calibration.
+

@@ -409,3 +409,29 @@ une catégorie » est enfreinte d'une assertion.
 La constante `a = 1` de la popularité n'est pas calibrée, et son incertitude reprenait celle du
 win rate faute de mieux : quelle que soit l'option, elle demande sa propre spec.
 
+### Réglage retenu le 24/09 : hybride calibré (option choisie par le joueur)
+
+`meta` garde le win rate, pondéré par `meta_wr_weight` (valeur et incertitude ensemble) ;
+un terme `popularity = popularity_scale · ln(pick_rate / 2 %)`, lu par poste, d'incertitude
+relative. La préférence « méta » du joueur pondère les deux. Balayage 4 × 5 sur la calibration
+(gel commun) et 4 × 4 sur la concordance :
+
+| win rate × | popularité × | Calibration | Concordance top-3 |
+|---|---|---|---|
+| 1,0 | 0 (avant) | 30/52 | 5,9 % |
+| **0,25** | **1,0** | **37/52** | **15,0 %** |
+| 0 | 2,0 | 34/52 | 18,2 % |
+
+**Retenu : (0,25 ; 1,0)**, meilleur point de la calibration — l'instrument sans biais de
+popularité — sans catégorie perdante hors `synergy_senna_tahmkench`, déjà jugé périmé. La
+concordance monte encore avec la popularité mais la favorise par construction ; au-delà de 1,5
+la calibration perd des cas de counter.
+
+Le moteur passe devant la règle « trier par pick rate » (12,9 % en top-3), qu'il suivait à
+moins de la moitié. `comp_engage_mid_peel` : Orianna remonte de n°5 à **n°2**, derrière Zed —
+le dernier écart est ce que visent les leviers du chantier 5. Yasuo en blind mid reste n°2.
+
+**Reste ouvert** : la Task 3 du chantier 5 (amortir la méta par le contexte) portait sur le win
+rate seul. Avec un win rate déjà ramené au quart, son effet sera faible ; à mesurer avant
+d'étendre l'amortissement à la popularité.
+

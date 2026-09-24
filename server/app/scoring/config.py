@@ -11,10 +11,15 @@ class ScoringConstants(BaseModel):
     # Signal méta hybride (chantier 13, arbitrage du joueur le 24/09/2026). Le win
     # rate brut classe à l'envers d'un bon drafteur sur la calibration comme sur la
     # concordance pro : le win rate d'un champion peu joué mesure surtout ses
-    # joueurs dédiés. Son poids et celui de la popularité se calibrent ensemble ;
-    # neutres par défaut (win rate à plein, popularité absente).
-    meta_wr_weight: float = 1.0
-    popularity_scale: float = 0.0
+    # joueurs dédiés. Balayage conjoint le 24/09 (gel 16.19.1, master_plus) :
+    # (0,25 ; 1,0) est le meilleur point de la calibration, 30 -> 37/52, sans
+    # catégorie perdante hors synergy_senna_tahmkench, cas déjà jugé périmé par le
+    # joueur. Concordance pro top-3 5,9 -> 15,0 %. La concordance monte encore avec
+    # la popularité, mais elle la favorise par construction (la soloqueue copie les
+    # pros) ; au-delà de 1,5 la calibration perd des cas de counter. Garder un quart
+    # du win rate laisse le moteur réagir à un champion devenu fort en début de patch.
+    meta_wr_weight: float = 0.25
+    popularity_scale: float = 1.0
     popularity_ref: float = 2.0       # pick rate de référence, en % ; s'annule entre candidats d'un même poste
     popularity_floor: float = 0.05    # pick rate plancher, en % : borne ln() pour un pick jamais joué
     popularity_rel: float = 0.5
