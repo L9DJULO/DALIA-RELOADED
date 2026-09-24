@@ -1,8 +1,9 @@
 {
-  "_comment": "Role overrides + notes de champions. Roles : Lolalytics patch 16.3 Master+ pickrate >2%. Ratings [cc, engage, poke, splitpush, teamfight, utility, burst, dps, tankiness], echelle 1-5, arbitres avec le joueur (master+, main ADC) les 15/09/2026. tankiness = survivabilite effective (dash, bouclier, intouchabilite), pas resistance brute. cc = lockdown fiable reellement apporte, pas simple presence d'un CC.",
+  "_comment": "Role overrides + notes de champions. Roles : Lolalytics patch 16.19 Master+ part des parties du champion sur le poste >=15%, regeneres le 2026-09-24 par scripts/refresh_roles.py. Ratings [cc, engage, poke, splitpush, teamfight, utility, burst, dps, tankiness], echelle 1-5, arbitres avec le joueur (master+, main ADC) les 15/09/2026. tankiness = survivabilite effective (dash, bouclier, intouchabilite), pas resistance brute. cc = lockdown fiable reellement apporte, pas simple presence d'un CC.",
   "Aatrox": {
     "roles": [
-      "top"
+      "top",
+      "jungle"
     ]
   },
   "Ahri": {
@@ -18,8 +19,7 @@
   },
   "Akshan": {
     "roles": [
-      "mid",
-      "top"
+      "mid"
     ]
   },
   "Alistar": {
@@ -36,6 +36,12 @@
       2,
       1,
       5
+    ]
+  },
+  "Ambessa": {
+    "roles": [
+      "top",
+      "jungle"
     ]
   },
   "Amumu": {
@@ -57,13 +63,13 @@
   },
   "Anivia": {
     "roles": [
-      "mid"
+      "mid",
+      "top"
     ]
   },
   "Annie": {
     "roles": [
-      "mid",
-      "support"
+      "mid"
     ],
     "ratings": [
       3,
@@ -95,8 +101,7 @@
   },
   "Ashe": {
     "roles": [
-      "bot",
-      "support"
+      "bot"
     ],
     "ratings": [
       4,
@@ -112,7 +117,8 @@
   },
   "AurelionSol": {
     "roles": [
-      "mid"
+      "mid",
+      "bot"
     ]
   },
   "Aurora": {
@@ -166,7 +172,7 @@
   "Brand": {
     "roles": [
       "support",
-      "mid"
+      "bot"
     ],
     "ratings": [
       3,
@@ -198,8 +204,7 @@
   },
   "Briar": {
     "roles": [
-      "jungle",
-      "top"
+      "jungle"
     ]
   },
   "Caitlyn": {
@@ -220,22 +225,26 @@
   },
   "Camille": {
     "roles": [
-      "top"
+      "top",
+      "support"
     ]
   },
   "Cassiopeia": {
     "roles": [
-      "mid"
+      "mid",
+      "top",
+      "bot"
     ]
   },
   "Chogath": {
     "roles": [
+      "jungle",
       "top"
     ]
   },
   "Corki": {
     "roles": [
-      "mid"
+      "bot"
     ]
   },
   "Darius": {
@@ -245,13 +254,7 @@
   },
   "Diana": {
     "roles": [
-      "jungle",
-      "mid"
-    ]
-  },
-  "DrMundo": {
-    "roles": [
-      "top",
+      "mid",
       "jungle"
     ]
   },
@@ -271,15 +274,21 @@
       2
     ]
   },
+  "DrMundo": {
+    "roles": [
+      "top"
+    ]
+  },
   "Ekko": {
     "roles": [
-      "jungle",
-      "mid"
+      "mid",
+      "jungle"
     ]
   },
   "Elise": {
     "roles": [
-      "jungle"
+      "jungle",
+      "support"
     ]
   },
   "Evelynn": {
@@ -305,7 +314,8 @@
   },
   "Fiddlesticks": {
     "roles": [
-      "jungle"
+      "jungle",
+      "support"
     ]
   },
   "Fiora": {
@@ -315,13 +325,13 @@
   },
   "Fizz": {
     "roles": [
-      "mid"
+      "mid",
+      "jungle"
     ]
   },
   "Galio": {
     "roles": [
-      "mid",
-      "support"
+      "mid"
     ],
     "ratings": [
       4,
@@ -352,10 +362,8 @@
   },
   "Gragas": {
     "roles": [
-      "jungle",
       "top",
-      "mid",
-      "support"
+      "jungle"
     ],
     "ratings": [
       3,
@@ -376,7 +384,8 @@
   },
   "Gwen": {
     "roles": [
-      "top"
+      "top",
+      "jungle"
     ]
   },
   "Hecarim": {
@@ -386,9 +395,9 @@
   },
   "Heimerdinger": {
     "roles": [
+      "top",
       "mid",
-      "support",
-      "top"
+      "bot"
     ],
     "ratings": [
       3,
@@ -405,7 +414,7 @@
   "Hwei": {
     "roles": [
       "mid",
-      "support"
+      "bot"
     ],
     "ratings": [
       3,
@@ -426,8 +435,8 @@
   },
   "Irelia": {
     "roles": [
-      "mid",
-      "top"
+      "top",
+      "mid"
     ]
   },
   "Ivern": {
@@ -458,14 +467,13 @@
   },
   "Jax": {
     "roles": [
-      "top",
-      "jungle"
+      "top"
     ]
   },
   "Jayce": {
     "roles": [
       "top",
-      "mid"
+      "jungle"
     ]
   },
   "Jhin": {
@@ -498,11 +506,6 @@
       2,
       5,
       1
-    ]
-  },
-  "KSante": {
-    "roles": [
-      "top"
     ]
   },
   "Kaisa": {
@@ -539,8 +542,7 @@
   },
   "Karma": {
     "roles": [
-      "support",
-      "mid"
+      "support"
     ],
     "ratings": [
       3,
@@ -583,7 +585,8 @@
   },
   "Kayle": {
     "roles": [
-      "top"
+      "top",
+      "mid"
     ]
   },
   "Kayn": {
@@ -593,7 +596,8 @@
   },
   "Kennen": {
     "roles": [
-      "top"
+      "top",
+      "mid"
     ]
   },
   "Khazix": {
@@ -613,7 +617,8 @@
   },
   "KogMaw": {
     "roles": [
-      "bot"
+      "bot",
+      "mid"
     ],
     "ratings": [
       2,
@@ -627,6 +632,11 @@
       1
     ]
   },
+  "KSante": {
+    "roles": [
+      "top"
+    ]
+  },
   "Leblanc": {
     "roles": [
       "mid"
@@ -634,8 +644,7 @@
   },
   "LeeSin": {
     "roles": [
-      "jungle",
-      "top"
+      "jungle"
     ]
   },
   "Leona": {
@@ -656,8 +665,7 @@
   },
   "Lillia": {
     "roles": [
-      "jungle",
-      "top"
+      "jungle"
     ]
   },
   "Lissandra": {
@@ -665,10 +673,14 @@
       "mid"
     ]
   },
+  "Locke": {
+    "roles": [
+      "mid"
+    ]
+  },
   "Lucian": {
     "roles": [
-      "bot",
-      "mid"
+      "bot"
     ],
     "ratings": [
       1,
@@ -701,7 +713,8 @@
   "Lux": {
     "roles": [
       "support",
-      "mid"
+      "mid",
+      "bot"
     ],
     "ratings": [
       3,
@@ -717,8 +730,7 @@
   },
   "Malphite": {
     "roles": [
-      "top",
-      "support"
+      "top"
     ],
     "ratings": [
       3,
@@ -740,7 +752,8 @@
   "Maokai": {
     "roles": [
       "support",
-      "jungle"
+      "jungle",
+      "top"
     ],
     "ratings": [
       4,
@@ -761,7 +774,8 @@
   },
   "Mel": {
     "roles": [
-      "mid"
+      "mid",
+      "bot"
     ]
   },
   "Milio": {
@@ -796,6 +810,11 @@
       1
     ]
   },
+  "MonkeyKing": {
+    "roles": [
+      "jungle"
+    ]
+  },
   "Mordekaiser": {
     "roles": [
       "top"
@@ -803,8 +822,7 @@
   },
   "Morgana": {
     "roles": [
-      "support",
-      "mid"
+      "support"
     ],
     "ratings": [
       4,
@@ -820,7 +838,6 @@
   },
   "Naafiri": {
     "roles": [
-      "mid",
       "jungle"
     ]
   },
@@ -842,7 +859,8 @@
   },
   "Nasus": {
     "roles": [
-      "top"
+      "top",
+      "mid"
     ]
   },
   "Nautilus": {
@@ -863,7 +881,6 @@
   },
   "Neeko": {
     "roles": [
-      "mid",
       "support"
     ],
     "ratings": [
@@ -911,8 +928,7 @@
   },
   "Olaf": {
     "roles": [
-      "top",
-      "jungle"
+      "top"
     ]
   },
   "Orianna": {
@@ -928,8 +944,7 @@
   "Pantheon": {
     "roles": [
       "support",
-      "top",
-      "mid"
+      "top"
     ],
     "ratings": [
       3,
@@ -945,9 +960,8 @@
   },
   "Poppy": {
     "roles": [
-      "top",
-      "jungle",
-      "support"
+      "support",
+      "top"
     ],
     "ratings": [
       3,
@@ -979,12 +993,13 @@
   },
   "Qiyana": {
     "roles": [
-      "mid",
-      "jungle"
+      "jungle",
+      "mid"
     ]
   },
   "Quinn": {
     "roles": [
+      "jungle",
       "top"
     ]
   },
@@ -1053,24 +1068,24 @@
   },
   "Rengar": {
     "roles": [
-      "jungle",
-      "top"
+      "jungle"
     ]
   },
   "Riven": {
-    "roles": [
-      "top"
-    ]
-  },
-  "Rumble": {
     "roles": [
       "top",
       "mid"
     ]
   },
+  "Rumble": {
+    "roles": [
+      "top"
+    ]
+  },
   "Ryze": {
     "roles": [
-      "mid"
+      "mid",
+      "top"
     ]
   },
   "Samira": {
@@ -1097,8 +1112,7 @@
   },
   "Senna": {
     "roles": [
-      "support",
-      "bot"
+      "support"
     ],
     "ratings": [
       2,
@@ -1115,7 +1129,6 @@
   "Seraphine": {
     "roles": [
       "support",
-      "mid",
       "bot"
     ],
     "ratings": [
@@ -1132,8 +1145,7 @@
   },
   "Sett": {
     "roles": [
-      "top",
-      "support"
+      "top"
     ],
     "ratings": [
       3,
@@ -1214,14 +1226,12 @@
   },
   "Skarner": {
     "roles": [
-      "jungle",
-      "top"
+      "jungle"
     ]
   },
   "Smolder": {
     "roles": [
-      "bot",
-      "mid"
+      "bot"
     ],
     "ratings": [
       2,
@@ -1270,8 +1280,9 @@
   "Swain": {
     "roles": [
       "support",
+      "bot",
       "mid",
-      "bot"
+      "top"
     ],
     "ratings": [
       3,
@@ -1293,13 +1304,14 @@
   },
   "Syndra": {
     "roles": [
-      "mid"
+      "mid",
+      "bot"
     ]
   },
   "TahmKench": {
     "roles": [
-      "top",
-      "support"
+      "support",
+      "top"
     ],
     "ratings": [
       4,
@@ -1321,8 +1333,8 @@
   },
   "Talon": {
     "roles": [
-      "mid",
-      "jungle"
+      "jungle",
+      "mid"
     ]
   },
   "Taric": {
@@ -1364,8 +1376,7 @@
   },
   "Tristana": {
     "roles": [
-      "bot",
-      "mid"
+      "bot"
     ],
     "ratings": [
       2,
@@ -1381,8 +1392,8 @@
   },
   "Trundle": {
     "roles": [
-      "jungle",
-      "top"
+      "top",
+      "jungle"
     ]
   },
   "Tryndamere": {
@@ -1397,8 +1408,7 @@
   },
   "Twitch": {
     "roles": [
-      "bot",
-      "support"
+      "bot"
     ],
     "ratings": [
       2,
@@ -1425,7 +1435,8 @@
   },
   "Varus": {
     "roles": [
-      "bot"
+      "bot",
+      "top"
     ],
     "ratings": [
       4,
@@ -1441,8 +1452,8 @@
   },
   "Vayne": {
     "roles": [
-      "bot",
-      "top"
+      "top",
+      "bot"
     ],
     "ratings": [
       2,
@@ -1458,13 +1469,15 @@
   },
   "Veigar": {
     "roles": [
-      "mid"
+      "mid",
+      "bot"
     ]
   },
   "Velkoz": {
     "roles": [
+      "support",
       "mid",
-      "support"
+      "bot"
     ],
     "ratings": [
       3,
@@ -1495,7 +1508,8 @@
   },
   "Viktor": {
     "roles": [
-      "mid"
+      "mid",
+      "bot"
     ]
   },
   "Vladimir": {
@@ -1514,12 +1528,6 @@
     "roles": [
       "jungle",
       "top"
-    ]
-  },
-  "Wukong": {
-    "roles": [
-      "top",
-      "jungle"
     ]
   },
   "Xayah": {
@@ -1541,7 +1549,8 @@
   "Xerath": {
     "roles": [
       "mid",
-      "support"
+      "support",
+      "bot"
     ],
     "ratings": [
       3,
@@ -1563,8 +1572,8 @@
   "Yasuo": {
     "roles": [
       "mid",
-      "bot",
-      "top"
+      "top",
+      "bot"
     ],
     "ratings": [
       3,
@@ -1580,13 +1589,29 @@
   },
   "Yone": {
     "roles": [
-      "mid",
-      "top"
+      "top",
+      "mid"
     ]
   },
   "Yorick": {
     "roles": [
       "top"
+    ]
+  },
+  "Yunara": {
+    "roles": [
+      "bot"
+    ],
+    "ratings": [
+      2,
+      2,
+      3,
+      2,
+      5,
+      3,
+      2,
+      5,
+      3
     ]
   },
   "Yuumi": {
@@ -1605,6 +1630,11 @@
       5
     ]
   },
+  "Zaahen": {
+    "roles": [
+      "top"
+    ]
+  },
   "Zac": {
     "roles": [
       "jungle"
@@ -1612,7 +1642,8 @@
   },
   "Zed": {
     "roles": [
-      "mid"
+      "mid",
+      "jungle"
     ]
   },
   "Zeri": {
@@ -1650,8 +1681,7 @@
   },
   "Zilean": {
     "roles": [
-      "support",
-      "mid"
+      "support"
     ],
     "ratings": [
       4,
@@ -1667,11 +1697,13 @@
   },
   "Zoe": {
     "roles": [
-      "mid"
+      "mid",
+      "support"
     ]
   },
   "Zyra": {
     "roles": [
+      "jungle",
       "support"
     ],
     "ratings": [
@@ -1684,22 +1716,6 @@
       4,
       3,
       1
-    ]
-  },
-  "Yunara": {
-    "roles": [
-      "bot"
-    ],
-    "ratings": [
-      2,
-      2,
-      3,
-      2,
-      5,
-      3,
-      2,
-      5,
-      3
     ]
   }
 }

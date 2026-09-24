@@ -62,3 +62,24 @@ async def test_loader_reads_attackrange_from_data_dragon(monkeypatch):
     assert by_name["Caitlyn"].attack_range == 650 and not by_name["Caitlyn"].is_melee
     assert by_name["Leona"].attack_range == 125 and by_name["Leona"].is_melee
     assert by_name["Sansstats"].attack_range == 550, "repli quand stats est absent"
+
+
+@pytest.mark.asyncio
+async def test_loader_warns_on_override_keys_matching_no_champion(monkeypatch, caplog):
+    """« Wukong » a perdu ses rôles en silence : Data Dragon l'appelle « MonkeyKing »."""
+    raw = {"MonkeyKing": {"key": "62", "name": "Wukong", "tags": ["Fighter", "Tank"],
+                          "info": {"difficulty": 3}, "stats": {"attackrange": 175}}}
+
+    class _F:
+        async def fetch_all_champions_ddragon(self):
+            return raw
+
+        def champion_image_url(self, key):
+            return ""
+
+    db = ChampionDatabase(_F())
+    monkeypatch.setattr(db, "_load_overrides", lambda: {"_comment": "", "Wukong": {"roles": ["jungle"]}})
+    with caplog.at_level("WARNING", logger="dalia.champion_data"):
+        await db.initialize()
+    assert "wukong" in caplog.text
+    assert db.get_by_key("MonkeyKing").roles == ["top"], "l'entrée orpheline n'est pas lue : repli sur les tags"

@@ -102,14 +102,25 @@ noter les 102 restants, sinon les notes dériveront d'un paquet à l'autre.
 
 ## 4bis. Le fichier d'overrides n'a pas suivi les sorties récentes
 
-**Quatre champions sont totalement absents de `champion_overrides.json`** : Ambessa, Locke, Wukong et
-Zaahen. Pas d'entrée du tout, donc pas de `roles` non plus : leurs lanes sont devinées par
-`_default_roles` depuis les tags Riot. Yunara était dans le même cas jusqu'au 15/09.
+**Soldé le 24/09.** Il ne manquait en fait que trois champions (Ambessa, Locke, Zaahen). Wukong avait
+une entrée, mais sous la clé « Wukong » alors que Data Dragon l'appelle « MonkeyKing » : l'entrée
+n'était jamais lue, et Wukong retombait sur `_default_roles` — **top seul, jamais proposé en jungle**,
+où il est au rang 3.
 
-Conséquence : un champion récent peut être conseillé dans la mauvaise lane, ou absent de la bonne, sans
-aucun signal.
+Même racine, second bug : le slug Lolalytics de Wukong est `wukong`, pas `monkeyking`. La page de
+counters renvoyait un 404 que `fetch_counter_page` avale : **le moteur n'a jamais eu aucun matchup
+pour Wukong**. Vérifié sur les 173 champions, c'est le seul slug divergent.
 
----
+Correctifs :
+
+- `scripts/refresh_roles.py` régénère tous les `roles` depuis Lolalytics Master+ : un poste est
+  retenu si au moins 15 % des parties du champion s'y jouent, le poste principal toujours. La
+  règle d'origine (« pick rate > 2 % ») a été écartée : le pick rate mesure la popularité, et un
+  champion peu joué passait sous le seuil partout (Zyra en jungle seule, Vayne en top seule).
+- `LolalyticsFetcher.SLUG_EXCEPTIONS` porte `monkeyking → wukong`.
+- Le chargeur journalise un avertissement pour toute clé d'override sans champion Data Dragon.
+
+Les rôles dataient du patch 16.3 : 78 champions changent. À rejouer à chaque grosse bascule de méta.
 
 ## 4ter. Les notes sont par champion, pas par rôle
 
@@ -120,6 +131,13 @@ Le joueur a par ailleurs signalé que la liste des supports est trop permissive 
 existe pas vraiment, c'est super rare quand on monte dans les elos », idem pour Gragas, et Shaco,
 Heimerdinger et Sett ne se jouent pas vraiment support à master+. Ces champions sont proposés sur un
 poste où ils ne se jouent plus.
+
+**Liste des supports corrigée le 24/09** par la régénération des rôles (chantier 4bis) : Malphite,
+Gragas, Heimerdinger et Sett ne sont plus proposés support. **Shaco le reste** : 22 % de ses parties
+Master+ s'y jouent, au-dessus du seuil de 15 %. À trancher avec le joueur si ce pick doit sortir
+malgré la donnée.
+
+**Reste ouvert** : les notes par rôle.
 
 ---
 

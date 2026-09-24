@@ -507,3 +507,22 @@ produit le 15/09 et qui a motivé le gel.
 
 Les snapshots vivent dans `snapshots/`, non versionné : ils se régénèrent, et ils ne
 valent que pour le cache gelé qui les a produits.
+
+## Regel du 24 septembre 2026
+
+Les rôles des champions ont été régénérés (`scripts/refresh_roles.py`, chantier 4bis) : Viktor
+est désormais proposé bot, Wukong jungle, etc. Le snapshot du 17/09 ne contenait pas les matchups
+de ces nouveaux postes — `FrozenCacheMiss`, exactement le garde-fou voulu.
+
+- Le snapshot du 17/09 est **conservé** dans `server/app/data/cache-frozen-2026-09-17/` : pour
+  rejouer le baseline documenté plus haut, le renommer en `cache-frozen/`.
+- Nouveau gel : **24/09/2026, 2212 entrées, Data Dragon 16.19.1, tier `master_plus`**. Les deux
+  états (anciens et nouveaux rôles) ont peuplé le cache vivant avant le gel, pour que la
+  comparaison se fasse sur un snapshot commun.
+- Baseline sur ce gel : **32/52**. Anciens et nouveaux rôles : **0 assertion basculée**,
+  42 changements de rang, 44 déplacements de score.
+
+Un gel ne peut pas rejouer un appel qui échoue en direct : `fetch_counter_page` n'écrit pas
+en cache une réponse vide, et le rejeu gelé lève alors `FrozenCacheMiss`. C'est ainsi qu'est
+apparu le slug erroné de Wukong.
+

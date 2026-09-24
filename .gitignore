@@ -63,7 +63,7 @@ server/app/data/models/
 server/app/data/cache/
 !server/app/data/cache/.gitkeep
 # Snapshot gelé du cache pour la calibration : local, régénérable par --freeze-cache
-server/app/data/cache-frozen/
+server/app/data/cache-frozen*/
 # Snapshots de comparaison de la calibration : locaux, regenerables
 server/tests/calibration/snapshots/
 

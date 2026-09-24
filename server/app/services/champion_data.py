@@ -168,6 +168,12 @@ class ChampionDatabase:
 
         self._by_id, self._by_key, self._by_name = by_id, by_key, by_name
 
+        # Une clé qui ne correspond à aucun champion n'est jamais lue : « Wukong »
+        # a ainsi perdu ses rôles en silence, Data Dragon l'appelant « MonkeyKing ».
+        unmatched = sorted(k for k in overrides if not k.startswith("_") and k not in {r.lower() for r in raw})
+        if unmatched:
+            logger.warning("Overrides sans champion Data Dragon, ignorés : %s", ", ".join(unmatched))
+
         logger.info("Loaded %d champions", len(self._by_id))
 
     # ── Lookups ──────────────────────────────────────────────────────────

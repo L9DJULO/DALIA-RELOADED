@@ -137,3 +137,11 @@ async def test_frozen_calibration_never_silently_fetches_fresh_data(tmp_path):
     with pytest.raises(FrozenCacheMiss):
         await fetcher.fetch_tierlist(role='mid', patch='16.17', tier='master_plus')
     await fetcher.close()
+
+
+def test_lolalytics_slug_follows_the_site_not_data_dragon():
+    """« monkeyking » renvoie un 404 avalé par fetch_counter_page : Wukong n'avait aucun matchup."""
+    from app.services.data_fetcher import LolalyticsFetcher
+    assert LolalyticsFetcher.key_to_slug("MonkeyKing") == "wukong"
+    assert LolalyticsFetcher.key_to_slug("AurelionSol") == "aurelionsol"
+    assert LolalyticsFetcher.key_to_slug("KSante") == "ksante"

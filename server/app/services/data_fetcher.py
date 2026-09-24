@@ -396,7 +396,13 @@ class LolalyticsFetcher:
         return results
 
     # ── Champion slug helper ─────────────────────────────────────────────
+    # Clés Data Dragon dont le slug Lolalytics n'est pas la clé en minuscules.
+    # Vérifié le 24/09/2026 sur les 173 champions : seul Wukong diverge, et
+    # « monkeyking » renvoie un 404 que fetch_counter_page avale en silence.
+    SLUG_EXCEPTIONS = {"monkeyking": "wukong"}
+
     @staticmethod
     def key_to_slug(champion_key: str) -> str:
         """Convert Data Dragon key (e.g. 'AurelionSol') to Lolalytics slug ('aurelionsol')."""
-        return champion_key.lower().replace("'", "").replace(" ", "")
+        slug = champion_key.lower().replace("'", "").replace(" ", "")
+        return LolalyticsFetcher.SLUG_EXCEPTIONS.get(slug, slug)
