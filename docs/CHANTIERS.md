@@ -98,6 +98,11 @@ plein de manières d'être sûr de jouer les grabs ») qui la fixe sur l'impact 
 difficulté d'exécution. Les huit autres dimensions n'ont aucune définition écrite. À rédiger avant de
 noter les 102 restants, sinon les notes dériveront d'un paquet à l'autre.
 
+**Grille écrite le 24/09** : `docs/GRILLE_NOTATION.md`, tirée des 71 arbitrages (ancres vérifiées
+contre le fichier d'overrides). Elle révèle que **`teamfight` est saturée** — 69 des 71 champions
+de bot lane à 4 ou 5 — et laisse trois points à trancher avec le joueur avant de noter les 102 :
+réarbitrer `teamfight`, fixer les ancres hautes de `splitpush`, départager Brand et Vel'Koz.
+
 ---
 
 ## 4bis. Le fichier d'overrides n'a pas suivi les sorties récentes
