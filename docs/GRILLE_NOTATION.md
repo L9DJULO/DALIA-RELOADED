@@ -137,3 +137,26 @@ première ligne.
    saturée. Tant qu'elle l'est, le levier teamfight du chantier 5 ne départage pas la bot lane.
 2. **Ancres hautes de `splitpush`** : quels tops à 5.
 3. **Brand et Vel'Koz**, identiques (`3 1 5 1 5 2 5 2 1`) : une différence réelle existe-t-elle ?
+
+---
+
+## Proposition de réarbitrage de `teamfight` — en attente du joueur
+
+Proposée le 24/09, **non arbitrée**. Aucune source publiée ne note l'impact en teamfight champion
+par champion ; ces valeurs sont une proposition à valider ou corriger. Entre parenthèses, l'ancienne
+note quand elle change (40 changements sur 71).
+
+Répartition : avant 43 × 5, 26 × 4, 1 × 3, 1 × 2 — après 21 × 5, 28 × 4, 21 × 3, 1 × 2.
+
+- **5 — le combat groupé est sa condition de victoire** : Alistar, Amumu, Aphelios, Brand, Galio,
+  Jinx, Karthus, Kog'Maw, Leona, Malphite, Maokai, Miss Fortune, Neeko, Rakan, Rell, Renata,
+  Samira, Seraphine, Sona, Swain, Taric.
+- **4 — fort en combat groupé sans que ce soit tout son jeu** : Annie (5), Ashe (5), Braum (5),
+  Gragas, Hwei (5), Janna, Jhin, Karma, Lulu (5), Milio (5), Nami (5), Nautilus (5), Nilah (5),
+  Sett, Shen (5), Sivir (5), Smolder, Thresh, Twitch (5), Varus (5), Vel'Koz (5), Xayah (5),
+  Yasuo, Yunara (5), Zeri (5), Ziggs (5), Zilean (5), Zyra (5).
+- **3 — contribution moyenne ; son jeu passe par la lane, le pick ou le siège** : Bard (4),
+  Blitzcrank (4), Caitlyn (4), Draven (4), Ezreal, Heimerdinger (4), Kai'Sa (4), Kalista (4),
+  Lucian (4), Lux (4), Morgana (4), Pantheon (4), Poppy (4), Pyke (4), Senna (4), Soraka (4),
+  Tahm Kench (4), Tristana (5), Vayne (5), Xerath (4), Yuumi (4).
+- **2** : Shaco.
