@@ -1434,7 +1434,7 @@
   {
     "id": "role_inference_naafiri_ambiguous",
     "category": "role_inference",
-    "description": "Mid POV vs Naafiri (jgl 0.62 / mid 0.38) + Aatrox top — reasons must NOT claim 'Lane favorable contre Naafiri' since lane prob < 0.7",
+    "description": "Mid POV vs Naafiri (jgl 0.79 / mid 0.12 / top 0.09, 16.19) + Aatrox top — reasons must NOT claim 'Lane favorable contre Naafiri' since lane prob < 0.7",
     "setup": {
       "my_team": "blue",
       "my_role": "mid",
@@ -1480,7 +1480,7 @@
   {
     "id": "role_inference_galio_alone_ambiguous",
     "category": "role_inference",
-    "description": "Mid POV vs single locked Galio (mid 0.55 / sup 0.40 / top 0.05) — ambiguity reason must surface and 'Lane favorable' must NOT (lane_prob < 0.7)",
+    "description": "Mid POV vs single locked Galio (mid 0.81 / sup 0.12 / top 0.07, 16.19 — sous le seuil 0.85, donc ambigu) — ambiguity reason must surface. La seconde assertion ('Lane favorable' absente) ne teste plus le seuil lane_prob < 0.7 : Galio est à 0.81 en mid ; elle passe parce que le matchup n'est pas favorable. À remplacer par un vrai flex si le seuil doit rester couvert.",
     "setup": {
       "my_team": "blue",
       "my_role": "mid",
@@ -1524,9 +1524,9 @@
     "confidence": "high"
   },
   {
-    "id": "role_inference_galio_forced_support_by_ahri",
+    "id": "role_inference_akali_forced_top_by_ahri",
     "category": "role_inference",
-    "description": "Galio + Ahri (mid pinned) — Ahri occupies mid, Galio inference collapses to support, no ambiguity reason should fire on Galio anymore",
+    "description": "Akali (mid 0.67 / top 0.33) + Ahri (mid pinned) — Ahri occupies mid, Akali inference collapses to top, no ambiguity reason should fire on Akali. Remplace Galio le 24/09 : en 16.19 Galio hors mid se partage support 0.63 / top 0.37, la prémisse ne tenait plus.",
     "setup": {
       "my_team": "blue",
       "my_role": "mid",
@@ -1535,7 +1535,7 @@
       "enemy_picks": {
         "mid": "Ahri",
         "_unknown": [
-          "Galio"
+          "Akali"
         ]
       },
       "bans": [],
@@ -1564,12 +1564,12 @@
       {
         "type": "must_not_have_reason_containing",
         "champion": "Lissandra",
-        "substring": "Galio probable"
+        "substring": "Akali probable"
       },
       {
         "type": "must_not_have_reason_containing",
         "champion": "Lissandra",
-        "substring": "Lane favorable contre Galio"
+        "substring": "Lane favorable contre Akali"
       }
     ],
     "confidence": "high"

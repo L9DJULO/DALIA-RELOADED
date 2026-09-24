@@ -16,6 +16,12 @@ champion n'est jamais lue par le chargeur (c'était le cas de « Wukong », que
 Data Dragon appelle « MonkeyKing »). Seuls les `roles` sont réécrits ; les
 `ratings` et tout autre champ sont conservés.
 
+Écrit aussi role_distribution.json : la probabilité qu'un adversaire joue chaque
+poste, lue par role_inference quand la position ennemie est inconnue. Mêmes
+parts Lolalytics, postes sous 3 % retirés. Un flex pick garde ses vraies
+proportions (Shaco ~77 % jungle, ~23 % support) au lieu d'une estimation faite
+à la main au patch 14.x.
+
 Usage (depuis server/) :
   python scripts/refresh_roles.py            # affiche le diff, n'écrit rien
   python scripts/refresh_roles.py --write    # applique
@@ -35,13 +41,29 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from app.services.data_fetcher import LolalyticsFetcher  # noqa: E402
 
 OVERRIDES = Path(__file__).resolve().parent.parent / "app" / "data" / "champion_overrides.json"
+DISTRIBUTION = Path(__file__).resolve().parent.parent / "app" / "data" / "role_distribution.json"
 ROLES = ("top", "jungle", "mid", "bot", "support")
 TIER = "master_plus"
+DIST_FLOOR = 3.0
 
 
 def roles_from_shares(shares: Dict[str, float], threshold: float) -> List[str]:
     ranked = sorted((r for r in ROLES if shares.get(r, 0.0) > 0.0), key=lambda r: -shares[r])
     return ranked[:1] + [r for r in ranked[1:] if shares[r] >= threshold]
+
+
+def distribution_from_shares(shares: Dict[str, float], floor: float = DIST_FLOOR) -> Dict[str, float]:
+    """Probabilité qu'un adversaire joue chaque poste, pour role_inference.
+
+    Les postes sous `floor` % sont du bruit (Ambessa bot) : retirés avant de
+    renormaliser, pour ne pas diluer un flex pick réel comme Shaco jungle/support.
+    """
+    kept = {r: s for r, s in shares.items() if s >= floor}
+    total = sum(kept.values())
+    if total <= 0:
+        return {}
+    ranked = sorted(kept, key=lambda r: -kept[r])
+    return {r: round(kept[r] / total, 2) for r in ranked}
 
 
 async def main() -> int:
@@ -65,12 +87,16 @@ async def main() -> int:
     overrides = json.loads(OVERRIDES.read_text(encoding="utf-8"))
     by_lower = {k.lower(): k for k in overrides if not k.startswith("_")}
     out: Dict[str, object] = {"_comment": overrides.get("_comment", "")}
+    distribution: Dict[str, object] = {}
     changes: List[str] = []
 
     for key in sorted(ddragon, key=str.lower):
         cid = ddragon[key]["key"]
         shares = {r: float(lists[r].get(cid, {}).get("pctLane", 0.0) or 0.0) for r in ROLES}
         roles = roles_from_shares(shares, args.threshold)
+        dist = distribution_from_shares(shares)
+        if dist:
+            distribution[key] = dist
         old_key = by_lower.pop(key.lower(), None)
         if old_key is None and ddragon[key].get("name", "").lower() in by_lower:
             old_key = by_lower.pop(ddragon[key]["name"].lower())
@@ -100,6 +126,13 @@ async def main() -> int:
         # Le fichier est versionné en CRLF, sans saut de ligne final.
         OVERRIDES.write_text(_dump(out), encoding="utf-8", newline="\r\n")
         print(f"Écrit : {OVERRIDES}")
+        meta = json.loads(DISTRIBUTION.read_text(encoding="utf-8")).get("_meta", {}) if DISTRIBUTION.exists() else {}
+        meta["source"] = (f"Lolalytics patch {patch} Master+, part des parties du champion par poste (pctLane), "
+                          f"postes sous {DIST_FLOOR:g}% retirés puis renormalisés. Régénéré le "
+                          f"{date.today().isoformat()} par scripts/refresh_roles.py.")
+        DISTRIBUTION.write_text(json.dumps({"_meta": meta, **distribution}, indent=2, ensure_ascii=False) + "\n",
+                                encoding="utf-8", newline="\n")
+        print(f"Écrit : {DISTRIBUTION}")
     return 0
 
 
