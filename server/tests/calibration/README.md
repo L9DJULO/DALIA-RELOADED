@@ -526,3 +526,58 @@ Un gel ne peut pas rejouer un appel qui échoue en direct : `fetch_counter_page`
 en cache une réponse vide, et le rejeu gelé lève alors `FrozenCacheMiss`. C'est ainsi qu'est
 apparu le slug erroné de Wukong.
 
+## L'apport à la partie (chantier 5)
+
+Mesuré le 24/09/2026 sur un gel commun (2459 entrées, Data Dragon 16.19.1, `master_plus`),
+**après** le réglage du signal méta (chantier 13 : win rate × 0,25, popularité × 1,0).
+Référence `snapshots/baseline_v6.json` : **37/52**. Chaque levier seul, les deux autres neutres.
+Cas de référence `comp_engage_mid_peel` : Orianna n°2, Zed n°1, écart **1,51** point.
+
+### Terme teamfight (`teamfight_scale`)
+
+| Valeur | Global | Basculées | Rangs | Scores | Orianna / Zed / écart |
+|---|---|---|---|---|---|
+| 0,25 | 37 | 0 | 18 | 117 | 2 / 1 / 1,01 |
+| 0,5 | 37 | 0 | 21 | 117 | 2 / 1 / 0,51 |
+| 0,75 | 36 | −1 (`comp_full_aa_top_jax`) | 29 | 117 | 2 / 1 / 0,01 |
+| 1,0 | 38 | +2 −1 | 38 | 117 | **1 / 2 / −0,49** |
+
+À 1,0, `comp_engage_mid_peel` et `counter_pick_top_vs_darius` passent, `comp_full_aa_top_jax`
+tombe : la catégorie `anti_autoattack` perd une assertion.
+
+### Poids du matchup (`matchup_weight["master_plus"]`)
+
+| Valeur | Global | Basculées | Rangs | Orianna / Zed / écart |
+|---|---|---|---|---|
+| 0,8 | 35 | −2 | 25 | 2 / 1 / 1,24 |
+| 0,6 | 35 | −2 | 41 | 2 / 1 / 0,97 |
+| 0,4 | 35 | −2 | 54 | 2 / 1 / 0,69 |
+
+Les deux mêmes assertions tombent à toutes les valeurs : `counter_pick_top_vs_darius` et
+`edge_case_malphite_vs_full_ad`. Aucune n'est gagnée.
+
+### Amortissement de la méta (`meta_context_damping`)
+
+| Valeur | Global | Basculées | Rangs | Orianna / Zed / écart |
+|---|---|---|---|---|
+| 0,2 | 36 | −1 | 12 | 2 / 1 / 1,44 |
+| 0,35 | 36 | −1 | 15 | 2 / 1 / 1,37 |
+| 0,5 | 36 | −1 | 19 | 2 / 1 / 1,32 |
+
+`counter_pick_top_vs_darius` tombe à toutes les valeurs. Aucune assertion gagnée.
+
+### Ce que la mesure dit
+
+- **Les trois leviers vont dans le sens de l'arbitrage du joueur** : l'écart Zed − Orianna se
+  réduit à chaque fois.
+- **Seul le terme teamfight le fait sans rien casser.** Le poids du matchup et l'amortissement
+  de la méta ne gagnent aucune assertion et en perdent : les cas de counter ont besoin du duel
+  de couloir à plein, et un win rate déjà ramené au quart (chantier 13) n'a plus rien à amortir.
+  La spec les supposait utiles ; sur ce moteur ils ne le sont pas.
+- **La spec prévoyait que le cas de référence ne basculerait pas** (§6.4). Avec le signal méta
+  corrigé, il bascule à `teamfight_scale = 1,0` — au prix d'une assertion anti-auto-attaque.
+- Limite : la note `teamfight` est saturée en bot lane (69 des 71 champions notés à 4 ou 5,
+  `docs/GRILLE_NOTATION.md`) et les champions mid sont encore notés depuis les tags Riot. Le
+  terme ne départage donc réellement qu'une partie des candidats ; à re-mesurer après le
+  réarbitrage.
+
