@@ -157,6 +157,15 @@ d'équipe. **Aucune vague du plan en cours ne traite ce point.**
 C'est probablement le défaut qui coûte le plus de conseils erronés, puisqu'il touche tous les last
 picks où le joueur doit arbitrer entre gagner sa lane et gagner la partie.
 
+**Mené les 18 et 24/09** (spec et plan `2026-09-18-apport-a-la-partie`). Les trois leviers sont
+câblés, testés, et **laissés neutres** : le poids du matchup et l'amortissement de la méta perdent
+des assertions sans en gagner ; le terme teamfight rapproche Orianna de Zed mais dégrade la
+concordance pro (z = −3,9). Détail dans le `README.md` de la calibration.
+
+L'écart Zed − Orianna est passé de +5,23 à **+1,51**, Orianna de n°5 à **n°2** — par le signal
+méta corrigé (chantier 13), pas par ces leviers. **Reste ouvert** : le cas de référence échoue
+encore. Suite : réarbitrer `teamfight` et noter les mids (chantier 4), puis re-mesurer le terme.
+
 ---
 
 ## 6. Cas de calibration à ajouter

@@ -126,3 +126,37 @@ Trois vagues sur le moteur de scoring, plus la condition qui les rendait mesurab
 - **Le jugement du joueur n'a porté que sur le rôle ADC/bot.** Les 102 champions de top, jungle et mid ne sont toujours pas notés à la main, et la grille de notation n'est écrite pour aucune dimension sauf `cc`.
 
 Conception détaillée : [la spec](docs/superpowers/specs/2026-09-14-qualite-moteur-scoring-design.md), [le plan](docs/superpowers/plans/2026-09-14-qualite-moteur-scoring.md), [le bilan de calibration](server/tests/calibration/README.md) et [les chantiers ouverts](docs/CHANTIERS.md).
+
+## Signal méta, rôles et apport à la partie (24 septembre 2026)
+
+**Le signal méta classait à l'envers.** Mesuré sur 5 250 décisions de drafts pros (LCK, LPL,
+LEC, LCS), le moteur était sous le hasard (5,9 % en top-3 contre 6,6 %) : `meta_term` ne lisait
+que le win rate, et le win rate d'un champion peu joué mesure surtout ses joueurs dédiés.
+Option choisie par le joueur : un hybride calibré. Le win rate compte pour un quart, un terme
+`popularity = ln(pick rate / 2 %)` par poste s'ajoute. Calibration **30 → 37/52**, concordance
+top-3 **5,9 → 15,0 %**, devant la règle « trier par pick rate ».
+
+**Rôles tirés de Lolalytics.** `scripts/refresh_roles.py` régénère les postes proposés (≥ 15 %
+des parties du champion) et la distribution des rôles adverses (vraies parts des flex picks).
+Deux bugs silencieux corrigés en route : l'entrée « Wukong » des overrides n'était jamais lue
+(Data Dragon dit « MonkeyKing »), et son slug Lolalytics renvoyait un 404 avalé — Wukong n'avait
+**aucun matchup** et n'était jamais proposé jungle.
+
+**L'apport à la partie (chantier 5)** : terme teamfight, poids du matchup par rang, amortissement
+de la méta — câblés et laissés neutres, aucun ne tenant la mesure (voir le bilan de calibration).
+Avertissement de composition « aucun champion au corps à corps » (chantier 11). Grille de
+notation écrite (`docs/GRILLE_NOTATION.md`).
+
+**Chiffres de vérification** : 195 tests unitaires serveur, 24 tests Vitest (`--pool=threads`,
+le pool par défaut ne démarre pas sur cette machine), build Vite. Calibration sur gel du 24/09
+(2459 entrées, Data Dragon 16.19.1, `master_plus`) : **37/52**, triage 13/11/13/15. Le gel du
+17/09 est conservé dans `server/app/data/cache-frozen-2026-09-17/`.
+
+**Ce qui reste ouvert** :
+
+- Réarbitrer la note `teamfight` (proposition en attente dans la grille) — condition pour
+  re-mesurer le levier teamfight.
+- Noter les 102 champions de top, jungle et mid ; ancres hautes de `splitpush` ; Brand/Vel'Koz.
+- Le cas de référence Orianna/Zed échoue encore (n°2, écart 1,51) ; Yasuo reste n°2 en blind mid.
+- Chantiers 6 et 7 : cas de calibration en attente d'arbitrage.
+

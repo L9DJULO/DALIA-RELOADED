@@ -581,3 +581,24 @@ Les deux mêmes assertions tombent à toutes les valeurs : `counter_pick_top_vs_
   terme ne départage donc réellement qu'une partie des candidats ; à re-mesurer après le
   réarbitrage.
 
+### Bilan : aucun levier retenu en l'état
+
+Mesure conjointe inutile : le poids du matchup et l'amortissement de la méta ne gagnent rien et
+perdent à toutes les valeurs, il ne reste que le terme teamfight. Or celui-ci, recoupé sur la
+concordance pro (5 250 décisions), **dégrade** : top-3 15,0 → 14,0 % à 0,5 (z = −3,9),
+13,5 % à 1,0 (z = −4,7). Sur la calibration il ne monte pas le global à 0,5 et fait perdre
+`anti_autoattack` à 1,0.
+
+**Retenu : le triplet neutre** (`teamfight_scale` 0, `matchup_weight` 1,0, `meta_context_damping`
+0). Référence suivante : `snapshots/baseline_v7.json`, 37/52, triage 13/11/13/15.
+
+**Réponse au §6.4 de la spec** : l'écart Zed − Orianna, +5,23 le 18/09, est à **+1,51** sans
+aucun des trois leviers — c'est le signal méta corrigé (chantier 13) qui l'a réduit, pas cette
+spec. Le terme teamfight le fait basculer à 1,0, mais au prix d'une assertion et de la
+concordance : le cas reste ouvert.
+
+**Pourquoi le terme teamfight échoue** : sa formule suit la spec, mais la note qu'il lit est
+saturée en bot lane et dérivée des tags Riot en mid. Le terme amplifie une donnée grossière.
+Suite : réarbitrer `teamfight` (proposition dans `docs/GRILLE_NOTATION.md`), noter les mids,
+re-mesurer. C'est la conclusion que la spec prévoyait en cas d'échec : revenir aux notes.
+

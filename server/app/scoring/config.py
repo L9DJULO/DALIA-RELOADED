@@ -28,7 +28,10 @@ class ScoringConstants(BaseModel):
     # situation favorable. Tant que le contexte reel est inconnu, cette moyenne est
     # la meilleure information disponible ; quand il est connu, continuer a la
     # compter a plein revient a la compter deux fois contre les termes qui, eux,
-    # decrivent CETTE partie. Neutre par defaut, active a la mesure.
+    # decrivent CETTE partie.
+    # Mesure du 24/09 (gel 16.19.1, apres le signal meta calibre) : 0,2 / 0,35 / 0,5
+    # perdent tous counter_pick_top_vs_darius et ne gagnent rien. Un win rate deja
+    # ramene au quart n'a plus rien a amortir. Retenu : neutre.
     meta_context_damping: float = 0.0
     # Matchup
     offlane_weight: float = 0.5
@@ -40,6 +43,9 @@ class ScoringConstants(BaseModel):
     # facteur de rang serait du double comptage. Neutre par defaut, calibre par un
     # facteur d'echelle global — la calibration ne tourne qu'a un rang a la fois et
     # ne saurait pas departager huit valeurs independantes.
+    # Mesure du 24/09 (master_plus) : 0,8 / 0,6 / 0,4 perdent toutes
+    # counter_pick_top_vs_darius et edge_case_malphite_vs_full_ad, n'en gagnent
+    # aucune — les cas de counter ont besoin du duel a plein. Retenu : neutre.
     matchup_weight: Dict[str, float] = {
         "iron": 1.0, "bronze": 1.0, "silver": 1.0, "gold": 1.0,
         "platinum": 1.0, "emerald": 1.0, "diamond": 1.0, "master_plus": 1.0,
@@ -101,7 +107,12 @@ class ScoringConstants(BaseModel):
     # Impact en teamfight. Terme permanent et de faible amplitude : un champion
     # qui pese lourd en combat groupe vaut quelque chose dans toutes les parties,
     # pas seulement dans celles qui s'annoncent groupees (arbitrage du joueur,
-    # 18/09/2026). Neutre par defaut, active a la mesure.
+    # 18/09/2026).
+    # Mesure du 24/09 : 0,5 ne bascule rien et reduit l'ecart Zed-Orianna de 1,51 a
+    # 0,51 ; 1,0 fait passer Orianna n°1 mais perd comp_full_aa_top_jax. Sur la
+    # concordance pro le terme degrade (top-3 15,0 -> 14,0 % a 0,5, z = -3,9). Retenu :
+    # neutre, tant que la note teamfight est saturee (69/71 a 4-5 en bot lane) et que
+    # les mids sont notes depuis les tags. A re-mesurer apres le rearbitrage.
     teamfight_reference: float = 3.0
     teamfight_scale: float = 0.0
     teamfight_rel: float = 0.5
