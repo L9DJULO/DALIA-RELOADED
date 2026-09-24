@@ -404,7 +404,7 @@ class DraftEngine:
         allies = [c for a in draft.ally_picks if a.champion_id and (c := self.db.get_by_id(a.champion_id))]
         terms: List[Term] = [meta_term(self.meta.stats(champ.id, role, tier))]
 
-        mu = await matchup_term(self.matchup, champ.id, role, draft, tier)
+        mu = await matchup_term(self.matchup, champ.id, role, draft, tier, rank)
         if mu:
             terms.append(mu)
         future = await future_opponent_term(self.matchup, self.meta, self.db, champ, role, draft, rank)

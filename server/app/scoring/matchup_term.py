@@ -4,13 +4,14 @@ import math
 from typing import Optional
 from app.config import config
 from app.models.draft import DraftState
+from app.scoring.rank import matchup_weight
 from app.scoring.shrink import shrink, shrink_sd
 from app.scoring.types import Term
 from app.services.matchup import MatchupAnalyzer
 
 
 async def matchup_term(analyzer: MatchupAnalyzer, champion_id: int, role: str, draft: DraftState,
-                       tier: Optional[str]) -> Optional[Term]:
+                       tier: Optional[str], rank: Optional[str] = None) -> Optional[Term]:
     enemies = [e for e in draft.enemy_picks if e.champion_id is not None]
     if not enemies:
         return None
@@ -38,5 +39,6 @@ async def matchup_term(analyzer: MatchupAnalyzer, champion_id: int, role: str, d
                 value += weight * (est - 50.0) * c.heuristic_matchup_scale
                 variance += (weight * c.heuristic_matchup_sd) ** 2
     source = "observed" if observed else "heuristic"
-    return Term("matchup", value, math.sqrt(variance), source, sample,
+    weight = matchup_weight(rank)
+    return Term("matchup", value * weight, math.sqrt(variance) * weight, source, sample,
                 "" if observed else "estimation de kit, aucune donnée de matchup")

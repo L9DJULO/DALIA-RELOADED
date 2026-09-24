@@ -55,3 +55,28 @@ async def test_counter_cache_is_keyed_by_tier(catalog):
     await analyzer.load_matchups(78, "top", tier="iron")
     assert seen == ["iron", "gold"]
     assert analyzer.counters(78, "top", "iron")[75][3] == 4
+
+
+async def test_matchup_weight_scales_value_and_uncertainty_together(catalog, monkeypatch):
+    """Un terme reechelonne garde une incertitude proportionnelle.
+
+    Laisser l'abs_sd intacte gonflerait l'incertitude relative, elargirait le groupe
+    de tete et declencherait des reordonnancements parasites du departage par risque
+    subi (vague 2).
+    """
+    from app.config import config
+    from app.models.draft import DraftState
+    from app.scoring.matchup_term import matchup_term
+    from app.services.matchup import MatchupAnalyzer
+
+    analyzer = MatchupAnalyzer(catalog, catalog.fetcher)
+    analyzer.prefetch = AsyncMock()
+    analyzer.matchup_data = AsyncMock(return_value=(0.0, 400, 0.0, -4.0))
+    draft = DraftState(my_role="mid", enemy_picks=[{"champion_id": 103, "role": "mid"}])
+
+    full = await matchup_term(analyzer, 61, "mid", draft, None, "master_plus")
+    monkeypatch.setitem(config.scoring.matchup_weight, "master_plus", 0.5)
+    halved = await matchup_term(analyzer, 61, "mid", draft, None, "master_plus")
+
+    assert halved.value == pytest.approx(full.value * 0.5)
+    assert halved.abs_sd == pytest.approx(full.abs_sd * 0.5)

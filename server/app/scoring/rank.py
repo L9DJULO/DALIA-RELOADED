@@ -24,5 +24,13 @@ def counter_lambda(rank: Optional[str]) -> float:
     return config.scoring.counter_lambda.get(rank, config.scoring.counter_lambda_unknown)
 
 
+def matchup_weight(rank: Optional[str]) -> float:
+    """Combien le duel de couloir compte a ce rang. 1.0 = a plein."""
+    c = config.scoring
+    if not rank:
+        return c.matchup_weight_unknown
+    return c.matchup_weight.get(rank, c.matchup_weight_unknown)
+
+
 def mastery_rank_factor(rank: Optional[str]) -> float:
     return config.scoring.mastery_rank_factor.get(rank, 1.0)

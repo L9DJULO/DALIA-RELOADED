@@ -12,6 +12,17 @@ class ScoringConstants(BaseModel):
     offlane_weight: float = 0.5
     heuristic_matchup_scale: float = 0.2
     heuristic_matchup_sd: float = 3.0
+    # Poids du duel de couloir selon le rang, en sens inverse de counter_lambda :
+    # plus le rang monte, moins la lane decide la partie. Ne s'applique qu'au terme
+    # `matchup` ; `future_opponent` porte deja counter_lambda, y superposer un second
+    # facteur de rang serait du double comptage. Neutre par defaut, calibre par un
+    # facteur d'echelle global — la calibration ne tourne qu'a un rang a la fois et
+    # ne saurait pas departager huit valeurs independantes.
+    matchup_weight: Dict[str, float] = {
+        "iron": 1.0, "bronze": 1.0, "silver": 1.0, "gold": 1.0,
+        "platinum": 1.0, "emerald": 1.0, "diamond": 1.0, "master_plus": 1.0,
+    }
+    matchup_weight_unknown: float = 1.0
     # Adversaire futur
     min_opponent_pick_rate: float = 0.5
     counter_lambda: Dict[str, float] = {
