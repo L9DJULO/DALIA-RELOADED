@@ -261,6 +261,20 @@ réellement.
 `mastery_term` testé ; docstring de `champion_data.py` aligné sur la réalité — les `ratings` des 71
 champions de bot lane sont bien dans `champion_overrides.json`, les 102 autres retombent sur les tags.
 
+**Rouverte le 25/09** par la revue de la branche `chantier-5-apport-partie` — reportés, rien de
+bloquant :
+
+- `DraftWorkshop.jsx:81` : `DIMENSIONS[d.dimension]` sans repli sur le nom brut (en-tête vide
+  pour un terme non libellé).
+- Tests de câblage par recherche dans le source (`teamfight_term(`, `popularity_term(`) : ils
+  prouvent l'appel, pas que le terme atteint `breakdown.terms`. Asserter via l'API.
+- Barre « Teamfight 0.0 » affichée sur chaque carte tant que `teamfight_scale` vaut 0.
+- `role_inference_galio_alone_ambiguous` ne couvre plus le seuil `lane_prob < 0.7` (Galio à 0,81).
+- `scraper.py` réécrit de LF en CRLF (~726 lignes) ; pas de `.gitattributes` dans le dépôt.
+- `champion_data.py` : l'ensemble des clés Data Dragon est reconstruit pour chaque override.
+- `matchup_details` non pondérés par `matchup_weight` ; pas de test `rank=None` dans `matchup_term`.
+- `teamfight_term(ratings)` non typé.
+
 ---
 
 ## 11. La portée des champions — donnée et bug corrigés, équilibre mêlée/distance restant
@@ -443,4 +457,8 @@ le dernier écart est ce que visent les leviers du chantier 5. Yasuo en blind mi
 **Reste ouvert** : la Task 3 du chantier 5 (amortir la méta par le contexte) portait sur le win
 rate seul. Avec un win rate déjà ramené au quart, son effet sera faible ; à mesurer avant
 d'étendre l'amortissement à la popularité.
+
+**Suite identifiée par la revue** : `MetaAnalyzer.score()` (0-100), qui sert aux bans, à
+l'impact des bans et au filtre des wildcards, reste pondéré à 80 % par le win rate. Il contredit
+désormais le signal hybride du moteur ; à aligner dans une passe dédiée.
 
