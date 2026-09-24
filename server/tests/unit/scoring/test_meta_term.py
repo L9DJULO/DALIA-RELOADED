@@ -17,8 +17,11 @@ def test_meta_term_is_shrunk_win_rate_delta(monkeypatch):
 
 
 def test_meta_term_without_stats_is_neutral_and_uncertain():
+    """L'ignorance porte sur la quantité pondérée : 0,25·(WR − 50), donc 0,25·σ (spec §6.3)."""
+    from app.config import config
     t = meta_term(None)
-    assert t.value == 0.0 and t.sd == 3.0 and t.source == "heuristic"
+    assert t.value == 0.0 and t.source == "heuristic"
+    assert t.sd == pytest.approx(config.scoring.no_meta_sd * config.scoring.meta_wr_weight)
 
 
 @pytest.mark.asyncio
@@ -74,7 +77,7 @@ def test_popularity_vanishes_at_zero_scale(monkeypatch):
     from app.config import config
     from app.scoring.meta_term import popularity_term
     monkeypatch.setattr(config.scoring, "popularity_scale", 0.0)
-    assert popularity_term(ChampionStats(champion_id=1, role="mid", pick_rate=12.0, games=9000)).value == 0.0
+    assert popularity_term(ChampionStats(champion_id=1, role="mid", pick_rate=12.0, games=9000), 2.0).value == 0.0
 
 
 def test_popularity_favours_what_master_plus_actually_plays(monkeypatch):
@@ -82,8 +85,8 @@ def test_popularity_favours_what_master_plus_actually_plays(monkeypatch):
     from app.config import config
     from app.scoring.meta_term import popularity_term
     monkeypatch.setattr(config.scoring, "popularity_scale", 1.0)
-    jungle = popularity_term(ChampionStats(champion_id=35, role="jungle", pick_rate=3.2, games=6000))
-    support = popularity_term(ChampionStats(champion_id=35, role="support", pick_rate=0.9, games=1700))
+    jungle = popularity_term(ChampionStats(champion_id=35, role="jungle", pick_rate=3.2, games=6000), 2.0)
+    support = popularity_term(ChampionStats(champion_id=35, role="support", pick_rate=0.9, games=1700), 2.0)
     assert jungle.value > support.value
     assert jungle.value - support.value == pytest.approx(math.log(3.2 / 0.9))
 
@@ -93,7 +96,7 @@ def test_popularity_carries_a_relative_uncertainty(monkeypatch):
     from app.config import config
     from app.scoring.meta_term import popularity_term
     monkeypatch.setattr(config.scoring, "popularity_scale", 1.0)
-    t = popularity_term(ChampionStats(champion_id=1, role="mid", pick_rate=8.0, games=9000))
+    t = popularity_term(ChampionStats(champion_id=1, role="mid", pick_rate=8.0, games=9000), 2.0)
     assert t.name == "popularity" and t.abs_sd == 0.0 and t.rel_sd > 0.0
 
 
@@ -101,9 +104,44 @@ def test_popularity_of_an_unplayed_pick_is_bounded(monkeypatch):
     from app.config import config
     from app.scoring.meta_term import popularity_term
     monkeypatch.setattr(config.scoring, "popularity_scale", 1.0)
-    zero = popularity_term(ChampionStats(champion_id=1, role="mid", pick_rate=0.0, games=5))
+    zero = popularity_term(ChampionStats(champion_id=1, role="mid", pick_rate=0.0, games=5), 2.0)
     assert math.isfinite(zero.value)
-    assert popularity_term(None) is None
+
+
+def test_no_data_on_the_role_is_never_better_than_rare_data(monkeypatch):
+    """Revue du 25/09 : un champion jamais joué sur le poste prenait 0, la valeur d'un pick
+    médian, pendant qu'un pick rare réel prenait −3,7."""
+    from app.config import config
+    from app.scoring.meta_term import popularity_term
+    monkeypatch.setattr(config.scoring, "popularity_scale", 1.0)
+    rare = popularity_term(ChampionStats(champion_id=1, role="support", pick_rate=0.1, games=200), 1.5)
+    unplayed = popularity_term(None, 1.5)
+    assert unplayed is not None and unplayed.value <= rare.value
+
+
+def test_popularity_is_anchored_on_the_role_so_a_median_pick_is_neutral(monkeypatch):
+    """Un zéro arbitraire gonflait σ, la confiance et le verdict « à égalité » (revue du 25/09)."""
+    from app.config import config
+    from app.scoring.meta_term import popularity_term
+    monkeypatch.setattr(config.scoring, "popularity_scale", 1.0)
+    median = popularity_term(ChampionStats(champion_id=1, role="mid", pick_rate=1.3, games=4000), 1.3)
+    assert median.value == pytest.approx(0.0) and median.sd == pytest.approx(0.0)
+
+
+def test_no_popularity_term_without_any_data_for_the_role():
+    """Source indisponible : aucun candidat n'a de référence, le terme n'a pas de sens."""
+    from app.scoring.meta_term import popularity_term
+    assert popularity_term(None, None) is None
+
+
+def test_meta_analyzer_gives_the_median_pick_rate_of_a_role(catalog):
+    meta = MetaAnalyzer(catalog, catalog.fetcher)
+    tier = meta._default_tier()
+    meta._by_tier[tier] = {(c, "mid"): ChampionStats(champion_id=c, role="mid", pick_rate=pr, games=1000)
+                           for c, pr in ((1, 0.5), (2, 1.0), (3, 4.0))}
+    meta._loaded_roles.add(("mid", tier))
+    assert meta.median_pick_rate("mid") == pytest.approx(1.0)
+    assert meta.median_pick_rate("top") is None
 
 
 def test_the_engine_actually_appends_the_popularity_term():
@@ -163,7 +201,8 @@ def test_meta_damping_never_touches_the_no_data_branch(monkeypatch):
     from app.config import config
     monkeypatch.setattr(config.scoring, "meta_context_damping", 0.9)
     term = meta_term(None, 1.0)
-    assert term.value == 0.0 and term.abs_sd == config.scoring.no_meta_sd
+    assert term.value == 0.0
+    assert term.abs_sd == pytest.approx(config.scoring.no_meta_sd * config.scoring.meta_wr_weight)
 
 
 def test_the_engine_actually_passes_the_context_fraction():

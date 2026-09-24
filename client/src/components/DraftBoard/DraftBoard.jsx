@@ -45,14 +45,14 @@ function SETag({ tag }) {
   );
 }
 
-// META S : le serveur ne pose `meta-forte` qu'à partir de +1,5 point de win
-// rate de contribution méta ; ce filtre reste défensif si la donnée est incohérente.
-const META_S_MIN_SCORE = 1.5;
+// META S : le serveur pose `meta-forte` à partir de +1,5 point de win rate rétréci,
+// lu avant la pondération du signal méta (le terme affiché n'en garde qu'un quart).
+// Ce filtre reste défensif : jamais META S sur une contribution méta négative.
 function tagAllowed(tag, rec) {
   if (tag === 'off-meta') return false;
   if (tag === 'meta-forte') {
     const meta = rec?.breakdown?.meta ?? 0;
-    return meta >= META_S_MIN_SCORE;
+    return meta > 0;
   }
   return true;
 }

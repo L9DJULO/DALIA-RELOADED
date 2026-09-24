@@ -34,3 +34,10 @@ def test_distribution_drops_marginal_roles_before_normalising():
 
 def test_distribution_of_an_unplayed_champion_is_empty():
     assert refresh_roles.distribution_from_shares({"top": 0, "mid": 0}) == {}
+
+
+def test_a_champion_absent_from_the_data_keeps_its_roles():
+    """Revue du 25/09 : un champion que Lolalytics ne liste pas encore sortait sans poste."""
+    assert refresh_roles.roles_or_previous({"top": 0, "mid": 0}, 15.0, ["top", "jungle"]) == ["top", "jungle"]
+    assert refresh_roles.roles_or_previous({"top": 0}, 15.0, None) is None
+    assert refresh_roles.roles_or_previous({"top": 80, "mid": 20}, 15.0, ["jungle"]) == ["top", "mid"]

@@ -108,6 +108,15 @@ class MetaAnalyzer:
         tier = tier or self._default_tier()
         return self._by_tier.get(tier, {}).get((champion_id, role))
 
+    def median_pick_rate(self, role: str, tier: Optional[str] = None) -> Optional[float]:
+        """Pick rate médian des champions joués sur ce poste, ou None sans donnée."""
+        tier = tier or self._default_tier()
+        rates = sorted(s.pick_rate for (_, r), s in self._by_tier.get(tier, {}).items() if r == role)
+        if not rates:
+            return None
+        mid = len(rates) // 2
+        return rates[mid] if len(rates) % 2 else (rates[mid - 1] + rates[mid]) / 2
+
     def is_loaded(self, role: str, tier: Optional[str] = None) -> bool:
         return (role, tier or self._default_tier()) in self._loaded_roles
 

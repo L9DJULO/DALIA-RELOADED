@@ -6,7 +6,6 @@ while draft/recommend uses the auth'd user's pool when available.
 from __future__ import annotations
 
 import logging
-import math
 from typing import Dict, List, Optional, Literal
 # UserDB used as Optional type hint in route signatures
 
@@ -18,6 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import config
 from app.models.draft import DraftRequest, DraftResponse, PoolEntry, AnnotatedPool, CompareRequest, PoolAdviceRequest
 from app.services.pool_advisor import advise_pool
+from app.scoring.aggregate import comparison_sd
 from app.auth.deps import get_current_user, get_optional_user, oauth2_scheme, require_admin
 from app.db.models import ChampionPoolEntryDB, DuoLinkDB, UserDB
 from app.db.session import get_db
@@ -288,7 +288,8 @@ async def compare_champions(body: CompareRequest, request: Request,
     order += sorted(names - set(order))
     deltas = [{"dimension": name, "left": round(term_value(left, name), 2), "right": round(term_value(right, name), 2),
                "delta": round(term_value(left, name) - term_value(right, name), 2)} for name in order if name in names]
-    combined_sd = round(math.sqrt(left.score_sd ** 2 + right.score_sd ** 2), 2)
+    # Incertitude de la DIFFÉRENCE : une constante de conversion commune aux deux s'annule.
+    combined_sd = round(comparison_sd(left.breakdown.terms, right.breakdown.terms), 2)
     score_delta = round(left.total_score - right.total_score, 2)
     delta_pp = None
     if left.wpa and right.wpa:

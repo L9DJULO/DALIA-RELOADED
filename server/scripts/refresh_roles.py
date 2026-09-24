@@ -34,7 +34,7 @@ import json
 import sys
 from datetime import date
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
@@ -50,6 +50,17 @@ DIST_FLOOR = 3.0
 def roles_from_shares(shares: Dict[str, float], threshold: float) -> List[str]:
     ranked = sorted((r for r in ROLES if shares.get(r, 0.0) > 0.0), key=lambda r: -shares[r])
     return ranked[:1] + [r for r in ranked[1:] if shares[r] >= threshold]
+
+
+def roles_or_previous(shares: Dict[str, float], threshold: float,
+                       previous: Optional[List[str]]) -> Optional[List[str]]:
+    """Postes tirés des parts ; un champion absent des données garde les siens.
+
+    Un champion que Lolalytics Master+ ne liste pas encore (sortie récente) aurait
+    sinon `roles: []` et disparaîtrait de tous les postes. Sans postes connus non
+    plus, None : l'entrée n'en porte pas et le chargeur retombe sur les tags.
+    """
+    return roles_from_shares(shares, threshold) or previous
 
 
 def distribution_from_shares(shares: Dict[str, float], floor: float = DIST_FLOOR) -> Dict[str, float]:
@@ -93,7 +104,6 @@ async def main() -> int:
     for key in sorted(ddragon, key=str.lower):
         cid = ddragon[key]["key"]
         shares = {r: float(lists[r].get(cid, {}).get("pctLane", 0.0) or 0.0) for r in ROLES}
-        roles = roles_from_shares(shares, args.threshold)
         dist = distribution_from_shares(shares)
         if dist:
             distribution[key] = dist
@@ -102,12 +112,16 @@ async def main() -> int:
             old_key = by_lower.pop(ddragon[key]["name"].lower())
         entry = dict(overrides.get(old_key, {})) if old_key else {}
         old_roles = entry.get("roles")
+        roles = roles_or_previous(shares, args.threshold, old_roles)
         # Garde l'orthographe existante quand elle est lue ; sinon la clé Data Dragon.
         new_key = old_key if old_key and old_key.lower() == key.lower() else key
-        entry = {"roles": roles, **{k: v for k, v in entry.items() if k != "roles"}}
+        rest = {k: v for k, v in entry.items() if k != "roles"}
+        entry = {"roles": roles, **rest} if roles else rest
         out[new_key] = entry
         detail = " ".join(f"{r}={shares[r]:.0f}%" for r in ROLES if shares[r] >= 5)
-        if old_key is None:
+        if not any(shares.values()):
+            changes.append(f"! {new_key:14} absent des données Master+ : postes conservés {roles}")
+        elif old_key is None:
             changes.append(f"+ {new_key:14} {roles}  ({detail})")
         elif new_key != old_key:
             changes.append(f"~ {old_key} -> {new_key}: {old_roles} -> {roles}  ({detail})")

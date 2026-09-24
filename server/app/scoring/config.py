@@ -20,7 +20,6 @@ class ScoringConstants(BaseModel):
     # du win rate laisse le moteur réagir à un champion devenu fort en début de patch.
     meta_wr_weight: float = 0.25
     popularity_scale: float = 1.0
-    popularity_ref: float = 2.0       # pick rate de référence, en % ; s'annule entre candidats d'un même poste
     popularity_floor: float = 0.05    # pick rate plancher, en % : borne ln() pour un pick jamais joué
     popularity_rel: float = 0.5
     # Amortissement de la meta par le contexte. Le win rate brut est une moyenne

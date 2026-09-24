@@ -408,7 +408,7 @@ class DraftEngine:
         revealed = len([e for e in draft.enemy_picks if e.champion_id])
         context_fraction = min(1.0, revealed / 5.0)
         terms: List[Term] = [meta_term(stats, context_fraction)]
-        popularity = popularity_term(stats)
+        popularity = popularity_term(stats, self.meta.median_pick_rate(role, tier))
         if popularity:
             terms.append(popularity)
 
@@ -858,8 +858,11 @@ class DraftEngine:
             tags.append("flex")
         if draft.is_last_pick and matchup is not None and matchup.value >= 1.5:
             tags.append("last-pick-counter")
+        # META S garde son sens d'origine — win rate rétréci d'au moins +1,5 point —,
+        # lu avant la pondération du chantier 13 qui ramène le terme au quart.
         meta = terms.get("meta")
-        if meta is not None and meta.value >= 1.5:
+        weight = config.scoring.meta_wr_weight
+        if meta is not None and weight > 0 and meta.value / weight >= 1.5:
             tags.append("meta-forte")
         mastery = terms.get("mastery")
         if mastery is not None and mastery.value >= 0.5:

@@ -32,14 +32,14 @@ function Tag({ tag }) {
 }
 
 // META S doit refléter un vrai gagnant du patch. Le serveur pose `meta-forte`
-// quand la contribution méta atteint +1,5 point de win rate ; ce filtre évite
-// qu'une donnée incohérente affiche META S sur un pick faible.
-const META_S_MIN_SCORE = 1.5;
+// à partir de +1,5 point de win rate rétréci, lu avant la pondération du signal
+// méta (le terme affiché n'en garde qu'un quart) ; ce filtre évite qu'une donnée
+// incohérente affiche META S sur une contribution méta négative.
 function tagAllowed(tag, rec) {
   if (tag === 'off-meta') return false;
   if (tag === 'meta-forte') {
     const meta = rec?.breakdown?.meta ?? 0;
-    return meta >= META_S_MIN_SCORE;
+    return meta > 0;
   }
   return true;
 }

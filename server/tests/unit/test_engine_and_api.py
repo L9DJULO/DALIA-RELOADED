@@ -243,3 +243,27 @@ def test_tiebreak_is_inert_when_no_candidate_carries_outcome_risk():
     scored = [_rec(1, "A", 2.0, 3.0, 0.0), _rec(2, "B", 1.5, 3.0, 0.0)]
     scored, _ = _reorder_head_by_risk(scored)
     assert [r.champion_name for r in scored] == ["A", "B"], "ordre de l'esperance conserve"
+
+
+def test_meta_s_tag_survives_the_quarter_win_rate_weight(catalog):
+    """Revue du 25/09 : au seuil de 1,5 sur la valeur pondérée, META S était devenu impossible."""
+    from app.config import config
+    from app.models.draft import DraftState
+    from app.scoring.types import Term
+    engine = DraftEngine(catalog, catalog.fetcher)
+    draft = DraftState(my_role="mid")
+    w = config.scoring.meta_wr_weight
+    strong = engine._assign_tags(catalog.get_by_id(103), draft, {"meta": Term("meta", 2.0 * w)})
+    average = engine._assign_tags(catalog.get_by_id(103), draft, {"meta": Term("meta", 1.0 * w)})
+    assert "meta-forte" in strong and "meta-forte" not in average
+
+
+def test_compare_tie_uses_the_uncertainty_of_the_difference(client):
+    """Une constante de conversion commune s'annule entre deux champions (comparison_sd)."""
+    from app.scoring.aggregate import comparison_sd
+    from app.models.draft import ScoreTerm
+    response = client.post('/api/draft/compare', json={"draft_state": {"my_role": "top", "enemy_picks": [{"champion_id": 59}]}, "champion_ids": [78, 75], "rank_bucket": "SILVER"})
+    data = response.json()
+    left = [ScoreTerm(**t) for t in data["left"]["breakdown"]["terms"]]
+    right = [ScoreTerm(**t) for t in data["right"]["breakdown"]["terms"]]
+    assert data["combined_sd"] == pytest.approx(comparison_sd(left, right), abs=0.01)
