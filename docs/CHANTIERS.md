@@ -367,3 +367,45 @@ d'un terme dont le signal est lui-même en cause. À trancher avant de l'implém
 
 **Limite de la mesure** : elle ne juge pas le conseil rendu à un joueur sur son pool déclaré, mais
 le signal de fond sur lequel tout le reste s'empile.
+
+### Diagnostic du 24/09 : quatre variantes du terme méta, deux instruments
+
+`meta_term` remplacé à la volée (sans toucher au code), rejoué sur les 5 250 décisions de la
+concordance et sur la calibration. Calibration comparée sur un gel commun (24/09, 2459 entrées),
+baseline 30/52 sur ce gel.
+
+| Variante | Calibration | Concordance top-3 | Top-10 | Rang moyen |
+|---|---|---|---|---|
+| Actuelle : `shrink(win_rate − 50)` | 30/52 | 5,9 % | 19,4 % | 13,69 |
+| Aucun terme méta | 34/52 | 12,2 % | 33,0 % | 12,01 |
+| Popularité seule : `ln(pick_rate / 2 %)` | **36/52** | **16,7 %** | **42,6 %** | **10,85** |
+| Win rate + popularité | 33/52 | 9,0 % | 25,3 % | 12,93 |
+
+Écarts de concordance appariés (McNemar sur « dans le top-3 ») : z = +14, +21 et +10 contre la
+variante actuelle.
+
+**Ce qui est établi** : retirer le terme méta *seul* double la concordance et gagne quatre
+assertions. Le win rate brut ne se contente pas de ne pas aider — il dégrade le classement sur
+les deux instruments. Ce résultat n'est pas contaminé par la circularité ci-dessous.
+
+**Ce qui ne l'est pas** : la popularité gagne sur les deux instruments, mais la concordance la
+favorise en partie par construction — la soloqueue copie les picks pros. La calibration, arbitrée
+par le joueur, ne souffre pas de ce biais et va dans le même sens.
+
+**Coût de la variante popularité** : deux assertions perdues. `synergy_senna_tahmkench`, déjà
+jugée « outdated de fou » par le joueur (chantier 6), et `counter_pick_top_vs_darius`
+(Quinn devant Garen). La catégorie `counter` passe de 6/8 à 5/8 : la règle « ne pas faire perdre
+une catégorie » est enfreinte d'une assertion.
+
+**À arbitrer avec le joueur** — c'est un choix de philosophie, pas un réglage :
+
+1. Remplacer le win rate par la popularité (« ce que Master+ joue est ce qui marche »), au risque
+   d'un moteur qui recommande ce qui est déjà populaire et réagit en retard à un champion devenu
+   fort en début de patch.
+2. Garder le win rate mais le neutraliser fortement (rétrécissement bien plus dur, ou amortissement
+   total) — la variante « aucun terme » montre déjà l'essentiel du gain.
+3. Un hybride dont l'amplitude se calibre.
+
+La constante `a = 1` de la popularité n'est pas calibrée, et son incertitude reprenait celle du
+win rate faute de mieux : quelle que soit l'option, elle demande sa propre spec.
+
