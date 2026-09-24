@@ -46,3 +46,69 @@ async def test_empty_tier_falls_back_to_default_tier(catalog):
     await meta.load_tierlist("mid", tier="iron")
     assert meta.stats(103, "mid", "iron").win_rate == 52
     assert "iron" in meta.rank_fallback
+
+
+def test_win_rate_weight_is_neutral_by_default():
+    """Chantier 13 : le poids du win rate se calibre ; à 1,0 rien ne bouge."""
+    t = meta_term(ChampionStats(champion_id=1, role="mid", win_rate=53.0, games=1500))
+    assert math.isclose(t.value, shrink(3.0, 1500, 500))
+
+
+def test_win_rate_weight_rescales_value_and_uncertainty_together(monkeypatch):
+    """Rééchelonner la valeur sans l'incertitude gonflerait l'incertitude relative (spec §6.3)."""
+    from app.config import config
+    stats = ChampionStats(champion_id=1, role="mid", win_rate=53.0, games=1500)
+    full = meta_term(stats)
+    monkeypatch.setattr(config.scoring, "meta_wr_weight", 0.25)
+    quarter = meta_term(stats)
+    assert quarter.value == pytest.approx(full.value * 0.25)
+    assert quarter.abs_sd == pytest.approx(full.abs_sd * 0.25)
+
+
+def test_popularity_is_neutral_until_its_scale_is_set():
+    from app.scoring.meta_term import popularity_term
+    assert popularity_term(ChampionStats(champion_id=1, role="mid", pick_rate=12.0, games=9000)).value == 0.0
+
+
+def test_popularity_favours_what_master_plus_actually_plays(monkeypatch):
+    """Shaco support est bien moins joué que Shaco jungle : le terme le dit par poste."""
+    from app.config import config
+    from app.scoring.meta_term import popularity_term
+    monkeypatch.setattr(config.scoring, "popularity_scale", 1.0)
+    jungle = popularity_term(ChampionStats(champion_id=35, role="jungle", pick_rate=3.2, games=6000))
+    support = popularity_term(ChampionStats(champion_id=35, role="support", pick_rate=0.9, games=1700))
+    assert jungle.value > support.value
+    assert jungle.value - support.value == pytest.approx(math.log(3.2 / 0.9))
+
+
+def test_popularity_carries_a_relative_uncertainty(monkeypatch):
+    """Le pick rate est mesuré sans bruit notable ; c'est sa conversion en points qui est incertaine."""
+    from app.config import config
+    from app.scoring.meta_term import popularity_term
+    monkeypatch.setattr(config.scoring, "popularity_scale", 1.0)
+    t = popularity_term(ChampionStats(champion_id=1, role="mid", pick_rate=8.0, games=9000))
+    assert t.name == "popularity" and t.abs_sd == 0.0 and t.rel_sd > 0.0
+
+
+def test_popularity_of_an_unplayed_pick_is_bounded(monkeypatch):
+    from app.config import config
+    from app.scoring.meta_term import popularity_term
+    monkeypatch.setattr(config.scoring, "popularity_scale", 1.0)
+    zero = popularity_term(ChampionStats(champion_id=1, role="mid", pick_rate=0.0, games=5))
+    assert math.isfinite(zero.value)
+    assert popularity_term(None) is None
+
+
+def test_the_engine_actually_appends_the_popularity_term():
+    """Piège déjà rencontré : une fonction juste, appelée nulle part."""
+    import inspect
+    from app.services.draft_engine import DraftEngine
+    assert "popularity_term(" in inspect.getsource(DraftEngine)
+
+
+def test_the_meta_preference_also_weighs_popularity():
+    """Pour le joueur, les deux sont « la méta » : un seul curseur les pondère."""
+    from app.scoring.aggregate import apply_preferences
+    from app.scoring.types import Term
+    out = apply_preferences([Term("popularity", 2.0)], {"meta": 0.5})
+    assert out[0].value == pytest.approx(1.0)

@@ -35,7 +35,7 @@ from app.scoring.composition_term import archetype_term, composition_term
 from app.scoring.heuristic_terms import mechanics_term, model_term, synergy_term, teamfight_term
 from app.scoring.mastery_term import MasteryInputs, mastery_term
 from app.scoring.matchup_term import matchup_term
-from app.scoring.meta_term import meta_term
+from app.scoring.meta_term import meta_term, popularity_term
 from app.scoring.opponent_model import future_opponent_term
 from app.scoring.rank import lolalytics_tier
 from app.scoring.types import Estimate, Term
@@ -402,7 +402,11 @@ class DraftEngine:
         tier = lolalytics_tier(rank, self.fetcher.TIER)
         has_enemies = any(e.champion_id for e in draft.enemy_picks)
         allies = [c for a in draft.ally_picks if a.champion_id and (c := self.db.get_by_id(a.champion_id))]
-        terms: List[Term] = [meta_term(self.meta.stats(champ.id, role, tier))]
+        stats = self.meta.stats(champ.id, role, tier)
+        terms: List[Term] = [meta_term(stats)]
+        popularity = popularity_term(stats)
+        if popularity:
+            terms.append(popularity)
 
         mu = await matchup_term(self.matchup, champ.id, role, draft, tier, rank)
         if mu:

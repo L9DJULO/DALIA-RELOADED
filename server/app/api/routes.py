@@ -282,7 +282,7 @@ async def compare_champions(body: CompareRequest, request: Request,
     def term_value(rec, name):
         return next((t.value for t in rec.breakdown.terms if t.name == name), 0.0)
 
-    order = ["meta", "matchup", "future_opponent", "mastery", "composition", "archetype", "synergy", "mechanics",
+    order = ["meta", "popularity", "matchup", "future_opponent", "mastery", "composition", "archetype", "synergy", "mechanics",
              "teamfight", "model"]
     # Un terme absent de `order` est ajouté en fin plutôt que masqué.
     order += sorted(names - set(order))

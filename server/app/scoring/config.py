@@ -8,6 +8,16 @@ class ScoringConstants(BaseModel):
     k_meta: int = 500
     k_matchup: int = 200
     no_meta_sd: float = 3.0
+    # Signal méta hybride (chantier 13, arbitrage du joueur le 24/09/2026). Le win
+    # rate brut classe à l'envers d'un bon drafteur sur la calibration comme sur la
+    # concordance pro : le win rate d'un champion peu joué mesure surtout ses
+    # joueurs dédiés. Son poids et celui de la popularité se calibrent ensemble ;
+    # neutres par défaut (win rate à plein, popularité absente).
+    meta_wr_weight: float = 1.0
+    popularity_scale: float = 0.0
+    popularity_ref: float = 2.0       # pick rate de référence, en % ; s'annule entre candidats d'un même poste
+    popularity_floor: float = 0.05    # pick rate plancher, en % : borne ln() pour un pick jamais joué
+    popularity_rel: float = 0.5
     # Matchup
     offlane_weight: float = 0.5
     heuristic_matchup_scale: float = 0.2

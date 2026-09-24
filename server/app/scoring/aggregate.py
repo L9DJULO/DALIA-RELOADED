@@ -8,7 +8,7 @@ from app.scoring.types import Term
 
 # Clés de préférence (stockées en base) → nom du terme qu'elles multiplient.
 PREF_KEY_BY_TERM: Dict[str, str] = {
-    "meta": "meta", "matchup": "matchup", "synergy": "synergy",
+    "meta": "meta", "popularity": "meta", "matchup": "matchup", "synergy": "synergy",
     "composition": "composition", "mastery": "mastery", "future_opponent": "draft_risk",
 }
 

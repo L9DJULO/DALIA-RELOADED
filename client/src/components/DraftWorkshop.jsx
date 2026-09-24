@@ -9,7 +9,7 @@ import { compareChampions, saveHistoryEntry, apiErrorText } from '../services/ap
 import { historyPayload } from '../lib/replay';
 import '../workshop.css';
 
-const DIMENSIONS = { meta: 'Méta', matchup: 'Matchup', future_opponent: 'Adversaire à venir', mastery: 'Maîtrise',
+const DIMENSIONS = { meta: 'Méta', popularity: 'Popularité', matchup: 'Matchup', future_opponent: 'Adversaire à venir', mastery: 'Maîtrise',
   composition: 'Composition', archetype: 'Archétype', synergy: 'Synergie', mechanics: 'Mécaniques', teamfight: 'Teamfight', model: 'Modèle' };
 const signed = value => `${value > 0 ? '+' : ''}${value.toFixed(1)}`;
 
