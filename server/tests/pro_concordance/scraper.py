@@ -290,6 +290,7 @@ def _cargo_query(
     where: str,
     order_by: str = "",
     use_cache: bool = True,
+    join_on: str = "",
 ) -> Tuple[List[Dict[str, Any]], bool]:
     """Run a paged Cargo query.
 
@@ -301,7 +302,7 @@ def _cargo_query(
     offset = 0
     complete = True
     while True:
-        cache_name = _cache_key(table, where, fields, offset)
+        cache_name = _cache_key(f"{table}|{join_on}" if join_on else table, where, fields, offset)
         cached = _read_cache(cache_name) if use_cache else None
         if cached is not None:
             page = cached
@@ -317,6 +318,8 @@ def _cargo_query(
             }
             if order_by:
                 params["order_by"] = order_by
+            if join_on:
+                params["join_on"] = join_on
 
             page = None
             for attempt in range(MAX_RETRIES):
