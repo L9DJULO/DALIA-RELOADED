@@ -495,3 +495,15 @@ peu joués) : la saturation disparaît, 34 des 71 champions du joueur à 4-5 con
   à la main se limite aux écarts.
 - La participation aux kills mesure la présence, pas l'impact ; le support n'est pas mesuré.
 
+**Relevé par la revue du 25/09** (reportés, sans effet sur les données actuelles) :
+
+- Pantheon (472 parties pros en jungle), Trundle, Yone, Camille et Shen sont en règle de repli :
+  leur poste principal dans les overrides n'est pas celui que les pros jouent. Mesurer sur le
+  poste le plus joué en pro plutôt que `roles[0]` les ferait entrer dans la mesure.
+- `pro_teamfight` : appariement des clés encore sensible à la casse (Bel'Veth non mesurable) ;
+  quintiles biaisés sur un poste de moins de 5 champions ; une collecte incomplète écrase
+  `pro_player_stats.json` sans que `pro_teamfight` lise `_meta.complete`.
+- `derive_ratings` : `fetch_facts` relance aussi les erreurs définitives (404) ; `review_order`
+  et `control_report` sensibles à la casse.
+- Docstring de `burst` imprécis ; ligne « support » toujours vide dans la sortie de `pro_teamfight`.
+
