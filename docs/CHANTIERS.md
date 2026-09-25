@@ -557,3 +557,8 @@ bilan du chantier 14 annonce 37/52 sur ce gel. Le gel n'étant pas versionné, l
 mesuré sur un autre état du cache. À instruire avant de re-mesurer le levier teamfight ; les
 comparaisons de cette passe sont appariées sur le même gel et n'en dépendent pas.
 
+**Expliqué le même jour** (détail dans le `README.md` de la calibration) : le 37 venait du gel
+de 00h34, regelé à 13h29 sans nouveau baseline. Le regel coûte un point (Syndra/Malzahar et
+Malphite n°1 perdus, Olaf/Kha'Zix gagné), les notes calculées un autre (Quinn/Garen, écart 0,24
+pour une incertitude de 2,3). Rien de cassé. Nouveau baseline `baseline_v8` : **36/53**.
+

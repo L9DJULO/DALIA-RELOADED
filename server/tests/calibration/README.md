@@ -632,3 +632,25 @@ calculées, contre n°2 (1,51) avec les anciennes notes par tags. Les notes de s
 sous-évaluent Orianna (dégâts 2, utilité 2) : elle perd `composition` et `archetype`. C'est
 l'objet de la liste de relecture (`app/data/ratings_review.md`).
 
+
+## Écart de baseline 37 → 35, expliqué le 25/09/2026
+
+Le bilan du chantier 14 annonçait 37/52 ; la suite donnait 35/52 sur le gel en place. Les deux
+chiffres sont justes, sur des gels différents. `baseline_v7` (37/52) date du gel du 25/09 à
+00h34 (2459 entrées) ; le cache a été regelé à 13h29 (2464 entrées) au milieu du chantier 14,
+sans nouveau baseline. En rejouant le code de 00h45 (`5883c4e`) sur le nouveau gel :
+
+| Effet | Assertions | Solde |
+|---|---|---|
+| Regel des données (même code) | Syndra > Malzahar ✗, Malphite n°1 ✗ (Sett devant, 1,08 contre 0,70), Olaf > Kha'Zix ✓ | 37 → 36 |
+| Notes calculées `0ff980f` (même gel) | Quinn > Garen ✗ : −1,98 contre −1,74, écart 0,24 pour σ ≈ 2,3 | 36 → 35 |
+
+Le « 37/52 inchangé (+2 −2) » de `0ff980f` avait été mesuré sur l'ancien gel. Rien n'est cassé :
+les trois pertes sont des écarts bien inférieurs à l'incertitude.
+
+**Règle** : tout regel s'accompagne d'un nouveau baseline, et tout score cité dans ce fichier
+dit sur quel gel il a été mesuré.
+
+**Référence suivante** : `snapshots/baseline_v8.json`, **36/53**, gel du 25/09 13h29 (2464
+entrées, Data Dragon 16.19.1, `master_plus`), après le remplacement du cas Galio par deux cas
+Vladimir (2 assertions remplacées par 3).
