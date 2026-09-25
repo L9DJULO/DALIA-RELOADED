@@ -143,7 +143,9 @@ def format_report(report: Dict[str, dict]) -> str:
 
 
 def merge_ratings(overrides: dict, derived: Dict[str, List[int]]) -> dict:
-    """Les notes du joueur restent ; les autres entrées reçoivent le calcul (spec §4.4)."""
+    """Les notes du joueur restent ; les autres entrées reçoivent le calcul (spec §4.4).
+    Clés appariées sans casse, comme le chargeur (« BelVeth » / « Belveth »)."""
+    derived = {k.lower(): v for k, v in derived.items()}
     out = {}
     for key, entry in overrides.items():
         if key.startswith("_") or not isinstance(entry, dict):
@@ -152,8 +154,8 @@ def merge_ratings(overrides: dict, derived: Dict[str, List[int]]) -> dict:
         entry = dict(entry)
         if "ratings" in entry and entry.get("ratings_source", "joueur") == "joueur":
             entry["ratings_source"] = "joueur"
-        elif key in derived:
-            entry["ratings"] = list(derived[key])
+        elif key.lower() in derived:
+            entry["ratings"] = list(derived[key.lower()])
             entry["ratings_source"] = "calcul"
         out[key] = entry
     return out
@@ -161,12 +163,13 @@ def merge_ratings(overrides: dict, derived: Dict[str, List[int]]) -> dict:
 
 def apply_teamfight(overrides: dict, teamfight: Dict[str, int]) -> dict:
     """La mesure pro remplace teamfight partout, notes du joueur comprises (spec §2)."""
+    teamfight = {k.lower(): v for k, v in teamfight.items()}
     out = {}
     for key, entry in overrides.items():
-        if isinstance(entry, dict) and "ratings" in entry and key in teamfight:
+        if isinstance(entry, dict) and "ratings" in entry and key.lower() in teamfight:
             entry = dict(entry)
             ratings = list(entry["ratings"])
-            ratings[DIMENSIONS.index("teamfight")] = int(teamfight[key])
+            ratings[DIMENSIONS.index("teamfight")] = int(teamfight[key.lower()])
             entry["ratings"] = ratings
         out[key] = entry
     return out
@@ -197,7 +200,7 @@ def main() -> int:
     report = control_report(derived, player_ratings(overrides))
     REPORT_PATH.write_text(format_report(report), encoding="utf-8", newline="\n")
     for dim, r in report.items():
-        print(f"{dim:10} exact {r['exact']:5.1f} %  ±1 {r['within1']:5.1f} %  écarts≥2 {len(r['gaps'])}")
+        print(f"{dim:10} exact {r['exact']:5.1f} %  ±1 {r['within1']:5.1f} %  écarts>=2 {len(r['gaps'])}")
     if args.write:
         merged = merge_ratings(overrides, derived)
         OVERRIDES.write_bytes(dump_overrides(merged).encode("utf-8"))

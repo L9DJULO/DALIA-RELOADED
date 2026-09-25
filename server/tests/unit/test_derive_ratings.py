@@ -61,3 +61,12 @@ def test_teamfight_replaces_index_four_everywhere_player_notes_included():
 def test_dump_keeps_crlf_without_final_newline():
     text = derive_ratings.dump_overrides({"A": {"roles": ["top"]}})
     assert "\r\n" in text and not text.endswith("\n") and '  "A": {' in text
+
+
+def test_override_keys_match_data_dragon_whatever_their_case():
+    """« BelVeth » dans les overrides, « Belveth » chez Data Dragon : le chargeur les
+    apparie sans casse, la fusion doit faire pareil."""
+    out = derive_ratings.merge_ratings({"BelVeth": {"roles": ["jungle"]}}, {"Belveth": [3] * 9})
+    assert out["BelVeth"]["ratings"] == [3] * 9
+    out = derive_ratings.apply_teamfight({"BelVeth": {"ratings": [3] * 9}}, {"Belveth": 5})
+    assert out["BelVeth"]["ratings"][4] == 5

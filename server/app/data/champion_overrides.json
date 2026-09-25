@@ -4,23 +4,71 @@
     "roles": [
       "top",
       "jungle"
-    ]
+    ],
+    "ratings": [
+      3,
+      4,
+      1,
+      4,
+      3,
+      3,
+      4,
+      5,
+      5
+    ],
+    "ratings_source": "calcul"
   },
   "Ahri": {
     "roles": [
       "mid"
-    ]
+    ],
+    "ratings": [
+      3,
+      1,
+      4,
+      1,
+      3,
+      3,
+      5,
+      2,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "Akali": {
     "roles": [
       "mid",
       "top"
-    ]
+    ],
+    "ratings": [
+      2,
+      2,
+      1,
+      1,
+      3,
+      3,
+      4,
+      2,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "Akshan": {
     "roles": [
       "mid"
-    ]
+    ],
+    "ratings": [
+      2,
+      2,
+      2,
+      2,
+      3,
+      3,
+      5,
+      5,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "Alistar": {
     "roles": [
@@ -36,13 +84,26 @@
       2,
       1,
       5
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Ambessa": {
     "roles": [
       "top",
       "jungle"
-    ]
+    ],
+    "ratings": [
+      2,
+      4,
+      1,
+      4,
+      3,
+      3,
+      4,
+      3,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "Amumu": {
     "roles": [
@@ -59,13 +120,26 @@
       2,
       2,
       5
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Anivia": {
     "roles": [
       "mid",
       "top"
-    ]
+    ],
+    "ratings": [
+      4,
+      3,
+      4,
+      1,
+      4,
+      3,
+      4,
+      2,
+      1
+    ],
+    "ratings_source": "calcul"
   },
   "Annie": {
     "roles": [
@@ -81,7 +155,8 @@
       5,
       2,
       2
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Aphelios": {
     "roles": [
@@ -97,7 +172,8 @@
       3,
       5,
       1
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Ashe": {
     "roles": [
@@ -113,24 +189,61 @@
       2,
       5,
       1
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "AurelionSol": {
     "roles": [
       "mid",
       "bot"
-    ]
+    ],
+    "ratings": [
+      3,
+      1,
+      4,
+      1,
+      4,
+      3,
+      4,
+      2,
+      2
+    ],
+    "ratings_source": "calcul"
   },
   "Aurora": {
     "roles": [
       "mid",
       "top"
-    ]
+    ],
+    "ratings": [
+      3,
+      2,
+      4,
+      1,
+      3,
+      3,
+      5,
+      2,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "Azir": {
     "roles": [
       "mid"
-    ]
+    ],
+    "ratings": [
+      3,
+      1,
+      2,
+      3,
+      3,
+      3,
+      4,
+      4,
+      2
+    ],
+    "ratings_source": "calcul"
   },
   "Bard": {
     "roles": [
@@ -146,12 +259,25 @@
       2,
       2,
       4
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "BelVeth": {
     "roles": [
       "jungle"
-    ]
+    ],
+    "ratings": [
+      3,
+      4,
+      1,
+      4,
+      3,
+      3,
+      4,
+      5,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "Blitzcrank": {
     "roles": [
@@ -167,7 +293,8 @@
       3,
       1,
       3
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Brand": {
     "roles": [
@@ -184,7 +311,8 @@
       5,
       2,
       1
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Braum": {
     "roles": [
@@ -200,12 +328,25 @@
       1,
       1,
       5
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Briar": {
     "roles": [
       "jungle"
-    ]
+    ],
+    "ratings": [
+      4,
+      4,
+      1,
+      3,
+      3,
+      3,
+      4,
+      3,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "Caitlyn": {
     "roles": [
@@ -221,42 +362,115 @@
       3,
       4,
       3
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Camille": {
     "roles": [
       "top",
       "support"
-    ]
+    ],
+    "ratings": [
+      3,
+      4,
+      1,
+      3,
+      3,
+      3,
+      4,
+      5,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "Cassiopeia": {
     "roles": [
       "mid",
       "top",
       "bot"
-    ]
+    ],
+    "ratings": [
+      4,
+      3,
+      4,
+      1,
+      4,
+      3,
+      4,
+      2,
+      1
+    ],
+    "ratings_source": "calcul"
   },
   "Chogath": {
     "roles": [
       "jungle",
       "top"
-    ]
+    ],
+    "ratings": [
+      3,
+      3,
+      1,
+      3,
+      3,
+      3,
+      2,
+      1,
+      5
+    ],
+    "ratings_source": "calcul"
   },
   "Corki": {
     "roles": [
       "bot"
-    ]
+    ],
+    "ratings": [
+      2,
+      2,
+      3,
+      2,
+      3,
+      3,
+      4,
+      4,
+      2
+    ],
+    "ratings_source": "calcul"
   },
   "Darius": {
     "roles": [
       "top"
-    ]
+    ],
+    "ratings": [
+      3,
+      4,
+      1,
+      4,
+      3,
+      3,
+      4,
+      3,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "Diana": {
     "roles": [
       "mid",
       "jungle"
-    ]
+    ],
+    "ratings": [
+      3,
+      4,
+      1,
+      3,
+      3,
+      3,
+      4,
+      3,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "Draven": {
     "roles": [
@@ -272,29 +486,78 @@
       5,
       5,
       2
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "DrMundo": {
     "roles": [
       "top"
-    ]
+    ],
+    "ratings": [
+      2,
+      4,
+      1,
+      4,
+      3,
+      3,
+      4,
+      3,
+      5
+    ],
+    "ratings_source": "calcul"
   },
   "Ekko": {
     "roles": [
       "mid",
       "jungle"
-    ]
+    ],
+    "ratings": [
+      3,
+      2,
+      1,
+      1,
+      3,
+      3,
+      4,
+      2,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "Elise": {
     "roles": [
       "jungle",
       "support"
-    ]
+    ],
+    "ratings": [
+      3,
+      1,
+      3,
+      3,
+      3,
+      3,
+      4,
+      3,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "Evelynn": {
     "roles": [
       "jungle"
-    ]
+    ],
+    "ratings": [
+      2,
+      2,
+      1,
+      1,
+      3,
+      3,
+      4,
+      1,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "Ezreal": {
     "roles": [
@@ -310,24 +573,61 @@
       3,
       4,
       3
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Fiddlesticks": {
     "roles": [
       "jungle",
       "support"
-    ]
+    ],
+    "ratings": [
+      4,
+      3,
+      4,
+      3,
+      3,
+      3,
+      4,
+      2,
+      1
+    ],
+    "ratings_source": "calcul"
   },
   "Fiora": {
     "roles": [
       "top"
-    ]
+    ],
+    "ratings": [
+      3,
+      3,
+      1,
+      5,
+      3,
+      3,
+      4,
+      5,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "Fizz": {
     "roles": [
       "mid",
       "jungle"
-    ]
+    ],
+    "ratings": [
+      3,
+      2,
+      1,
+      1,
+      3,
+      3,
+      4,
+      2,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "Galio": {
     "roles": [
@@ -343,22 +643,59 @@
       2,
       2,
       5
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Gangplank": {
     "roles": [
       "top"
-    ]
+    ],
+    "ratings": [
+      2,
+      2,
+      1,
+      3,
+      3,
+      3,
+      4,
+      2,
+      1
+    ],
+    "ratings_source": "calcul"
   },
   "Garen": {
     "roles": [
       "top"
-    ]
+    ],
+    "ratings": [
+      2,
+      4,
+      1,
+      4,
+      3,
+      3,
+      4,
+      3,
+      5
+    ],
+    "ratings_source": "calcul"
   },
   "Gnar": {
     "roles": [
       "top"
-    ]
+    ],
+    "ratings": [
+      3,
+      1,
+      2,
+      3,
+      3,
+      3,
+      2,
+      2,
+      5
+    ],
+    "ratings_source": "calcul"
   },
   "Gragas": {
     "roles": [
@@ -375,23 +712,60 @@
       3,
       2,
       4
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Graves": {
     "roles": [
       "jungle"
-    ]
+    ],
+    "ratings": [
+      2,
+      1,
+      2,
+      3,
+      3,
+      3,
+      4,
+      5,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "Gwen": {
     "roles": [
       "top",
       "jungle"
-    ]
+    ],
+    "ratings": [
+      2,
+      4,
+      1,
+      4,
+      3,
+      3,
+      4,
+      4,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "Hecarim": {
     "roles": [
       "jungle"
-    ]
+    ],
+    "ratings": [
+      3,
+      4,
+      1,
+      3,
+      3,
+      3,
+      4,
+      3,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "Heimerdinger": {
     "roles": [
@@ -409,7 +783,8 @@
       4,
       3,
       1
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Hwei": {
     "roles": [
@@ -426,23 +801,60 @@
       4,
       2,
       1
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Illaoi": {
     "roles": [
       "top"
-    ]
+    ],
+    "ratings": [
+      2,
+      4,
+      1,
+      4,
+      3,
+      3,
+      4,
+      3,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "Irelia": {
     "roles": [
       "top",
       "mid"
-    ]
+    ],
+    "ratings": [
+      3,
+      4,
+      1,
+      3,
+      3,
+      3,
+      4,
+      3,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "Ivern": {
     "roles": [
       "jungle"
-    ]
+    ],
+    "ratings": [
+      4,
+      3,
+      2,
+      1,
+      3,
+      5,
+      2,
+      1,
+      2
+    ],
+    "ratings_source": "calcul"
   },
   "Janna": {
     "roles": [
@@ -458,23 +870,60 @@
       1,
       1,
       2
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "JarvanIV": {
     "roles": [
       "jungle"
-    ]
+    ],
+    "ratings": [
+      3,
+      4,
+      1,
+      3,
+      3,
+      3,
+      4,
+      3,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "Jax": {
     "roles": [
       "top"
-    ]
+    ],
+    "ratings": [
+      3,
+      3,
+      1,
+      4,
+      3,
+      3,
+      4,
+      5,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "Jayce": {
     "roles": [
       "top",
       "jungle"
-    ]
+    ],
+    "ratings": [
+      2,
+      1,
+      5,
+      1,
+      3,
+      3,
+      4,
+      4,
+      2
+    ],
+    "ratings_source": "calcul"
   },
   "Jhin": {
     "roles": [
@@ -490,7 +939,8 @@
       4,
       4,
       1
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Jinx": {
     "roles": [
@@ -506,7 +956,8 @@
       2,
       5,
       1
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Kaisa": {
     "roles": [
@@ -522,7 +973,8 @@
       4,
       5,
       3
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Kalista": {
     "roles": [
@@ -538,7 +990,8 @@
       3,
       5,
       2
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Karma": {
     "roles": [
@@ -554,7 +1007,8 @@
       3,
       2,
       2
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Karthus": {
     "roles": [
@@ -571,49 +1025,146 @@
       4,
       3,
       2
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Kassadin": {
     "roles": [
       "mid"
-    ]
+    ],
+    "ratings": [
+      2,
+      2,
+      1,
+      1,
+      3,
+      3,
+      4,
+      2,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "Katarina": {
     "roles": [
       "mid"
-    ]
+    ],
+    "ratings": [
+      2,
+      2,
+      1,
+      1,
+      3,
+      3,
+      4,
+      2,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "Kayle": {
     "roles": [
       "top",
       "mid"
-    ]
+    ],
+    "ratings": [
+      2,
+      2,
+      1,
+      3,
+      3,
+      5,
+      4,
+      5,
+      1
+    ],
+    "ratings_source": "calcul"
   },
   "Kayn": {
     "roles": [
       "jungle"
-    ]
+    ],
+    "ratings": [
+      2,
+      4,
+      1,
+      4,
+      3,
+      3,
+      4,
+      5,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "Kennen": {
     "roles": [
       "top",
       "mid"
-    ]
+    ],
+    "ratings": [
+      4,
+      3,
+      4,
+      3,
+      3,
+      3,
+      4,
+      2,
+      1
+    ],
+    "ratings_source": "calcul"
   },
   "Khazix": {
     "roles": [
       "jungle"
-    ]
+    ],
+    "ratings": [
+      2,
+      2,
+      1,
+      1,
+      3,
+      3,
+      4,
+      2,
+      2
+    ],
+    "ratings_source": "calcul"
   },
   "Kindred": {
     "roles": [
       "jungle"
-    ]
+    ],
+    "ratings": [
+      3,
+      3,
+      2,
+      2,
+      3,
+      3,
+      5,
+      5,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "Kled": {
     "roles": [
       "top"
-    ]
+    ],
+    "ratings": [
+      2,
+      4,
+      1,
+      4,
+      3,
+      3,
+      4,
+      5,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "KogMaw": {
     "roles": [
@@ -630,22 +1181,59 @@
       2,
       5,
       1
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "KSante": {
     "roles": [
       "top"
-    ]
+    ],
+    "ratings": [
+      5,
+      4,
+      1,
+      4,
+      4,
+      5,
+      2,
+      3,
+      5
+    ],
+    "ratings_source": "calcul"
   },
   "Leblanc": {
     "roles": [
       "mid"
-    ]
+    ],
+    "ratings": [
+      3,
+      2,
+      4,
+      1,
+      3,
+      3,
+      5,
+      2,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "LeeSin": {
     "roles": [
       "jungle"
-    ]
+    ],
+    "ratings": [
+      3,
+      4,
+      1,
+      3,
+      3,
+      3,
+      4,
+      3,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "Leona": {
     "roles": [
@@ -661,22 +1249,59 @@
       2,
       1,
       5
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Lillia": {
     "roles": [
       "jungle"
-    ]
+    ],
+    "ratings": [
+      3,
+      3,
+      1,
+      4,
+      3,
+      3,
+      4,
+      3,
+      2
+    ],
+    "ratings_source": "calcul"
   },
   "Lissandra": {
     "roles": [
       "mid"
-    ]
+    ],
+    "ratings": [
+      4,
+      3,
+      4,
+      1,
+      3,
+      3,
+      5,
+      2,
+      2
+    ],
+    "ratings_source": "calcul"
   },
   "Locke": {
     "roles": [
       "mid"
-    ]
+    ],
+    "ratings": [
+      2,
+      2,
+      1,
+      1,
+      3,
+      3,
+      4,
+      2,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "Lucian": {
     "roles": [
@@ -692,7 +1317,8 @@
       5,
       5,
       2
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Lulu": {
     "roles": [
@@ -708,7 +1334,8 @@
       2,
       1,
       2
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Lux": {
     "roles": [
@@ -726,7 +1353,8 @@
       5,
       1,
       1
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Malphite": {
     "roles": [
@@ -742,12 +1370,25 @@
       5,
       1,
       5
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Malzahar": {
     "roles": [
       "mid"
-    ]
+    ],
+    "ratings": [
+      4,
+      3,
+      4,
+      1,
+      4,
+      3,
+      4,
+      2,
+      1
+    ],
+    "ratings_source": "calcul"
   },
   "Maokai": {
     "roles": [
@@ -765,18 +1406,43 @@
       2,
       2,
       4
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "MasterYi": {
     "roles": [
       "jungle"
-    ]
+    ],
+    "ratings": [
+      2,
+      2,
+      1,
+      4,
+      3,
+      3,
+      4,
+      5,
+      2
+    ],
+    "ratings_source": "calcul"
   },
   "Mel": {
     "roles": [
       "mid",
       "bot"
-    ]
+    ],
+    "ratings": [
+      3,
+      1,
+      5,
+      1,
+      3,
+      3,
+      4,
+      2,
+      1
+    ],
+    "ratings_source": "calcul"
   },
   "Milio": {
     "roles": [
@@ -792,7 +1458,8 @@
       2,
       1,
       2
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "MissFortune": {
     "roles": [
@@ -808,17 +1475,42 @@
       4,
       4,
       1
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "MonkeyKing": {
     "roles": [
       "jungle"
-    ]
+    ],
+    "ratings": [
+      3,
+      4,
+      1,
+      3,
+      3,
+      3,
+      4,
+      3,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "Mordekaiser": {
     "roles": [
       "top"
-    ]
+    ],
+    "ratings": [
+      2,
+      4,
+      1,
+      4,
+      3,
+      3,
+      4,
+      3,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "Morgana": {
     "roles": [
@@ -834,12 +1526,25 @@
       2,
       2,
       2
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Naafiri": {
     "roles": [
       "jungle"
-    ]
+    ],
+    "ratings": [
+      2,
+      2,
+      1,
+      1,
+      3,
+      3,
+      4,
+      2,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "Nami": {
     "roles": [
@@ -855,13 +1560,26 @@
       3,
       1,
       2
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Nasus": {
     "roles": [
       "top",
       "mid"
-    ]
+    ],
+    "ratings": [
+      3,
+      4,
+      1,
+      5,
+      3,
+      3,
+      4,
+      3,
+      5
+    ],
+    "ratings_source": "calcul"
   },
   "Nautilus": {
     "roles": [
@@ -877,7 +1595,8 @@
       3,
       1,
       5
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Neeko": {
     "roles": [
@@ -893,12 +1612,25 @@
       4,
       2,
       2
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Nidalee": {
     "roles": [
       "jungle"
-    ]
+    ],
+    "ratings": [
+      2,
+      1,
+      4,
+      3,
+      3,
+      3,
+      4,
+      2,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "Nilah": {
     "roles": [
@@ -914,32 +1646,93 @@
       4,
       5,
       3
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Nocturne": {
     "roles": [
       "jungle"
-    ]
+    ],
+    "ratings": [
+      3,
+      2,
+      1,
+      1,
+      3,
+      3,
+      4,
+      5,
+      2
+    ],
+    "ratings_source": "calcul"
   },
   "Nunu": {
     "roles": [
       "jungle"
-    ]
+    ],
+    "ratings": [
+      3,
+      5,
+      1,
+      1,
+      4,
+      3,
+      2,
+      1,
+      5
+    ],
+    "ratings_source": "calcul"
   },
   "Olaf": {
     "roles": [
       "top"
-    ]
+    ],
+    "ratings": [
+      3,
+      4,
+      1,
+      3,
+      3,
+      3,
+      4,
+      3,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "Orianna": {
     "roles": [
       "mid"
-    ]
+    ],
+    "ratings": [
+      3,
+      1,
+      3,
+      1,
+      3,
+      3,
+      3,
+      1,
+      1
+    ],
+    "ratings_source": "calcul"
   },
   "Ornn": {
     "roles": [
       "top"
-    ]
+    ],
+    "ratings": [
+      5,
+      5,
+      1,
+      1,
+      4,
+      3,
+      2,
+      1,
+      5
+    ],
+    "ratings_source": "calcul"
   },
   "Pantheon": {
     "roles": [
@@ -956,7 +1749,8 @@
       5,
       2,
       3
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Poppy": {
     "roles": [
@@ -973,7 +1767,8 @@
       3,
       2,
       5
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Pyke": {
     "roles": [
@@ -989,19 +1784,44 @@
       4,
       1,
       3
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Qiyana": {
     "roles": [
       "jungle",
       "mid"
-    ]
+    ],
+    "ratings": [
+      3,
+      2,
+      1,
+      1,
+      3,
+      3,
+      4,
+      2,
+      2
+    ],
+    "ratings_source": "calcul"
   },
   "Quinn": {
     "roles": [
       "jungle",
       "top"
-    ]
+    ],
+    "ratings": [
+      3,
+      1,
+      2,
+      3,
+      3,
+      3,
+      4,
+      5,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "Rakan": {
     "roles": [
@@ -1017,17 +1837,42 @@
       2,
       1,
       3
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Rammus": {
     "roles": [
       "jungle"
-    ]
+    ],
+    "ratings": [
+      5,
+      5,
+      1,
+      1,
+      4,
+      3,
+      2,
+      1,
+      5
+    ],
+    "ratings_source": "calcul"
   },
   "RekSai": {
     "roles": [
       "jungle"
-    ]
+    ],
+    "ratings": [
+      3,
+      4,
+      1,
+      3,
+      3,
+      3,
+      4,
+      3,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "Rell": {
     "roles": [
@@ -1043,7 +1888,8 @@
       2,
       1,
       4
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Renata": {
     "roles": [
@@ -1059,34 +1905,95 @@
       2,
       1,
       2
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Renekton": {
     "roles": [
       "top"
-    ]
+    ],
+    "ratings": [
+      3,
+      4,
+      1,
+      3,
+      3,
+      3,
+      4,
+      3,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "Rengar": {
     "roles": [
       "jungle"
-    ]
+    ],
+    "ratings": [
+      3,
+      4,
+      1,
+      3,
+      3,
+      3,
+      4,
+      5,
+      2
+    ],
+    "ratings_source": "calcul"
   },
   "Riven": {
     "roles": [
       "top",
       "mid"
-    ]
+    ],
+    "ratings": [
+      3,
+      4,
+      1,
+      4,
+      3,
+      3,
+      4,
+      3,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "Rumble": {
     "roles": [
       "top"
-    ]
+    ],
+    "ratings": [
+      3,
+      3,
+      1,
+      1,
+      4,
+      3,
+      4,
+      2,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "Ryze": {
     "roles": [
       "mid",
       "top"
-    ]
+    ],
+    "ratings": [
+      3,
+      1,
+      4,
+      1,
+      4,
+      3,
+      4,
+      2,
+      2
+    ],
+    "ratings_source": "calcul"
   },
   "Samira": {
     "roles": [
@@ -1102,13 +2009,26 @@
       5,
       5,
       2
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Sejuani": {
     "roles": [
       "jungle",
       "top"
-    ]
+    ],
+    "ratings": [
+      4,
+      5,
+      1,
+      1,
+      4,
+      3,
+      2,
+      1,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "Senna": {
     "roles": [
@@ -1124,7 +2044,8 @@
       2,
       3,
       2
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Seraphine": {
     "roles": [
@@ -1141,7 +2062,8 @@
       3,
       2,
       2
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Sett": {
     "roles": [
@@ -1157,7 +2079,8 @@
       4,
       2,
       4
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Shaco": {
     "roles": [
@@ -1174,7 +2097,8 @@
       3,
       3,
       2
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Shen": {
     "roles": [
@@ -1191,22 +2115,59 @@
       3,
       2,
       5
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Shyvana": {
     "roles": [
       "jungle"
-    ]
+    ],
+    "ratings": [
+      2,
+      4,
+      1,
+      3,
+      3,
+      3,
+      4,
+      3,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "Singed": {
     "roles": [
       "top"
-    ]
+    ],
+    "ratings": [
+      3,
+      3,
+      1,
+      3,
+      3,
+      3,
+      2,
+      1,
+      5
+    ],
+    "ratings_source": "calcul"
   },
   "Sion": {
     "roles": [
       "top"
-    ]
+    ],
+    "ratings": [
+      5,
+      5,
+      1,
+      1,
+      4,
+      3,
+      2,
+      1,
+      5
+    ],
+    "ratings_source": "calcul"
   },
   "Sivir": {
     "roles": [
@@ -1222,12 +2183,25 @@
       2,
       5,
       3
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Skarner": {
     "roles": [
       "jungle"
-    ]
+    ],
+    "ratings": [
+      5,
+      5,
+      1,
+      4,
+      4,
+      3,
+      4,
+      3,
+      5
+    ],
+    "ratings_source": "calcul"
   },
   "Smolder": {
     "roles": [
@@ -1243,7 +2217,8 @@
       3,
       4,
       3
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Sona": {
     "roles": [
@@ -1259,7 +2234,8 @@
       1,
       1,
       1
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Soraka": {
     "roles": [
@@ -1275,7 +2251,8 @@
       1,
       1,
       1
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Swain": {
     "roles": [
@@ -1294,19 +2271,44 @@
       3,
       3,
       4
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Sylas": {
     "roles": [
       "mid",
       "jungle"
-    ]
+    ],
+    "ratings": [
+      2,
+      4,
+      1,
+      4,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "Syndra": {
     "roles": [
       "mid",
       "bot"
-    ]
+    ],
+    "ratings": [
+      3,
+      1,
+      4,
+      1,
+      3,
+      3,
+      5,
+      2,
+      1
+    ],
+    "ratings_source": "calcul"
   },
   "TahmKench": {
     "roles": [
@@ -1323,19 +2325,44 @@
       2,
       2,
       5
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Taliyah": {
     "roles": [
       "mid",
       "jungle"
-    ]
+    ],
+    "ratings": [
+      3,
+      1,
+      4,
+      1,
+      4,
+      5,
+      4,
+      2,
+      1
+    ],
+    "ratings_source": "calcul"
   },
   "Talon": {
     "roles": [
       "jungle",
       "mid"
-    ]
+    ],
+    "ratings": [
+      2,
+      2,
+      1,
+      1,
+      3,
+      3,
+      4,
+      2,
+      2
+    ],
+    "ratings_source": "calcul"
   },
   "Taric": {
     "roles": [
@@ -1351,12 +2378,25 @@
       3,
       2,
       5
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Teemo": {
     "roles": [
       "top"
-    ]
+    ],
+    "ratings": [
+      3,
+      1,
+      3,
+      3,
+      3,
+      3,
+      3,
+      5,
+      1
+    ],
+    "ratings_source": "calcul"
   },
   "Thresh": {
     "roles": [
@@ -1372,7 +2412,8 @@
       2,
       2,
       4
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Tristana": {
     "roles": [
@@ -1388,23 +2429,60 @@
       5,
       5,
       4
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Trundle": {
     "roles": [
       "top",
       "jungle"
-    ]
+    ],
+    "ratings": [
+      2,
+      4,
+      1,
+      5,
+      3,
+      3,
+      4,
+      3,
+      5
+    ],
+    "ratings_source": "calcul"
   },
   "Tryndamere": {
     "roles": [
       "top"
-    ]
+    ],
+    "ratings": [
+      2,
+      2,
+      1,
+      5,
+      3,
+      3,
+      4,
+      5,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "TwistedFate": {
     "roles": [
       "mid"
-    ]
+    ],
+    "ratings": [
+      3,
+      1,
+      4,
+      1,
+      3,
+      3,
+      5,
+      2,
+      2
+    ],
+    "ratings_source": "calcul"
   },
   "Twitch": {
     "roles": [
@@ -1420,18 +2498,43 @@
       4,
       5,
       2
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Udyr": {
     "roles": [
       "jungle",
       "top"
-    ]
+    ],
+    "ratings": [
+      3,
+      4,
+      1,
+      4,
+      3,
+      3,
+      4,
+      3,
+      5
+    ],
+    "ratings_source": "calcul"
   },
   "Urgot": {
     "roles": [
       "top"
-    ]
+    ],
+    "ratings": [
+      3,
+      1,
+      3,
+      4,
+      3,
+      3,
+      4,
+      3,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "Varus": {
     "roles": [
@@ -1448,7 +2551,8 @@
       3,
       5,
       1
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Vayne": {
     "roles": [
@@ -1465,13 +2569,26 @@
       2,
       5,
       3
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Veigar": {
     "roles": [
       "mid",
       "bot"
-    ]
+    ],
+    "ratings": [
+      4,
+      3,
+      4,
+      1,
+      3,
+      3,
+      5,
+      2,
+      1
+    ],
+    "ratings_source": "calcul"
   },
   "Velkoz": {
     "roles": [
@@ -1489,46 +2606,131 @@
       5,
       2,
       1
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Vex": {
     "roles": [
       "mid"
-    ]
+    ],
+    "ratings": [
+      3,
+      1,
+      4,
+      1,
+      3,
+      3,
+      5,
+      2,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "Vi": {
     "roles": [
       "jungle"
-    ]
+    ],
+    "ratings": [
+      4,
+      4,
+      1,
+      3,
+      3,
+      3,
+      4,
+      3,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "Viego": {
     "roles": [
       "jungle"
-    ]
+    ],
+    "ratings": [
+      3,
+      3,
+      1,
+      4,
+      3,
+      3,
+      4,
+      5,
+      2
+    ],
+    "ratings_source": "calcul"
   },
   "Viktor": {
     "roles": [
       "mid",
       "bot"
-    ]
+    ],
+    "ratings": [
+      3,
+      1,
+      4,
+      1,
+      4,
+      3,
+      4,
+      2,
+      1
+    ],
+    "ratings_source": "calcul"
   },
   "Vladimir": {
     "roles": [
       "mid",
       "top"
-    ]
+    ],
+    "ratings": [
+      2,
+      1,
+      4,
+      1,
+      4,
+      3,
+      4,
+      2,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "Volibear": {
     "roles": [
       "top",
       "jungle"
-    ]
+    ],
+    "ratings": [
+      3,
+      4,
+      1,
+      4,
+      3,
+      3,
+      4,
+      3,
+      5
+    ],
+    "ratings_source": "calcul"
   },
   "Warwick": {
     "roles": [
       "jungle",
       "top"
-    ]
+    ],
+    "ratings": [
+      3,
+      4,
+      1,
+      3,
+      3,
+      3,
+      4,
+      3,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "Xayah": {
     "roles": [
@@ -1544,7 +2746,8 @@
       3,
       5,
       4
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Xerath": {
     "roles": [
@@ -1562,12 +2765,25 @@
       5,
       2,
       1
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "XinZhao": {
     "roles": [
       "jungle"
-    ]
+    ],
+    "ratings": [
+      3,
+      4,
+      1,
+      3,
+      3,
+      3,
+      4,
+      3,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "Yasuo": {
     "roles": [
@@ -1585,18 +2801,43 @@
       4,
       5,
       3
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Yone": {
     "roles": [
       "top",
       "mid"
-    ]
+    ],
+    "ratings": [
+      3,
+      2,
+      1,
+      4,
+      3,
+      3,
+      4,
+      4,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "Yorick": {
     "roles": [
       "top"
-    ]
+    ],
+    "ratings": [
+      3,
+      4,
+      1,
+      5,
+      3,
+      3,
+      4,
+      3,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "Yunara": {
     "roles": [
@@ -1612,7 +2853,8 @@
       2,
       5,
       3
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Yuumi": {
     "roles": [
@@ -1628,23 +2870,60 @@
       1,
       1,
       5
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Zaahen": {
     "roles": [
       "top"
-    ]
+    ],
+    "ratings": [
+      3,
+      3,
+      1,
+      4,
+      3,
+      3,
+      2,
+      3,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "Zac": {
     "roles": [
       "jungle"
-    ]
+    ],
+    "ratings": [
+      5,
+      5,
+      1,
+      1,
+      4,
+      3,
+      2,
+      1,
+      5
+    ],
+    "ratings_source": "calcul"
   },
   "Zed": {
     "roles": [
       "mid",
       "jungle"
-    ]
+    ],
+    "ratings": [
+      2,
+      2,
+      1,
+      1,
+      3,
+      3,
+      4,
+      2,
+      3
+    ],
+    "ratings_source": "calcul"
   },
   "Zeri": {
     "roles": [
@@ -1660,7 +2939,8 @@
       2,
       5,
       2
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Ziggs": {
     "roles": [
@@ -1677,7 +2957,8 @@
       4,
       2,
       3
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Zilean": {
     "roles": [
@@ -1693,13 +2974,26 @@
       2,
       1,
       2
-    ]
+    ],
+    "ratings_source": "joueur"
   },
   "Zoe": {
     "roles": [
       "mid",
       "support"
-    ]
+    ],
+    "ratings": [
+      3,
+      1,
+      4,
+      1,
+      3,
+      3,
+      5,
+      2,
+      2
+    ],
+    "ratings_source": "calcul"
   },
   "Zyra": {
     "roles": [
@@ -1716,6 +3010,7 @@
       4,
       3,
       1
-    ]
+    ],
+    "ratings_source": "joueur"
   }
 }
