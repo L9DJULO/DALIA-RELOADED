@@ -19,22 +19,22 @@ def test_kill_participation_survives_a_game_without_kills():
 
 
 def test_ratings_are_ranked_within_the_role_not_across_roles():
-    """Un support a naturellement plus de participation qu'un top."""
+    """Un jungler a naturellement plus de participation qu'un top."""
     rows = []
     for i, champ in enumerate(["T1", "T2", "T3", "T4", "T5"]):
         rows += [row(champ, "top", 1, i, 10)] * 30
     for i, champ in enumerate(["S1", "S2", "S3", "S4", "S5"]):
-        rows += [row(champ, "support", 1, 5 + i, 10)] * 30
-    roles = {c: ("top" if c.startswith("T") else "support") for c in ["T1", "T2", "T3", "T4", "T5", "S1", "S2", "S3", "S4", "S5"]}
+        rows += [row(champ, "jungle", 1, 5 + i, 10)] * 30
+    roles = {c: ("top" if c.startswith("T") else "jungle") for c in ["T1", "T2", "T3", "T4", "T5", "S1", "S2", "S3", "S4", "S5"]}
     r = pro_teamfight.teamfight_ratings(rows, roles)
     assert r["T5"] == 5 and r["S5"] == 5 and r["T1"] == 1 and r["S1"] == 1
 
 
 def test_a_champion_rated_on_its_main_role_only():
-    rows = [row("X", "support", 5, 5, 10)] * 30 + [row("X", "mid", 0, 0, 10)] * 30
+    rows = [row("X", "jungle", 5, 5, 10)] * 30 + [row("X", "mid", 0, 0, 10)] * 30
     rows += [row(f"M{i}", "mid", 1, i, 10) for i in range(5) for _ in range(30)]
-    rows += [row(f"S{i}", "support", 1, i, 10) for i in range(5) for _ in range(30)]
-    roles = {"X": "support", **{f"M{i}": "mid" for i in range(5)}, **{f"S{i}": "support" for i in range(5)}}
+    rows += [row(f"S{i}", "jungle", 1, i, 10) for i in range(5) for _ in range(30)]
+    roles = {"X": "jungle", **{f"M{i}": "mid" for i in range(5)}, **{f"S{i}": "jungle" for i in range(5)}}
     assert pro_teamfight.teamfight_ratings(rows, roles)["X"] == 5
 
 
@@ -42,3 +42,22 @@ def test_too_few_games_fall_back_to_the_rules():
     rows = [row("Rare", "mid", 5, 5, 10)] * 4 + [row(f"M{i}", "mid", 1, i, 10) for i in range(5) for _ in range(30)]
     roles = {"Rare": "mid", **{f"M{i}": "mid" for i in range(5)}}
     assert "Rare" not in pro_teamfight.teamfight_ratings(rows, roles)
+
+
+def test_supports_are_not_rated_from_kill_participation():
+    """Un bouclier ou un soin sur un allié qui tue donne une assist : les enchanteurs gonflent
+    leur participation sans être plus présents dans le combat (mesure du 25/09 : Nami, Milio,
+    Yuumi à 5, Nautilus et Blitzcrank à 1)."""
+    rows = [row(f"S{i}", "support", 1, i, 10) for i in range(5) for _ in range(30)]
+    roles = {f"S{i}": "support" for i in range(5)}
+    assert pro_teamfight.teamfight_ratings(rows, roles) == {}
+
+
+def test_every_champion_gets_a_teamfight_note_measured_or_from_the_rules():
+    """Spec §5.2 : sans mesure, la règle de repli ; jamais l'ancienne note à la main."""
+    from app.services.rating_rules import ChampionFacts
+    facts = {k: ChampionFacts(key=k, damage=2, durability=2, crowd_control=2, mobility=1, utility=1,
+                              style=5, ranged=False, subclasses=frozenset(sub))
+             for k, sub in (("Measured", ()), ("Tank", ("Vanguard",)), ("Plain", ()))}
+    full = pro_teamfight.full_teamfight({"Measured": 1}, facts)
+    assert full == {"Measured": 1, "Tank": 4, "Plain": 3}

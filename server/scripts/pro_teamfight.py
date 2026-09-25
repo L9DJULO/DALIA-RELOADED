@@ -25,6 +25,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from app.scoring.shrink import shrink  # noqa: E402
 
 STATS_PATH = Path(__file__).resolve().parent.parent / "app" / "data" / "pro_player_stats.json"
+# Le support n'est pas mesuré : un bouclier ou un soin sur un allié qui tue donne une
+# assist, les enchanteurs gonflent leur participation sans être plus présents dans le
+# combat (mesure du 25/09 : Nami, Milio, Yuumi à 5 ; Nautilus, Blitzcrank à 1).
+MEASURED_ROLES = ("top", "jungle", "mid", "bot")
 
 
 def kill_participation(row: dict) -> float:
@@ -42,7 +46,7 @@ def teamfight_ratings(rows: List[dict], primary_role: Dict[str, str], k: int = 2
     role_mean = {role: mean(v) for role, v in by_role.items()}
     scores: Dict[str, Dict[str, float]] = defaultdict(dict)
     for (champ, role), kps in by_champ.items():
-        if primary_role.get(champ) != role or len(kps) < min_games:
+        if role not in MEASURED_ROLES or primary_role.get(champ) != role or len(kps) < min_games:
             continue
         scores[role][champ] = shrink(mean(kps) - role_mean[role], len(kps), k)
     ratings: Dict[str, int] = {}
@@ -51,6 +55,12 @@ def teamfight_ratings(rows: List[dict], primary_role: Dict[str, str], k: int = 2
         for rank, champ in enumerate(ordered):
             ratings[champ] = 1 + min(4, rank * 5 // len(ordered))
     return ratings
+
+
+def full_teamfight(measured: Dict[str, int], facts: Dict[str, "ChampionFacts"]) -> Dict[str, int]:
+    """Note teamfight de chaque champion : mesurée si possible, sinon la règle de repli (spec §5.2)."""
+    from app.services.rating_rules import teamfight_fallback
+    return {key: measured.get(key, teamfight_fallback(f)) for key, f in facts.items()}
 
 
 def main() -> int:
@@ -62,14 +72,15 @@ def main() -> int:
     overrides = json.loads(derive_ratings.OVERRIDES.read_text(encoding="utf-8"))
     primary = {k: v["roles"][0] for k, v in overrides.items() if isinstance(v, dict) and v.get("roles")}
     ratings = teamfight_ratings(rows, primary)
+    full = full_teamfight(ratings, derive_ratings.load_facts())
     print(f"{len(ratings)} champions notés depuis {len(rows)} lignes pros ; "
-          f"{len(primary) - len(ratings)} en repli sur les règles")
+          f"{len(full) - len(ratings)} en repli sur les règles")
     for role in ("top", "jungle", "mid", "bot", "support"):
         champs = sorted((c for c in ratings if primary.get(c) == role), key=lambda c: -ratings[c])
         print(f"{role:8} " + ", ".join(f"{c}={ratings[c]}" for c in champs))
     if args.write:
         OV = derive_ratings.OVERRIDES
-        OV.write_bytes(derive_ratings.dump_overrides(derive_ratings.apply_teamfight(overrides, ratings)).encode("utf-8"))
+        OV.write_bytes(derive_ratings.dump_overrides(derive_ratings.apply_teamfight(overrides, full)).encode("utf-8"))
         print(f"Écrit : {OV}")
     return 0
 
