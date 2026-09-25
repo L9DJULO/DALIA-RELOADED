@@ -112,6 +112,10 @@ class ScoringConstants(BaseModel):
     # concordance pro le terme degrade (top-3 15,0 -> 14,0 % a 0,5, z = -3,9). Retenu :
     # neutre, tant que la note teamfight est saturee (69/71 a 4-5 en bot lane) et que
     # les mids sont notes depuis les tags. A re-mesurer apres le rearbitrage.
+    # Re-mesure du 25/09 (chantier 14), note teamfight mesuree sur les pros (hors
+    # support) : calibration 37 / 36 / 34 / 34 a 0 / 0,25 / 0,5 / 1,0 ; concordance
+    # top-3 z = -4,4 / -1,6 / +3,0. 1,0 met Orianna devant Yasuo mais perd Jax,
+    # Malphite et Garen. Retenu : neutre, aucune valeur ne tient la calibration.
     teamfight_reference: float = 3.0
     teamfight_scale: float = 0.0
     teamfight_rel: float = 0.5

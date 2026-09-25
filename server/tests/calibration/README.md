@@ -602,3 +602,33 @@ saturée en bot lane et dérivée des tags Riot en mid. Le terme amplifie une do
 Suite : réarbitrer `teamfight` (proposition dans `docs/GRILLE_NOTATION.md`), noter les mids,
 re-mesurer. C'est la conclusion que la spec prévoyait en cas d'échec : revenir aux notes.
 
+## Notes dérivées et teamfight mesuré (chantier 14)
+
+Mesuré le 25/09/2026. Spec et plan `2026-09-25-notes-derivees`.
+
+**Notes calculées** (`app/services/rating_rules.py`, `scripts/derive_ratings.py`) : règles
+lisibles sur les notes de style Riot et les sous-classes du wiki, calées sur les 71 notes du
+joueur. Accord final par dimension : exact 53-71 %, ±1 89-97 % (`app/data/ratings_report.md`).
+Écrites pour les 102 champions sans note du joueur ; calibration 37/52 inchangée (+2 −2).
+
+**Teamfight mesuré** (`scripts/pro_teamfight.py`) : participation aux kills relative au poste,
+22 560 lignes pros (26.01-26.15, disjointes de la concordance), support exclu. 90 champions
+mesurés, 83 sur la règle de repli.
+
+**Levier `teamfight_scale`**, gel commun (2464 entrées) et concordance :
+
+| Valeur | Calibration | Concordance top-3 | z |
+|---|---|---|---|
+| 0 | 37/52 | 14,6 % | — |
+| 0,25 | 36/52 | 13,4 % | −4,4 |
+| 0,5 | 34/52 | 14,0 % | −1,6 |
+| 1,0 | 34/52 | 15,9 % | +3,0 |
+
+**Retenu : 0.** Aucune valeur ne tient la calibration ; 1,0 gagne en concordance top-3 mais
+perd en top-10 et fait tomber Jax, Malphite et Garen.
+
+**Cas de référence** `comp_engage_mid_peel` : Orianna retombe n°5 (écart 5,93) avec les notes
+calculées, contre n°2 (1,51) avec les anciennes notes par tags. Les notes de style Riot
+sous-évaluent Orianna (dégâts 2, utilité 2) : elle perd `composition` et `archetype`. C'est
+l'objet de la liste de relecture (`app/data/ratings_review.md`).
+

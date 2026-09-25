@@ -167,3 +167,13 @@ Répartition : avant 43 × 5, 26 × 4, 1 × 3, 1 × 2 — après 21 × 5, 28 × 
   Lucian (4), Lux (4), Morgana (4), Pantheon (4), Poppy (4), Pyke (4), Senna (4), Soraka (4),
   Tahm Kench (4), Tristana (5), Vayne (5), Xerath (4), Yuumi (4).
 - **2** : Shaco.
+
+---
+
+## Définition exécutable (25/09)
+
+Depuis le chantier 14, la grille est **exécutée** par `server/app/services/rating_rules.py` :
+une fonction par dimension, calée sur les 71 notes du joueur et testée. Ce document reste la
+référence des intentions ; le code, celle des seuils. La note `teamfight` n'est plus décidée
+mais mesurée (`server/scripts/pro_teamfight.py`).
+

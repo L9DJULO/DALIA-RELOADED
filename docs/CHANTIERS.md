@@ -479,3 +479,19 @@ plutôt que de la décréter.
 
 **Bloque** : le levier teamfight du chantier 5, laissé neutre faute d'une note qui départage.
 
+### Mené le 25/09 (chantiers 4 et 14)
+
+Les 102 champions ont des notes **calculées** depuis les notes de style Riot et les sous-classes
+du wiki, calées sur les 71 du joueur (accord exact 53-71 %, ±1 89-97 %). La note `teamfight`
+est **mesurée** sur les parties pros pour les 173 (support exclu, règle de repli pour les champions
+peu joués) : la saturation disparaît, 34 des 71 champions du joueur à 4-5 contre 69.
+
+**Reste ouvert** :
+
+- Le levier teamfight reste à 0 : aucune valeur ne tient la calibration.
+- Les notes Riot sont grossières sur certains champions clés : Orianna, sous-notée, retombe n°5
+  derrière Zed dans le cas de référence. Le joueur relit `server/app/data/ratings_review.md`
+  (les notes calculées les plus jouées en pro d'abord) et corrige ce qui le choque — la notation
+  à la main se limite aux écarts.
+- La participation aux kills mesure la présence, pas l'impact ; le support n'est pas mesuré.
+

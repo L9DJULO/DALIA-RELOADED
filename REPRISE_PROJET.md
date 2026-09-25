@@ -160,3 +160,19 @@ le pool par défaut ne démarre pas sur cette machine), build Vite. Calibration 
 - Le cas de référence Orianna/Zed échoue encore (n°2, écart 1,51) ; Yasuo reste n°2 en blind mid.
 - Chantiers 6 et 7 : cas de calibration en attente d'arbitrage.
 
+## Notes de champions dérivées des données (25 septembre 2026)
+
+Le joueur n'a plus à noter les 102 champions à la main. Les notes viennent des notes de style
+officielles de Riot (CommunityDragon) et des sous-classes du wiki LoL, converties par des règles
+lisibles calées sur ses 71 notes (accord ±1 : 89-97 % selon la dimension). La note `teamfight`
+est mesurée sur 22 560 lignes de parties pros (participation aux kills, support exclu).
+
+Correctif CI au passage : un avis RustSec publié le 14/09 sur `rustls` faisait échouer
+`cargo audit` ; `rustls` monté en 0.23.45.
+
+**Chiffres de vérification** : tests unitaires serveur verts, calibration 37/52 inchangée, levier
+teamfight laissé à 0 après re-mesure.
+
+**Ce qui reste ouvert** : relire `server/app/data/ratings_review.md` (Orianna d'abord, qui
+retourne le cas de référence) ; régénérer le bot password Fandom, exposé en clair le 25/09.
+
