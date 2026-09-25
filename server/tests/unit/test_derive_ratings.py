@@ -70,3 +70,14 @@ def test_override_keys_match_data_dragon_whatever_their_case():
     assert out["BelVeth"]["ratings"] == [3] * 9
     out = derive_ratings.apply_teamfight({"BelVeth": {"ratings": [3] * 9}}, {"Belveth": 5})
     assert out["BelVeth"]["ratings"][4] == 5
+
+
+def test_review_list_puts_the_most_played_computed_champions_first():
+    """Spec §4.5. Une note calculée fausse coûte le plus sur un champion très joué (Orianna,
+    sous-notée par Riot, a retourné le cas de référence) : relire d'abord ceux-là."""
+    overrides = {"Orianna": {"ratings": [1] * 9, "ratings_source": "calcul"},
+                 "Zed": {"ratings": [1] * 9, "ratings_source": "calcul"},
+                 "Jinx": {"ratings": [1] * 9, "ratings_source": "joueur"},
+                 "Rare": {"ratings": [1] * 9, "ratings_source": "calcul"}}
+    rows = [{"champion": "Orianna"}] * 40 + [{"champion": "Zed"}] * 10 + [{"champion": "Jinx"}] * 99
+    assert derive_ratings.review_order(overrides, rows) == [("Orianna", 40), ("Zed", 10), ("Rare", 0)]

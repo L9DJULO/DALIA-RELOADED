@@ -180,6 +180,27 @@ def dump_overrides(data: dict) -> str:
     return json.dumps(data, indent=2).replace("\n", "\r\n")
 
 
+def review_order(overrides: dict, pro_rows: List[dict]) -> List[Tuple[str, int]]:
+    """Notes calculées à relire, les plus jouées en pro d'abord (spec §4.5).
+
+    Une contradiction interne ne trahit pas une note Riot trop grossière (Orianna) ;
+    le poids d'un champion dans les parties, si.
+    """
+    from collections import Counter
+    games = Counter(r["champion"] for r in pro_rows)
+    computed = [k for k, v in overrides.items() if isinstance(v, dict) and v.get("ratings_source") == "calcul"]
+    return sorted(((k, games.get(k, 0)) for k in computed), key=lambda kv: (-kv[1], kv[0]))
+
+
+def format_review(order: List[Tuple[str, int]], overrides: dict, limit: int = 40) -> str:
+    lines = ["# Notes calculées à relire, les plus jouées en pro d'abord", "",
+             "Vecteur : cc, engage, poke, splitpush, teamfight, utility, burst, dps, tankiness.", "",
+             "| Champion | Parties pros | Notes |", "|---|---|---|"]
+    for key, n in order[:limit]:
+        lines.append(f"| {key} | {n} | {' '.join(str(v) for v in overrides[key]['ratings'])} |")
+    return "\n".join(lines) + "\n"
+
+
 def player_ratings(overrides: dict) -> Dict[str, List[int]]:
     return {k: v["ratings"] for k, v in overrides.items()
             if isinstance(v, dict) and "ratings" in v and v.get("ratings_source", "joueur") == "joueur"}
@@ -201,6 +222,11 @@ def main() -> int:
     REPORT_PATH.write_text(format_report(report), encoding="utf-8", newline="\n")
     for dim, r in report.items():
         print(f"{dim:10} exact {r['exact']:5.1f} %  ±1 {r['within1']:5.1f} %  écarts>=2 {len(r['gaps'])}")
+    pro_stats = DATA / "pro_player_stats.json"
+    if pro_stats.exists():
+        rows = json.loads(pro_stats.read_text(encoding="utf-8"))["rows"]
+        (DATA / "ratings_review.md").write_text(format_review(review_order(overrides, rows), overrides),
+                                                encoding="utf-8", newline="\n")
     if args.write:
         merged = merge_ratings(overrides, derived)
         OVERRIDES.write_bytes(dump_overrides(merged).encode("utf-8"))

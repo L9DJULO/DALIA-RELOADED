@@ -102,3 +102,6 @@ client/src-tauri/gen/schemas/
 .tools/
 client/test-results/
 client/playwright-report/
+
+# Cache brut des stats joueurs pros : pro_player_stats.json en est la version versionnée
+server/tests/pro_concordance/cache/ScoreboardPlayers_*
