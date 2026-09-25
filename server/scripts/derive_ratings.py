@@ -24,10 +24,12 @@ import httpx
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from app.services.rating_rules import ChampionFacts  # noqa: E402
+from app.services.rating_rules import DIMENSIONS, ChampionFacts, derive  # noqa: E402
 
 DATA = Path(__file__).resolve().parent.parent / "app" / "data"
 FACTS_PATH = DATA / "champion_facts.json"
+OVERRIDES = DATA / "champion_overrides.json"
+REPORT_PATH = DATA / "ratings_report.md"
 UA = {"User-Agent": "DALIA-research/1.0"}
 CDRAGON = "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champions/{}.json"
 WIKI_API = "https://wiki.leagueoflegends.com/en-us/api.php"
@@ -110,14 +112,96 @@ def load_facts() -> Dict[str, ChampionFacts]:
     return {k: facts_from_record(k, v) for k, v in raw.items() if not k.startswith("_")}
 
 
+def control_report(derived: Dict[str, List[int]], player: Dict[str, List[int]]) -> Dict[str, dict]:
+    """Accord du calcul avec les notes du joueur, dimension par dimension (spec §4.3)."""
+    keys = sorted(k for k in player if k in derived)
+    report = {}
+    for i, dim in enumerate(DIMENSIONS):
+        if dim == "teamfight":
+            continue
+        diffs = [(k, derived[k][i], player[k][i]) for k in keys]
+        n = max(1, len(diffs))
+        report[dim] = {
+            "exact": round(100.0 * sum(d == p for _, d, p in diffs) / n, 1),
+            "within1": round(100.0 * sum(abs(d - p) <= 1 for _, d, p in diffs) / n, 1),
+            "gaps": [(k, d, p) for k, d, p in diffs if abs(d - p) >= 2],
+        }
+    return report
+
+
+def format_report(report: Dict[str, dict]) -> str:
+    lines = ["# Rapport de contrôle des notes calculées", "",
+             "Accord du calcul avec les notes du joueur (critère : ≥ 50 % exact, ≥ 85 % à ±1).", "",
+             "| Dimension | Exact | ±1 | Écarts ≥ 2 |", "|---|---|---|---|"]
+    for dim, r in report.items():
+        ok = "" if r["exact"] >= 50 and r["within1"] >= 85 else " ✗"
+        lines.append(f"| `{dim}`{ok} | {r['exact']} % | {r['within1']} % | {len(r['gaps'])} |")
+    for dim, r in report.items():
+        if r["gaps"]:
+            lines += ["", f"## `{dim}`", ""] + [f"- {k} : calculé {d}, joueur {p}" for k, d, p in r["gaps"]]
+    return "\n".join(lines) + "\n"
+
+
+def merge_ratings(overrides: dict, derived: Dict[str, List[int]]) -> dict:
+    """Les notes du joueur restent ; les autres entrées reçoivent le calcul (spec §4.4)."""
+    out = {}
+    for key, entry in overrides.items():
+        if key.startswith("_") or not isinstance(entry, dict):
+            out[key] = entry
+            continue
+        entry = dict(entry)
+        if "ratings" in entry and entry.get("ratings_source", "joueur") == "joueur":
+            entry["ratings_source"] = "joueur"
+        elif key in derived:
+            entry["ratings"] = list(derived[key])
+            entry["ratings_source"] = "calcul"
+        out[key] = entry
+    return out
+
+
+def apply_teamfight(overrides: dict, teamfight: Dict[str, int]) -> dict:
+    """La mesure pro remplace teamfight partout, notes du joueur comprises (spec §2)."""
+    out = {}
+    for key, entry in overrides.items():
+        if isinstance(entry, dict) and "ratings" in entry and key in teamfight:
+            entry = dict(entry)
+            ratings = list(entry["ratings"])
+            ratings[DIMENSIONS.index("teamfight")] = int(teamfight[key])
+            entry["ratings"] = ratings
+        out[key] = entry
+    return out
+
+
+def dump_overrides(data: dict) -> str:
+    """Même format que le fichier versionné : indentation 2, CRLF, sans saut de ligne final."""
+    return json.dumps(data, indent=2).replace("\n", "\r\n")
+
+
+def player_ratings(overrides: dict) -> Dict[str, List[int]]:
+    return {k: v["ratings"] for k, v in overrides.items()
+            if isinstance(v, dict) and "ratings" in v and v.get("ratings_source", "joueur") == "joueur"}
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--fetch", action="store_true", help="recollecter les faits publiés")
+    ap.add_argument("--write", action="store_true", help="écrire les notes calculées dans les overrides")
     args = ap.parse_args()
     if args.fetch or not FACTS_PATH.exists():
         facts, unmatched = fetch_facts()
         FACTS_PATH.write_text(json.dumps(facts, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
         print(f"{len(facts) - 1} champions collectés ; noms du wiki sans correspondance : {unmatched}")
+    facts = load_facts()
+    derived = {k: derive(f) for k, f in facts.items()}
+    overrides = json.loads(OVERRIDES.read_text(encoding="utf-8"))
+    report = control_report(derived, player_ratings(overrides))
+    REPORT_PATH.write_text(format_report(report), encoding="utf-8", newline="\n")
+    for dim, r in report.items():
+        print(f"{dim:10} exact {r['exact']:5.1f} %  ±1 {r['within1']:5.1f} %  écarts≥2 {len(r['gaps'])}")
+    if args.write:
+        merged = merge_ratings(overrides, derived)
+        OVERRIDES.write_bytes(dump_overrides(merged).encode("utf-8"))
+        print(f"Écrit : {OVERRIDES}")
     return 0
 
 
