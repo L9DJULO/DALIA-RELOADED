@@ -1,0 +1,2106 @@
+{
+  "_meta": {
+    "ddragon": "16.19.1",
+    "fetched": "2026-09-25",
+    "unmatched_wiki": [
+      "Champion classes/Marksman",
+      "Champion classes/Specialist"
+    ]
+  },
+  "Aatrox": {
+    "damage": 3,
+    "durability": 3,
+    "crowd_control": 2,
+    "mobility": 2,
+    "utility": 2,
+    "style": 3,
+    "ranged": false,
+    "subclasses": [
+      "Juggernaut"
+    ]
+  },
+  "Ahri": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 2,
+    "mobility": 3,
+    "utility": 1,
+    "style": 10,
+    "ranged": true,
+    "subclasses": [
+      "Burst"
+    ]
+  },
+  "Akali": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 1,
+    "mobility": 3,
+    "utility": 1,
+    "style": 7,
+    "ranged": false,
+    "subclasses": [
+      "Assassin"
+    ]
+  },
+  "Akshan": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 1,
+    "mobility": 3,
+    "utility": 2,
+    "style": 1,
+    "ranged": true,
+    "subclasses": [
+      "Assassin",
+      "Marksman"
+    ]
+  },
+  "Alistar": {
+    "damage": 1,
+    "durability": 3,
+    "crowd_control": 3,
+    "mobility": 1,
+    "utility": 2,
+    "style": 7,
+    "ranged": false,
+    "subclasses": [
+      "Vanguard"
+    ]
+  },
+  "Ambessa": {
+    "damage": 3,
+    "durability": 2,
+    "crowd_control": 1,
+    "mobility": 3,
+    "utility": 1,
+    "style": 6,
+    "ranged": false,
+    "subclasses": [
+      "Diver",
+      "Skirmisher"
+    ]
+  },
+  "Amumu": {
+    "damage": 2,
+    "durability": 3,
+    "crowd_control": 3,
+    "mobility": 1,
+    "utility": 1,
+    "style": 9,
+    "ranged": false,
+    "subclasses": [
+      "Vanguard"
+    ]
+  },
+  "Anivia": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 3,
+    "mobility": 1,
+    "utility": 2,
+    "style": 10,
+    "ranged": true,
+    "subclasses": [
+      "Battlemage"
+    ]
+  },
+  "Annie": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 3,
+    "mobility": 1,
+    "utility": 2,
+    "style": 10,
+    "ranged": true,
+    "subclasses": [
+      "Burst"
+    ]
+  },
+  "Aphelios": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 2,
+    "mobility": 1,
+    "utility": 1,
+    "style": 3,
+    "ranged": true,
+    "subclasses": [
+      "Marksman"
+    ]
+  },
+  "Ashe": {
+    "damage": 2,
+    "durability": 1,
+    "crowd_control": 3,
+    "mobility": 1,
+    "utility": 2,
+    "style": 3,
+    "ranged": true,
+    "subclasses": [
+      "Marksman"
+    ]
+  },
+  "AurelionSol": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 2,
+    "mobility": 2,
+    "utility": 1,
+    "style": 10,
+    "ranged": true,
+    "subclasses": [
+      "Battlemage"
+    ]
+  },
+  "Aurora": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 2,
+    "mobility": 3,
+    "utility": 1,
+    "style": 10,
+    "ranged": true,
+    "subclasses": [
+      "Assassin",
+      "Burst"
+    ]
+  },
+  "Azir": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 2,
+    "mobility": 2,
+    "utility": 1,
+    "style": 5,
+    "ranged": true,
+    "subclasses": [
+      "Specialist"
+    ]
+  },
+  "Bard": {
+    "damage": 1,
+    "durability": 1,
+    "crowd_control": 3,
+    "mobility": 2,
+    "utility": 3,
+    "style": 7,
+    "ranged": true,
+    "subclasses": [
+      "Catcher"
+    ]
+  },
+  "Belveth": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 2,
+    "mobility": 3,
+    "utility": 1,
+    "style": 1,
+    "ranged": false,
+    "subclasses": [
+      "Skirmisher"
+    ]
+  },
+  "Blitzcrank": {
+    "damage": 1,
+    "durability": 2,
+    "crowd_control": 3,
+    "mobility": 1,
+    "utility": 1,
+    "style": 9,
+    "ranged": false,
+    "subclasses": [
+      "Catcher"
+    ]
+  },
+  "Brand": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 2,
+    "mobility": 1,
+    "utility": 1,
+    "style": 10,
+    "ranged": true,
+    "subclasses": [
+      "Burst"
+    ]
+  },
+  "Braum": {
+    "damage": 1,
+    "durability": 2,
+    "crowd_control": 3,
+    "mobility": 1,
+    "utility": 2,
+    "style": 9,
+    "ranged": false,
+    "subclasses": [
+      "Warden"
+    ]
+  },
+  "Briar": {
+    "damage": 2,
+    "durability": 2,
+    "crowd_control": 3,
+    "mobility": 3,
+    "utility": 1,
+    "style": 2,
+    "ranged": false,
+    "subclasses": [
+      "Diver"
+    ]
+  },
+  "Caitlyn": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 2,
+    "mobility": 2,
+    "utility": 1,
+    "style": 2,
+    "ranged": true,
+    "subclasses": [
+      "Marksman"
+    ]
+  },
+  "Camille": {
+    "damage": 3,
+    "durability": 2,
+    "crowd_control": 2,
+    "mobility": 3,
+    "utility": 1,
+    "style": 4,
+    "ranged": false,
+    "subclasses": [
+      "Diver"
+    ]
+  },
+  "Cassiopeia": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 3,
+    "mobility": 1,
+    "utility": 1,
+    "style": 10,
+    "ranged": true,
+    "subclasses": [
+      "Battlemage"
+    ]
+  },
+  "Chogath": {
+    "damage": 2,
+    "durability": 3,
+    "crowd_control": 2,
+    "mobility": 1,
+    "utility": 1,
+    "style": 7,
+    "ranged": false,
+    "subclasses": [
+      "Specialist"
+    ]
+  },
+  "Corki": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 1,
+    "mobility": 2,
+    "utility": 1,
+    "style": 5,
+    "ranged": true,
+    "subclasses": [
+      "Marksman"
+    ]
+  },
+  "Darius": {
+    "damage": 3,
+    "durability": 2,
+    "crowd_control": 2,
+    "mobility": 1,
+    "utility": 1,
+    "style": 6,
+    "ranged": false,
+    "subclasses": [
+      "Juggernaut"
+    ]
+  },
+  "Diana": {
+    "damage": 3,
+    "durability": 2,
+    "crowd_control": 2,
+    "mobility": 2,
+    "utility": 1,
+    "style": 7,
+    "ranged": false,
+    "subclasses": [
+      "Assassin",
+      "Diver"
+    ]
+  },
+  "DrMundo": {
+    "damage": 2,
+    "durability": 3,
+    "crowd_control": 1,
+    "mobility": 1,
+    "utility": 1,
+    "style": 6,
+    "ranged": false,
+    "subclasses": [
+      "Juggernaut"
+    ]
+  },
+  "Draven": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 1,
+    "mobility": 2,
+    "utility": 1,
+    "style": 2,
+    "ranged": true,
+    "subclasses": [
+      "Marksman"
+    ]
+  },
+  "Ekko": {
+    "damage": 3,
+    "durability": 2,
+    "crowd_control": 2,
+    "mobility": 3,
+    "utility": 1,
+    "style": 8,
+    "ranged": false,
+    "subclasses": [
+      "Assassin"
+    ]
+  },
+  "Elise": {
+    "damage": 2,
+    "durability": 2,
+    "crowd_control": 2,
+    "mobility": 2,
+    "utility": 1,
+    "style": 7,
+    "ranged": true,
+    "subclasses": [
+      "Diver"
+    ]
+  },
+  "Evelynn": {
+    "damage": 2,
+    "durability": 2,
+    "crowd_control": 1,
+    "mobility": 2,
+    "utility": 2,
+    "style": 8,
+    "ranged": false,
+    "subclasses": [
+      "Assassin"
+    ]
+  },
+  "Ezreal": {
+    "damage": 1,
+    "durability": 1,
+    "crowd_control": 1,
+    "mobility": 1,
+    "utility": 1,
+    "style": 1,
+    "ranged": true,
+    "subclasses": [
+      "Marksman"
+    ]
+  },
+  "Fiddlesticks": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 3,
+    "mobility": 1,
+    "utility": 1,
+    "style": 10,
+    "ranged": true,
+    "subclasses": [
+      "Specialist"
+    ]
+  },
+  "Fiora": {
+    "damage": 3,
+    "durability": 2,
+    "crowd_control": 2,
+    "mobility": 2,
+    "utility": 2,
+    "style": 3,
+    "ranged": false,
+    "subclasses": [
+      "Skirmisher"
+    ]
+  },
+  "Fizz": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 2,
+    "mobility": 3,
+    "utility": 1,
+    "style": 9,
+    "ranged": false,
+    "subclasses": [
+      "Assassin"
+    ]
+  },
+  "Galio": {
+    "damage": 2,
+    "durability": 3,
+    "crowd_control": 3,
+    "mobility": 2,
+    "utility": 1,
+    "style": 10,
+    "ranged": false,
+    "subclasses": [
+      "Warden"
+    ]
+  },
+  "Gangplank": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 1,
+    "mobility": 1,
+    "utility": 2,
+    "style": 8,
+    "ranged": false,
+    "subclasses": [
+      "Specialist"
+    ]
+  },
+  "Garen": {
+    "damage": 2,
+    "durability": 3,
+    "crowd_control": 1,
+    "mobility": 1,
+    "utility": 1,
+    "style": 8,
+    "ranged": false,
+    "subclasses": [
+      "Juggernaut"
+    ]
+  },
+  "Gnar": {
+    "damage": 2,
+    "durability": 3,
+    "crowd_control": 2,
+    "mobility": 2,
+    "utility": 1,
+    "style": 5,
+    "ranged": true,
+    "subclasses": [
+      "Specialist"
+    ]
+  },
+  "Gragas": {
+    "damage": 2,
+    "durability": 3,
+    "crowd_control": 3,
+    "mobility": 2,
+    "utility": 1,
+    "style": 9,
+    "ranged": false,
+    "subclasses": [
+      "Vanguard"
+    ]
+  },
+  "Graves": {
+    "damage": 3,
+    "durability": 2,
+    "crowd_control": 1,
+    "mobility": 2,
+    "utility": 2,
+    "style": 3,
+    "ranged": true,
+    "subclasses": [
+      "Specialist"
+    ]
+  },
+  "Gwen": {
+    "damage": 3,
+    "durability": 2,
+    "crowd_control": 1,
+    "mobility": 3,
+    "utility": 1,
+    "style": 5,
+    "ranged": false,
+    "subclasses": [
+      "Skirmisher"
+    ]
+  },
+  "Hecarim": {
+    "damage": 2,
+    "durability": 2,
+    "crowd_control": 2,
+    "mobility": 2,
+    "utility": 1,
+    "style": 7,
+    "ranged": false,
+    "subclasses": [
+      "Diver"
+    ]
+  },
+  "Heimerdinger": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 2,
+    "mobility": 1,
+    "utility": 2,
+    "style": 10,
+    "ranged": true,
+    "subclasses": [
+      "Specialist"
+    ]
+  },
+  "Hwei": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 3,
+    "mobility": 1,
+    "utility": 2,
+    "style": 9,
+    "ranged": true,
+    "subclasses": [
+      "Artillery"
+    ]
+  },
+  "Illaoi": {
+    "damage": 3,
+    "durability": 2,
+    "crowd_control": 1,
+    "mobility": 1,
+    "utility": 1,
+    "style": 7,
+    "ranged": false,
+    "subclasses": [
+      "Juggernaut"
+    ]
+  },
+  "Irelia": {
+    "damage": 2,
+    "durability": 2,
+    "crowd_control": 2,
+    "mobility": 3,
+    "utility": 2,
+    "style": 4,
+    "ranged": false,
+    "subclasses": [
+      "Diver"
+    ]
+  },
+  "Ivern": {
+    "damage": 1,
+    "durability": 1,
+    "crowd_control": 3,
+    "mobility": 2,
+    "utility": 3,
+    "style": 1,
+    "ranged": true,
+    "subclasses": [
+      "Catcher"
+    ]
+  },
+  "Janna": {
+    "damage": 1,
+    "durability": 1,
+    "crowd_control": 3,
+    "mobility": 1,
+    "utility": 3,
+    "style": 10,
+    "ranged": true,
+    "subclasses": [
+      "Enchanter"
+    ]
+  },
+  "JarvanIV": {
+    "damage": 2,
+    "durability": 2,
+    "crowd_control": 2,
+    "mobility": 2,
+    "utility": 2,
+    "style": 6,
+    "ranged": false,
+    "subclasses": [
+      "Diver"
+    ]
+  },
+  "Jax": {
+    "damage": 3,
+    "durability": 2,
+    "crowd_control": 2,
+    "mobility": 2,
+    "utility": 1,
+    "style": 2,
+    "ranged": false,
+    "subclasses": [
+      "Skirmisher"
+    ]
+  },
+  "Jayce": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 1,
+    "mobility": 2,
+    "utility": 2,
+    "style": 5,
+    "ranged": true,
+    "subclasses": [
+      "Artillery"
+    ]
+  },
+  "Jhin": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 2,
+    "mobility": 1,
+    "utility": 1,
+    "style": 3,
+    "ranged": true,
+    "subclasses": [
+      "Catcher",
+      "Marksman"
+    ]
+  },
+  "Jinx": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 2,
+    "mobility": 1,
+    "utility": 1,
+    "style": 2,
+    "ranged": true,
+    "subclasses": [
+      "Marksman"
+    ]
+  },
+  "KSante": {
+    "damage": 2,
+    "durability": 3,
+    "crowd_control": 3,
+    "mobility": 2,
+    "utility": 2,
+    "style": 3,
+    "ranged": false,
+    "subclasses": [
+      "Skirmisher",
+      "Warden"
+    ]
+  },
+  "Kaisa": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 0,
+    "mobility": 3,
+    "utility": 1,
+    "style": 2,
+    "ranged": true,
+    "subclasses": [
+      "Marksman"
+    ]
+  },
+  "Kalista": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 1,
+    "mobility": 3,
+    "utility": 2,
+    "style": 2,
+    "ranged": true,
+    "subclasses": [
+      "Marksman"
+    ]
+  },
+  "Karma": {
+    "damage": 2,
+    "durability": 1,
+    "crowd_control": 2,
+    "mobility": 1,
+    "utility": 2,
+    "style": 10,
+    "ranged": true,
+    "subclasses": [
+      "Burst",
+      "Enchanter"
+    ]
+  },
+  "Karthus": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 1,
+    "mobility": 1,
+    "utility": 2,
+    "style": 10,
+    "ranged": true,
+    "subclasses": [
+      "Battlemage"
+    ]
+  },
+  "Kassadin": {
+    "damage": 3,
+    "durability": 2,
+    "crowd_control": 1,
+    "mobility": 3,
+    "utility": 1,
+    "style": 9,
+    "ranged": false,
+    "subclasses": [
+      "Assassin"
+    ]
+  },
+  "Katarina": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 1,
+    "mobility": 3,
+    "utility": 1,
+    "style": 10,
+    "ranged": false,
+    "subclasses": [
+      "Assassin"
+    ]
+  },
+  "Kayle": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 1,
+    "mobility": 1,
+    "utility": 3,
+    "style": 3,
+    "ranged": false,
+    "subclasses": [
+      "Specialist"
+    ]
+  },
+  "Kayn": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 1,
+    "mobility": 3,
+    "utility": 1,
+    "style": 1,
+    "ranged": false,
+    "subclasses": [
+      "Skirmisher"
+    ]
+  },
+  "Kennen": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 3,
+    "mobility": 1,
+    "utility": 1,
+    "style": 7,
+    "ranged": true,
+    "subclasses": [
+      "Specialist"
+    ]
+  },
+  "Khazix": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 1,
+    "mobility": 2,
+    "utility": 1,
+    "style": 6,
+    "ranged": false,
+    "subclasses": [
+      "Assassin"
+    ]
+  },
+  "Kindred": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 2,
+    "mobility": 3,
+    "utility": 2,
+    "style": 3,
+    "ranged": true,
+    "subclasses": [
+      "Marksman"
+    ]
+  },
+  "Kled": {
+    "damage": 3,
+    "durability": 2,
+    "crowd_control": 1,
+    "mobility": 3,
+    "utility": 1,
+    "style": 3,
+    "ranged": false,
+    "subclasses": [
+      "Skirmisher"
+    ]
+  },
+  "KogMaw": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 1,
+    "mobility": 1,
+    "utility": 1,
+    "style": 2,
+    "ranged": true,
+    "subclasses": [
+      "Marksman"
+    ]
+  },
+  "Leblanc": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 2,
+    "mobility": 3,
+    "utility": 1,
+    "style": 10,
+    "ranged": true,
+    "subclasses": [
+      "Assassin",
+      "Burst"
+    ]
+  },
+  "LeeSin": {
+    "damage": 3,
+    "durability": 2,
+    "crowd_control": 2,
+    "mobility": 3,
+    "utility": 1,
+    "style": 6,
+    "ranged": false,
+    "subclasses": [
+      "Diver"
+    ]
+  },
+  "Leona": {
+    "damage": 1,
+    "durability": 3,
+    "crowd_control": 3,
+    "mobility": 1,
+    "utility": 1,
+    "style": 9,
+    "ranged": false,
+    "subclasses": [
+      "Vanguard"
+    ]
+  },
+  "Lillia": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 2,
+    "mobility": 2,
+    "utility": 2,
+    "style": 8,
+    "ranged": false,
+    "subclasses": [
+      "Skirmisher"
+    ]
+  },
+  "Lissandra": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 3,
+    "mobility": 2,
+    "utility": 1,
+    "style": 10,
+    "ranged": true,
+    "subclasses": [
+      "Burst"
+    ]
+  },
+  "Locke": {
+    "damage": 3,
+    "durability": 2,
+    "crowd_control": 1,
+    "mobility": 3,
+    "utility": 1,
+    "style": 8,
+    "ranged": false,
+    "subclasses": [
+      "Assassin"
+    ]
+  },
+  "Lucian": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 1,
+    "mobility": 3,
+    "utility": 1,
+    "style": 4,
+    "ranged": true,
+    "subclasses": [
+      "Marksman"
+    ]
+  },
+  "Lulu": {
+    "damage": 2,
+    "durability": 1,
+    "crowd_control": 2,
+    "mobility": 1,
+    "utility": 3,
+    "style": 8,
+    "ranged": true,
+    "subclasses": [
+      "Enchanter"
+    ]
+  },
+  "Lux": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 2,
+    "mobility": 1,
+    "utility": 2,
+    "style": 9,
+    "ranged": true,
+    "subclasses": [
+      "Artillery",
+      "Burst"
+    ]
+  },
+  "Malphite": {
+    "damage": 1,
+    "durability": 3,
+    "crowd_control": 3,
+    "mobility": 1,
+    "utility": 1,
+    "style": 8,
+    "ranged": false,
+    "subclasses": [
+      "Vanguard"
+    ]
+  },
+  "Malzahar": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 3,
+    "mobility": 1,
+    "utility": 2,
+    "style": 10,
+    "ranged": true,
+    "subclasses": [
+      "Battlemage"
+    ]
+  },
+  "Maokai": {
+    "damage": 1,
+    "durability": 3,
+    "crowd_control": 3,
+    "mobility": 1,
+    "utility": 2,
+    "style": 8,
+    "ranged": false,
+    "subclasses": [
+      "Vanguard"
+    ]
+  },
+  "MasterYi": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 1,
+    "mobility": 2,
+    "utility": 1,
+    "style": 2,
+    "ranged": false,
+    "subclasses": [
+      "Skirmisher"
+    ]
+  },
+  "Mel": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 2,
+    "mobility": 1,
+    "utility": 1,
+    "style": 10,
+    "ranged": true,
+    "subclasses": [
+      "Artillery"
+    ]
+  },
+  "Milio": {
+    "damage": 1,
+    "durability": 1,
+    "crowd_control": 2,
+    "mobility": 1,
+    "utility": 3,
+    "style": 8,
+    "ranged": true,
+    "subclasses": [
+      "Enchanter"
+    ]
+  },
+  "MissFortune": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 1,
+    "mobility": 1,
+    "utility": 1,
+    "style": 4,
+    "ranged": true,
+    "subclasses": [
+      "Marksman"
+    ]
+  },
+  "MonkeyKing": {
+    "damage": 2,
+    "durability": 2,
+    "crowd_control": 2,
+    "mobility": 2,
+    "utility": 1,
+    "style": 6,
+    "ranged": false,
+    "subclasses": [
+      "Diver"
+    ]
+  },
+  "Mordekaiser": {
+    "damage": 3,
+    "durability": 2,
+    "crowd_control": 1,
+    "mobility": 1,
+    "utility": 2,
+    "style": 8,
+    "ranged": false,
+    "subclasses": [
+      "Juggernaut"
+    ]
+  },
+  "Morgana": {
+    "damage": 2,
+    "durability": 1,
+    "crowd_control": 3,
+    "mobility": 1,
+    "utility": 2,
+    "style": 10,
+    "ranged": true,
+    "subclasses": [
+      "Catcher"
+    ]
+  },
+  "Naafiri": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 1,
+    "mobility": 3,
+    "utility": 1,
+    "style": 7,
+    "ranged": false,
+    "subclasses": [
+      "Assassin"
+    ]
+  },
+  "Nami": {
+    "damage": 1,
+    "durability": 1,
+    "crowd_control": 3,
+    "mobility": 1,
+    "utility": 2,
+    "style": 9,
+    "ranged": true,
+    "subclasses": [
+      "Enchanter"
+    ]
+  },
+  "Nasus": {
+    "damage": 2,
+    "durability": 3,
+    "crowd_control": 2,
+    "mobility": 1,
+    "utility": 1,
+    "style": 3,
+    "ranged": false,
+    "subclasses": [
+      "Juggernaut"
+    ]
+  },
+  "Nautilus": {
+    "damage": 1,
+    "durability": 3,
+    "crowd_control": 3,
+    "mobility": 1,
+    "utility": 1,
+    "style": 8,
+    "ranged": false,
+    "subclasses": [
+      "Vanguard"
+    ]
+  },
+  "Neeko": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 3,
+    "mobility": 1,
+    "utility": 1,
+    "style": 8,
+    "ranged": true,
+    "subclasses": [
+      "Burst",
+      "Catcher"
+    ]
+  },
+  "Nidalee": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 1,
+    "mobility": 3,
+    "utility": 2,
+    "style": 8,
+    "ranged": true,
+    "subclasses": [
+      "Specialist"
+    ]
+  },
+  "Nilah": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 1,
+    "mobility": 3,
+    "utility": 2,
+    "style": 3,
+    "ranged": false,
+    "subclasses": [
+      "Skirmisher"
+    ]
+  },
+  "Nocturne": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 2,
+    "mobility": 2,
+    "utility": 2,
+    "style": 4,
+    "ranged": false,
+    "subclasses": [
+      "Assassin"
+    ]
+  },
+  "Nunu": {
+    "damage": 1,
+    "durability": 3,
+    "crowd_control": 2,
+    "mobility": 1,
+    "utility": 2,
+    "style": 8,
+    "ranged": false,
+    "subclasses": [
+      "Vanguard"
+    ]
+  },
+  "Olaf": {
+    "damage": 2,
+    "durability": 2,
+    "crowd_control": 2,
+    "mobility": 1,
+    "utility": 1,
+    "style": 4,
+    "ranged": false,
+    "subclasses": [
+      "Diver"
+    ]
+  },
+  "Orianna": {
+    "damage": 2,
+    "durability": 1,
+    "crowd_control": 2,
+    "mobility": 1,
+    "utility": 2,
+    "style": 9,
+    "ranged": true,
+    "subclasses": [
+      "Burst"
+    ]
+  },
+  "Ornn": {
+    "damage": 1,
+    "durability": 3,
+    "crowd_control": 3,
+    "mobility": 1,
+    "utility": 2,
+    "style": 7,
+    "ranged": false,
+    "subclasses": [
+      "Vanguard"
+    ]
+  },
+  "Pantheon": {
+    "damage": 3,
+    "durability": 2,
+    "crowd_control": 2,
+    "mobility": 2,
+    "utility": 1,
+    "style": 8,
+    "ranged": false,
+    "subclasses": [
+      "Diver"
+    ]
+  },
+  "Poppy": {
+    "damage": 2,
+    "durability": 3,
+    "crowd_control": 3,
+    "mobility": 2,
+    "utility": 1,
+    "style": 8,
+    "ranged": false,
+    "subclasses": [
+      "Warden"
+    ]
+  },
+  "Pyke": {
+    "damage": 2,
+    "durability": 1,
+    "crowd_control": 3,
+    "mobility": 3,
+    "utility": 1,
+    "style": 7,
+    "ranged": false,
+    "subclasses": [
+      "Assassin",
+      "Catcher"
+    ]
+  },
+  "Qiyana": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 2,
+    "mobility": 2,
+    "utility": 1,
+    "style": 7,
+    "ranged": false,
+    "subclasses": [
+      "Assassin"
+    ]
+  },
+  "Quinn": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 2,
+    "mobility": 3,
+    "utility": 1,
+    "style": 3,
+    "ranged": true,
+    "subclasses": [
+      "Specialist"
+    ]
+  },
+  "Rakan": {
+    "damage": 1,
+    "durability": 2,
+    "crowd_control": 3,
+    "mobility": 3,
+    "utility": 3,
+    "style": 9,
+    "ranged": false,
+    "subclasses": [
+      "Catcher"
+    ]
+  },
+  "Rammus": {
+    "damage": 2,
+    "durability": 3,
+    "crowd_control": 3,
+    "mobility": 2,
+    "utility": 1,
+    "style": 7,
+    "ranged": false,
+    "subclasses": [
+      "Vanguard"
+    ]
+  },
+  "RekSai": {
+    "damage": 2,
+    "durability": 2,
+    "crowd_control": 2,
+    "mobility": 2,
+    "utility": 2,
+    "style": 4,
+    "ranged": false,
+    "subclasses": [
+      "Diver"
+    ]
+  },
+  "Rell": {
+    "damage": 1,
+    "durability": 3,
+    "crowd_control": 3,
+    "mobility": 2,
+    "utility": 2,
+    "style": 9,
+    "ranged": false,
+    "subclasses": [
+      "Vanguard"
+    ]
+  },
+  "Renata": {
+    "damage": 2,
+    "durability": 1,
+    "crowd_control": 3,
+    "mobility": 1,
+    "utility": 2,
+    "style": 8,
+    "ranged": true,
+    "subclasses": [
+      "Enchanter"
+    ]
+  },
+  "Renekton": {
+    "damage": 2,
+    "durability": 2,
+    "crowd_control": 2,
+    "mobility": 2,
+    "utility": 1,
+    "style": 5,
+    "ranged": false,
+    "subclasses": [
+      "Diver"
+    ]
+  },
+  "Rengar": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 2,
+    "mobility": 2,
+    "utility": 1,
+    "style": 4,
+    "ranged": false,
+    "subclasses": [
+      "Assassin",
+      "Diver"
+    ]
+  },
+  "Riven": {
+    "damage": 3,
+    "durability": 2,
+    "crowd_control": 2,
+    "mobility": 3,
+    "utility": 1,
+    "style": 8,
+    "ranged": false,
+    "subclasses": [
+      "Skirmisher"
+    ]
+  },
+  "Rumble": {
+    "damage": 3,
+    "durability": 2,
+    "crowd_control": 2,
+    "mobility": 1,
+    "utility": 1,
+    "style": 9,
+    "ranged": false,
+    "subclasses": [
+      "Battlemage"
+    ]
+  },
+  "Ryze": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 2,
+    "mobility": 2,
+    "utility": 2,
+    "style": 10,
+    "ranged": true,
+    "subclasses": [
+      "Battlemage"
+    ]
+  },
+  "Samira": {
+    "damage": 3,
+    "durability": 2,
+    "crowd_control": 1,
+    "mobility": 3,
+    "utility": 1,
+    "style": 1,
+    "ranged": true,
+    "subclasses": [
+      "Marksman"
+    ]
+  },
+  "Sejuani": {
+    "damage": 2,
+    "durability": 2,
+    "crowd_control": 3,
+    "mobility": 2,
+    "utility": 1,
+    "style": 8,
+    "ranged": false,
+    "subclasses": [
+      "Vanguard"
+    ]
+  },
+  "Senna": {
+    "damage": 2,
+    "durability": 1,
+    "crowd_control": 2,
+    "mobility": 1,
+    "utility": 3,
+    "style": 3,
+    "ranged": true,
+    "subclasses": [
+      "Enchanter",
+      "Marksman"
+    ]
+  },
+  "Seraphine": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 3,
+    "mobility": 1,
+    "utility": 2,
+    "style": 10,
+    "ranged": true,
+    "subclasses": [
+      "Burst",
+      "Enchanter"
+    ]
+  },
+  "Sett": {
+    "damage": 2,
+    "durability": 2,
+    "crowd_control": 2,
+    "mobility": 2,
+    "utility": 1,
+    "style": 4,
+    "ranged": false,
+    "subclasses": [
+      "Juggernaut"
+    ]
+  },
+  "Shaco": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 2,
+    "mobility": 2,
+    "utility": 2,
+    "style": 5,
+    "ranged": false,
+    "subclasses": [
+      "Assassin"
+    ]
+  },
+  "Shen": {
+    "damage": 2,
+    "durability": 3,
+    "crowd_control": 2,
+    "mobility": 2,
+    "utility": 3,
+    "style": 5,
+    "ranged": false,
+    "subclasses": [
+      "Warden"
+    ]
+  },
+  "Shyvana": {
+    "damage": 2,
+    "durability": 2,
+    "crowd_control": 1,
+    "mobility": 2,
+    "utility": 1,
+    "style": 6,
+    "ranged": false,
+    "subclasses": [
+      "Diver"
+    ]
+  },
+  "Singed": {
+    "damage": 2,
+    "durability": 3,
+    "crowd_control": 2,
+    "mobility": 2,
+    "utility": 1,
+    "style": 10,
+    "ranged": false,
+    "subclasses": [
+      "Specialist"
+    ]
+  },
+  "Sion": {
+    "damage": 2,
+    "durability": 3,
+    "crowd_control": 3,
+    "mobility": 1,
+    "utility": 1,
+    "style": 7,
+    "ranged": false,
+    "subclasses": [
+      "Vanguard"
+    ]
+  },
+  "Sivir": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 1,
+    "mobility": 1,
+    "utility": 2,
+    "style": 2,
+    "ranged": true,
+    "subclasses": [
+      "Marksman"
+    ]
+  },
+  "Skarner": {
+    "damage": 2,
+    "durability": 3,
+    "crowd_control": 3,
+    "mobility": 2,
+    "utility": 1,
+    "style": 5,
+    "ranged": false,
+    "subclasses": [
+      "Juggernaut",
+      "Vanguard"
+    ]
+  },
+  "Smolder": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 1,
+    "mobility": 1,
+    "utility": 1,
+    "style": 4,
+    "ranged": true,
+    "subclasses": [
+      "Marksman"
+    ]
+  },
+  "Sona": {
+    "damage": 2,
+    "durability": 1,
+    "crowd_control": 2,
+    "mobility": 1,
+    "utility": 2,
+    "style": 9,
+    "ranged": true,
+    "subclasses": [
+      "Enchanter"
+    ]
+  },
+  "Soraka": {
+    "damage": 1,
+    "durability": 1,
+    "crowd_control": 2,
+    "mobility": 1,
+    "utility": 3,
+    "style": 10,
+    "ranged": true,
+    "subclasses": [
+      "Enchanter"
+    ]
+  },
+  "Swain": {
+    "damage": 2,
+    "durability": 2,
+    "crowd_control": 2,
+    "mobility": 1,
+    "utility": 1,
+    "style": 10,
+    "ranged": true,
+    "subclasses": [
+      "Battlemage"
+    ]
+  },
+  "Sylas": {
+    "damage": 2,
+    "durability": 2,
+    "crowd_control": 1,
+    "mobility": 3,
+    "utility": 1,
+    "style": 7,
+    "ranged": false,
+    "subclasses": [
+      "Burst",
+      "Skirmisher"
+    ]
+  },
+  "Syndra": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 2,
+    "mobility": 1,
+    "utility": 1,
+    "style": 10,
+    "ranged": true,
+    "subclasses": [
+      "Burst"
+    ]
+  },
+  "TahmKench": {
+    "damage": 2,
+    "durability": 3,
+    "crowd_control": 2,
+    "mobility": 1,
+    "utility": 3,
+    "style": 7,
+    "ranged": false,
+    "subclasses": [
+      "Warden"
+    ]
+  },
+  "Taliyah": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 2,
+    "mobility": 1,
+    "utility": 3,
+    "style": 10,
+    "ranged": true,
+    "subclasses": [
+      "Battlemage"
+    ]
+  },
+  "Talon": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 1,
+    "mobility": 2,
+    "utility": 1,
+    "style": 7,
+    "ranged": false,
+    "subclasses": [
+      "Assassin"
+    ]
+  },
+  "Taric": {
+    "damage": 1,
+    "durability": 2,
+    "crowd_control": 2,
+    "mobility": 1,
+    "utility": 3,
+    "style": 8,
+    "ranged": false,
+    "subclasses": [
+      "Enchanter",
+      "Warden"
+    ]
+  },
+  "Teemo": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 2,
+    "mobility": 1,
+    "utility": 2,
+    "style": 4,
+    "ranged": true,
+    "subclasses": [
+      "Marksman",
+      "Specialist"
+    ]
+  },
+  "Thresh": {
+    "damage": 1,
+    "durability": 2,
+    "crowd_control": 3,
+    "mobility": 1,
+    "utility": 3,
+    "style": 8,
+    "ranged": true,
+    "subclasses": [
+      "Catcher"
+    ]
+  },
+  "Tristana": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 2,
+    "mobility": 2,
+    "utility": 1,
+    "style": 3,
+    "ranged": true,
+    "subclasses": [
+      "Marksman"
+    ]
+  },
+  "Trundle": {
+    "damage": 2,
+    "durability": 3,
+    "crowd_control": 1,
+    "mobility": 1,
+    "utility": 2,
+    "style": 3,
+    "ranged": false,
+    "subclasses": [
+      "Juggernaut"
+    ]
+  },
+  "Tryndamere": {
+    "damage": 3,
+    "durability": 2,
+    "crowd_control": 1,
+    "mobility": 2,
+    "utility": 1,
+    "style": 2,
+    "ranged": false,
+    "subclasses": [
+      "Skirmisher"
+    ]
+  },
+  "TwistedFate": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 2,
+    "mobility": 2,
+    "utility": 2,
+    "style": 7,
+    "ranged": true,
+    "subclasses": [
+      "Burst"
+    ]
+  },
+  "Twitch": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 1,
+    "mobility": 2,
+    "utility": 1,
+    "style": 1,
+    "ranged": true,
+    "subclasses": [
+      "Marksman"
+    ]
+  },
+  "Udyr": {
+    "damage": 2,
+    "durability": 3,
+    "crowd_control": 2,
+    "mobility": 2,
+    "utility": 1,
+    "style": 4,
+    "ranged": false,
+    "subclasses": [
+      "Juggernaut"
+    ]
+  },
+  "Urgot": {
+    "damage": 2,
+    "durability": 2,
+    "crowd_control": 2,
+    "mobility": 1,
+    "utility": 1,
+    "style": 6,
+    "ranged": true,
+    "subclasses": [
+      "Juggernaut"
+    ]
+  },
+  "Varus": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 2,
+    "mobility": 1,
+    "utility": 1,
+    "style": 3,
+    "ranged": true,
+    "subclasses": [
+      "Artillery",
+      "Marksman"
+    ]
+  },
+  "Vayne": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 2,
+    "mobility": 2,
+    "utility": 1,
+    "style": 1,
+    "ranged": true,
+    "subclasses": [
+      "Marksman"
+    ]
+  },
+  "Veigar": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 3,
+    "mobility": 1,
+    "utility": 1,
+    "style": 10,
+    "ranged": true,
+    "subclasses": [
+      "Burst"
+    ]
+  },
+  "Velkoz": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 2,
+    "mobility": 1,
+    "utility": 1,
+    "style": 10,
+    "ranged": true,
+    "subclasses": [
+      "Artillery"
+    ]
+  },
+  "Vex": {
+    "damage": 3,
+    "durability": 2,
+    "crowd_control": 2,
+    "mobility": 2,
+    "utility": 1,
+    "style": 9,
+    "ranged": true,
+    "subclasses": [
+      "Burst"
+    ]
+  },
+  "Vi": {
+    "damage": 2,
+    "durability": 2,
+    "crowd_control": 3,
+    "mobility": 2,
+    "utility": 1,
+    "style": 6,
+    "ranged": false,
+    "subclasses": [
+      "Diver"
+    ]
+  },
+  "Viego": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 2,
+    "mobility": 2,
+    "utility": 1,
+    "style": 3,
+    "ranged": false,
+    "subclasses": [
+      "Skirmisher"
+    ]
+  },
+  "Viktor": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 2,
+    "mobility": 1,
+    "utility": 1,
+    "style": 9,
+    "ranged": true,
+    "subclasses": [
+      "Battlemage"
+    ]
+  },
+  "Vladimir": {
+    "damage": 3,
+    "durability": 2,
+    "crowd_control": 1,
+    "mobility": 1,
+    "utility": 1,
+    "style": 10,
+    "ranged": true,
+    "subclasses": [
+      "Battlemage"
+    ]
+  },
+  "Volibear": {
+    "damage": 2,
+    "durability": 3,
+    "crowd_control": 2,
+    "mobility": 2,
+    "utility": 1,
+    "style": 4,
+    "ranged": false,
+    "subclasses": [
+      "Juggernaut"
+    ]
+  },
+  "Warwick": {
+    "damage": 2,
+    "durability": 2,
+    "crowd_control": 2,
+    "mobility": 1,
+    "utility": 1,
+    "style": 4,
+    "ranged": false,
+    "subclasses": [
+      "Diver"
+    ]
+  },
+  "Xayah": {
+    "damage": 3,
+    "durability": 2,
+    "crowd_control": 3,
+    "mobility": 1,
+    "utility": 1,
+    "style": 4,
+    "ranged": true,
+    "subclasses": [
+      "Marksman"
+    ]
+  },
+  "Xerath": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 2,
+    "mobility": 1,
+    "utility": 1,
+    "style": 9,
+    "ranged": true,
+    "subclasses": [
+      "Artillery"
+    ]
+  },
+  "XinZhao": {
+    "damage": 2,
+    "durability": 2,
+    "crowd_control": 2,
+    "mobility": 2,
+    "utility": 1,
+    "style": 4,
+    "ranged": false,
+    "subclasses": [
+      "Diver"
+    ]
+  },
+  "Yasuo": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 2,
+    "mobility": 3,
+    "utility": 2,
+    "style": 3,
+    "ranged": false,
+    "subclasses": [
+      "Skirmisher"
+    ]
+  },
+  "Yone": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 2,
+    "mobility": 3,
+    "utility": 1,
+    "style": 5,
+    "ranged": false,
+    "subclasses": [
+      "Assassin",
+      "Skirmisher"
+    ]
+  },
+  "Yorick": {
+    "damage": 2,
+    "durability": 2,
+    "crowd_control": 2,
+    "mobility": 1,
+    "utility": 2,
+    "style": 6,
+    "ranged": false,
+    "subclasses": [
+      "Juggernaut"
+    ]
+  },
+  "Yunara": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 1,
+    "mobility": 2,
+    "utility": 0,
+    "style": 2,
+    "ranged": true,
+    "subclasses": [
+      "Marksman"
+    ]
+  },
+  "Yuumi": {
+    "damage": 1,
+    "durability": 1,
+    "crowd_control": 1,
+    "mobility": 3,
+    "utility": 3,
+    "style": 10,
+    "ranged": true,
+    "subclasses": [
+      "Enchanter"
+    ]
+  },
+  "Zaahen": {
+    "damage": 2,
+    "durability": 2,
+    "crowd_control": 2,
+    "mobility": 2,
+    "utility": 1,
+    "style": 4,
+    "ranged": false,
+    "subclasses": [
+      "Skirmisher"
+    ]
+  },
+  "Zac": {
+    "damage": 2,
+    "durability": 3,
+    "crowd_control": 3,
+    "mobility": 2,
+    "utility": 1,
+    "style": 10,
+    "ranged": false,
+    "subclasses": [
+      "Vanguard"
+    ]
+  },
+  "Zed": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 1,
+    "mobility": 3,
+    "utility": 1,
+    "style": 6,
+    "ranged": false,
+    "subclasses": [
+      "Assassin"
+    ]
+  },
+  "Zeri": {
+    "damage": 2,
+    "durability": 1,
+    "crowd_control": 2,
+    "mobility": 3,
+    "utility": 0,
+    "style": 4,
+    "ranged": true,
+    "subclasses": [
+      "Marksman"
+    ]
+  },
+  "Ziggs": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 2,
+    "mobility": 2,
+    "utility": 1,
+    "style": 9,
+    "ranged": true,
+    "subclasses": [
+      "Artillery"
+    ]
+  },
+  "Zilean": {
+    "damage": 2,
+    "durability": 1,
+    "crowd_control": 2,
+    "mobility": 2,
+    "utility": 3,
+    "style": 10,
+    "ranged": true,
+    "subclasses": [
+      "Specialist"
+    ]
+  },
+  "Zoe": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 2,
+    "mobility": 2,
+    "utility": 1,
+    "style": 10,
+    "ranged": true,
+    "subclasses": [
+      "Burst"
+    ]
+  },
+  "Zyra": {
+    "damage": 3,
+    "durability": 1,
+    "crowd_control": 3,
+    "mobility": 1,
+    "utility": 1,
+    "style": 10,
+    "ranged": true,
+    "subclasses": [
+      "Catcher"
+    ]
+  }
+}
