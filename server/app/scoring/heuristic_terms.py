@@ -1,5 +1,6 @@
 """Termes heuristiques convertis en points de WR : synergie de kit, mécaniques, modèle."""
 from app.config import config
+from app.models.champion import ChampionRatings
 from app.scoring.types import Term
 
 
@@ -18,7 +19,7 @@ def mechanics_term(delta: float) -> Term:
                 "règles d'interactions de kits", rel_sd=c.mechanics_rel)
 
 
-def teamfight_term(ratings) -> Term:
+def teamfight_term(ratings: ChampionRatings) -> Term:
     """Ce que le champion pese quand les dix sont groupes.
 
     Inconditionnel : ni les allies connus, ni les picks adverses, ni le rang

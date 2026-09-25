@@ -80,3 +80,19 @@ async def test_matchup_weight_scales_value_and_uncertainty_together(catalog, mon
 
     assert halved.value == pytest.approx(full.value * 0.5)
     assert halved.abs_sd == pytest.approx(full.abs_sd * 0.5)
+
+
+@pytest.mark.asyncio
+async def test_unknown_rank_uses_the_unknown_matchup_weight(catalog, monkeypatch):
+    """Sans rang (compte non lié, requête sans rang), le poids du duel est celui du rang inconnu,
+    jamais celui d'un rang particulier."""
+    from app.config import config
+    analyzer = MatchupAnalyzer(catalog, catalog.fetcher)
+    analyzer.prefetch = AsyncMock()
+    analyzer.matchup_data = AsyncMock(return_value=(0.0, 400, 0.0, -4.0))
+    draft = DraftState(my_role="mid", enemy_picks=[{"champion_id": 103, "role": "mid"}])
+    full = await matchup_term(analyzer, 61, "mid", draft, None, "master_plus")
+    monkeypatch.setattr(config.scoring, "matchup_weight_unknown", 0.25)
+    unknown = await matchup_term(analyzer, 61, "mid", draft, None, None)
+    assert unknown.value == pytest.approx(full.value * 0.25)
+    assert unknown.abs_sd == pytest.approx(full.abs_sd * 0.25)

@@ -105,9 +105,11 @@ def utility(f: ChampionFacts) -> int:
 def burst(f: ChampionFacts) -> int:
     """Dégâts concentrés en une rotation (calage du 25/09 sur les notes du joueur).
 
-    Un tireur explose une cible à proportion de sa mobilité (Draven, Samira, Lucian) ;
-    immobile, il fait des dégâts soutenus (Jinx, Kog'Maw). Un mage à gros dégâts vaut 4,
-    5 s'il est de la sous-classe Burst. Un champion à faibles dégâts garde 2.
+    Un tireur à gros dégâts explose une cible à proportion de sa mobilité (Draven, Samira,
+    Lucian) ; immobile, il fait des dégâts soutenus (Jinx, Kog'Maw). Tout autre champion à
+    gros dégâts (Riot ≥ 3) vaut 4, 5 s'il est de la sous-classe Burst. À dégâts moyens (2) :
+    4 pour un assassin, juggernaut ou diver, 3 pour un mage Burst, Battlemage ou Artillery.
+    Le reste garde 2.
     """
     if "Marksman" in f.subclasses and f.damage >= 3:
         return {3: 5, 2: 4}.get(f.mobility, 3)

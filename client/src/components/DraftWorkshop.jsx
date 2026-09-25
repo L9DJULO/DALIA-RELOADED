@@ -78,7 +78,7 @@ export function ComparePanel() {
     {data && <div aria-live="polite">
       <h4>{data.tied ? 'Choix équivalents : l\u2019écart est sous l\u2019incertitude' : `${data.score_delta > 0 ? data.left.champion_name : data.right.champion_name} est préféré de ${Math.abs(data.score_delta).toFixed(1)} points de win rate`}</h4>
       <table><thead><tr><th>Critère</th><th>{data.left.champion_name}</th><th>{data.right.champion_name}</th><th>A − B</th></tr></thead><tbody>
-        {data.dimensions.map(d => <tr key={d.dimension}><th>{DIMENSIONS[d.dimension]}</th><td>{d.left.toFixed(1)}</td><td>{d.right.toFixed(1)}</td><td>{signed(d.delta)}</td></tr>)}
+        {data.dimensions.map(d => <tr key={d.dimension}><th>{DIMENSIONS[d.dimension] || d.dimension}</th><td>{d.left.toFixed(1)}</td><td>{d.right.toFixed(1)}</td><td>{signed(d.delta)}</td></tr>)}
         <tr><th>Avantage</th><td>{formatAdvantage(data.left.total_score)} {formatSd(data.left.score_sd)}</td><td>{formatAdvantage(data.right.total_score)} {formatSd(data.right.score_sd)}</td><td>{signed(data.score_delta)} (incertitude {formatSd(data.combined_sd)})</td></tr>
       </tbody></table>
       <p className="muted">{data.explanation}</p>

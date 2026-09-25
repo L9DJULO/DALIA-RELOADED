@@ -176,8 +176,10 @@ def test_compare_reports_terms_and_tie(client):
     assert data["data_status"]["rank"] == "silver"
 
 
-def test_compare_lists_every_term_the_engine_produced(client):
+def test_compare_lists_every_term_the_engine_produced(client, monkeypatch):
     """Une liste de dimensions écrite en dur masque tout terme ajouté après elle (teamfight)."""
+    from app.config import config
+    monkeypatch.setattr(config.scoring, "teamfight_scale", 0.5)
     response = client.post('/api/draft/compare', json={"draft_state": {"my_role": "top", "enemy_picks": [{"champion_id": 59}]}, "champion_ids": [78, 75], "rank_bucket": "SILVER"})
     data = response.json()
     produced = {t["name"] for side in ("left", "right") for t in data[side]["breakdown"]["terms"]}
@@ -267,3 +269,47 @@ def test_compare_tie_uses_the_uncertainty_of_the_difference(client):
     left = [ScoreTerm(**t) for t in data["left"]["breakdown"]["terms"]]
     right = [ScoreTerm(**t) for t in data["right"]["breakdown"]["terms"]]
     assert data["combined_sd"] == pytest.approx(comparison_sd(left, right), abs=0.01)
+
+
+# ── Câblage des termes, vérifié sur ce que le moteur renvoie ──
+# Une recherche dans le source prouve l'appel, pas que le terme atteint breakdown.terms.
+
+def _top_request(enemies=()):
+    return DraftRequest(draft_state={"my_role": "top", "enemy_picks": [{"champion_id": e} for e in enemies]},
+                        champion_pool={"top": [{"champion_id": 78}, {"champion_id": 75}]}, enable_wildcard=False)
+
+
+def _terms(result, champion_id):
+    rec = next(r for r in result.recommendations if r.champion_id == champion_id)
+    return {t.name: t for t in rec.breakdown.terms}
+
+
+@pytest.mark.asyncio
+async def test_teamfight_term_reaches_the_breakdown_only_when_its_lever_is_on(catalog, monkeypatch):
+    """Levier coupé : pas de barre « Teamfight 0.0 » sur chaque carte."""
+    from app.config import config
+    engine = DraftEngine(catalog, catalog.fetcher)
+    monkeypatch.setattr(config.scoring, "teamfight_scale", 0.0)
+    assert "teamfight" not in _terms(await engine.recommend(_top_request()), 78)
+    monkeypatch.setattr(config.scoring, "teamfight_scale", 0.5)
+    assert "teamfight" in _terms(await engine.recommend(_top_request()), 78)
+
+
+@pytest.mark.asyncio
+async def test_popularity_term_reaches_the_breakdown(catalog):
+    catalog.fetcher.fetch_tierlist = AsyncMock(return_value={"cid": {
+        "78": {"wr": 50, "games": 9000, "pr": 6, "br": 0}, "75": {"wr": 50, "games": 9000, "pr": 1, "br": 0}}})
+    result = await DraftEngine(catalog, catalog.fetcher).recommend(_top_request())
+    poppy, nasus = _terms(result, 78)["popularity"], _terms(result, 75)["popularity"]
+    assert poppy.value > nasus.value
+
+
+@pytest.mark.asyncio
+async def test_meta_damping_reaches_the_breakdown_with_the_revealed_enemies(catalog, monkeypatch):
+    from app.config import config
+    monkeypatch.setattr(config.scoring, "meta_context_damping", 1.0)
+    catalog.fetcher.fetch_tierlist = AsyncMock(return_value={"cid": {"78": {"wr": 54, "games": 9000, "pr": 5, "br": 0}}})
+    engine = DraftEngine(catalog, catalog.fetcher)
+    blind = _terms(await engine.recommend(_top_request()), 78)["meta"]
+    full = _terms(await engine.recommend(_top_request(enemies=(59, 222, 103, 40, 24))), 78)["meta"]
+    assert blind.value > 0 and full.value == pytest.approx(0.0)

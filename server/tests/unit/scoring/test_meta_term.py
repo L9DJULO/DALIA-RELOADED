@@ -144,13 +144,6 @@ def test_meta_analyzer_gives_the_median_pick_rate_of_a_role(catalog):
     assert meta.median_pick_rate("top") is None
 
 
-def test_the_engine_actually_appends_the_popularity_term():
-    """Piège déjà rencontré : une fonction juste, appelée nulle part."""
-    import inspect
-    from app.services.draft_engine import DraftEngine
-    assert "popularity_term(" in inspect.getsource(DraftEngine)
-
-
 def test_the_meta_preference_also_weighs_popularity():
     """Pour le joueur, les deux sont « la méta » : un seul curseur les pondère."""
     from app.scoring.aggregate import apply_preferences
@@ -203,15 +196,6 @@ def test_meta_damping_never_touches_the_no_data_branch(monkeypatch):
     term = meta_term(None, 1.0)
     assert term.value == 0.0
     assert term.abs_sd == pytest.approx(config.scoring.no_meta_sd * config.scoring.meta_wr_weight)
-
-
-def test_the_engine_actually_passes_the_context_fraction():
-    """Piege deja rencontre deux fois : un parametre juste, jamais transmis."""
-    import inspect
-    from app.services.draft_engine import DraftEngine
-    source = inspect.getsource(DraftEngine)
-    assert "context_fraction" in source
-    assert "meta_term(stats, context_fraction)" in source
 
 
 async def _loaded_meta(catalog, rows):

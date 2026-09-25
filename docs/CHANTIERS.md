@@ -275,6 +275,20 @@ bloquant :
 - `matchup_details` non pondérés par `matchup_weight` ; pas de test `rank=None` dans `matchup_term`.
 - `teamfight_term(ratings)` non typé.
 
+**Soldés le 25/09** : repli sur le nom brut dans `DraftWorkshop` ; tests de câblage passés par
+le moteur (le terme doit atteindre `breakdown.terms`) pour teamfight, popularité et
+amortissement méta ; plus de terme teamfight tant que `teamfight_scale` vaut 0 (calibration
+appariée : aucun mouvement) ; clés Data Dragon calculées une fois ; test `rank=None` ;
+`teamfight_term` typé.
+
+**Laissé volontairement** : `matchup_details` non pondérés. Ce sont des observations
+affichées (win rate et écart face à tel adversaire), pas la contribution au score ; les
+pondérer ferait afficher un win rate que personne n'a mesuré. Le poids reste dans le terme.
+
+**Reste** : le cas `role_inference_galio_alone_ambiguous` (un nouveau cas à arbitrer, pas un
+correctif) et les fins de ligne sans `.gitattributes` (une normalisation réécrirait des
+centaines de fichiers : à faire dans un commit isolé, si on le décide).
+
 ---
 
 ## 11. La portée des champions — donnée et bug corrigés, équilibre mêlée/distance restant
@@ -516,11 +530,8 @@ peu joués) : la saturation disparaît, 34 des 71 champions du joueur à 4-5 con
 - `pro_teamfight` refuse une collecte marquée incomplète ; le collecteur écrit une collecte
   interrompue à côté (`pro_player_stats.incomplete.json`) au lieu d'écraser la dernière complète.
 
-Reste :
-
-- `derive_ratings` : `fetch_facts` relance aussi les erreurs définitives (404) ; `review_order`
-  et `control_report` sensibles à la casse.
-- Docstring de `burst` imprécis.
+Soldé le 25/09 pour `derive_ratings` : un 4xx (hors 429) n'est plus réessayé ; `review_order`
+et `control_report` apparient sans casse ; docstring de `burst` aligné sur la règle.
 
 **Écart de baseline relevé le 25/09** : la calibration donne **35/52** sur le gel du 25/09
 (13:29, 2464 entrées), y compris aux commits `0ff980f`, `fc2e542` et `c378565`, alors que le

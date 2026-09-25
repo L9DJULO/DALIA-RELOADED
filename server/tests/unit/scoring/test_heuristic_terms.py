@@ -64,11 +64,3 @@ def test_teamfight_term_carries_its_uncertainty_as_rel_sd(monkeypatch):
     term = teamfight_term(ChampionRatings(teamfight=5))
     assert term.abs_sd == 0.0 and term.rel_sd > 0.0
     assert term.outcome_sd == 0.0, "ce n'est pas un risque subi : rien n'est ignore ici"
-
-
-def test_the_engine_actually_appends_the_teamfight_term():
-    """Piege deja rencontre deux fois : une fonction juste, appelee nulle part."""
-    import inspect
-    from app.services.draft_engine import DraftEngine
-    source = inspect.getsource(DraftEngine)
-    assert "teamfight_term(" in source

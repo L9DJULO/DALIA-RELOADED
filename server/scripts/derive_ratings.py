@@ -80,6 +80,11 @@ def _get_json(client: httpx.Client, url: str, **params) -> dict:
             r = client.get(url, params=params or None, headers=UA, timeout=30.0)
             r.raise_for_status()
             return r.json()
+        except httpx.HTTPStatusError as exc:
+            # Un 4xx ne guérit pas en réessayant, sauf 429 (limite de débit).
+            if exc.response.status_code < 500 and exc.response.status_code != 429:
+                raise RuntimeError(f"HTTP {exc.response.status_code} : {url}") from exc
+            time.sleep(2 * (attempt + 1))
         except (httpx.HTTPError, ValueError):
             time.sleep(2 * (attempt + 1))
     raise RuntimeError(f"Échec après 4 tentatives : {url}")
@@ -113,8 +118,11 @@ def load_facts() -> Dict[str, ChampionFacts]:
 
 
 def control_report(derived: Dict[str, List[int]], player: Dict[str, List[int]]) -> Dict[str, dict]:
-    """Accord du calcul avec les notes du joueur, dimension par dimension (spec §4.3)."""
-    keys = sorted(k for k in player if k in derived)
+    """Accord du calcul avec les notes du joueur, dimension par dimension (spec §4.3).
+    Clés appariées sans casse : faits en Data Dragon (« Belveth »), overrides libres (« BelVeth »)."""
+    derived = {k.lower(): v for k, v in derived.items()}
+    derived = {k: derived[k.lower()] for k in player if k.lower() in derived}
+    keys = sorted(derived)
     report = {}
     for i, dim in enumerate(DIMENSIONS):
         if dim == "teamfight":
@@ -201,9 +209,9 @@ def review_order(overrides: dict, pro_rows: List[dict]) -> List[Tuple[str, int]]
     le poids d'un champion dans les parties, si.
     """
     from collections import Counter
-    games = Counter(r["champion"] for r in pro_rows)
+    games = Counter(r["champion"].lower() for r in pro_rows)
     computed = [k for k, v in overrides.items() if isinstance(v, dict) and v.get("ratings_source") == "calcul"]
-    return sorted(((k, games.get(k, 0)) for k in computed), key=lambda kv: (-kv[1], kv[0]))
+    return sorted(((k, games.get(k.lower(), 0)) for k in computed), key=lambda kv: (-kv[1], kv[0]))
 
 
 def format_review(order: List[Tuple[str, int]], overrides: dict, limit: int = 40) -> str:

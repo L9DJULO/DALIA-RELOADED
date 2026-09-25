@@ -430,7 +430,9 @@ class DraftEngine:
             terms.append(synergy_term(await self.synergy.score(champ.id, role, draft), duo_bonus))
         mechanics_delta, mechanics = self.mechanics.evaluate(champ, draft)
         terms.append(mechanics_term(mechanics_delta))
-        terms.append(teamfight_term(champ.ratings))
+        if config.scoring.teamfight_scale:
+            # Levier coupé : un terme toujours nul n'est pas un critère (barre « Teamfight 0.0 »).
+            terms.append(teamfight_term(champ.ratings))
 
         ml_s, ml_expl = None, None
         if ml is not None and ml.supports(champ.id, role, draft):

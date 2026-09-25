@@ -105,3 +105,34 @@ def test_a_computed_note_the_player_edited_becomes_his():
 def test_the_computed_vector_is_remembered_to_detect_later_edits():
     out = derive_ratings.merge_ratings({"Zed": {"roles": ["mid"]}}, {"Zed": [2, 2, 1, 3, 3, 3, 4, 2, 3]})
     assert out["Zed"]["ratings_calcul"] == [2, 2, 1, 3, 3, 3, 4, 2, 3]
+
+
+def test_review_and_control_match_keys_whatever_their_case():
+    """Les lignes pros et les faits portent les clés Data Dragon (« Belveth »), les overrides
+    parfois une autre casse (« BelVeth ») : le champion ne doit perdre ni ses parties ni sa
+    place dans le rapport de contrôle."""
+    overrides = {"BelVeth": {"ratings": [1] * 9, "ratings_source": "calcul"}}
+    assert derive_ratings.review_order(overrides, [{"champion": "Belveth"}] * 3) == [("BelVeth", 3)]
+    report = derive_ratings.control_report({"Belveth": [3] * 9}, {"BelVeth": [3] * 9})
+    assert report["cc"]["exact"] == 100.0
+
+
+def test_a_definitive_http_error_is_not_retried(monkeypatch):
+    """Un 404 ne guérit pas en réessayant : quatre tentatives espacées ne font que ralentir la
+    collecte. Un 5xx ou un 429, si."""
+    import httpx
+    import pytest
+    calls = []
+
+    def handler(request):
+        calls.append(request.url.path)
+        return httpx.Response(404 if request.url.path == "/absent" else 503)
+
+    monkeypatch.setattr(derive_ratings.time, "sleep", lambda s: None)
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        with pytest.raises(RuntimeError):
+            derive_ratings._get_json(client, "https://x.test/absent")
+        assert calls == ["/absent"]
+        with pytest.raises(RuntimeError):
+            derive_ratings._get_json(client, "https://x.test/busy")
+        assert calls.count("/busy") == 4
