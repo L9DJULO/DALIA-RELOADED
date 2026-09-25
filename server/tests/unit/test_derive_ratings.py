@@ -59,9 +59,10 @@ def test_teamfight_replaces_index_four_everywhere_player_notes_included():
     assert out["Jinx"]["ratings_source"] == "joueur", "le reste reste au joueur"
 
 
-def test_dump_keeps_crlf_without_final_newline():
+def test_dump_keeps_lf_without_final_newline():
+    """Le dépôt est en LF (.gitattributes) : un CRLF réécrirait tout le fichier au passage."""
     text = derive_ratings.dump_overrides({"A": {"roles": ["top"]}})
-    assert "\r\n" in text and not text.endswith("\n") and '  "A": {' in text
+    assert "\r\n" not in text and not text.endswith("\n") and '  "A": {' in text
 
 
 def test_override_keys_match_data_dragon_whatever_their_case():
@@ -136,3 +137,12 @@ def test_a_definitive_http_error_is_not_retried(monkeypatch):
         with pytest.raises(RuntimeError):
             derive_ratings._get_json(client, "https://x.test/busy")
         assert calls.count("/busy") == 4
+
+
+def test_measured_teamfight_also_updates_the_computed_vector():
+    """Sans cela, le recalcul suivant réécrit ratings_calcul pour rattraper la mesure : un
+    diff sans changement de note."""
+    overrides = {"Yone": {"ratings": [3, 2, 1, 4, 5, 3, 4, 4, 3], "ratings_calcul": [3, 2, 1, 4, 5, 3, 4, 4, 3],
+                          "ratings_source": "calcul"}}
+    out = derive_ratings.apply_teamfight(overrides, {"Yone": 1})
+    assert out["Yone"]["ratings"][4] == 1 and out["Yone"]["ratings_calcul"][4] == 1

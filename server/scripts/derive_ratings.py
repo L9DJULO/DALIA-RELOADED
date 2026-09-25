@@ -193,13 +193,18 @@ def apply_teamfight(overrides: dict, teamfight: Dict[str, int]) -> dict:
             ratings = list(entry["ratings"])
             ratings[DIMENSIONS.index("teamfight")] = int(teamfight[key.lower()])
             entry["ratings"] = ratings
+            if "ratings_calcul" in entry:
+                # Le vecteur de calcul suit la mesure : sinon le prochain recalcul le réécrit seul.
+                calc = list(entry["ratings_calcul"])
+                calc[DIMENSIONS.index("teamfight")] = int(teamfight[key.lower()])
+                entry["ratings_calcul"] = calc
         out[key] = entry
     return out
 
 
 def dump_overrides(data: dict) -> str:
-    """Même format que le fichier versionné : indentation 2, CRLF, sans saut de ligne final."""
-    return json.dumps(data, indent=2).replace("\n", "\r\n")
+    """Même format que le fichier versionné : indentation 2, LF (.gitattributes), sans saut de ligne final."""
+    return json.dumps(data, indent=2)
 
 
 def review_order(overrides: dict, pro_rows: List[dict]) -> List[Tuple[str, int]]:

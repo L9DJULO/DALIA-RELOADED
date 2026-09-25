@@ -137,8 +137,8 @@ async def main() -> int:
 
     if args.write:
         out["_comment"] = _refresh_comment(str(out["_comment"]), patch, args.threshold)
-        # Le fichier est versionné en CRLF, sans saut de ligne final.
-        OVERRIDES.write_text(_dump(out), encoding="utf-8", newline="\r\n")
+        # Même format que le fichier versionné : LF (.gitattributes), sans saut de ligne final.
+        OVERRIDES.write_text(_dump(out), encoding="utf-8", newline="\n")
         print(f"Écrit : {OVERRIDES}")
         meta = json.loads(DISTRIBUTION.read_text(encoding="utf-8")).get("_meta", {}) if DISTRIBUTION.exists() else {}
         meta["source"] = (f"Lolalytics patch {patch} Master+, part des parties du champion par poste (pctLane), "
