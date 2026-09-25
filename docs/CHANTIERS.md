@@ -462,3 +462,20 @@ d'étendre l'amortissement à la popularité.
 l'impact des bans et au filtre des wildcards, reste pondéré à 80 % par le win rate. Il contredit
 désormais le signal hybride du moteur ; à aligner dans une passe dédiée.
 
+---
+
+## 14. Mesurer l'impact en teamfight sur les parties pros
+
+Décidé avec le joueur le 25/09. La note `teamfight` est saturée (69 des 71 champions notés à 4 ou
+5) et le joueur juge la notion trop vague pour une note à la main : beaucoup de champions « pas
+faits pour les teamfights » y passent bien, et un même champion joue ou non les combats selon la
+partie. Sa piste : **mesurer sur les parties pros**, où presque toutes les compositions mêlent des
+champions à avantages particuliers qui tiennent aussi un combat à cinq.
+
+La suite de concordance a déjà l'accès authentifié à Leaguepedia et les drafts de 525 parties.
+`ScoreboardPlayers` y donne, par joueur et par partie, kills, morts, assists et kills d'équipe,
+dégâts aux champions : de quoi estimer une participation aux combats par champion et par poste,
+plutôt que de la décréter.
+
+**Bloque** : le levier teamfight du chantier 5, laissé neutre faute d'une note qui départage.
+

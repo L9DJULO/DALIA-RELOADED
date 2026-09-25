@@ -45,3 +45,15 @@ def test_pool_advice_suggests_missing_tools_in_same_role(catalog):
     assert all(s["champion_id"] != 75 for s in advice["suggestions"])
     assert any(s["champion_id"] == 78 for s in advice["suggestions"])
     assert all("top" in catalog.get_by_id(s["champion_id"]).roles for s in advice["suggestions"])
+
+
+def test_brand_answers_high_health_targets_where_velkoz_does_not(catalog):
+    """Arbitrage du joueur, 25/09 : « Brand plus de dégâts sur les persos à haut PV ;
+    Vel'Koz plus d'utilité ; sinon pas grand-chose qui les différencie »."""
+    from app.models.champion import Champion
+    analyzer = MechanicsAnalyzer(catalog)
+    brand, velkoz = Champion(id=63, key="Brand", name="Brand"), Champion(id=161, key="Velkoz", name="Vel'Koz")
+    assert "anti_tank" in analyzer.coverage(brand)
+    assert "anti_tank" not in analyzer.coverage(velkoz)
+    _, rules = analyzer.evaluate(brand, draft([54, 78], role="support"))
+    assert any(r["id"] == "health_scaling_damage" for r in rules)

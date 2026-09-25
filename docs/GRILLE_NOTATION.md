@@ -66,11 +66,10 @@ d'Aphelios sont tous deux « du CC » d'intensité différente.
 
 ### `splitpush` — tient-il seul une lane secondaire, 1v1 et pression de tour
 
-Aucun champion de bot lane n'est à 5, et seuls Vayne et Yasuo sont à 4. **Les ancres hautes
-restent à arbitrer** avec les tops : les 102 champions restants portent l'essentiel de cette
-dimension.
+Aucun champion de bot lane n'est à 5, et seuls Vayne et Yasuo sont à 4. Les 102 champions
+restants portent l'essentiel de cette dimension.
 
-- **5** — *à arbitrer* (candidats : Fiora, Jax, Tryndamere, Yorick).
+- **5** — Fiora, Trundle, Yorick, Tryndamere, Nasus (arbitrage du joueur, 25/09).
 - **4** — Vayne, Yasuo.
 - **3** — pousse vite et s'échappe : Ezreal, Kai'Sa, Tristana, Ziggs.
 - **1-2** — ne pèse pas seul sur une lane.
@@ -131,16 +130,24 @@ première ligne.
 
 ---
 
-## À trancher avec le joueur avant de noter les 102
+## Tranché avec le joueur le 25/09
 
-1. **`teamfight`** : réarbitrer les 71 notes existantes sur la grille ci-dessus, ou l'accepter
-   saturée. Tant qu'elle l'est, le levier teamfight du chantier 5 ne départage pas la bot lane.
-2. **Ancres hautes de `splitpush`** : quels tops à 5.
-3. **Brand et Vel'Koz**, identiques (`3 1 5 1 5 2 5 2 1`) : une différence réelle existe-t-elle ?
+1. **`teamfight`** : à réarbitrer, mais **pas à la main**. Mot du joueur : « la notion de team
+   fight est trop vague, genre y'a plein de persos pas "faits pour les team fights" mais qui
+   passent bien dans un fight à 5 / des champions qui jouent ou pas les TF en fonction des
+   games ». Et : « la notion de team fight serait intéressante si on regardait les games de pro
+   (quasi toutes les compos ont des champs avec des avantages mais qui passent aussi très bien
+   dans des team fights) ». La proposition ci-dessous reste une base de discussion, pas une
+   donnée ; la note doit venir d'une mesure sur les parties pros (chantier 14).
+2. **Ancres hautes de `splitpush`** : Fiora, Trundle, Yorick, Tryndamere, Nasus.
+3. **Brand et Vel'Koz** : « Vel'Koz a plus d'utilité que Brand, et Brand plus de dégâts sur les
+   persos à haut PV ; sinon pas grand-chose qui les différencie ». Appliqué : `utility` de
+   Vel'Koz 2 → 3, Brand ajouté aux réponses aux gros PV (`anti_tank`, règle
+   `health_scaling_damage`).
 
 ---
 
-## Proposition de réarbitrage de `teamfight` — en attente du joueur
+## Proposition de réarbitrage de `teamfight` — écartée comme donnée, gardée comme repère
 
 Proposée le 24/09, **non arbitrée**. Aucune source publiée ne note l'impact en teamfight champion
 par champion ; ces valeurs sont une proposition à valider ou corriger. Entre parenthèses, l'ancienne

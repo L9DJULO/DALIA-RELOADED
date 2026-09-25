@@ -93,7 +93,8 @@ class MechanicsAnalyzer:
                 min(7, 3 * sum(c.key in KNOCKUPS for c in allies)),
                 "Les projections de {targets} offrent une fenêtre pour R sans devoir toucher ta propre tornade.",
                 "L'allié doit toucher, et Yasuo doit pouvoir suivre à portée ; un pré-pick n'est pas un engagement confirmé.", "synergy")
-        if key in {"Vayne", "Fiora", "Gwen", "KogMaw"}:
+        # Brand : le passif inflige des dégâts en % des PV max (arbitrage du joueur, 25/09).
+        if key in {"Vayne", "Fiora", "Gwen", "KogMaw", "Brand"}:
             targets = [c for c in enemies if c.is_tank]
             add("health_scaling_damage", targets, min(6, 2 * len(targets)),
                 "Les dégâts liés aux PV de la cible donnent une réponse aux PV élevés de {targets}.",
@@ -117,6 +118,6 @@ class MechanicsAnalyzer:
         if r.poke >= 4: result.add("range")
         if champion.key in PEEL or champion.key == "Morgana": result.add("peel")
         if champion.key in {"Poppy", "Cassiopeia"}: result.add("anti_mobility")
-        if champion.key in {"Vayne", "Fiora", "Gwen", "KogMaw", "Varus"}: result.add("anti_tank")
+        if champion.key in {"Vayne", "Fiora", "Gwen", "KogMaw", "Varus", "Brand"}: result.add("anti_tank")
         if champion.key in {"Jax", "Nilah", "Nasus", "Rammus", "Malphite"}: result.add("anti_attacks")
         return result

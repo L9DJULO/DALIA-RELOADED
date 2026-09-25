@@ -157,3 +157,12 @@ rend des sorties identiques.
 
 Noter à la main le bot lane d'abord (ADC + supports), par paquets de 10, proposition puis correction.
 Le terme d'interaction de synergie ne sera traité qu'ensuite, sur des entrées qui discriminent.
+
+## Grille de notation — 25/09
+
+| Question | Décision | Mot du joueur |
+|---|---|---|
+| Ancres `splitpush` à 5 | Fiora, Trundle, Yorick, Tryndamere, Nasus | — |
+| Brand et Vel'Koz identiques | Vel'Koz `utility` +1 ; Brand répond aux gros PV | « Vel'Koz a plus d'utilité que Brand, et Brand plus de dégâts sur les persos à haut PV, sinon pas grand-chose qui les différencie » |
+| Note `teamfight` saturée | À réarbitrer, mais depuis les parties pros plutôt qu'à la main | « la notion de team fight est trop vague […] des champions qui jouent ou pas les TF en fonction des games » ; « serait intéressante si on regardait les games de pro » |
+
