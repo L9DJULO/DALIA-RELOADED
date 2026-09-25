@@ -212,3 +212,48 @@ def test_the_engine_actually_passes_the_context_fraction():
     source = inspect.getsource(DraftEngine)
     assert "context_fraction" in source
     assert "meta_term(stats, context_fraction)" in source
+
+
+async def _loaded_meta(catalog, rows):
+    meta = MetaAnalyzer(catalog, catalog.fetcher)
+    catalog.fetcher.fetch_tierlist = AsyncMock(return_value={"cid": rows})
+    await meta.load_tierlist("mid")
+    return meta
+
+
+@pytest.mark.asyncio
+async def test_historic_score_follows_the_engine_hybrid_signal_not_raw_win_rate(catalog):
+    """Chantier 13 : bans, impact des bans et wildcards lisaient un score pondéré à 80 % par le
+    win rate, que le moteur a ramené au quart. Un pick de niche à gros win rate ne doit plus
+    passer devant le champion que le rang joue réellement."""
+    meta = await _loaded_meta(catalog, {
+        "103": {"wr": 50.5, "games": 60000, "pr": 12.0, "br": 5},   # Ahri : très jouée, win rate moyen
+        "61": {"wr": 55.0, "games": 20000, "pr": 0.8, "br": 0},     # Orianna : niche à gros win rate
+    })
+    assert meta.score(103, "mid") > meta.score(61, "mid")
+
+
+@pytest.mark.asyncio
+async def test_historic_score_scale_doubles_pick_rate_every_ten_points(catalog):
+    """50 à 3 % de pick rate et win rate de 50 % ; chaque doublement du pick rate vaut 10 points,
+    et le win rate y pèse exactement comme dans le moteur (même quart, même rétrécissement)."""
+    from app.config import config
+    meta = await _loaded_meta(catalog, {
+        "103": {"wr": 50.0, "games": 50000, "pr": 3.0, "br": 0},
+        "61": {"wr": 50.0, "games": 50000, "pr": 6.0, "br": 0},
+        "157": {"wr": 53.0, "games": 50000, "pr": 3.0, "br": 0},
+    })
+    assert meta.score(103, "mid") == pytest.approx(50.0, abs=0.05)
+    assert meta.score(61, "mid") == pytest.approx(60.0, abs=0.05)
+    wr_points = config.scoring.meta_wr_weight * shrink(3.0, 50000, config.scoring.k_meta)
+    assert meta.score(157, "mid") == pytest.approx(50.0 + 10.0 / math.log(2) * wr_points, abs=0.05)
+
+
+@pytest.mark.asyncio
+async def test_historic_score_unknown_role_stays_cautious_and_absent_champion_is_not_viable(catalog):
+    """Sans aucune donnée sur le poste : 45 comme avant. Poste chargé mais champion absent :
+    il n'y est pas joué, donc sous le seuil wildcard (45), comme la popularité du moteur."""
+    meta = MetaAnalyzer(catalog, catalog.fetcher)
+    assert meta.score(103, "mid") == 45.0
+    meta = await _loaded_meta(catalog, {"103": {"wr": 50.0, "games": 50000, "pr": 3.0, "br": 0}})
+    assert meta.score(61, "mid") < 45.0

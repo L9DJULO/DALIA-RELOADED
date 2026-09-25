@@ -2,16 +2,19 @@
 
 Le terme méta du scoring lit `stats()` ; le score 0-100 historique reste
 utilisé par le recommandeur de bans, l'impact des bans et le filtre wildcard.
+Il suit le même signal hybride que le moteur (chantier 13).
 """
 from __future__ import annotations
 
 import asyncio
 import logging
+import math
 import time
 from typing import Dict, Optional
 
 from app.config import config
 from app.models.champion import ChampionStats
+from app.scoring.meta_term import meta_term, popularity_term
 from app.services.champion_data import ChampionDatabase
 from app.services.data_fetcher import LolalyticsFetcher
 
@@ -121,25 +124,24 @@ class MetaAnalyzer:
         return (role, tier or self._default_tier()) in self._loaded_roles
 
     # ── Score 0-100 historique : bans, impact des bans, filtre wildcard ──
+    # Même signal que le moteur (chantier 13) : win rate au quart, rétréci, plus
+    # la popularité ln(pick rate). Il pesait à 80 % le win rate brut, qui classe à
+    # l'envers d'un bon drafteur, et contredisait les conseils du moteur.
+    # Ancre absolue, pas la médiane du poste : les seuils des appelants (45 viable,
+    # 55 forte, 65 menace, 70 S) sont absolus. Mesure du 25/09 (gel 16.19.1,
+    # master_plus) : ancre à 3 %, 10 points par doublement, autant de champions
+    # au-dessus de chaque seuil qu'avant, à 2 % deux à trois fois plus de « S ».
+    SCORE_REF_PICK_RATE = 3.0
+    SCORE_POINTS_PER_DOUBLING = 10.0
+
     def score(self, champion_id: int, role: str) -> float:
         """Return 0-100 meta score on the default tier. Call load_tierlist() first."""
-        stats = self.db.get_stats(champion_id, role)
-        if stats is None:
-            return 45.0  # slightly below average — unknown = cautious
-        wr_score = _clamp((stats.win_rate - 45.0) / 10.0 * 100.0)
-        pr_score = min(stats.pick_rate / 12.0 * 100.0, 100.0)
-        br_score = min(stats.ban_rate / 30.0 * 100.0, 100.0)
-        raw = wr_score * 0.80 + pr_score * 0.15 + br_score * 0.05
-        games = stats.games
-        min_rel = config.min_games_reliable
-        full_conf = config.min_games_full_confidence
-        if games < min_rel:
-            confidence = 0.35 + 0.30 * (games / min_rel)
-        elif games < full_conf:
-            confidence = 0.65 + 0.35 * ((games - min_rel) / (full_conf - min_rel))
-        else:
-            confidence = 1.0
-        return round(_clamp(raw * confidence), 1)
+        if self.median_pick_rate(role) is None:
+            return 45.0  # aucune donnée sur le poste — inconnu = prudent
+        stats = self.stats(champion_id, role)
+        # Absent d'un poste chargé : il n'y est pas joué, la popularité prend le plancher.
+        signal = meta_term(stats).value + popularity_term(stats, self.SCORE_REF_PICK_RATE).value
+        return round(_clamp(50.0 + signal * self.SCORE_POINTS_PER_DOUBLING / math.log(2)), 1)
 
     def games(self, champion_id: int, role: str) -> int:
         """Return number of games for a (champion, role) on the default tier. 0 if unknown."""
