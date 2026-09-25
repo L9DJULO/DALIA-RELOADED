@@ -1,0 +1,4 @@
+# Fins de ligne : LF partout dans le dépôt et la copie de travail, quel que soit
+# l'éditeur. Les scripts PowerShell restent en CRLF pour Windows PowerShell 5.1.
+* text=auto eol=lf
+*.ps1 text eol=crlf
