@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import re
 import json
 import logging
 import os
@@ -138,7 +139,10 @@ def _cache_key(table: str, where: str, fields: str, offset: int) -> str:
     # Stable hash: Python's built-in hash() is randomized per process, so
     # caches written in one run would never match in the next.
     digest = hashlib.sha1(raw.encode("utf-8")).hexdigest()[:12]
-    return f"{table}__{digest}.json"
+    # Une requête jointe (« ScoreboardPlayers=SP,…|… ») porte des caractères
+    # interdits dans un nom de fichier Windows ; un nom de table simple est inchangé.
+    prefix = re.sub(r"[^A-Za-z0-9]+", "_", table).strip("_")
+    return f"{prefix}__{digest}.json"
 
 
 def _read_cache(name: str) -> Optional[List[Dict[str, Any]]]:
