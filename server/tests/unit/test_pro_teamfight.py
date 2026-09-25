@@ -61,3 +61,14 @@ def test_every_champion_gets_a_teamfight_note_measured_or_from_the_rules():
              for k, sub in (("Measured", ()), ("Tank", ("Vanguard",)), ("Plain", ()))}
     full = pro_teamfight.full_teamfight({"Measured": 1}, facts)
     assert full == {"Measured": 1, "Tank": 4, "Plain": 3}
+
+
+def test_report_shows_damage_share_and_flags_rule_fallbacks():
+    """Spec §5.2 : la part de dégâts pour voir qui porte les combats, et « peu de données »
+    pour distinguer une note mesurée d'une note de règle (revue du 25/09)."""
+    rows = [row(f"M{i}", "mid", 1, i, 10, dmg=1000 * (i + 1)) for i in range(5) for _ in range(30)]
+    primary = {**{f"M{i}": "mid" for i in range(5)}, "Rare": "mid"}
+    measured = pro_teamfight.teamfight_ratings(rows, primary)
+    text = pro_teamfight.teamfight_report(rows, primary, measured, {**measured, "Rare": 3})
+    assert "M4" in text and "%" in text
+    assert "Rare" in text and "peu de données" in text

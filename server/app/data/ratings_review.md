@@ -2,6 +2,8 @@
 
 Vecteur : cc, engage, poke, splitpush, teamfight, utility, burst, dps, tankiness.
 
+Corriger une note : modifier `ratings` dans `champion_overrides.json`. Au passage suivant du script, une note calculée qui ne correspond plus à son calcul (`ratings_calcul`) devient celle du joueur et n'est plus jamais réécrite.
+
 | Champion | Parties pros | Notes |
 |---|---|---|
 | Ryze | 629 | 3 1 4 1 2 3 4 2 2 |

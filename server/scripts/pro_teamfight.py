@@ -25,6 +25,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from app.scoring.shrink import shrink  # noqa: E402
 
 STATS_PATH = Path(__file__).resolve().parent.parent / "app" / "data" / "pro_player_stats.json"
+REPORT = STATS_PATH.parent / "teamfight_report.md"
 # Le support n'est pas mesuré : un bouclier ou un soin sur un allié qui tue donne une
 # assist, les enchanteurs gonflent leur participation sans être plus présents dans le
 # combat (mesure du 25/09 : Nami, Milio, Yuumi à 5 ; Nautilus, Blitzcrank à 1).
@@ -57,6 +58,39 @@ def teamfight_ratings(rows: List[dict], primary_role: Dict[str, str], k: int = 2
     return ratings
 
 
+def teamfight_report(rows: List[dict], primary_role: Dict[str, str], measured: Dict[str, int],
+                     full: Dict[str, int]) -> str:
+    """Spec §5.2 : qui porte les combats, et quelles notes ne sont que la règle de repli.
+
+    Les lignes collectées ne gardent pas l'identifiant de partie : les dégâts sont
+    rapportés à la moyenne du poste, pas à l'équipe.
+    """
+    by_role: Dict[str, List[float]] = defaultdict(list)
+    by_champ: Dict[tuple, List[dict]] = defaultdict(list)
+    for r in rows:
+        by_role[r["role"]].append(r["damage"])
+        by_champ[(r["champion"], r["role"])].append(r)
+    lines = ["# Teamfight mesuré sur les parties pros", "",
+             "Participation aux kills relative au poste, en quintiles (support non mesuré).", ""]
+    for role in MEASURED_ROLES:
+        champs = sorted((c for c in measured if primary_role.get(c) == role), key=lambda c: -measured[c])
+        if not champs:
+            continue
+        mean_dmg = mean(by_role[role]) or 1.0
+        lines += [f"## {role}", "", "| Champion | Note | Parties | Participation | Dégâts / moyenne du poste |",
+                  "|---|---|---|---|---|"]
+        for c in champs:
+            rs = by_champ[(c, role)]
+            lines.append(f"| {c} | {measured[c]} | {len(rs)} | {mean(kill_participation(r) for r in rs):.0%} "
+                         f"| {mean(r['damage'] for r in rs) / mean_dmg:.0%} |")
+        lines.append("")
+    fallback = sorted(c for c in full if c not in measured)
+    lines += ["## Règle de repli — peu de données", "",
+              f"{len(fallback)} champions : moins de 5 parties pros sur leur poste principal, ou support.", "",
+              ", ".join(f"{c} ({full[c]})" for c in fallback)]
+    return "\n".join(lines) + "\n"
+
+
 def full_teamfight(measured: Dict[str, int], facts: Dict[str, "ChampionFacts"]) -> Dict[str, int]:
     """Note teamfight de chaque champion : mesurée si possible, sinon la règle de repli (spec §5.2)."""
     from app.services.rating_rules import teamfight_fallback
@@ -75,6 +109,7 @@ def main() -> int:
     full = full_teamfight(ratings, derive_ratings.load_facts())
     print(f"{len(ratings)} champions notés depuis {len(rows)} lignes pros ; "
           f"{len(full) - len(ratings)} en repli sur les règles")
+    REPORT.write_text(teamfight_report(rows, primary, ratings, full), encoding="utf-8", newline="\n")
     for role in ("top", "jungle", "mid", "bot", "support"):
         champs = sorted((c for c in ratings if primary.get(c) == role), key=lambda c: -ratings[c])
         print(f"{role:8} " + ", ".join(f"{c}={ratings[c]}" for c in champs))

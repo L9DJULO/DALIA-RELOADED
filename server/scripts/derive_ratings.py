@@ -146,16 +146,30 @@ def merge_ratings(overrides: dict, derived: Dict[str, List[int]]) -> dict:
     """Les notes du joueur restent ; les autres entrées reçoivent le calcul (spec §4.4).
     Clés appariées sans casse, comme le chargeur (« BelVeth » / « Belveth »)."""
     derived = {k.lower(): v for k, v in derived.items()}
+    tf = DIMENSIONS.index("teamfight")
+
+    def edited(entry: dict) -> bool:
+        # teamfight est posé ensuite par la mesure pro : il n'entre pas dans la comparaison.
+        calc = entry.get("ratings_calcul")
+        return calc is not None and any(i != tf and a != b for i, (a, b) in enumerate(zip(entry["ratings"], calc)))
+
     out = {}
     for key, entry in overrides.items():
         if key.startswith("_") or not isinstance(entry, dict):
             out[key] = entry
             continue
         entry = dict(entry)
-        if "ratings" in entry and entry.get("ratings_source", "joueur") == "joueur":
+        source = entry.get("ratings_source", "joueur")
+        if "ratings" in entry and (source == "joueur" or edited(entry)):
+            # Une note calculée que le joueur a corrigée devient la sienne.
             entry["ratings_source"] = "joueur"
+            entry.pop("ratings_calcul", None)
         elif key.lower() in derived:
-            entry["ratings"] = list(derived[key.lower()])
+            ratings = list(derived[key.lower()])
+            if "ratings" in entry:
+                ratings[tf] = entry["ratings"][tf]   # la mesure pro survit au recalcul
+            entry["ratings"] = ratings
+            entry["ratings_calcul"] = list(ratings)
             entry["ratings_source"] = "calcul"
         out[key] = entry
     return out
@@ -195,6 +209,9 @@ def review_order(overrides: dict, pro_rows: List[dict]) -> List[Tuple[str, int]]
 def format_review(order: List[Tuple[str, int]], overrides: dict, limit: int = 40) -> str:
     lines = ["# Notes calculées à relire, les plus jouées en pro d'abord", "",
              "Vecteur : cc, engage, poke, splitpush, teamfight, utility, burst, dps, tankiness.", "",
+             "Corriger une note : modifier `ratings` dans `champion_overrides.json`. Au passage suivant du "
+             "script, une note calculée qui ne correspond plus à son calcul (`ratings_calcul`) devient "
+             "celle du joueur et n'est plus jamais réécrite.", "",
              "| Champion | Parties pros | Notes |", "|---|---|---|"]
     for key, n in order[:limit]:
         lines.append(f"| {key} | {n} | {' '.join(str(v) for v in overrides[key]['ratings'])} |")

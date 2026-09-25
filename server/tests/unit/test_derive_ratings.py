@@ -47,7 +47,8 @@ def test_merge_keeps_every_player_rating_and_role():
     derived = {"Jinx": [9] * 9, "Zed": [1, 1, 1, 3, 3, 2, 5, 2, 3]}
     out = derive_ratings.merge_ratings(overrides, derived)
     assert out["Jinx"]["ratings"] == [2, 1, 3, 2, 5, 3, 2, 5, 1] and out["Jinx"]["ratings_source"] == "joueur"
-    assert out["Zed"] == {"roles": ["mid", "jungle"], "ratings": [1, 1, 1, 3, 3, 2, 5, 2, 3], "ratings_source": "calcul"}
+    assert out["Zed"] == {"roles": ["mid", "jungle"], "ratings": [1, 1, 1, 3, 3, 2, 5, 2, 3],
+                          "ratings_calcul": [1, 1, 1, 3, 3, 2, 5, 2, 3], "ratings_source": "calcul"}
     assert out["_comment"] == "c"
 
 
@@ -81,3 +82,26 @@ def test_review_list_puts_the_most_played_computed_champions_first():
                  "Rare": {"ratings": [1] * 9, "ratings_source": "calcul"}}
     rows = [{"champion": "Orianna"}] * 40 + [{"champion": "Zed"}] * 10 + [{"champion": "Jinx"}] * 99
     assert derive_ratings.review_order(overrides, rows) == [("Orianna", 40), ("Zed", 10), ("Rare", 0)]
+
+
+def test_rerunning_the_derivation_keeps_the_measured_teamfight():
+    """Revue du 25/09 : --write remettait la règle de repli à la place de la mesure pro."""
+    overrides = {"Zed": {"roles": ["mid"], "ratings": [1, 1, 1, 3, 1, 2, 5, 2, 3], "ratings_source": "calcul"}}
+    out = derive_ratings.merge_ratings(overrides, {"Zed": [2, 2, 1, 3, 3, 3, 4, 2, 3]})
+    assert out["Zed"]["ratings"][4] == 1, "teamfight mesuré conservé"
+    assert out["Zed"]["ratings"][0] == 2, "le reste suit le calcul"
+
+
+def test_a_computed_note_the_player_edited_becomes_his():
+    """Revue du 25/09 : corriger une note calculée sans changer son marqueur ne doit pas
+    être écrasé au passage suivant."""
+    overrides = {"Orianna": {"roles": ["mid"], "ratings": [5, 3, 3, 1, 5, 5, 4, 2, 1],
+                             "ratings_source": "calcul", "ratings_calcul": [3, 1, 3, 1, 5, 3, 3, 1, 1]}}
+    out = derive_ratings.merge_ratings(overrides, {"Orianna": [3, 1, 3, 1, 3, 3, 3, 1, 1]})
+    assert out["Orianna"]["ratings"] == [5, 3, 3, 1, 5, 5, 4, 2, 1]
+    assert out["Orianna"]["ratings_source"] == "joueur"
+
+
+def test_the_computed_vector_is_remembered_to_detect_later_edits():
+    out = derive_ratings.merge_ratings({"Zed": {"roles": ["mid"]}}, {"Zed": [2, 2, 1, 3, 3, 3, 4, 2, 3]})
+    assert out["Zed"]["ratings_calcul"] == [2, 2, 1, 3, 3, 3, 4, 2, 3]
