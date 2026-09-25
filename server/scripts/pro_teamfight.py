@@ -32,6 +32,36 @@ REPORT = STATS_PATH.parent / "teamfight_report.md"
 MEASURED_ROLES = ("top", "jungle", "mid", "bot")
 
 
+def load_rows(path: Path) -> List[dict]:
+    """Lignes pros d'une collecte complète ; une collecte interrompue fausserait les notes."""
+    data = json.loads(path.read_text(encoding="utf-8"))
+    if not data.get("_meta", {}).get("complete"):
+        raise ValueError(f"{path} : collecte incomplète, relancer scrape_player_stats.py")
+    return data["rows"]
+
+
+def pro_roles(rows: List[dict], min_games: int = 5) -> Dict[str, str]:
+    """Poste mesuré de chaque champion : celui où les pros le jouent le plus.
+
+    Le premier poste des overrides suit la soloqueue : Pantheon y est support, les pros le
+    jouent en jungle. Lu sur les lignes pros, il porte aussi leurs clés Data Dragon, celles
+    des faits : plus d'appariement sensible à la casse (overrides « BelVeth »).
+
+    Un champion surtout joué support n'est pas mesuré (voir MEASURED_ROLES), même s'il a
+    quelques parties ailleurs : Seraphine sur 5 parties bot pour 338 en support dirait peu
+    de ses combats. Il reste sur la règle de repli.
+    """
+    games: Dict[str, Dict[str, int]] = defaultdict(lambda: defaultdict(int))
+    for r in rows:
+        games[r["champion"]][r["role"]] += 1
+    roles = {}
+    for champ, by_role in games.items():
+        role = max(MEASURED_ROLES + ("support",), key=lambda ro: by_role.get(ro, 0))
+        if role in MEASURED_ROLES and by_role[role] >= min_games:
+            roles[champ] = role
+    return roles
+
+
 def kill_participation(row: dict) -> float:
     team = row.get("team_kills") or 0
     return (row["kills"] + row["assists"]) / team if team > 0 else 0.0
@@ -54,7 +84,8 @@ def teamfight_ratings(rows: List[dict], primary_role: Dict[str, str], k: int = 2
     for role, champs in scores.items():
         ordered = sorted(champs, key=lambda c: champs[c])
         for rank, champ in enumerate(ordered):
-            ratings[champ] = 1 + min(4, rank * 5 // len(ordered))
+            # Centre du rang : sur un poste de moins de cinq champions, rang × 5 // n tassait vers le bas.
+            ratings[champ] = 1 + min(4, int((rank + 0.5) * 5 / len(ordered)))
     return ratings
 
 
@@ -86,7 +117,7 @@ def teamfight_report(rows: List[dict], primary_role: Dict[str, str], measured: D
         lines.append("")
     fallback = sorted(c for c in full if c not in measured)
     lines += ["## Règle de repli — peu de données", "",
-              f"{len(fallback)} champions : moins de 5 parties pros sur leur poste principal, ou support.", "",
+              f"{len(fallback)} champions : moins de 5 parties pros sur leur poste le plus joué, ou joués surtout support.", "",
               ", ".join(f"{c} ({full[c]})" for c in fallback)]
     return "\n".join(lines) + "\n"
 
@@ -102,15 +133,19 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--write", action="store_true")
     args = ap.parse_args()
-    rows = json.loads(STATS_PATH.read_text(encoding="utf-8"))["rows"]
+    try:
+        rows = load_rows(STATS_PATH)
+    except ValueError as exc:
+        print(exc, file=sys.stderr)
+        return 2
     overrides = json.loads(derive_ratings.OVERRIDES.read_text(encoding="utf-8"))
-    primary = {k: v["roles"][0] for k, v in overrides.items() if isinstance(v, dict) and v.get("roles")}
+    primary = pro_roles(rows)
     ratings = teamfight_ratings(rows, primary)
     full = full_teamfight(ratings, derive_ratings.load_facts())
     print(f"{len(ratings)} champions notés depuis {len(rows)} lignes pros ; "
           f"{len(full) - len(ratings)} en repli sur les règles")
     REPORT.write_text(teamfight_report(rows, primary, ratings, full), encoding="utf-8", newline="\n")
-    for role in ("top", "jungle", "mid", "bot", "support"):
+    for role in MEASURED_ROLES:
         champs = sorted((c for c in ratings if primary.get(c) == role), key=lambda c: -ratings[c])
         print(f"{role:8} " + ", ".join(f"{c}={ratings[c]}" for c in champs))
     if args.write:

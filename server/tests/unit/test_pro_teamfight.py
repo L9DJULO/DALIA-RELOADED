@@ -72,3 +72,47 @@ def test_report_shows_damage_share_and_flags_rule_fallbacks():
     text = pro_teamfight.teamfight_report(rows, primary, measured, {**measured, "Rare": 3})
     assert "M4" in text and "%" in text
     assert "Rare" in text and "peu de données" in text
+
+
+def test_measured_on_the_role_pros_play_most_not_the_override_order():
+    """Revue du 25/09 : Pantheon (472 parties pros en jungle) tombait en repli parce que son
+    premier poste dans les overrides est support. Un champion surtout support en pro (Shen)
+    n'est pas mesuré sur ses quelques parties ailleurs : il reste sur la règle de repli."""
+    rows = ([row("Pantheon", "jungle", 1, 5, 10)] * 30 + [row("Pantheon", "top", 1, 5, 10)]
+            + [row("Shen", "support", 1, 5, 10)] * 40 + [row("Shen", "top", 1, 5, 10)] * 10
+            + [row("Rare", "mid", 1, 5, 10)] * 4)
+    assert pro_teamfight.pro_roles(rows) == {"Pantheon": "jungle"}
+
+
+def test_measured_notes_reach_the_champion_whatever_the_override_case():
+    """Data Dragon écrit « Belveth », les overrides « BelVeth » : le poste lu dans les
+    overrides ne trouvait jamais la clé pro. Le poste vient maintenant des lignes pros, qui
+    portent les mêmes clés que les faits."""
+    from app.services.rating_rules import ChampionFacts
+    rows = [row("Belveth", "jungle", 1, i, 10) for i in range(2) for _ in range(30)]
+    rows = [dict(r, champion="Belveth" if r["assists"] else "Vi") for r in rows]
+    measured = pro_teamfight.teamfight_ratings(rows, pro_teamfight.pro_roles(rows))
+    facts = {k: ChampionFacts(key=k, damage=2, durability=2, crowd_control=2, mobility=1, utility=1,
+                              style=5, ranged=False, subclasses=frozenset()) for k in ("Belveth", "Vi")}
+    assert pro_teamfight.full_teamfight(measured, facts) == {"Belveth": 4, "Vi": 2}
+
+
+def test_quintiles_on_a_small_role_are_centred():
+    """Sous cinq champions, rang × 5 // n tassait le poste vers le bas : deux champions
+    sortaient à 1 et 3. Le centre de chaque rang les place à 2 et 4 ; un seul, à 3."""
+    rows = [row("A", "top", 1, 1, 10)] * 30 + [row("B", "top", 1, 5, 10)] * 30 + [row("C", "mid", 1, 1, 10)] * 30
+    r = pro_teamfight.teamfight_ratings(rows, {"A": "top", "B": "top", "C": "mid"})
+    assert r == {"A": 2, "B": 4, "C": 3}
+
+
+def test_an_incomplete_collection_is_refused(tmp_path):
+    """Une collecte interrompue écrit un fichier partiel : les notes en seraient faussées
+    sans que rien ne le signale."""
+    import json
+    import pytest
+    path = tmp_path / "stats.json"
+    path.write_text(json.dumps({"_meta": {"complete": False}, "rows": [row("A", "mid", 1, 1, 10)]}), encoding="utf-8")
+    with pytest.raises(ValueError, match="incompl"):
+        pro_teamfight.load_rows(path)
+    path.write_text(json.dumps({"_meta": {"complete": True}, "rows": [row("A", "mid", 1, 1, 10)]}), encoding="utf-8")
+    assert len(pro_teamfight.load_rows(path)) == 1

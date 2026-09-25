@@ -66,6 +66,8 @@ server/app/data/cache/
 server/app/data/cache-frozen*/
 # Snapshots de comparaison de la calibration : locaux, regenerables
 server/tests/calibration/snapshots/
+# Collecte pro interrompue, gardée à côté de la dernière complète pour inspection
+server/app/data/*.incomplete.json
 
 # ── User data ──
 server/app/data/users/

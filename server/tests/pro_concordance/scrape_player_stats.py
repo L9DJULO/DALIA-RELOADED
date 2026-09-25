@@ -61,9 +61,12 @@ def main() -> int:
         out.append({"champion": key, "role": role, "kills": int(r.get("Kills") or 0),
                     "assists": int(r.get("Assists") or 0), "team_kills": int(r.get("TeamKills") or 0),
                     "damage": int(r.get("Damage") or 0), "patch": r.get("Patch")})
-    OUT.write_text(json.dumps({"_meta": {"complete": complete, "unmatched": sorted(unmatched), "rows": len(out)},
-                               "rows": out}, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
-    print(f"{len(out)} lignes écrites ({'complet' if complete else 'INCOMPLET'}) ; sans correspondance : {sorted(unmatched)}")
+    # Une collecte interrompue n'écrase pas la dernière complète : elle va à côté, pour inspection.
+    target = OUT if complete else OUT.with_name(OUT.stem + ".incomplete.json")
+    target.write_text(json.dumps({"_meta": {"complete": complete, "unmatched": sorted(unmatched), "rows": len(out)},
+                                  "rows": out}, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
+    print(f"{len(out)} lignes écrites dans {target.name} ({'complet' if complete else 'INCOMPLET'}) ; "
+          f"sans correspondance : {sorted(unmatched)}")
     return 0 if complete else 2
 
 

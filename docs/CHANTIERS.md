@@ -4,7 +4,7 @@ Tout ce qu'on a identifié et volontairement mis de côté, avec ce qui le bloqu
 pas le faire. Tenu à jour au fil des découvertes : rien ne doit disparaître dans l'historique de
 conversation.
 
-Dernière mise à jour : 24 septembre 2026, après le premier baseline de concordance pro.
+Dernière mise à jour : 25 septembre 2026, score méta 0-100 aligné et suites de la revue du chantier 14.
 
 ---
 
@@ -462,6 +462,13 @@ d'étendre l'amortissement à la popularité.
 l'impact des bans et au filtre des wildcards, reste pondéré à 80 % par le win rate. Il contredit
 désormais le signal hybride du moteur ; à aligner dans une passe dédiée.
 
+**Aligné le 25/09.** Le score lit le terme méta et la popularité du moteur, ancrés sur 3 % de
+pick rate (50 points, 10 points par doublement). L'ancre est absolue parce que les seuils des
+appelants le sont (45 viable, 55 forte, 65 menace, 70 S) : sur le gel du 25/09, autant de
+champions au-dessus de chaque seuil qu'avant, mais les bons — Jinx, Thresh, Lee Sin en tête au
+lieu de Quinn top, Ivern jungle ou Lux bot. Calibration inchangée, aucun score déplacé ; Morgana
+et Xayah entrent en wildcards dans trois cas.
+
 ---
 
 ## 14. Mesurer l'impact en teamfight sur les parties pros
@@ -495,15 +502,29 @@ peu joués) : la saturation disparaît, 34 des 71 champions du joueur à 4-5 con
   à la main se limite aux écarts.
 - La participation aux kills mesure la présence, pas l'impact ; le support n'est pas mesuré.
 
-**Relevé par la revue du 25/09** (reportés, sans effet sur les données actuelles) :
+**Relevé par la revue du 25/09.** Soldé le 25/09 pour `pro_teamfight` :
 
-- Pantheon (472 parties pros en jungle), Trundle, Yone, Camille et Shen sont en règle de repli :
-  leur poste principal dans les overrides n'est pas celui que les pros jouent. Mesurer sur le
-  poste le plus joué en pro plutôt que `roles[0]` les ferait entrer dans la mesure.
-- `pro_teamfight` : appariement des clés encore sensible à la casse (Bel'Veth non mesurable) ;
-  quintiles biaisés sur un poste de moins de 5 champions ; une collecte incomplète écrase
-  `pro_player_stats.json` sans que `pro_teamfight` lise `_meta.complete`.
+- Mesure sur le poste le plus joué en pro, lu sur les lignes pros et non plus sur `roles[0]`
+  des overrides. Un champion surtout joué support reste sur la règle de repli : Seraphine
+  n'est pas mesurée sur 5 parties bot pour 338 en support. 98 champions mesurés contre 90 ;
+  Pantheon, Trundle, Swain, Senna, Cho'Gath entrent, Yone passe de 5 (7 parties top) à 1
+  (122 parties mid), Shen et Camille (surtout support en pro) repassent en repli. 26 notes
+  changent ; calibration : aucune assertion basculée, 26 scores déplacés de 0,36 au plus.
+- Le poste venant des lignes pros, les clés sont celles de Data Dragon, comme les faits : plus
+  d'appariement par casse (Bel'Veth, une seule partie pro, reste en repli faute de données).
+- Quintiles centrés sur le rang (deux champions sur un poste : 2 et 4, plus 1 et 3).
+- `pro_teamfight` refuse une collecte marquée incomplète ; le collecteur écrit une collecte
+  interrompue à côté (`pro_player_stats.incomplete.json`) au lieu d'écraser la dernière complète.
+
+Reste :
+
 - `derive_ratings` : `fetch_facts` relance aussi les erreurs définitives (404) ; `review_order`
   et `control_report` sensibles à la casse.
-- Docstring de `burst` imprécis ; ligne « support » toujours vide dans la sortie de `pro_teamfight`.
+- Docstring de `burst` imprécis.
+
+**Écart de baseline relevé le 25/09** : la calibration donne **35/52** sur le gel du 25/09
+(13:29, 2464 entrées), y compris aux commits `0ff980f`, `fc2e542` et `c378565`, alors que le
+bilan du chantier 14 annonce 37/52 sur ce gel. Le gel n'étant pas versionné, le 37 a pu être
+mesuré sur un autre état du cache. À instruire avant de re-mesurer le levier teamfight ; les
+comparaisons de cette passe sont appariées sur le même gel et n'en dépendent pas.
 
