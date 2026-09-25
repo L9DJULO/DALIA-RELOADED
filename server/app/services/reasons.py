@@ -154,8 +154,11 @@ def _ally_patterns(ally: Champion) -> set:
 
 
 # ── Matchup reason (candidate vs one enemy) ──────────────────────────
-# Threshold above which we are confident enough to claim a lane matchup.
-LANE_CONFIDENCE_THRESHOLD = 0.7
+# Threshold above which we are confident enough to claim a lane matchup :
+# l'adversaire est plus probablement en face qu'ailleurs, une fois les autres
+# picks éliminés (arbitrage du joueur le 25/09/2026 : un Vladimir mid à 62 %
+# « va souvent au mid »). 0,7 taisait tous les flex.
+LANE_CONFIDENCE_THRESHOLD = 0.5
 
 
 def _matchup_reason(cand, enemy, delta, is_lane, cand_role=None,
@@ -385,7 +388,8 @@ def generate_reasons(
                 cand, enemy, mu.get("delta", 0.0),
                 mu.get("is_lane_opponent", False),
                 cand_role=role,
-                enemy_role=pick.role,
+                # En ranked le client ne révèle pas le poste adverse : le poste déduit fait foi.
+                enemy_role=pick.role or mu.get("opponent_role"),
                 lane_probability=lane_p,
                 observed=mu.get("games", 0) >= 30,
             ))

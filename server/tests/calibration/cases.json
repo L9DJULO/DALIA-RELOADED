@@ -1472,15 +1472,15 @@
       {
         "type": "must_not_have_reason_containing",
         "champion": "Lissandra",
-        "substring": "Lane favorable contre Naafiri"
+        "substring": "Lane favorable dans les matchs observes contre Naafiri"
       }
     ],
     "confidence": "high"
   },
   {
-    "id": "role_inference_galio_alone_ambiguous",
+    "id": "role_inference_vladimir_flex_likely_mid",
     "category": "role_inference",
-    "description": "Mid POV vs single locked Galio (mid 0.81 / sup 0.12 / top 0.07, 16.19 — sous le seuil 0.85, donc ambigu) — ambiguity reason must surface. La seconde assertion ('Lane favorable' absente) ne teste plus le seuil lane_prob < 0.7 : Galio est à 0.81 en mid ; elle passe parce que le matchup n'est pas favorable. À remplacer par un vrai flex si le seuil doit rester couvert.",
+    "description": "Mid POV vs Vladimir seul (mid 0.62 / top 0.24 / bot 0.14, 16.19). Plus probablement mid qu'ailleurs : l'avantage d'Orianna (+3,5 sur 4 087 parties) se dit en lane (seuil 0,5, arbitrage du joueur le 25/09), avec l'avertissement d'ambiguïté. Remplace le cas Galio, devenu mid à 0,81 et sans avantage : il ne testait plus le seuil.",
     "setup": {
       "my_team": "blue",
       "my_role": "mid",
@@ -1488,7 +1488,7 @@
       "ally_picks": {},
       "enemy_picks": [
         {
-          "name": "Galio"
+          "name": "Vladimir"
         }
       ],
       "bans": [],
@@ -1511,14 +1511,58 @@
     },
     "assertions": [
       {
-        "type": "must_not_have_reason_containing",
+        "type": "must_have_reason_containing",
         "champion": "Orianna",
-        "substring": "Lane favorable contre Galio"
+        "substring": "Lane favorable dans les matchs observes contre Vladimir"
       },
       {
         "type": "must_have_reason_containing",
         "champion": "Orianna",
-        "substring": "Galio probable"
+        "substring": "Vladimir probable"
+      }
+    ],
+    "confidence": "high"
+  },
+  {
+    "id": "role_inference_vladimir_pushed_off_mid",
+    "category": "role_inference",
+    "description": "Mid POV vs Vladimir + Syndra (mid 0.81). Par élimination Vladimir n'est plus mid qu'à ~25 % : « si un autre perso a plus de chance d'aller mid on le met mid et Vlad passe top » (le joueur, 25/09). Plus de « Lane favorable contre Vladimir ».",
+    "setup": {
+      "my_team": "blue",
+      "my_role": "mid",
+      "my_pick_order": 3,
+      "ally_picks": {},
+      "enemy_picks": [
+        {
+          "name": "Vladimir"
+        },
+        {
+          "name": "Syndra"
+        }
+      ],
+      "bans": [],
+      "champion_pool": {
+        "mid": [
+          {
+            "champion": "Orianna",
+            "tier": "S"
+          },
+          {
+            "champion": "Lux",
+            "tier": "B"
+          },
+          {
+            "champion": "Ahri",
+            "tier": "A"
+          }
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "must_not_have_reason_containing",
+        "champion": "Orianna",
+        "substring": "Lane favorable dans les matchs observes contre Vladimir"
       }
     ],
     "confidence": "high"
@@ -1569,7 +1613,7 @@
       {
         "type": "must_not_have_reason_containing",
         "champion": "Lissandra",
-        "substring": "Lane favorable contre Akali"
+        "substring": "Lane favorable dans les matchs observes contre Akali"
       }
     ],
     "confidence": "high"

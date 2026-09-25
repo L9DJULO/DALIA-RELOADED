@@ -285,9 +285,27 @@ appariée : aucun mouvement) ; clés Data Dragon calculées une fois ; test `ran
 affichées (win rate et écart face à tel adversaire), pas la contribution au score ; les
 pondérer ferait afficher un win rate que personne n'a mesuré. Le poids reste dans le terme.
 
-**Reste** : le cas `role_inference_galio_alone_ambiguous` (un nouveau cas à arbitrer, pas un
-correctif) et les fins de ligne sans `.gitattributes` (une normalisation réécrirait des
-centaines de fichiers : à faire dans un commit isolé, si on le décide).
+**Fins de ligne soldées le 25/09** : `.gitattributes` (LF partout, CRLF pour `*.ps1`),
+normalisation en un commit isolé listé dans `.git-blame-ignore-revs`.
+
+**Postes adverses par élimination, le 25/09** (arbitrage du joueur : « si un autre perso a plus
+de chance d'aller mid on le met mid et Vlad passe top par élimination ») :
+
+- `infer_enemy_roles` calcule les marginales exactes sur toutes les répartitions de postes
+  distincts, pondérées par les priors. L'ancien verrou n'agissait qu'à 0,85 : Vladimir + Syndra
+  (mid 0,81) laissait Vladimir mid à 62 %, il y est maintenant à 25 %.
+- Seuil « Lane » de 0,7 à **0,5** : l'adversaire est plus probablement en face qu'ailleurs.
+- **Bug trouvé** : la raison lisait `pick.role`, toujours vide en ranked (le client ne révèle
+  pas les postes adverses). « Lane favorable » ne sortait donc jamais face à un poste déduit,
+  quel que soit le seuil. Elle lit maintenant le poste déduit.
+- **Assertions vides** : les cas cherchaient « Lane favorable contre X », texte que le moteur ne
+  produit pas (« Lane favorable dans les matchs observes contre X »). Les `must_not` de Naafiri,
+  Akali et Galio passaient donc toujours. Libellés corrigés, et un test vérifie désormais que
+  chaque libellé de matchup des cas est producible.
+- Cas Galio remplacé par `role_inference_vladimir_flex_likely_mid` (Vladimir seul : « Lane
+  favorable » attendu) et `role_inference_vladimir_pushed_off_mid` (avec Syndra : plus de
+  « Lane »). Calibration 36/53 (les 2 assertions Galio remplacées par 3) ; sur les 31 autres
+  cas, aucun mouvement — ils fixent presque tous le poste des ennemis.
 
 ---
 

@@ -6,12 +6,13 @@ likely role per enemy, which produced confident but wrong outputs (e.g. flagging
 "Lane favorable contre Naafiri" when Naafiri was actually jungle and we were
 mid).
 
-This module returns a *distribution* over roles per enemy, then propagates
-constraints: when a champion is mono-role-locked (>=0.85 on a single role),
-that role is considered occupied and removed from every other enemy's
-distribution. After renormalisation, ambiguous flex picks may collapse to
-1.0 if a single legal role remains — exactly as a human would reason about
-the draft.
+This module returns a *distribution* over roles per enemy, reasoned by
+elimination over the whole enemy team: every assignment of distinct roles is
+weighted by the product of the priors, and each enemy's distribution is its
+marginal. A likelier mid pushes a flex off mid even when neither is certain
+(Vladimir + Syndra : Vladimir leaves mid), a taken top keeps the flex on mid —
+exactly as a human reasons about the draft (player's rule, 25/09/2026). The
+former propagation only locked roles at ≥ 0.85 and ignored everything below.
 
 The downstream consumer (matchup analyzer, reasons generator) reads
 draft.role_distributions to compute weighted scores instead of a single
@@ -21,6 +22,7 @@ from __future__ import annotations
 
 import json
 import logging
+from itertools import permutations
 from pathlib import Path
 from typing import Dict, List, Optional, TYPE_CHECKING
 
@@ -32,7 +34,6 @@ if TYPE_CHECKING:
 logger = logging.getLogger("dalia.role_inference")
 
 # Confidence thresholds
-MONO_ROLE_THRESHOLD = 0.85   # ≥ this on a single role → champion is "locked" to that role
 HIGH_CONFIDENCE = 0.85       # max prob ≥ this → no ambiguity warning needed
 
 
@@ -125,10 +126,11 @@ def infer_enemy_roles(
         2. If an enemy already has an explicit role assigned (LCU did reveal
            it for some reason, or this is a deterministic test setup), pin
            that role to 1.0.
-        3. Find any enemy with prob ≥ MONO_ROLE_THRESHOLD on a single role
-           → mark that role as occupied.
-        4. For every other enemy, zero-out occupied roles and renormalise.
-        5. Repeat until no new role gets locked. Up to 5 iterations.
+        3. Enumerate every assignment of distinct roles to the enemies (at most
+           5! = 120), weight it by the product of the priors, and return each
+           enemy's marginal. No role absent from a prior is ever introduced.
+        4. If no assignment is possible (two champions that only play mid),
+           keep each prior as is rather than fail.
     """
     distribution = role_distribution if role_distribution is not None else load_role_distribution()
     out: Dict[int, Dict[str, float]] = {}
@@ -148,58 +150,33 @@ def infer_enemy_roles(
         roles = champ.roles if champ else []
         out[ep.champion_id] = _prior_for_champion(name, key, roles, distribution)
 
-    # Iterative constraint propagation.
-    # Each iteration: highest-confidence champion per role claims it exclusively.
-    # If two champions are both mono-role-locked to the same role, the one with
-    # higher probability wins; the other is forced to redistribute to other roles.
-    for _iter in range(5):
-        # Build role ownership: only the highest-confidence champion per role wins.
-        role_owner: Dict[str, int] = {}   # role → champion_id
-        role_owner_p: Dict[str, float] = {}  # role → winning probability
+    return _eliminate(out)
 
-        for cid, dist in out.items():
-            if not dist:
-                continue
-            best_role, best_p = max(dist.items(), key=lambda x: x[1])
-            if best_p < MONO_ROLE_THRESHOLD:
-                continue
-            # Claim the role only if no one else has claimed it yet, or we beat them
-            if best_role not in role_owner or best_p > role_owner_p[best_role]:
-                role_owner[best_role] = cid
-                role_owner_p[best_role] = best_p
 
-        occupied = set(role_owner.keys())
-
-        changed = False
-        for cid, dist in out.items():
-            if not dist:
-                continue
-            best_role, best_p = max(dist.items(), key=lambda x: x[1])
-
-            # Skip if this champion is the legitimate owner of its best role
-            if best_p >= MONO_ROLE_THRESHOLD and role_owner.get(best_role) == cid:
-                continue
-
-            # Drop probability mass on roles owned by other champions
-            new_dist = {r: p for r, p in dist.items() if r not in occupied}
-            if not new_dist:
-                # Pathological: all roles occupied → keep original (avoid empty dist)
-                continue
-            new_dist = _normalise(new_dist)
-            if new_dist != dist:
-                out[cid] = new_dist
-                changed = True
-                if best_p >= MONO_ROLE_THRESHOLD:
-                    # Lost role conflict: log so devs can see it
-                    logger.debug(
-                        "Role conflict: champion %d lost %s to champion %d (%.2f < %.2f) — redistributed",
-                        cid, best_role, role_owner.get(best_role, -1),
-                        best_p, role_owner_p.get(best_role, 0),
-                    )
-
-        if not changed:
-            break
-
+def _eliminate(priors: Dict[int, Dict[str, float]]) -> Dict[int, Dict[str, float]]:
+    """Marginales exactes sur les répartitions de postes distincts, pondérées par les priors."""
+    ids = [cid for cid, d in priors.items() if d]
+    if not ids or len(ids) > len(ROLES):
+        return priors
+    totals = {cid: {r: 0.0 for r in priors[cid]} for cid in ids}
+    mass = 0.0
+    for assignment in permutations(ROLES, len(ids)):
+        w = 1.0
+        for cid, role in zip(ids, assignment):
+            w *= priors[cid].get(role, 0.0)
+            if w == 0.0:
+                break
+        if w == 0.0:
+            continue
+        mass += w
+        for cid, role in zip(ids, assignment):
+            totals[cid][role] += w
+    if mass <= 0.0:
+        logger.debug("No consistent role assignment for enemies %s — keeping priors", ids)
+        return priors
+    out = dict(priors)
+    for cid in ids:
+        out[cid] = {r: p / mass for r, p in totals[cid].items() if p > 0.0}
     return out
 
 
