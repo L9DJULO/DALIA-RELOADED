@@ -114,6 +114,11 @@ Liste validée le 26/09 :
 
 Vex : réception, avec la nuance du joueur — sa R lui permet aussi de plonger.
 
+**Dans le moteur** (26/09) : champ `properties` des overrides, lu dans `Champion.properties`.
+Contre une composition engage, `archetype_counter_adjust` compte la réception comme le peel
+(+0,08), retire le malus « free kill » d'un mage qui reçoit et ne donne plus le bonus de
+mobilité à un assassin. Mesure dans le `README.md` de la calibration.
+
 ## Sources
 
 - Wiki LoL, API MediaWiki : `https://wiki.leagueoflegends.com/en-us/api.php`, catégories

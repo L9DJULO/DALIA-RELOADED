@@ -224,10 +224,15 @@ def archetype_counter_adjust(candidate: Champion, enemy_archetype: Archetype) ->
 
     if enemy_archetype == Archetype.ENGAGE:
         # We need disengage / peel / mobility to kite their wombo.
-        if has_peel:                                 adj += 0.08
-        if has_mobility_proxy:                       adj += 0.05
+        # Réception (définie par le joueur le 26/09) : absorber l'engage et riposter,
+        # souvent en front-to-back — Orianna, Anivia, Renata. Elle répond comme le peel ;
+        # sans elle, un mage de contrôle passait pour une « free kill ».
+        answers = has_peel or "reception" in candidate.properties
+        if answers:                                  adj += 0.08
+        # La mobilité d'un assassin ne répond pas à l'engage : elle le fait plonger.
+        if has_mobility_proxy and "Assassin" not in tags: adj += 0.05
         if is_tank:                                  adj += 0.03   # soaks the engage
-        if is_immobile_carry and not has_peel:       adj -= 0.10   # free kill
+        if is_immobile_carry and not answers:        adj -= 0.10   # free kill
         if r.engage >= 4 and r.teamfight < 3:        adj -= 0.03   # same-engage trade is risky
 
     elif enemy_archetype == Archetype.POKE:

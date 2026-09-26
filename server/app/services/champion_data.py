@@ -160,6 +160,7 @@ class ChampionDatabase:
                 damage=damage,
                 ratings=ratings,
                 attack_range=attack_range,
+                properties=list(ov.get("properties", [])),
                 image_url=self.fetcher.champion_image_url(key),
             )
             by_id[cid] = champ

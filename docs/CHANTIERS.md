@@ -531,7 +531,11 @@ peu joués) : la saturation disparaît, 34 des 71 champions du joueur à 4-5 con
   après la relecture du joueur et la mesure sur le poste pro : même verdict (calibration 36/53
   à toutes les valeurs, 1,0 : +1 point de top-3, −3 de top-10). Le cas Orianna/Zed ne vient
   pas du teamfight mais du terme `archetype`, à l'envers contre une composition engage : il ne
-  connaît que le peel (`utility ≥ 4`), pas le contre-engage. Arbitrage du joueur en attente.
+  connaît que le peel (`utility ≥ 4`), pas le contre-engage. **Corrigé le 26/09 par la
+  « réception »**, propriété de draft définie par le joueur et posée sur 25 champions
+  (`docs/TAXONOMIES_CHAMPIONS.md`) : écart Zed − Orianna 7,7 → 4,2, calibration et concordance
+  neutres. Orianna reste n°6 ; le reste de l'écart est matchup, maîtrise du pool du cas,
+  popularité et méta.
 - Les notes Riot sont grossières sur certains champions clés : Orianna, sous-notée, retombe n°5
   derrière Zed dans le cas de référence. Le joueur relit `server/app/data/ratings_review.md`
   (les notes calculées les plus jouées en pro d'abord) et corrige ce qui le choque — la notation

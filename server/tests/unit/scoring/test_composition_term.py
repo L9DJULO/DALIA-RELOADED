@@ -67,3 +67,29 @@ def test_range_balance_is_not_judged_on_three_champions(catalog):
     """À trois, le quatrième pick peut encore rééquilibrer : trop tôt pour avertir."""
     comp = CompositionAnalyzer(catalog)
     assert _melee_warnings(comp, [catalog.get_by_id(i) for i in (103, 222, 40)]) == []
+
+
+def _mage(**kw):
+    from app.models.champion import Champion, ChampionRatings
+    return Champion(id=kw.pop("id", 1), key=kw.pop("key", "M"), name="M", tags=kw.pop("tags", ["Mage"]),
+                    ratings=ChampionRatings(utility=3, tankiness=1, engage=1), **kw)
+
+
+def test_reception_answers_an_engage_like_peel():
+    """Le joueur (26/09) : la réception, c'est absorber l'engage et riposter. Un mage de contrôle
+    qui reçoit (Orianna, Anivia) n'est pas une « free kill » face à une composition engage."""
+    plain, receiver = _mage(), _mage(properties=["reception"])
+    assert archetype_counter_adjust(plain, Archetype.ENGAGE) < 1.0
+    assert archetype_counter_adjust(receiver, Archetype.ENGAGE) > 1.0
+
+
+def test_an_assassin_gets_no_automatic_answer_to_an_engage():
+    """Sa mobilité ne répond pas à l'engage : Zed ne doit pas passer pour une réponse."""
+    from app.models.champion import Champion, ChampionRatings
+    zed = Champion(id=238, key="Zed", name="Zed", tags=["Assassin"], ratings=ChampionRatings(tankiness=2, utility=3))
+    assert archetype_counter_adjust(zed, Archetype.ENGAGE) == 1.0
+
+
+def test_properties_other_than_engage_answers_leave_the_rule_alone():
+    assert archetype_counter_adjust(_mage(properties=["reception"]), Archetype.POKE) == \
+        archetype_counter_adjust(_mage(), Archetype.POKE)

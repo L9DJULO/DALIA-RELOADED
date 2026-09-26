@@ -36,6 +36,9 @@ class Champion(BaseModel):
     damage: DamageProfile = DamageProfile()
     ratings: ChampionRatings = ChampionRatings()
     attack_range: int = 550           # Data Dragon stats.attackrange : 125-225 en mêlée, 450+ à distance
+    # Propriétés de draft définies et validées par le joueur (docs/TAXONOMIES_CHAMPIONS.md) :
+    # les règles lisent une propriété au lieu de nommer des champions (chantier 2).
+    properties: List[str] = []
     image_url: str = ""
 
     @property

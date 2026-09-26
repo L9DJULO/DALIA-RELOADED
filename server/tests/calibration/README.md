@@ -678,3 +678,21 @@ l'écart, **`archetype` à l'envers** (Zed +0,75, Orianna −1,50) : contre une 
 « mage immobile sans peel », pendant que Zed prend le bonus de mobilité d'un assassin. Le
 contre-engage (R d'Orianna, mur d'Anivia) n'existe pas dans la règle. Suite : arbitrage du
 joueur.
+
+## Réception (26/09/2026)
+
+Propriété de draft définie par le joueur — absorber l'engage adverse et riposter — posée sur 25
+champions (`properties` dans les overrides, liste dans `docs/TAXONOMIES_CHAMPIONS.md`). Contre
+une composition engage, `archetype_counter_adjust` la compte comme le peel, ne donne plus la
+« free kill » à un mage qui reçoit, ni le bonus de mobilité à un assassin.
+
+Gel du 25/09 13h29, contre `baseline_v8` : **36/53, aucune assertion basculée**, 14 changements
+de rang. Concordance : top-3 14,2 % (3 gagnées, 3 perdues), top-10 37,1 % (−0,1). Neutre, comme
+attendu : peu de décisions pros se jouent contre une composition engage.
+
+Cas de référence `comp_engage_mid_peel` : `archetype` Orianna −1,50 → +1,20, Zed +0,75 → 0 ;
+écart Zed − Orianna 7,7 → 4,2. Lissandra, wildcard de réception, entre n°2. Orianna reste n°6
+(−1,89, à 0,3 de Talon). Reste : matchup contre Akali 1,8, maîtrise du pool du cas (Zed S,
+Orianna A) 1,2, popularité et méta 1,8, synergie 0,6.
+
+Référence suivante : `snapshots/baseline_v9.json`, 36/53, même gel.

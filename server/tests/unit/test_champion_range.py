@@ -83,3 +83,25 @@ async def test_loader_warns_on_override_keys_matching_no_champion(monkeypatch, c
         await db.initialize()
     assert "wukong" in caplog.text
     assert db.get_by_key("MonkeyKing").roles == ["top"], "l'entrée orpheline n'est pas lue : repli sur les tags"
+
+
+@pytest.mark.asyncio
+async def test_loader_reads_draft_properties_from_overrides(monkeypatch):
+    """Propriétés de draft définies par le joueur (26/09), lues par les règles au lieu de noms."""
+    raw = {"Orianna": {"key": "61", "name": "Orianna", "tags": ["Mage"], "info": {"difficulty": 7},
+                       "stats": {"attackrange": 525}},
+           "Zed": {"key": "238", "name": "Zed", "tags": ["Assassin"], "info": {"difficulty": 7},
+                   "stats": {"attackrange": 125}}}
+
+    class _F:
+        async def fetch_all_champions_ddragon(self):
+            return raw
+
+        def champion_image_url(self, key):
+            return ""
+
+    db = ChampionDatabase(_F())
+    monkeypatch.setattr(db, "_load_overrides", lambda: {"Orianna": {"properties": ["reception"]}})
+    await db.initialize()
+    assert db.get_by_key("Orianna").properties == ["reception"]
+    assert db.get_by_key("Zed").properties == []

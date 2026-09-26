@@ -205,6 +205,9 @@
       4,
       2,
       1
+    ],
+    "properties": [
+      "reception"
     ]
   },
   "Annie": {
@@ -342,6 +345,9 @@
       4,
       4,
       2
+    ],
+    "properties": [
+      "reception"
     ]
   },
   "Bard": {
@@ -439,7 +445,10 @@
       1,
       5
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "properties": [
+      "reception"
+    ]
   },
   "Briar": {
     "roles": [
@@ -908,7 +917,10 @@
       2,
       5
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "properties": [
+      "reception"
+    ]
   },
   "Gangplank": {
     "roles": [
@@ -1010,7 +1022,10 @@
       2,
       4
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "properties": [
+      "reception"
+    ]
   },
   "Graves": {
     "roles": [
@@ -1234,7 +1249,10 @@
       1,
       2
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "properties": [
+      "reception"
+    ]
   },
   "JarvanIV": {
     "roles": [
@@ -1404,7 +1422,10 @@
       2,
       2
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "properties": [
+      "reception"
+    ]
   },
   "Karthus": {
     "roles": [
@@ -1694,6 +1715,9 @@
       2,
       3,
       5
+    ],
+    "properties": [
+      "reception"
     ]
   },
   "Leblanc": {
@@ -1823,6 +1847,9 @@
       5,
       2,
       2
+    ],
+    "properties": [
+      "reception"
     ]
   },
   "Locke": {
@@ -1885,7 +1912,10 @@
       1,
       2
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "properties": [
+      "reception"
+    ]
   },
   "Lux": {
     "roles": [
@@ -2042,7 +2072,10 @@
       1,
       2
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "properties": [
+      "reception"
+    ]
   },
   "MissFortune": {
     "roles": [
@@ -2132,7 +2165,10 @@
       2,
       2
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "properties": [
+      "reception"
+    ]
   },
   "Naafiri": {
     "roles": [
@@ -2177,7 +2213,10 @@
       1,
       2
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "properties": [
+      "reception"
+    ]
   },
   "Nasus": {
     "roles": [
@@ -2397,6 +2436,9 @@
       3,
       1,
       1
+    ],
+    "properties": [
+      "reception"
     ]
   },
   "Ornn": {
@@ -2461,7 +2503,10 @@
       2,
       5
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "properties": [
+      "reception"
+    ]
   },
   "Pyke": {
     "roles": [
@@ -2643,7 +2688,10 @@
       1,
       2
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "properties": [
+      "reception"
+    ]
   },
   "Renekton": {
     "roles": [
@@ -2866,7 +2914,10 @@
       2,
       2
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "properties": [
+      "reception"
+    ]
   },
   "Sett": {
     "roles": [
@@ -2919,7 +2970,10 @@
       2,
       5
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "properties": [
+      "reception"
+    ]
   },
   "Shyvana": {
     "roles": [
@@ -3082,7 +3136,10 @@
       1,
       1
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "properties": [
+      "reception"
+    ]
   },
   "Soraka": {
     "roles": [
@@ -3099,7 +3156,10 @@
       1,
       1
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "properties": [
+      "reception"
+    ]
   },
   "Swain": {
     "roles": [
@@ -3195,7 +3255,10 @@
       2,
       5
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "properties": [
+      "reception"
+    ]
   },
   "Taliyah": {
     "roles": [
@@ -3224,6 +3287,9 @@
       4,
       2,
       1
+    ],
+    "properties": [
+      "reception"
     ]
   },
   "Talon": {
@@ -3270,7 +3336,10 @@
       2,
       5
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "properties": [
+      "reception"
+    ]
   },
   "Teemo": {
     "roles": [
@@ -3603,6 +3672,9 @@
       5,
       2,
       3
+    ],
+    "properties": [
+      "reception"
     ]
   },
   "Vi": {
@@ -4086,7 +4158,10 @@
       1,
       2
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "properties": [
+      "reception"
+    ]
   },
   "Zoe": {
     "roles": [
