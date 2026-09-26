@@ -696,3 +696,25 @@ Cas de référence `comp_engage_mid_peel` : `archetype` Orianna −1,50 → +1,2
 Orianna A) 1,2, popularité et méta 1,8, synergie 0,6.
 
 Référence suivante : `snapshots/baseline_v9.json`, 36/53, même gel.
+
+## Scaling mesuré (26-27/09/2026)
+
+Définition du joueur : un champion scale s'il gagne nettement plus dans les parties longues.
+`scripts/refresh_scaling.py` lit « Win Rate vs Game Length » sur Lolalytics (Master+, 30 jours,
+245 couples champion-poste, médiane 17 500 parties) : tranches 5-7 moins tranches 2-3. Terme
+`scaling` : face à une équipe qui scale, un candidat early gagne, un scaler perd.
+
+Quatre cas du joueur (catégorie `scaling`, 7 assertions après retrait de Fiora contre Kayle) :
+**7/7 levier coupé** — le matchup et les autres termes font déjà ce qu'il décrit. Calibration
+61 assertions, 43 passent.
+
+| `scaling_scale` | Calibration | Concordance top-3 | Top-10 |
+|---|---|---|---|
+| 0 | 43/61 | 14,2 % | 37,1 % |
+| 1 | 43/61 (0 basculée) | 14,2 % (z −0,6) | 36,8 % (z −1,9) |
+| 2 | 43/61 (0 basculée) | 13,8 % (z −2,5) | 36,4 % (z −3,6) |
+
+**Retenu : 0.** Rien à gagner en calibration, une perte nette en concordance. La mesure contredit
+aussi une partie des intuitions : Jarvan IV +1,7 (pas early), Karthus jungle +0,2, Kog'Maw bot
+−2,3 (pas scaler, relativement aux autres ADC). Les données restent disponibles
+(`app/data/scaling.json`) pour d'autres usages, notamment le WPA (chantier 15).

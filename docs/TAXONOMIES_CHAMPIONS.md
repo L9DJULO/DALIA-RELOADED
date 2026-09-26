@@ -91,7 +91,9 @@ DALIA détecte sept archétypes adverses (`poke`, `engage`, `kite`, `split`, `pr
    pièces justificatives. C'est la réponse au chantier 2 : les règles lisent des propriétés, ne
    nomment plus de champions.
 2. **Les notions qui manquent**, par ordre d'impact probable : réception / disengage (fait le
-   26/09, voir ci-dessous), force en début de partie contre scaling, dive, waveclear.
+   26/09, voir ci-dessous), force en début de partie contre scaling (mesuré le 26/09 depuis le
+   win rate par durée de partie de Lolalytics, sans gain pour le moteur : chantier 16), dive,
+   waveclear.
 3. **Les mécaniques du wiki et les champs Meraki** comme matière première du chantier 1 :
    décomposer `cc` en « contrôle de zone » et « contrôle ciblé », `utility` en « protège un
    allié » et « accélère l'équipe », etc.

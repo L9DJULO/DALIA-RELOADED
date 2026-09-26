@@ -585,3 +585,19 @@ collecte : rang et maîtrise des 10 joueurs) est décidée.
 
 **Bloqué par** : une clé Riot personnelle (aucune dans `.env` ; une clé de développement expire
 toutes les 24 h), et deux choix du joueur — régions et paliers collectés.
+
+---
+
+## 16. Scaling : mesuré, levier laissé à 0
+
+Définition du joueur (26/09) : un champion scale s'il gagne nettement plus dans les parties
+longues. Mesuré sur Lolalytics (`scripts/refresh_scaling.py`, `app/data/scaling.json`), terme
+`scaling` câblé et testé : face à une équipe qui scale, valoriser ce qui gagne tôt.
+
+**Laissé neutre le 27/09** : les quatre cas du joueur passent déjà sans lui (7/7), et le levier
+dégrade la concordance pro (z −2,5 en top-3 à 2,0). Détail dans le `README.md` de la calibration.
+Fiora contre Kayle retirée : le joueur pensait à la phase de lane (Fiora 48,3 % des parties).
+
+**Reste ouvert** : la mesure est relative au poste — Jinx sort plate (55 % partout), Kog'Maw
+à −2,3 parmi des ADC qui scalent tous. Une mesure absolue (puissance selon le niveau et l'or)
+dirait autre chose ; elle n'existe pas dans les sources publiques trouvées.
