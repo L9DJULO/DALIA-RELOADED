@@ -654,3 +654,27 @@ dit sur quel gel il a été mesuré.
 **Référence suivante** : `snapshots/baseline_v8.json`, **36/53**, gel du 25/09 13h29 (2464
 entrées, Data Dragon 16.19.1, `master_plus`), après le remplacement du cas Galio par deux cas
 Vladimir (2 assertions remplacées par 3).
+
+## Levier `teamfight_scale` re-mesuré le 26/09/2026
+
+Après la relecture des notes calculées par le joueur (aucune correction) et la mesure du
+teamfight sur le poste pro (98 champions mesurés). Calibration sur le gel du 25/09 13h29 contre
+`baseline_v8` ; concordance sur les 5 250 décisions pros (McNemar apparié sur le top-3).
+
+| Valeur | Calibration | Concordance top-3 | Top-10 | z top-3 |
+|---|---|---|---|---|
+| 0 | 36/53 | 14,2 % | 37,2 % | — |
+| 0,25 | 36/53 (0 basculée) | 14,2 % | 36,2 % | −0,2 |
+| 0,5 | 36/53 (+1 −1) | 14,2 % | 34,3 % | +0,1 |
+| 1,0 | 36/53 (+2 −2) | 15,2 % | 34,0 % | +2,5 |
+
+**Retenu : 0**, comme le 25/09. Même profil : 1,0 gagne un point de top-3 et en perd trois de
+top-10, la calibration échange des assertions sans en gagner.
+
+**Le cas de référence n'est pas un problème de teamfight.** `comp_engage_mid_peel` : Zed +3,33,
+Orianna −4,35, écart 7,7 ; le levier donne au plus +2 à Orianna (5 contre 3). Premier poste de
+l'écart, **`archetype` à l'envers** (Zed +0,75, Orianna −1,50) : contre une composition engage,
+`archetype_counter_adjust` ne connaît que le peel (`utility ≥ 4`) et classe Orianna (utilité 3)
+« mage immobile sans peel », pendant que Zed prend le bonus de mobilité d'un assassin. Le
+contre-engage (R d'Orianna, mur d'Anivia) n'existe pas dans la règle. Suite : arbitrage du
+joueur.

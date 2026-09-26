@@ -527,7 +527,11 @@ peu joués) : la saturation disparaît, 34 des 71 champions du joueur à 4-5 con
 
 **Reste ouvert** :
 
-- Le levier teamfight reste à 0 : aucune valeur ne tient la calibration.
+- Le levier teamfight reste à 0 : aucune valeur ne tient la calibration. **Re-mesuré le 26/09**
+  après la relecture du joueur et la mesure sur le poste pro : même verdict (calibration 36/53
+  à toutes les valeurs, 1,0 : +1 point de top-3, −3 de top-10). Le cas Orianna/Zed ne vient
+  pas du teamfight mais du terme `archetype`, à l'envers contre une composition engage : il ne
+  connaît que le peel (`utility ≥ 4`), pas le contre-engage. Arbitrage du joueur en attente.
 - Les notes Riot sont grossières sur certains champions clés : Orianna, sous-notée, retombe n°5
   derrière Zed dans le cas de référence. Le joueur relit `server/app/data/ratings_review.md`
   (les notes calculées les plus jouées en pro d'abord) et corrige ce qui le choque — la notation
