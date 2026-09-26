@@ -619,3 +619,9 @@ contrôle », 51 + 6 partiels) ; calibration 44/60, concordance top-10 +0,3 poin
   Vayne retirés ; calibration 44/56 (`baseline_v11`). `no_tie_hard_counter` est à réécrire
   avec un counter confirmé par les données.
 - ~~Ekko~~ : « pas trop réception » (27/09), laissé sans.
+
+**Risque du blind (27/09)** : le joueur tient que Yasuo en blind est plus risqué que Syndra, mais
+les matchups n'en voient rien (pires matchups ≈ 46 % pour les deux, en Émeraude+ comme en
+Diamant 2+). Le correctif « flex à sa part réelle » n'a rien gagné (concordance en léger recul) et
+n'est pas retenu. Piste : mesurer le risque autrement que par les matchups — dépendance au
+jungler, dispersion des résultats, niveau requis.

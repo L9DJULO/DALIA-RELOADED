@@ -56,7 +56,7 @@
   {
     "id": "blind_pick_mid_no_yasuo",
     "category": "blind_pick",
-    "description": "Mid blind — le terme adversaire futur doit empecher Yasuo de dominer le classement",
+    "description": "Mid blind — le terme adversaire futur doit empecher Yasuo de dominer le classement Maintenu par le joueur le 27/09/2026 contre les données : les pires matchups de Yasuo et de Syndra sont au même niveau (≈ 46-47 % en Émeraude+ comme en Diamant 2+), mais « Syndra c'est bien mieux », « l'Émeraude c'est low elo ». Signal : le risque de Yasuo en blind n'est pas dans les matchups (dépendance au jungler, marge d'erreur).",
     "setup": {
       "my_team": "blue",
       "my_role": "mid",
@@ -105,7 +105,8 @@
         "champion_a": "Syndra",
         "champion_b": "Yasuo"
       }
-    ]
+    ],
+    "confidence": "low"
   },
   {
     "id": "blind_pick_mid_no_zed_akali",

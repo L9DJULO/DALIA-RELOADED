@@ -762,3 +762,17 @@ de tête — sur un mauvais exemple : à réécrire avec un counter confirmé pa
 devant un Yasuo S). L'échelle actuelle est gardée ; l'échelle « S +2, sous S resserré » perdait
 deux cas de blind (43/60).
 Référence suivante : `snapshots/baseline_v11.json`, **44/56**, même gel.
+
+## Risque du blind : Yasuo, et le flex réparti à parts égales (27/09/2026)
+
+`blind_pick_mid_no_yasuo` échoue parce que `future_opponent` donnait +0,07 à Yasuo : son poids de
+counter est divisé par ses trois postes (mid, top, bot) comme s'ils étaient équiprobables. Essai :
+la part réelle du poste (Yasuo mid 56 %) → Yasuo −0,19. Calibration inchangée (44/56) ;
+concordance top-3 14,2 % (+4 −10, z −1,6), top-10 37,2 % (+9 −19, z −1,9). **Non retenu** : aucun
+gain, tendance négative — en draft pro, cacher son poste avec un flex vaut sans doute plus que sa
+part statistique.
+
+Même au pire (l'adversaire prend toujours son meilleur counter), Yasuo et Syndra perdent autant
+(−2,7) ; leurs pires matchups joués sont au même niveau en Émeraude+ comme en Diamant 2+ (≈ 46 %).
+Le joueur maintient le cas (« Syndra c'est bien mieux ») : le risque de Yasuo en blind n'est pas
+dans les matchups. Cas passé en confiance basse, signal à instruire.
