@@ -1749,7 +1749,7 @@
     "id": "scaling_lane_bully_vs_kayle",
     "category": "scaling",
     "confidence": "high",
-    "description": "Top face à Kayle. Arbitrage du joueur le 26/09/2026 : « Fiora ou Irelia très fort dans Kayle ».",
+    "description": "Top face à Kayle. Arbitrage du joueur le 26/09/2026 : « Fiora ou Irelia très fort dans Kayle », puis le 27/09, face aux données (Fiora 48,3 % contre Kayle sur 2 512 parties Master+, Irelia 55,7 %) : « je maintiens pas Fiora, je pensais à la phase de lane ». Fiora gagne la lane, pas la partie : l'assertion Fiora est retirée, Fiora reste dans le pool.",
     "setup": {
       "my_team": "blue",
       "my_role": "top",
@@ -1781,11 +1781,6 @@
       }
     },
     "assertions": [
-      {
-        "type": "must_rank_higher_than",
-        "champion_a": "Fiora",
-        "champion_b": "Nasus"
-      },
       {
         "type": "must_rank_higher_than",
         "champion_a": "Irelia",
