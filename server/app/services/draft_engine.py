@@ -37,6 +37,7 @@ from app.scoring.mastery_term import MasteryInputs, mastery_term
 from app.scoring.matchup_term import matchup_term
 from app.scoring.meta_term import meta_term, popularity_term
 from app.scoring.opponent_model import future_opponent_term
+from app.scoring import scaling_term as scaling
 from app.scoring.rank import lolalytics_tier
 from app.scoring.types import Estimate, Term
 from app.services.champion_data import ChampionDatabase
@@ -425,6 +426,12 @@ class DraftEngine:
         arch = archetype_term(champ, enemy_archetype) if has_enemies else None
         if arch:
             terms.append(arch)
+        if has_enemies and config.scoring.scaling_scale:
+            enemy_keys = {e.champion_id: c.key for e in draft.enemy_picks
+                          if e.champion_id and (c := self.db.get_by_id(e.champion_id))}
+            tempo = scaling.scaling_term(champ.key, role, draft, enemy_keys, scaling.load_scaling())
+            if tempo:
+                terms.append(tempo)
         if allies:
             duo_bonus = bool(duo_partner_role) and any(a.role == duo_partner_role and a.champion_id for a in draft.ally_picks)
             terms.append(synergy_term(await self.synergy.score(champ.id, role, draft), duo_bonus))

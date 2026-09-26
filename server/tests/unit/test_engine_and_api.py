@@ -313,3 +313,17 @@ async def test_meta_damping_reaches_the_breakdown_with_the_revealed_enemies(cata
     blind = _terms(await engine.recommend(_top_request()), 78)["meta"]
     full = _terms(await engine.recommend(_top_request(enemies=(59, 222, 103, 40, 24))), 78)["meta"]
     assert blind.value > 0 and full.value == pytest.approx(0.0)
+
+
+@pytest.mark.asyncio
+async def test_scaling_term_reaches_the_breakdown_against_scalers(catalog, monkeypatch):
+    from app.config import config
+    from app.scoring import scaling_term as scaling
+    data = {"jinx": {"bot": {"delta": 12.0, "games": 90000}},
+            "poppy": {"top": {"delta": -5.0, "games": 90000}}, "nasus": {"top": {"delta": 10.0, "games": 90000}}}
+    monkeypatch.setattr(scaling, "load_scaling", lambda: data)
+    monkeypatch.setattr(config.scoring, "scaling_scale", 1.0)
+    body = DraftRequest(draft_state={"my_role": "top", "enemy_picks": [{"champion_id": 222, "role": "bot"}]},
+                        champion_pool={"top": [{"champion_id": 78}, {"champion_id": 75}]}, enable_wildcard=False)
+    result = await DraftEngine(catalog, catalog.fetcher).recommend(body)
+    assert _terms(result, 78)["scaling"].value > 0 > _terms(result, 75)["scaling"].value

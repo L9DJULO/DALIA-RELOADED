@@ -1694,5 +1694,199 @@
         "champion_b": "Malphite"
       }
     ]
+  },
+  {
+    "id": "scaling_early_jungler_vs_scalers",
+    "category": "scaling",
+    "confidence": "high",
+    "description": "Jungle face à Kayle top, Kassadin mid, Vayne bot. Arbitrage du joueur le 26/09/2026 : « Jarvan ou Lee Sin sont bons dans les persos scaling, il peut gank, mettre le perso au fond et jamais avoir le temps de scale ».",
+    "setup": {
+      "my_team": "blue",
+      "my_role": "jungle",
+      "my_pick_order": 4,
+      "ally_picks": {},
+      "enemy_picks": {
+        "top": "Kayle",
+        "mid": "Kassadin",
+        "bot": "Vayne"
+      },
+      "bans": [],
+      "champion_pool": {
+        "jungle": [
+          {
+            "champion": "Jarvan IV",
+            "tier": "A"
+          },
+          {
+            "champion": "Lee Sin",
+            "tier": "A"
+          },
+          {
+            "champion": "Karthus",
+            "tier": "A"
+          },
+          {
+            "champion": "Master Yi",
+            "tier": "A"
+          }
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "must_rank_higher_than",
+        "champion_a": "Jarvan IV",
+        "champion_b": "Karthus"
+      },
+      {
+        "type": "must_rank_higher_than",
+        "champion_a": "Lee Sin",
+        "champion_b": "Master Yi"
+      }
+    ]
+  },
+  {
+    "id": "scaling_lane_bully_vs_kayle",
+    "category": "scaling",
+    "confidence": "high",
+    "description": "Top face à Kayle. Arbitrage du joueur le 26/09/2026 : « Fiora ou Irelia très fort dans Kayle ».",
+    "setup": {
+      "my_team": "blue",
+      "my_role": "top",
+      "my_pick_order": 5,
+      "ally_picks": {},
+      "enemy_picks": {
+        "top": "Kayle"
+      },
+      "bans": [],
+      "champion_pool": {
+        "top": [
+          {
+            "champion": "Fiora",
+            "tier": "A"
+          },
+          {
+            "champion": "Irelia",
+            "tier": "A"
+          },
+          {
+            "champion": "Nasus",
+            "tier": "A"
+          },
+          {
+            "champion": "Kayle",
+            "tier": "A"
+          }
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "must_rank_higher_than",
+        "champion_a": "Fiora",
+        "champion_b": "Nasus"
+      },
+      {
+        "type": "must_rank_higher_than",
+        "champion_a": "Irelia",
+        "champion_b": "Nasus"
+      }
+    ]
+  },
+  {
+    "id": "scaling_lane_bully_vs_vayne",
+    "category": "scaling",
+    "confidence": "high",
+    "description": "Bot face à Vayne. Arbitrage du joueur le 26/09/2026 : « Draven et Lucian forts dans Vayne et Zeri ».",
+    "setup": {
+      "my_team": "blue",
+      "my_role": "bot",
+      "my_pick_order": 5,
+      "ally_picks": {},
+      "enemy_picks": {
+        "bot": "Vayne"
+      },
+      "bans": [],
+      "champion_pool": {
+        "bot": [
+          {
+            "champion": "Draven",
+            "tier": "A"
+          },
+          {
+            "champion": "Lucian",
+            "tier": "A"
+          },
+          {
+            "champion": "Kog'Maw",
+            "tier": "A"
+          },
+          {
+            "champion": "Twitch",
+            "tier": "A"
+          }
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "must_rank_higher_than",
+        "champion_a": "Draven",
+        "champion_b": "Kog'Maw"
+      },
+      {
+        "type": "must_rank_higher_than",
+        "champion_a": "Lucian",
+        "champion_b": "Kog'Maw"
+      }
+    ]
+  },
+  {
+    "id": "scaling_lane_bully_vs_zeri",
+    "category": "scaling",
+    "confidence": "high",
+    "description": "Bot face à Zeri. Arbitrage du joueur le 26/09/2026 : « Draven et Lucian forts dans Vayne et Zeri ».",
+    "setup": {
+      "my_team": "blue",
+      "my_role": "bot",
+      "my_pick_order": 5,
+      "ally_picks": {},
+      "enemy_picks": {
+        "bot": "Zeri"
+      },
+      "bans": [],
+      "champion_pool": {
+        "bot": [
+          {
+            "champion": "Draven",
+            "tier": "A"
+          },
+          {
+            "champion": "Lucian",
+            "tier": "A"
+          },
+          {
+            "champion": "Kog'Maw",
+            "tier": "A"
+          },
+          {
+            "champion": "Twitch",
+            "tier": "A"
+          }
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "must_rank_higher_than",
+        "champion_a": "Draven",
+        "champion_b": "Kog'Maw"
+      },
+      {
+        "type": "must_rank_higher_than",
+        "champion_a": "Lucian",
+        "champion_b": "Kog'Maw"
+      }
+    ]
   }
 ]

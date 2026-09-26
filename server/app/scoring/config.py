@@ -119,6 +119,13 @@ class ScoringConstants(BaseModel):
     teamfight_reference: float = 3.0
     teamfight_scale: float = 0.0
     teamfight_rel: float = 0.5
+    # Scaling (joueur, 26/09/2026) : face à une équipe qui scale, valoriser ce qui gagne
+    # tôt. Mesure : WR des parties longues − courtes, Lolalytics Master+ 30 jours
+    # (scripts/refresh_scaling.py). Rétréci par k_scaling parties ; neutre par défaut
+    # jusqu'à la mesure.
+    scaling_scale: float = 0.0
+    k_scaling: int = 1000
+    scaling_rel: float = 0.5
     # Synergie, mécaniques, modèle
     synergy_scale: float = 0.12
     synergy_cap: float = 3.0
