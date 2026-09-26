@@ -562,3 +562,18 @@ de 00h34, regelé à 13h29 sans nouveau baseline. Le regel coûte un point (Synd
 Malphite n°1 perdus, Olaf/Kha'Zix gagné), les notes calculées un autre (Quinn/Garen, écart 0,24
 pour une incertitude de 2,3). Rien de cassé. Nouveau baseline `baseline_v8` : **36/53**.
 
+---
+
+## 15. WPA des picks : retirer le biais de sélection du signal méta
+
+Proposé le 26/09 après l'article de Coachless sur le Win Probability Added. Le win rate d'un
+champion mélange son effet et le niveau de ceux qui le jouent — la cause mesurée au chantier 13.
+Le correctif actuel (win rate au quart + popularité) devine ce biais ; le WPA le mesure :
+`WR − moyenne de P(victoire | tout sauf le champion)`, avec le niveau et la maîtrise des joueurs
+dans le modèle.
+
+Spec : `docs/superpowers/specs/2026-09-26-wpa-des-picks-design.md`. Seule la phase 1 (enrichir la
+collecte : rang et maîtrise des 10 joueurs) est décidée.
+
+**Bloqué par** : une clé Riot personnelle (aucune dans `.env` ; une clé de développement expire
+toutes les 24 h), et deux choix du joueur — régions et paliers collectés.
