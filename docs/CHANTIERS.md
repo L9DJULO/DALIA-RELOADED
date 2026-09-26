@@ -192,7 +192,8 @@ inventer, les lui faire préciser.
    « le plus safe c'est Ornn ou Malphite mais c'est clairement pas les picks les plus forts, genre
    Camille c'est strong ». À reformuler avec lui.
 2. **`edge_case_garen_vs_darius`, Garen > Camille** — « les 2 se jouent, faudra me refaire des tests,
-   je vais demander à mes potes master main top ». En attente de sa réponse.
+   je vais demander à mes potes master main top ». **Retiré le 27/09** : face aux données
+   (Garen 50,8 % contre Darius, Sett 53,9 %), « les données ont raison ».
 
 Les deux sont marqués **confiance basse** dans la suite en attendant : leur échec est un signal à
 instruire, pas une régression bloquante.
@@ -612,8 +613,9 @@ contrôle », 51 + 6 partiels) ; calibration 44/60, concordance top-10 +0,3 poin
 
 **Reste à trancher avec le joueur** :
 
-- Confort contre risque : le palier S pèse ~2,9 points contre B et l'emporte dans 8 cas où le
-  cas veut l'inverse. « Il y a un équilibre à voir » : à mesurer (balayage du poids de maîtrise).
-- Désaccords cas / données : Tryndamere contre Darius (50,0 %), Garen contre Darius (50,8 %
-  contre 53,9 % pour Sett), Vayne contre Nasus (43,1 %).
+- ~~Confort contre risque~~ : tranché le 27/09 — en blind, le risque l'emporte sur le palier S.
+  Échelle de maîtrise inchangée.
+- ~~Désaccords cas / données~~ : « les données ont raison » (27/09). Tryndamere, Garen et
+  Vayne retirés ; calibration 44/56 (`baseline_v11`). `no_tie_hard_counter` est à réécrire
+  avec un counter confirmé par les données.
 - ~~Ekko~~ : « pas trop réception » (27/09), laissé sans.

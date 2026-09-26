@@ -743,3 +743,22 @@ instruments depuis le signal méta.
   au score, derrière au rang) : conservé à la demande du joueur. L'assertion reste en échec.
 
 Référence suivante : `snapshots/baseline_v10.json`, 44/60, même gel.
+
+## Trois cas retirés : les données avaient raison (27/09/2026)
+
+Présentés au joueur avec les chiffres Master+ du gel, comme Fiora contre Kayle. Sa réponse :
+« les données ont raison ». Les trois cas n'avaient que l'attente contredite ; ils sont retirés.
+
+| Cas | Attente | Données Master+ |
+|---|---|---|
+| `edge_case_tryndamere_no_cc` | Tryndamere top 3 contre une composition sans CC dur | 50,0 % contre Darius (6 403 parties), aucun CC apporté à l'équipe |
+| `edge_case_garen_vs_darius` | Garen top 3, devant Sett, contre Darius | Garen 50,8 % (18 870), Sett 53,9 % (17 537) |
+| `no_tie_hard_counter` | Vayne se détache de Malphite contre Nasus | Vayne 43,1 % contre Nasus (4 119), Malphite 48,5 % |
+
+`no_tie_hard_counter` testait une idée juste — un vrai counter en last pick se détache du groupe
+de tête — sur un mauvais exemple : à réécrire avec un counter confirmé par les données.
+
+**Maîtrise tranchée le même jour** : en blind, le risque l'emporte sur le palier S (« Syndra »
+devant un Yasuo S). L'échelle actuelle est gardée ; l'échelle « S +2, sous S resserré » perdait
+deux cas de blind (43/60).
+Référence suivante : `snapshots/baseline_v11.json`, **44/56**, même gel.

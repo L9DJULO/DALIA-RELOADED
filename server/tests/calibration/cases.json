@@ -1271,58 +1271,6 @@
     ]
   },
   {
-    "id": "edge_case_garen_vs_darius",
-    "category": "edge_case",
-    "description": "Garen top vs Darius enemy — specific counter edge case fires",
-    "setup": {
-      "my_team": "red",
-      "my_role": "top",
-      "my_pick_order": 4,
-      "ally_picks": {
-        "jungle": "Sejuani",
-        "mid": "Orianna",
-        "bot": "Jinx"
-      },
-      "enemy_picks": {
-        "top": "Darius",
-        "jungle": "Lee Sin"
-      },
-      "bans": [],
-      "champion_pool": {
-        "top": [
-          {
-            "champion": "Garen",
-            "tier": "B"
-          },
-          {
-            "champion": "Sett",
-            "tier": "A"
-          },
-          {
-            "champion": "Camille",
-            "tier": "A"
-          },
-          {
-            "champion": "Ornn",
-            "tier": "B"
-          }
-        ]
-      }
-    },
-    "assertions": [
-      {
-        "type": "must_be_in_top_3",
-        "champion": "Garen"
-      },
-      {
-        "type": "must_rank_higher_than",
-        "champion_a": "Garen",
-        "champion_b": "Sett"
-      }
-    ],
-    "confidence": "medium"
-  },
-  {
     "id": "edge_case_galio_vs_ap_heavy",
     "category": "edge_case",
     "description": "Galio mid vs AP-heavy enemy comp — MR scaling edge case fires",
@@ -1372,64 +1320,6 @@
       }
     ],
     "confidence": "medium"
-  },
-  {
-    "id": "edge_case_tryndamere_no_cc",
-    "category": "edge_case",
-    "description": "Tryndamere top vs comp with no hard CC — ult uncounterable edge case fires",
-    "setup": {
-      "my_team": "blue",
-      "my_role": "top",
-      "my_pick_order": 5,
-      "ally_picks": {
-        "jungle": "Khazix",
-        "mid": "Talon",
-        "bot": "Jinx",
-        "support": "Brand"
-      },
-      "enemy_picks": {
-        "top": "Camille",
-        "jungle": "Graves",
-        "mid": "Akali",
-        "bot": "Draven",
-        "support": "Yuumi"
-      },
-      "bans": [
-        "Leona",
-        "Nautilus",
-        "Malphite",
-        "Sejuani",
-        "Ornn",
-        "Amumu"
-      ],
-      "champion_pool": {
-        "top": [
-          {
-            "champion": "Tryndamere",
-            "tier": "B"
-          },
-          {
-            "champion": "Sett",
-            "tier": "A"
-          },
-          {
-            "champion": "Renekton",
-            "tier": "A"
-          },
-          {
-            "champion": "Garen",
-            "tier": "B"
-          }
-        ]
-      }
-    },
-    "assertions": [
-      {
-        "type": "must_be_in_top_3",
-        "champion": "Tryndamere"
-      }
-    ],
-    "confidence": "low"
   },
   {
     "id": "role_inference_naafiri_ambiguous",
@@ -1648,50 +1538,6 @@
         "type": "must_be_tied",
         "champion_a": "Orianna",
         "champion_b": "Syndra"
-      }
-    ]
-  },
-  {
-    "id": "no_tie_hard_counter",
-    "category": "ties",
-    "description": "Un counter direct en last pick doit se detacher du groupe de tete",
-    "setup": {
-      "my_team": "red",
-      "my_role": "top",
-      "my_pick_order": 5,
-      "rank_bucket": "emerald",
-      "ally_picks": {
-        "jungle": "Vi",
-        "mid": "Ahri",
-        "bot": "Jinx",
-        "support": "Leona"
-      },
-      "enemy_picks": {
-        "top": "Nasus",
-        "jungle": "Jarvan IV",
-        "mid": "Syndra",
-        "bot": "Caitlyn",
-        "support": "Lux"
-      },
-      "bans": [],
-      "champion_pool": {
-        "top": [
-          {
-            "champion": "Vayne",
-            "tier": "A"
-          },
-          {
-            "champion": "Malphite",
-            "tier": "A"
-          }
-        ]
-      }
-    },
-    "assertions": [
-      {
-        "type": "must_rank_higher_than",
-        "champion_a": "Vayne",
-        "champion_b": "Malphite"
       }
     ]
   },
