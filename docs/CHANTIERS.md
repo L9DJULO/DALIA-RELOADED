@@ -616,4 +616,4 @@ contrôle », 51 + 6 partiels) ; calibration 44/60, concordance top-10 +0,3 poin
   cas veut l'inverse. « Il y a un équilibre à voir » : à mesurer (balayage du poids de maîtrise).
 - Désaccords cas / données : Tryndamere contre Darius (50,0 %), Garen contre Darius (50,8 %
   contre 53,9 % pour Sett), Vayne contre Nasus (43,1 %).
-- Ekko : réception ou non (« je sais pas »).
+- ~~Ekko~~ : « pas trop réception » (27/09), laissé sans.

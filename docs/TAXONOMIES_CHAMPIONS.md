@@ -124,8 +124,7 @@ réception inclut ceux qui **encaissent et ripostent**, pas seulement ceux qui f
 |---|---|
 | Oui | Alistar, Bard, Thresh, Syndra, Cassiopeia, Malzahar, Viktor, Hwei, Ziggs, Vel'Koz, Xerath, Zyra, Ornn, Sion, Gnar, Sejuani, Rammus, Xin Zhao, Rakan (« gros oui »), Sett, Qiyana, Shyvana, Skarner, Ambessa, Urgot, Darius |
 | « Oui et non » → réception partielle (`reception_partielle`, compte à moitié) | Maokai, Vi, Aatrox, Pyke, Viego, Lux (« oui mais pas le premier choix ») |
-| Non | Trundle, Zac, Lee Sin, Hecarim, Briar, Warwick, Nocturne, Camille, Kled |
-| Sans avis (« je sais pas ») — non posé | Ekko |
+| Non | Trundle, Zac, Lee Sin, Hecarim, Briar, Warwick, Nocturne, Camille, Kled, Ekko (« pas trop », 27/09) |
 
 Total : 51 réceptions, 6 partielles.
 
