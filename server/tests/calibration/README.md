@@ -718,3 +718,28 @@ Quatre cas du joueur (catégorie `scaling`, 7 assertions après retrait de Fiora
 aussi une partie des intuitions : Jarvan IV +1,7 (pas early), Karthus jungle +0,2, Kog'Maw bot
 −2,3 (pas scaler, relativement aux autres ADC). Les données restent disponibles
 (`app/data/scaling.json`) pour d'autres usages, notamment le WPA (chantier 15).
+
+## Revue des règles à l'envers : réception seule réponse à un engage (27/09/2026)
+
+Écart terme par terme sur les 18 assertions en échec (outil jetable, somme des écarts
+défavorables) : `matchup` −20,5 (9 assertions), `popularity` −15,4 (11), `mastery` −14,1 (9),
+`composition` −8,8 (7), `meta` −4,5, `archetype` −4,0, `synergy` −4,0.
+
+- **`mastery`** : dans 8 cas sur 9, le pool du cas donne un meilleur palier au champion qui ne
+  doit pas passer (Yasuo S contre Lux B). Question de poids, pas de règle : « il y a un
+  équilibre à voir » (joueur). Non touché.
+- **`matchup`** : désaccords entre cas et données (Tryndamere, Garen, Vayne), soumis au joueur.
+- **`archetype`**, contre une composition engage, comptait comme réponse une utilité ≥ 4 (peel
+  d'office : Sett, Pyke, Senna) et un engage ≥ 4 (« mobilité »). Désormais seule la réception
+  du joueur répond, élargie le 27/09 à « tout ce qui désengage ou contrôle » (51 champions, 6
+  partiels à moitié ; liste dans `docs/TAXONOMIES_CHAMPIONS.md`).
+
+Gel du 25/09 13h29 : **44/60** (Lulu devant Pyke contre engage, aucune perte), 13 changements de
+rang ; `comp_engage_mid_peel` : Zed perd la première place (Lux n°1). Concordance : top-3
+14,3 % (+12 −8, z +0,9), **top-10 37,4 % (+24 −11, z +2,2)**. Premier gain sur les deux
+instruments depuis le signal méta.
+
+- **Départage par le risque** (`pick_order_first_avoids_niche` : Syndra au-dessus de Malzahar
+  au score, derrière au rang) : conservé à la demande du joueur. L'assertion reste en échec.
+
+Référence suivante : `snapshots/baseline_v10.json`, 44/60, même gel.

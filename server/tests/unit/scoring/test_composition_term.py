@@ -93,3 +93,26 @@ def test_an_assassin_gets_no_automatic_answer_to_an_engage():
 def test_properties_other_than_engage_answers_leave_the_rule_alone():
     assert archetype_counter_adjust(_mage(properties=["reception"]), Archetype.POKE) == \
         archetype_counter_adjust(_mage(), Archetype.POKE)
+
+
+def test_partial_reception_counts_for_half():
+    """« Oui et non » du joueur (Maokai, Vi, Pyke, Lux…) : une réponse partielle à l'engage."""
+    full = archetype_counter_adjust(_mage(properties=["reception"]), Archetype.ENGAGE)
+    half = archetype_counter_adjust(_mage(properties=["reception_partielle"]), Archetype.ENGAGE)
+    none = archetype_counter_adjust(_mage(), Archetype.ENGAGE)
+    assert none < half < full
+
+
+def test_utility_alone_is_no_longer_an_answer_to_an_engage():
+    """V2 (27/09) : seule la réception définie par le joueur répond à un engage ; une note
+    d'utilité ≥ 4 ne vaut plus peel d'office (Sett, Pyke, Senna la prenaient)."""
+    from app.models.champion import Champion, ChampionRatings
+    util = Champion(id=2, key="U", name="U", tags=["Mage"], ratings=ChampionRatings(utility=5, tankiness=1, engage=1))
+    assert archetype_counter_adjust(util, Archetype.ENGAGE) < 1.0
+
+
+def test_an_engager_is_not_mobile_against_an_engage():
+    """Répondre à un engage par un engage n'est pas le kiter."""
+    from app.models.champion import Champion, ChampionRatings
+    eng = Champion(id=3, key="E", name="E", tags=["Fighter"], ratings=ChampionRatings(engage=5, tankiness=3, splitpush=1, teamfight=4))
+    assert archetype_counter_adjust(eng, Archetype.ENGAGE) == 1.0

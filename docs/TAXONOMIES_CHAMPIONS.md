@@ -116,10 +116,27 @@ Liste validée le 26/09 :
 
 Vex : réception, avec la nuance du joueur — sa R lui permet aussi de plonger.
 
+**Élargie le 27/09** : « en gros tout ce qui désengage ou contrôle ». Le joueur a tranché une
+liste tirée des mécaniques du wiki (Knockback, Stasis, Blocker, Flee, Ground, Suppress). Sa
+réception inclut ceux qui **encaissent et ripostent**, pas seulement ceux qui fuient :
+
+| Verdict | Champions |
+|---|---|
+| Oui | Alistar, Bard, Thresh, Syndra, Cassiopeia, Malzahar, Viktor, Hwei, Ziggs, Vel'Koz, Xerath, Zyra, Ornn, Sion, Gnar, Sejuani, Rammus, Xin Zhao, Rakan (« gros oui »), Sett, Qiyana, Shyvana, Skarner, Ambessa, Urgot, Darius |
+| « Oui et non » → réception partielle (`reception_partielle`, compte à moitié) | Maokai, Vi, Aatrox, Pyke, Viego, Lux (« oui mais pas le premier choix ») |
+| Non | Trundle, Zac, Lee Sin, Hecarim, Briar, Warwick, Nocturne, Camille, Kled |
+| Sans avis (« je sais pas ») — non posé | Ekko |
+
+Total : 51 réceptions, 6 partielles.
+
 **Dans le moteur** (26/09) : champ `properties` des overrides, lu dans `Champion.properties`.
 Contre une composition engage, `archetype_counter_adjust` compte la réception comme le peel
 (+0,08), retire le malus « free kill » d'un mage qui reçoit et ne donne plus le bonus de
 mobilité à un assassin. Mesure dans le `README.md` de la calibration.
+
+**Le 27/09**, la réception devient la **seule** réponse reconnue à un engage : une note
+d'utilité ≥ 4 ne vaut plus peel d'office, et un engage ≥ 4 n'est plus compté comme mobilité.
+La réception partielle compte à moitié (bonus et malus « free kill »).
 
 ## Sources
 

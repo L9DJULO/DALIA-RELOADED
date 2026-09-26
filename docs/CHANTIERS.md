@@ -601,3 +601,19 @@ Fiora contre Kayle retirée : le joueur pensait à la phase de lane (Fiora 48,3 
 **Reste ouvert** : la mesure est relative au poste — Jinx sort plate (55 % partout), Kog'Maw
 à −2,3 parmi des ADC qui scalent tous. Une mesure absolue (puissance selon le niveau et l'or)
 dirait autre chose ; elle n'existe pas dans les sources publiques trouvées.
+
+---
+
+## 17. Règles à l'envers : revue des assertions en échec
+
+Menée le 27/09 (détail dans le `README.md` de la calibration). **Corrigé** : contre une
+composition engage, seule la réception du joueur répond (élargie à « tout ce qui désengage ou
+contrôle », 51 + 6 partiels) ; calibration 44/60, concordance top-10 +0,3 point (z +2,2).
+
+**Reste à trancher avec le joueur** :
+
+- Confort contre risque : le palier S pèse ~2,9 points contre B et l'emporte dans 8 cas où le
+  cas veut l'inverse. « Il y a un équilibre à voir » : à mesurer (balayage du poids de maîtrise).
+- Désaccords cas / données : Tryndamere contre Darius (50,0 %), Garen contre Darius (50,8 %
+  contre 53,9 % pour Sett), Vayne contre Nasus (43,1 %).
+- Ekko : réception ou non (« je sais pas »).
