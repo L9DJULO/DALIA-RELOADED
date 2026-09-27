@@ -178,19 +178,19 @@ export const ROLE_LABEL = {
 };
 
 export const TAG_CFG = {
-  'counter':       { label: 'COUNTER',   cls: 'tag-accent'  },
-  'safe-blind':    { label: 'SAFE',      cls: 'tag-ok'      },
-  'meta-forte':    { label: 'META S',    cls: 'tag-accent'  },
-  'flex':          { label: 'FLEX',      cls: 'tag-neutral' },
-  'last-pick-counter': { label: 'LAST PICK', cls: 'tag-accent' },
+  'counter':       { label: 'COUNTER',   cls: ''  },
+  'safe-blind':    { label: 'SAFE',      cls: 'tag--ok'      },
+  'meta-forte':    { label: 'META S',    cls: 'tag--hot'  },
+  'flex':          { label: 'FLEX',      cls: '' },
+  'last-pick-counter': { label: 'LAST PICK', cls: '' },
   // API tags supplémentaires (non affichés mais présents pour éviter les erreurs TAG_CFG lookup)
-  'counter-pick':      { label: 'COUNTER',   cls: 'tag-accent'  },
-  'first-pick-safe':   { label: 'SAFE',      cls: 'tag-ok'      },
-  'niche-counter':     { label: 'NICHE',     cls: 'tag-neutral' },
-  'off-meta':          { label: 'OFF META',  cls: 'tag-neutral' },
-  'low-data':          { label: 'LOW DATA',  cls: 'tag-neutral' },
-  'risky-blind':       { label: 'BLIND RISQUÉ', cls: 'tag-neutral' },
-  'comfort':           { label: 'CONFORT',  cls: 'tag-ok'      },
+  'counter-pick':      { label: 'COUNTER',   cls: ''  },
+  'first-pick-safe':   { label: 'SAFE',      cls: 'tag--ok'      },
+  'niche-counter':     { label: 'NICHE',     cls: 'tag--muted' },
+  'off-meta':          { label: 'OFF META',  cls: 'tag--muted' },
+  'low-data':          { label: 'LOW DATA',  cls: 'tag--warn' },
+  'risky-blind':       { label: 'BLIND RISQUÉ', cls: 'tag--warn' },
+  'comfort':           { label: 'CONFORT',  cls: 'tag--ok'      },
 };
 
 export const KIND_CFG = {

@@ -1,0 +1,67 @@
+/* ─────────────────────────────────────────────
+   BASE — reset (remplace le preflight Tailwind), focus, mouvement réduit
+   ───────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; border: 0 solid; }
+html { -webkit-text-size-adjust: 100%; tab-size: 4; }
+html, body, #root { height: 100%; }
+
+body {
+  background: var(--ink-0);
+  color: var(--bone-0);
+  font-family: var(--f-body);
+  font-size: var(--fs-body);
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+/* Hachure de fond, très discrète */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image: repeating-linear-gradient(45deg, transparent 0 18px, rgba(244, 239, 230, 0.05) 18px 19px);
+}
+#root { position: relative; z-index: 1; }
+
+h1, h2, h3, h4, h5, h6 { font-size: inherit; font-weight: inherit; }
+a { color: inherit; text-decoration: inherit; }
+b, strong { font-weight: 700; }
+small { font-size: 85%; }
+code, kbd, samp, pre { font-family: var(--f-mono); font-size: 1em; }
+ol, ul, menu { list-style: none; }
+table { border-collapse: collapse; text-indent: 0; }
+img, svg, video, canvas { display: block; vertical-align: middle; }
+img, video { max-width: 100%; height: auto; }
+[hidden] { display: none !important; }
+summary { cursor: pointer; }
+
+button, input, optgroup, select, textarea {
+  font-family: inherit; font-size: 100%; font-weight: inherit; line-height: inherit;
+  color: inherit; background: none;
+}
+button, [role="button"] { cursor: pointer; }
+button:disabled { cursor: not-allowed; }
+input::placeholder, textarea::placeholder { color: var(--bone-3); opacity: 1; }
+
+::-webkit-scrollbar       { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); }
+::selection { background: var(--accent-muted); color: var(--bone-0); }
+
+/* Focus : anneau os décalé, visible sur le rouge comme sur le noir */
+:focus-visible { outline: 2px solid var(--bone-0); outline-offset: 3px; }
+input:focus-visible, select:focus-visible, textarea:focus-visible { outline-offset: 1px; }
+
+.visually-hidden {
+  position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

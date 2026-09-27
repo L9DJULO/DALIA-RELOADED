@@ -25,16 +25,16 @@ export function Portrait({ champ, size = 48, banned = false, dim = false, classN
   };
   if (!champ) {
     return (
-      <div className="portrait portrait-empty" style={{ ...base, ...style }}/>
+      <div className="portrait portrait--empty" style={{ ...base, ...style }}/>
     );
   }
   return (
     <div
-      className={`portrait ${banned ? 'portrait-banned' : ''} ${dim ? 'portrait-dim' : ''} ${className}`}
+      className={`portrait ${banned ? 'portrait--banned' : ''} ${dim ? 'portrait--dim' : ''} ${className}`}
       style={{ ...base, ...style }}
     >
       <img src={champIcon(champ.key)} alt={champ.name} />
-      {banned && <div className="portrait-ban-x">✕</div>}
+      {banned && <div className="portrait__x">✕</div>}
     </div>
   );
 }
@@ -87,7 +87,7 @@ export const TERM_LABELS = {
   meta: 'Méta', popularity: 'Popularité', matchup: 'Matchup', future_opponent: 'Adversaire à venir', mastery: 'Maîtrise',
   composition: 'Compo', archetype: 'Archétype', synergy: 'Synergie', mechanics: 'Mécaniques', teamfight: 'Teamfight', scaling: 'Scaling adverse', model: 'Modèle',
 };
-const TERM_SOURCE_COLOR = { observed: 'var(--accent)', model: '#4ac8e8', heuristic: 'var(--text-muted)' };
+const TERM_SOURCE_COLOR = { observed: 'var(--accent)', model: '#4ac8e8', heuristic: 'var(--bone-2)' };
 
 export function TermBar({ term, max = 4 }) {
   const half = Math.min(100, (Math.abs(term.value) / max) * 100) / 2;
@@ -96,14 +96,14 @@ export function TermBar({ term, max = 4 }) {
   return (
     <div style={{ marginBottom: 7 }} title={term.note || ''}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
-        <span style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+        <span style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--bone-2)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
           {TERM_LABELS[term.name] || term.name}
         </span>
         <span style={{ fontFamily: 'var(--f-display)', fontSize: 11, fontWeight: 700, color: advantageColor(term.value) }}>
           {formatAdvantage(term.value)} <span style={{ opacity: 0.6, fontWeight: 400 }}>{formatSd(term.sd)}</span>
         </span>
       </div>
-      <div style={{ position: 'relative', height: 4, background: 'var(--surface-overlay, var(--ink-2))', border: '1px solid var(--border-subtle, var(--ink-5))' }}>
+      <div style={{ position: 'relative', height: 4, background: 'var(--ink-3, var(--ink-2))', border: '1px solid var(--border-subtle, var(--ink-5))' }}>
         <div style={{ position: 'absolute', left: '50%', top: -2, bottom: -2, width: 1, background: 'var(--border-subtle, var(--ink-5))' }}/>
         <div style={{ position: 'absolute', top: 0, height: '100%', width: `${half}%`, background: color, ...side }}/>
       </div>
@@ -196,7 +196,7 @@ export function TimerChip({ initial = 28 }) {
 export function LCUBadge({ connected = true }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.12em', color: connected ? 'var(--ok)' : 'var(--bone-3)' }}>
-      <span className={`lcu-dot ${connected ? 'lcu-on' : 'lcu-off'}`}/>
+      <span className={`dot ${connected ? 'dot--on' : ''}`}/>
       {connected ? 'LCU CONNECTÉ' : 'LCU OFFLINE'}
     </div>
   );

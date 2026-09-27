@@ -5,9 +5,9 @@ import useHistoryStore from '../../stores/historyStore';
 import { getDDragonChampUrl } from '../../lib/constants';
 
 const RESULT_COLORS = {
-  win:     { text: 'var(--win)',  bg: 'var(--win-bg)',  border: 'var(--win-border)' },
-  loss:    { text: 'var(--loss)', bg: 'var(--loss-bg)', border: 'var(--loss-border)' },
-  pending: { text: 'var(--text-muted)', bg: 'transparent', border: 'var(--border-subtle)' },
+  win:     { text: 'var(--ok)',  bg: 'var(--ok-bg)',  border: 'var(--ok-border)' },
+  loss:    { text: 'var(--bad)', bg: 'var(--bad-bg)', border: 'var(--bad-border)' },
+  pending: { text: 'var(--bone-2)', bg: 'transparent', border: 'var(--border-subtle)' },
 };
 
 const SE_LBL = {
@@ -32,15 +32,15 @@ function HistoryTab({ champions }) {
     <div style={{ display: 'flex', justifyContent: 'center', padding: 52 }}>
       <div style={{ textAlign: 'center' }}>
         <div style={{ width: 32, height: 32, margin: '0 auto 12px', border: '2px solid var(--accent)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }}/>
-        <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--text-muted)' }}>Chargement...</div>
+        <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--bone-2)' }}>Chargement...</div>
       </div>
     </div>
   );
 
   if (error) return (
-    <div style={{ padding: 24, background: 'var(--loss-bg)', border: '2px solid var(--loss-border)' }}>
-      <div style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'var(--loss)', marginBottom: 10 }}>{error}</div>
-      <button onClick={loadHistory} className="btn-secondary btn-sm" style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+    <div style={{ padding: 24, background: 'var(--bad-bg)', border: '2px solid var(--bad-border)' }}>
+      <div style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'var(--bad)', marginBottom: 10 }}>{error}</div>
+      <button onClick={loadHistory} className="btn btn--sm" style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
         <RefreshCw size={10}/> Réessayer
       </button>
     </div>
@@ -50,7 +50,7 @@ function HistoryTab({ champions }) {
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 64 }}>
       <History size={32} style={{ color: 'var(--accent)', marginBottom: 14 }}/>
       <div style={{ fontFamily: 'var(--f-display)', fontSize: 16, letterSpacing: '0.1em', marginBottom: 8 }}>AUCUN HISTORIQUE</div>
-      <div style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'var(--text-muted)', textAlign: 'center' }}>
+      <div style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'var(--bone-2)', textAlign: 'center' }}>
         Lance une analyse depuis le Draft Board pour commencer
       </div>
     </div>
@@ -59,10 +59,10 @@ function HistoryTab({ champions }) {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-        <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.1em' }}>
+        <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--bone-2)', letterSpacing: '0.1em' }}>
           {entries.length} DRAFT{entries.length !== 1 ? 'S' : ''}
         </span>
-        <button onClick={loadHistory} className="btn-ghost btn-sm" style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+        <button onClick={loadHistory} className="btn btn--ghost btn--sm" style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
           <RefreshCw size={10}/> ACTUALISER
         </button>
       </div>
@@ -75,7 +75,7 @@ function HistoryTab({ champions }) {
           <div key={entry.id} style={{
             display: 'flex', alignItems: 'center', gap: 12,
             padding: '10px 14px', marginBottom: 6,
-            background: 'var(--surface-card)',
+            background: 'var(--ink-2)',
             border: `2px solid ${rc.border}`,
             borderLeft: `4px solid ${rc.text}`,
           }}>
@@ -83,8 +83,8 @@ function HistoryTab({ champions }) {
             {champ ? (
               <img src={getDDragonChampUrl(champ.key)} alt={champ.name} style={{ width: 42, height: 42, objectFit: 'cover', flexShrink: 0, border: '1px solid var(--border-subtle)' }}/>
             ) : (
-              <div style={{ width: 42, height: 42, background: 'var(--surface-overlay)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: '1px solid var(--border-subtle)' }}>
-                <span style={{ color: 'var(--text-muted)', fontSize: 18 }}>?</span>
+              <div style={{ width: 42, height: 42, background: 'var(--ink-3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: '1px solid var(--border-subtle)' }}>
+                <span style={{ color: 'var(--bone-2)', fontSize: 18 }}>?</span>
               </div>
             )}
 
@@ -95,7 +95,7 @@ function HistoryTab({ champions }) {
                   {entry.my_champion_name || '—'}
                 </span>
                 {entry.my_role && (
-                  <span style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--text-muted)', padding: '1px 6px', border: '1px solid var(--border-subtle)', letterSpacing: '0.1em' }}>
+                  <span style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--bone-2)', padding: '1px 6px', border: '1px solid var(--border-subtle)', letterSpacing: '0.1em' }}>
                     {entry.my_role.toUpperCase()}
                   </span>
                 )}
@@ -104,14 +104,14 @@ function HistoryTab({ champions }) {
                     fontFamily: 'var(--f-mono)', fontSize: 9, padding: '1px 6px', letterSpacing: '0.08em',
                     background: entry.my_team === 'blue' ? 'rgba(74,139,255,0.12)' : 'var(--accent-muted)',
                     color: entry.my_team === 'blue' ? '#4a8bff' : 'var(--accent)',
-                    border: `1px solid ${entry.my_team === 'blue' ? 'rgba(74,139,255,0.3)' : 'var(--border-accent)'}`,
+                    border: `1px solid ${entry.my_team === 'blue' ? 'rgba(74,139,255,0.3)' : 'var(--accent)'}`,
                   }}>
                     {entry.my_team.toUpperCase()}
                   </span>
                 )}
               </div>
-              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                {entry.win_probability != null && <span>P(WIN) <span style={{ color: entry.win_probability >= 52 ? 'var(--win)' : entry.win_probability <= 48 ? 'var(--loss)' : 'var(--warn)' }}>{entry.win_probability.toFixed(1)}%</span></span>}
+              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--bone-2)', letterSpacing: '0.06em', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                {entry.win_probability != null && <span>P(WIN) <span style={{ color: entry.win_probability >= 52 ? 'var(--ok)' : entry.win_probability <= 48 ? 'var(--bad)' : 'var(--warn)' }}>{entry.win_probability.toFixed(1)}%</span></span>}
                 {entry.recommendation_score != null && <span>{entry.score_unit === 'wr_points' ? `AVANTAGE ${formatAdvantage(entry.recommendation_score)}` : `SCORE ${Math.round(entry.recommendation_score)} (ancien barème)`}</span>}
                 {entry.created_at && <span>{new Date(entry.created_at).toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric' })}</span>}
               </div>
@@ -121,9 +121,9 @@ function HistoryTab({ champions }) {
             <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
               {['win','loss'].map(r => {
                 const isActive = entry.result === r;
-                const c = r === 'win' ? 'var(--win)' : 'var(--loss)';
-                const bg = r === 'win' ? 'var(--win-bg)' : 'var(--loss-bg)';
-                const bd = r === 'win' ? 'var(--win-border)' : 'var(--loss-border)';
+                const c = r === 'win' ? 'var(--ok)' : 'var(--bad)';
+                const bg = r === 'win' ? 'var(--ok-bg)' : 'var(--bad-bg)';
+                const bd = r === 'win' ? 'var(--ok-border)' : 'var(--bad-border)';
                 return (
                   <button
                     key={r}
@@ -131,10 +131,10 @@ function HistoryTab({ champions }) {
                     style={{
                       padding: '4px 10px',
                       fontFamily: 'var(--f-display)', fontSize: 10, letterSpacing: '0.12em',
-                      background: isActive ? bg : 'var(--surface-elevated)',
-                      color: isActive ? c : 'var(--text-muted)',
+                      background: isActive ? bg : 'var(--ink-3)',
+                      color: isActive ? c : 'var(--bone-2)',
                       border: `2px solid ${isActive ? bd : 'var(--border-subtle)'}`,
-                      cursor: 'pointer', transition: 'all 0.1s',
+                      cursor: 'pointer', transition: 'background-color 0.1s, color 0.1s, border-color 0.1s',
                     }}
                   >
                     {r === 'win' ? 'V' : 'D'}
@@ -143,7 +143,7 @@ function HistoryTab({ champions }) {
               })}
               <button
                 onClick={() => deleteEntry(entry.id)}
-                style={{ padding: '4px 8px', background: 'transparent', border: '2px solid transparent', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                style={{ padding: '4px 8px', background: 'transparent', border: '2px solid transparent', color: 'var(--bone-2)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
                 title="Supprimer"
               >
                 <Trash2 size={11}/>
@@ -166,7 +166,7 @@ function StatsTab() {
     <div style={{ display: 'flex', justifyContent: 'center', padding: 52 }}>
       <div style={{ textAlign: 'center' }}>
         <div style={{ width: 32, height: 32, margin: '0 auto 12px', border: '2px solid var(--accent)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }}/>
-        <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--text-muted)' }}>Chargement...</div>
+        <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--bone-2)' }}>Chargement...</div>
       </div>
     </div>
   );
@@ -175,10 +175,10 @@ function StatsTab() {
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 64 }}>
       <BarChart2 size={32} style={{ color: 'var(--accent)', marginBottom: 14 }}/>
       <div style={{ fontFamily: 'var(--f-display)', fontSize: 16, letterSpacing: '0.1em', marginBottom: 8 }}>AUCUNE STAT</div>
-      <div style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'var(--text-muted)', textAlign: 'center' }}>
+      <div style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'var(--bone-2)', textAlign: 'center' }}>
         Joue et enregistre des drafts pour voir tes statistiques
       </div>
-      <button onClick={loadStats} className="btn-secondary" style={{ marginTop: 16, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+      <button onClick={loadStats} className="btn" style={{ marginTop: 16, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
         <RefreshCw size={11}/> CHARGER
       </button>
     </div>
@@ -188,12 +188,12 @@ function StatsTab() {
   const wins  = stats.wins  || 0;
   const losses= stats.losses|| 0;
   const winRate = total > 0 ? ((wins / total) * 100).toFixed(1) : null;
-  const wrColor = winRate >= 55 ? 'var(--win)' : winRate >= 50 ? 'var(--warn)' : 'var(--loss)';
+  const wrColor = winRate >= 55 ? 'var(--ok)' : winRate >= 50 ? 'var(--warn)' : 'var(--bad)';
 
   const cards = [
-    { label: 'TOTAL', value: total, color: 'var(--text-primary)' },
-    { label: 'VICTOIRES', value: wins, color: 'var(--win)' },
-    { label: 'DÉFAITES', value: losses, color: 'var(--loss)' },
+    { label: 'TOTAL', value: total, color: 'var(--bone-0)' },
+    { label: 'VICTOIRES', value: wins, color: 'var(--ok)' },
+    { label: 'DÉFAITES', value: losses, color: 'var(--bad)' },
     { label: 'WINRATE', value: winRate ? `${winRate}%` : '—', color: wrColor },
   ];
 
@@ -201,7 +201,7 @@ function StatsTab() {
     <div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12, marginBottom: 20 }}>
         {cards.map(({ label, value, color }) => (
-          <div key={label} style={{ padding: '18px 20px', background: 'var(--surface-card)', border: '2px solid var(--border-subtle)' }}>
+          <div key={label} style={{ padding: '18px 20px', background: 'var(--ink-2)', border: '2px solid var(--border-subtle)' }}>
             <div style={SE_LBL}>{label}</div>
             <div style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 40, letterSpacing: '-0.02em', color, lineHeight: 1 }}>
               {value}
@@ -213,7 +213,7 @@ function StatsTab() {
       {(stats.most_played_champion || stats.best_role) && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
           {stats.most_played_champion && (
-            <div style={{ padding: '16px 20px', background: 'var(--surface-card)', border: '2px solid var(--border-subtle)' }}>
+            <div style={{ padding: '16px 20px', background: 'var(--ink-2)', border: '2px solid var(--border-subtle)' }}>
               <div style={SE_LBL}>CHAMPION FAVORI</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <Trophy size={18} style={{ color: 'var(--accent)' }}/>
@@ -224,7 +224,7 @@ function StatsTab() {
             </div>
           )}
           {stats.best_role && (
-            <div style={{ padding: '16px 20px', background: 'var(--surface-card)', border: '2px solid var(--border-subtle)' }}>
+            <div style={{ padding: '16px 20px', background: 'var(--ink-2)', border: '2px solid var(--border-subtle)' }}>
               <div style={SE_LBL}>RÔLE PRINCIPAL</div>
               <div style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 24, letterSpacing: '0.08em' }}>
                 {stats.best_role.toUpperCase()}
@@ -251,13 +251,13 @@ export default function InsightsPage({ champions = [] }) {
       {/* Header */}
       <div style={{
         padding: '14px 20px', flexShrink: 0,
-        background: 'var(--surface-default)',
+        background: 'var(--ink-1)',
         borderBottom: '2.5px solid #f0ebe0',
         display: 'flex', alignItems: 'center', gap: 20,
       }}>
         <div style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 20, letterSpacing: '0.2em' }}>INSIGHTS</div>
 
-        <div style={{ display: 'flex', gap: 0, background: 'var(--surface-card)', border: '2px solid var(--border-subtle)', padding: 3 }}>
+        <div style={{ display: 'flex', gap: 0, background: 'var(--ink-2)', border: '2px solid var(--border-subtle)', padding: 3 }}>
           {TABS.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
@@ -267,8 +267,8 @@ export default function InsightsPage({ champions = [] }) {
                 padding: '6px 14px',
                 fontFamily: 'var(--f-display)', fontSize: 10, letterSpacing: '0.12em',
                 background: tab === id ? 'var(--accent)' : 'transparent',
-                color: tab === id ? '#000' : 'var(--text-muted)',
-                border: 'none', cursor: 'pointer', transition: 'all 0.1s',
+                color: tab === id ? '#000' : 'var(--bone-2)',
+                border: 'none', cursor: 'pointer', transition: 'background-color 0.1s, color 0.1s, border-color 0.1s',
               }}
             >
               <Icon size={12}/>{label}

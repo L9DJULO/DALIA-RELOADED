@@ -1,0 +1,90 @@
+/* ─────────────────────────────────────────────
+   TOKENS — Soul Eater design system
+   Noir, os, un seul rouge. Le rouge veut dire : le pick conseillé,
+   l'urgence, ce qui joue contre toi, l'équipe rouge.
+   ───────────────────────────────────────────── */
+:root {
+  color-scheme: dark;
+
+  /* Encre */
+  --ink-0: #000000;
+  --ink-1: #08080a;
+  --ink-2: #111114;
+  --ink-3: #1a1a1e;
+  --ink-4: #26262c;
+  --ink-5: #3a3a42;
+
+  /* Os — --bone-3 éclairci pour tenir 4,5:1 sur toutes les encres */
+  --bone-0: #f4efe6;
+  --bone-1: #e8e1d2;
+  --bone-2: #9a958a;
+  --bone-3: #8a857a;
+
+  /* Rouge, seule couleur d'accent */
+  --accent:        #d91e2b;  /* fonds : score conseillé, équipe rouge, urgence */
+  --accent-hover:  #e8283a;
+  --accent-deep:   #c41a26;  /* fond rouge sous un texte os (5,2:1) */
+  --accent-text:   #f23b47;  /* rouge écrit sur encre (≥ 4,5:1) */
+  --accent-muted:  rgba(217, 30, 43, 0.16);
+  --accent-subtle: rgba(217, 30, 43, 0.07);
+  --accent-glow:   rgba(217, 30, 43, 0.35);
+  --accent-ink:    #000000;
+
+  /* États */
+  --ok:          #9cd36b;
+  --ok-bg:       rgba(156, 211, 107, 0.08);
+  --ok-border:   rgba(156, 211, 107, 0.35);
+  --warn:        #f5b027;
+  --warn-bg:     rgba(245, 176, 39, 0.08);
+  --warn-border: rgba(245, 176, 39, 0.35);
+  --bad:         #ff4d56;
+  --bad-bg:      rgba(255, 77, 86, 0.08);
+  --bad-border:  rgba(255, 77, 86, 0.4);
+
+  /* Équipes */
+  --blue-team: #4a8bff;
+  --red-team:  var(--accent);
+
+  /* Lignes */
+  --border:        rgba(244, 239, 230, 0.10);
+  --border-subtle: rgba(244, 239, 230, 0.06);
+  --border-strong: rgba(244, 239, 230, 0.20);
+
+  /* Typographie */
+  --f-display: "Oswald", "Bebas Neue", Impact, sans-serif;
+  --f-body:    "Inter", system-ui, "Segoe UI", sans-serif;
+  --f-mono:    "JetBrains Mono", ui-monospace, Consolas, monospace;
+  --fs-label: 11px;   /* plancher des libellés */
+  --fs-small: 12px;
+  --fs-body:  13px;   /* plancher du texte courant */
+  --fs-md:    15px;
+  --fs-lg:    18px;
+  --fs-xl:    22px;
+  --fs-2xl:   28px;
+  --fs-3xl:   40px;
+
+  /* Signature */
+  --edge-weight: 2.5px;   /* trait os : structure */
+  --edge-thin:   1.5px;
+  --lift:        4px;     /* ombre portée franche : premier plan */
+  --skew:        -1deg;   /* inclinaison : le choix en cours */
+  --radius:      2px;
+  --hatch:       repeating-linear-gradient(-45deg, transparent 0 4px, rgba(244, 239, 230, 0.30) 4px 5px);
+  --hatch-faint: repeating-linear-gradient(-45deg, transparent 0 5px, rgba(244, 239, 230, 0.10) 5px 6px);
+  --hatch-ok:    repeating-linear-gradient(-45deg, transparent 0 3px, rgba(156, 211, 107, 0.9) 3px 5px);
+  --hatch-bad:   repeating-linear-gradient(-45deg, transparent 0 3px, rgba(242, 59, 71, 0.85) 3px 5px);
+
+  /* Profondeur */
+  --z-raised: 2;
+  --z-sticky: 20;
+  --z-menu:   40;
+  --z-banner: 60;
+  --z-dialog: 100;
+
+  /* Mouvement */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 0.12s;
+  --dur:      0.2s;
+
+  --scrollbar-thumb: #2a2a2e;
+}

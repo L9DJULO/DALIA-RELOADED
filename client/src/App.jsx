@@ -27,16 +27,6 @@ function DaliaMoon({ size = 32 }) {
   );
 }
 
-// ── Accent palette ──────────────────────────────
-const ACCENTS = [
-  { id:'red',     hex:'#d91e2b', label:'ROUGE'   },
-  { id:'violet',  hex:'#7b2cff', label:'VIOLET'  },
-  { id:'acid',    hex:'#e5ff00', label:'ACIDE'   },
-  { id:'cyan',    hex:'#00e7ff', label:'CYAN'    },
-  { id:'magenta', hex:'#ff1ec0', label:'MAGENTA' },
-  { id:'toxic',   hex:'#26ff6e', label:'TOXIC'   },
-];
-
 const NAV_TABS = [
   { id: 'draft',    label: 'DRAFT'      },
   { id: 'pool',     label: 'POOL'       },
@@ -108,7 +98,7 @@ function SideRoleChip() {
                 color: active ? (side==='blue' ? '#fff' : 'var(--accent-ink)') : 'var(--bone-3)',
                 border:`1.5px solid ${active ? (side==='blue' ? '#6aa0ff' : 'var(--accent)') : 'var(--ink-5)'}`,
                 borderRight: side==='blue' ? 0 : undefined,
-                cursor:'pointer', transition:'all 0.1s',
+                cursor:'pointer', transition: 'background-color 0.1s, color 0.1s, border-color 0.1s',
               }}
             >{side.toUpperCase()}</button>
           );
@@ -169,8 +159,7 @@ function SideRoleChip() {
 }
 
 // ── Topbar ──────────────────────────────────────
-function Topbar({ accent, onAccent, page, onPage }) {
-  const [accentOpen, setAccentOpen] = useState(false);
+function Topbar({ page, onPage }) {
   const connected = useLCUStore(s => s.connected);
 
   return (
@@ -204,7 +193,7 @@ function Topbar({ accent, onAccent, page, onPage }) {
                 border: 'none',
                 borderBottom: active ? 'none' : '3px solid transparent',
                 cursor: 'pointer',
-                transition: 'all 0.1s',
+                transition: 'background-color 0.1s, color 0.1s, border-color 0.1s',
               }}
               onMouseEnter={e => { if (!active) e.currentTarget.style.color = 'var(--bone-0)'; }}
               onMouseLeave={e => { if (!active) e.currentTarget.style.color = 'var(--bone-2)'; }}
@@ -226,46 +215,6 @@ function Topbar({ accent, onAccent, page, onPage }) {
 
         <div style={{ width:1, height:22, background:'var(--ink-5)' }}/>
 
-        {/* Accent picker */}
-        <div style={{ position:'relative' }}>
-          <button
-            onClick={() => setAccentOpen(v => !v)}
-            style={{
-              display:'flex', alignItems:'center', gap:8,
-              fontFamily:'var(--f-mono)', fontSize:10, letterSpacing:'0.12em',
-              color:'var(--bone-2)', background:'none', border:'none', cursor:'pointer',
-            }}
-          >
-            <span style={{ width:14, height:14, background:'var(--accent)', display:'inline-block', border:'1.5px solid var(--bone-0)' }}/>
-            ACCENT ▾
-          </button>
-          {accentOpen && (
-            <>
-              <div style={{ position:'fixed', inset:0, zIndex:30 }} onClick={() => setAccentOpen(false)}/>
-              <div style={{
-                position:'absolute', right:0, top:'calc(100% + 6px)',
-                background:'var(--ink-2)', border:'var(--edge-weight) solid var(--bone-0)',
-                boxShadow:'4px 4px 0 var(--ink-0)',
-                padding:8, zIndex:40, display:'flex', flexDirection:'column', gap:3, width:140,
-              }}>
-                {ACCENTS.map(a => (
-                  <button key={a.id} onClick={() => { onAccent(a.id); setAccentOpen(false); }} style={{
-                    display:'flex', alignItems:'center', gap:8,
-                    padding:'6px 8px',
-                    fontFamily:'var(--f-display)', fontSize:11, letterSpacing:'0.1em',
-                    background: accent === a.id ? 'var(--accent-muted)' : 'transparent',
-                    border: accent === a.id ? '1px solid var(--accent)' : '1px solid transparent',
-                    color: accent === a.id ? 'var(--accent)' : 'var(--bone-1)',
-                    cursor:'pointer', textAlign:'left',
-                  }}>
-                    <span style={{ width:12, height:12, background:a.hex, display:'inline-block', flexShrink:0 }}/>
-                    {a.label}
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
 
         <LiveTimerChip/>
       </div>
@@ -315,9 +264,6 @@ function EmptyRecsPanel({ loading }) {
 // ── App ─────────────────────────────────────────
 export default function App() {
   const [selected, setSelected] = useState(0);
-  const [accent, setAccent]     = useState(
-    () => document.documentElement.dataset.accent || localStorage.getItem('dalia_accent') || 'red'
-  );
   const [page, setPage] = useState('draft');
 
   // Subscribe so App (and its children) re-render when recommendations or loading changes
@@ -332,12 +278,6 @@ export default function App() {
   const isAuthed = !!token;
 
   useEffect(() => {
-    // Apply saved accent on mount
-    document.documentElement.dataset.accent = accent;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
     if (!isAuthed) return;
     useDraftStore.getState().resetDraft('live');
     // Start LCU polling + load user profile only once authenticated.
@@ -348,12 +288,6 @@ export default function App() {
   }, [isAuthed, userId]);
 
   useEffect(() => { setSelected(0); }, [recommendations]);
-
-  const handleAccent = (id) => {
-    setAccent(id);
-    document.documentElement.dataset.accent = id;
-    localStorage.setItem('dalia_accent', id);
-  };
 
   // Not logged in → auth page (replaces the whole shell).
   if (!isAuthed) {
@@ -366,7 +300,7 @@ export default function App() {
 
   return (
     <div style={{ height:'100vh', display:'grid', gridTemplateRows:'48px 1fr', background:'var(--ink-0)', position:'relative' }}>
-      <Topbar accent={accent} onAccent={handleAccent} page={page} onPage={setPage}/>
+      <Topbar page={page} onPage={setPage}/>
 
       {/* Bandeau d'erreur ANALYSER */}
       {draftError && (

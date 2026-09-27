@@ -8,15 +8,6 @@ import useUserStore from '../../stores/userStore';
 import { SectionLbl } from '../Primitives';
 import DraftPreferences from './DraftPreferences';
 
-const ACCENTS = [
-  { id: 'red',     hex: '#d91e2b', label: 'ROUGE'   },
-  { id: 'violet',  hex: '#7b2cff', label: 'VIOLET'  },
-  { id: 'acid',    hex: '#e5ff00', label: 'ACIDE'   },
-  { id: 'cyan',    hex: '#00e7ff', label: 'CYAN'    },
-  { id: 'magenta', hex: '#ff1ec0', label: 'MAGENTA' },
-  { id: 'toxic',   hex: '#26ff6e', label: 'TOXIC'   },
-];
-
 function Card({ children }) {
   return (
     <section style={{
@@ -31,9 +22,6 @@ function Card({ children }) {
 }
 
 export default function SettingsPage() {
-  const [accent, setAccent] = useState(
-    document.documentElement.dataset.accent || localStorage.getItem('dalia_accent') || 'red'
-  );
   const [connecting, setConnecting] = useState(false);
 
   const lcuConnected = useLCUStore(s => s.connected);
@@ -41,12 +29,6 @@ export default function SettingsPage() {
   const lcuConnect   = useLCUStore(s => s.connect);
   const user         = useAuthStore(s => s.user);
   const userLogout   = useUserStore(s => s.logout);
-
-  const handleAccent = (id) => {
-    document.documentElement.dataset.accent = id;
-    localStorage.setItem('dalia_accent', id);
-    setAccent(id);
-  };
 
   const handleLCUConnect = async () => {
     setConnecting(true);
@@ -89,41 +71,12 @@ export default function SettingsPage() {
           </Card>
         )}
 
-        {/* Accent color */}
-        <Card>
-          <SectionLbl n={2}>COULEUR D'ACCENT</SectionLbl>
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-            {ACCENTS.map(a => {
-              const isActive = accent === a.id;
-              return (
-                <button
-                  key={a.id}
-                  onClick={() => handleAccent(a.id)}
-                  style={{
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7,
-                    padding: '10px 14px',
-                    background: isActive ? 'var(--ink-3)' : 'var(--ink-2)',
-                    border: `var(--edge-weight) solid ${isActive ? a.hex : 'var(--ink-5)'}`,
-                    boxShadow: isActive ? `3px 3px 0 ${a.hex}` : 'none',
-                    cursor: 'pointer', transition: 'all 0.1s',
-                  }}
-                >
-                  <div style={{ width: 28, height: 28, background: a.hex, border: '1.5px solid var(--bone-0)' }}/>
-                  <span style={{ fontFamily: 'var(--f-display)', fontSize: 9, letterSpacing: '0.18em', color: isActive ? a.hex : 'var(--bone-2)' }}>
-                    {a.label}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </Card>
-
         {/* LCU */}
         <Card>
-          <SectionLbl n={3}>CLIENT LEAGUE (LCU)</SectionLbl>
+          <SectionLbl n={2}>CLIENT LEAGUE (LCU)</SectionLbl>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12 }}>
-            <span className={`lcu-dot ${lcuConnected ? 'lcu-on' : 'lcu-off'}`}/>
+            <span className={`dot ${lcuConnected ? 'dot--on' : ''}`}/>
             <span style={{
               fontFamily: 'var(--f-display)', fontSize: 12, letterSpacing: '0.1em',
               color: lcuConnected ? 'var(--ok)' : 'var(--bone-2)',

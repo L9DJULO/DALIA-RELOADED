@@ -349,7 +349,7 @@ export default function ChampionPoolEditor() {
                 color: isActive ? 'var(--accent)' : 'var(--bone-2)',
                 border: 'none',
                 borderBottom: isActive ? 'var(--edge-weight) solid var(--accent)' : '2px solid transparent',
-                cursor: 'pointer', transition: 'all 0.1s',
+                cursor: 'pointer', transition: 'background-color 0.1s, color 0.1s, border-color 0.1s',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
               }}
             >

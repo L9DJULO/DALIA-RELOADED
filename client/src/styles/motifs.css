@@ -1,0 +1,42 @@
+/* ─────────────────────────────────────────────
+   MOTIFS SOUL EATER — un motif, un sens
+   ───────────────────────────────────────────── */
+
+/* Trait os : sépare les grandes zones de l'écran */
+.se-edge { border: var(--edge-weight) solid var(--bone-0); }
+
+/* Ombre portée franche : premier plan (score, menu ouvert, bouton principal) */
+.se-lift     { box-shadow: var(--lift) var(--lift) 0 var(--ink-0); }
+.se-lift-red { box-shadow: var(--lift) var(--lift) 0 var(--accent); }
+
+/* Inclinaison −1° : le choix en cours, un seul à l'écran */
+.se-chosen {
+  transform: rotate(var(--skew));
+  border-color: var(--accent) !important;
+  box-shadow: 6px 6px 0 var(--accent);
+}
+
+/* Hachures : estimé, incertain, vide ou périmé */
+.se-hatch { background-image: var(--hatch); }
+
+/* Entaille rouge : en-tête de page, une par écran */
+.se-slash { position: relative; overflow: hidden; }
+.se-slash::after {
+  content: '';
+  position: absolute; right: -12px; bottom: 0;
+  width: min(46%, 520px); height: 14px;
+  background: var(--accent);
+  clip-path: polygon(6% 0, 100% 0, 100% 100%, 0 100%);
+  pointer-events: none;
+}
+
+/* Équerres : là où agir */
+.se-corners { position: relative; }
+.se-corners::before, .se-corners::after {
+  content: '';
+  position: absolute; width: 12px; height: 12px;
+  border: var(--edge-weight) solid var(--accent-text);
+  pointer-events: none;
+}
+.se-corners::before { left: -5px; top: -5px; border-right: 0; border-bottom: 0; }
+.se-corners::after  { right: -5px; bottom: -5px; border-left: 0; border-top: 0; }

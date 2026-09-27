@@ -18,32 +18,32 @@ export default class ErrorBoundary extends React.Component {
     return (
       <div style={{
         minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: 'var(--surface-base)', padding: 32,
+        background: 'var(--ink-0)', padding: 32,
       }}>
         <div style={{
-          background: 'var(--surface-card)',
-          border: '2.5px solid var(--loss-border)',
+          background: 'var(--ink-2)',
+          border: '2.5px solid var(--bad-border)',
           padding: '32px 36px',
           maxWidth: 520, width: '100%',
-          boxShadow: '6px 6px 0 var(--loss)',
+          boxShadow: '6px 6px 0 var(--bad)',
         }}>
           {/* Corner accents */}
-          <div style={{ position: 'absolute', top: -2, left: -2, width: 16, height: 16, borderTop: '2px solid var(--loss)', borderLeft: '2px solid var(--loss)' }}/>
-          <div style={{ position: 'absolute', bottom: -2, right: -2, width: 16, height: 16, borderBottom: '2px solid var(--loss)', borderRight: '2px solid var(--loss)' }}/>
+          <div style={{ position: 'absolute', top: -2, left: -2, width: 16, height: 16, borderTop: '2px solid var(--bad)', borderLeft: '2px solid var(--bad)' }}/>
+          <div style={{ position: 'absolute', bottom: -2, right: -2, width: 16, height: 16, borderBottom: '2px solid var(--bad)', borderRight: '2px solid var(--bad)' }}/>
 
-          <div style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 26, letterSpacing: '0.15em', color: 'var(--loss)', marginBottom: 4 }}>
+          <div style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 26, letterSpacing: '0.15em', color: 'var(--bad)', marginBottom: 4 }}>
             ERREUR CRITIQUE
           </div>
-          <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.12em', marginBottom: 20 }}>
+          <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--bone-2)', letterSpacing: '0.12em', marginBottom: 20 }}>
             Une erreur inattendue a interrompu l'application
           </div>
 
           <div style={{
             padding: '12px 14px',
-            background: 'var(--surface-elevated)',
+            background: 'var(--ink-3)',
             border: '1px solid var(--border-subtle)',
             fontFamily: 'var(--f-mono)', fontSize: 11,
-            color: 'var(--loss)',
+            color: 'var(--bad)',
             lineHeight: 1.7,
             marginBottom: 24,
             wordBreak: 'break-word',

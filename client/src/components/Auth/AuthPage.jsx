@@ -132,7 +132,7 @@ export default function AuthPage() {
                     border: 'var(--edge-weight) solid ' + (mode === m ? 'var(--accent)' : 'var(--ink-5)'),
                     borderRight: m === 'login' ? '0' : undefined,
                     cursor: 'pointer',
-                    transition: 'all 0.1s',
+                    transition: 'background-color 0.1s, color 0.1s, border-color 0.1s',
                   }}
                 >
                   {m === 'login' ? 'SE CONNECTER' : "S'INSCRIRE"}

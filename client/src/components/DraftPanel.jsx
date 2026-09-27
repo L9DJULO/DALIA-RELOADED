@@ -142,7 +142,7 @@ function PickSlot({ role, champ, side, onClick }) {
       <span style={{
         fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 13,
         letterSpacing: '0.04em',
-        color: champ ? 'var(--bone-0)' : isEmpty ? 'var(--bone-4)' : 'var(--bone-3)',
+        color: champ ? 'var(--bone-0)' : isEmpty ? 'var(--bone-3)' : 'var(--bone-3)',
         overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
         order: isRight ? 1 : 3,
         textAlign: isRight ? 'right' : 'left',
@@ -172,7 +172,7 @@ function BanSlot({ champ, onClick }) {
     >
       {champ
         ? <Portrait champ={champ} size={22} banned />
-        : <span style={{ color: 'var(--bone-4)', fontSize: 10, fontFamily: 'var(--f-mono)' }}>+</span>
+        : <span style={{ color: 'var(--bone-3)', fontSize: 10, fontFamily: 'var(--f-mono)' }}>+</span>
       }
     </div>
   );
@@ -377,7 +377,7 @@ function AnalyserButton() {
           color: loading ? 'var(--bone-2)' : 'var(--accent-ink)',
           border: 'var(--edge-weight) solid var(--bone-0)',
           cursor: loading ? 'not-allowed' : 'pointer',
-          transition: 'all 0.1s',
+          transition: 'background-color 0.1s, color 0.1s, border-color 0.1s',
           boxShadow: loading ? 'none' : '2px 2px 0 var(--bone-0)',
         }}
       >
@@ -458,7 +458,7 @@ function Reasoning({ pick }) {
             background: tab === id ? 'var(--accent)' : 'transparent',
             color: tab === id ? 'var(--accent-ink)' : 'var(--bone-2)',
             border: 'none', borderRight: '1px solid var(--ink-5)',
-            cursor: 'pointer', transition: 'all 0.1s',
+            cursor: 'pointer', transition: 'background-color 0.1s, color 0.1s, border-color 0.1s',
           }}>{label}</button>
         ))}
       </div>

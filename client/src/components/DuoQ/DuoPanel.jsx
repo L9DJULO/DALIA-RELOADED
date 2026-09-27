@@ -58,7 +58,7 @@ export default function DuoPanel({ embedded = false }) {
               background: duoActive ? 'var(--accent)' : 'var(--ink-3)',
               color: duoActive ? 'var(--accent-ink)' : 'var(--bone-2)',
               border: `1.5px solid ${duoActive ? 'var(--accent)' : 'var(--ink-5)'}`,
-              cursor: 'pointer', transition: 'all 0.1s',
+              cursor: 'pointer', transition: 'background-color 0.1s, color 0.1s, border-color 0.1s',
               boxShadow: duoActive ? '2px 2px 0 var(--ink-0)' : 'none',
             }}
           >
@@ -112,7 +112,7 @@ export default function DuoPanel({ embedded = false }) {
                 background: copied ? 'rgba(38,255,110,0.10)' : 'var(--ink-3)',
                 border: `1.5px solid ${copied ? 'rgba(38,255,110,0.4)' : 'var(--ink-5)'}`,
                 color: copied ? '#26ff6e' : 'var(--bone-2)',
-                cursor: 'pointer', transition: 'all 0.1s', display: 'flex',
+                cursor: 'pointer', transition: 'background-color 0.1s, color 0.1s, border-color 0.1s', display: 'flex',
               }}
             >
               {copied ? <CheckCircle2 size={14}/> : <Copy size={14}/>}
@@ -236,7 +236,7 @@ export default function DuoPanel({ embedded = false }) {
                     background: partnerRole === r ? 'var(--accent)' : 'var(--ink-3)',
                     color: partnerRole === r ? 'var(--accent-ink)' : 'var(--bone-2)',
                     border: `1.5px solid ${partnerRole === r ? 'var(--accent)' : 'var(--ink-5)'}`,
-                    cursor: 'pointer', transition: 'all 0.1s',
+                    cursor: 'pointer', transition: 'background-color 0.1s, color 0.1s, border-color 0.1s',
                   }}
                 >
                   {ROLE_SHORT[r]}
