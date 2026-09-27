@@ -454,6 +454,7 @@ def generate_verdict(
     future: float,
     tags: Optional[List[str]] = None,
     is_pool: bool = True,
+    synergy_details: Optional[List[Dict]] = None,
 ) -> str:
     """Produce a 1-2 clause verdict line that mentions the concrete
     lane opponent / top synergy ally when relevant.
@@ -504,6 +505,13 @@ def generate_verdict(
         if s > best_score:
             best_score = s
             top_ally_name = ally.name
+
+    # Paires mesurées : l'allié nommé est la meilleure paire, jamais une paire négative
+    # (sinon « Synergie forte avec Nautilus » à côté de « Duo défavorable avec Nautilus »).
+    observed = [d for d in (synergy_details or []) if d.get("source") == "observed"]
+    if observed:
+        best = max(observed, key=lambda d: d.get("delta", 0.0))
+        top_ally_name = best["ally_name"] if best.get("delta", 0.0) > 0 else None
 
     # ── Main phrase — pick the first rule that matches ──
     main: str

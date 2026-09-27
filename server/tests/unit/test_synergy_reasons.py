@@ -26,3 +26,30 @@ def test_measured_duo_lines_rank_with_the_measured_lane_lines():
     from app.services.reasons import _specificity
     for text in ("Duo favorable avec Janna (+1,8)", "Duo défavorable avec Janna (−1,2)"):
         assert _specificity({"text": text, "champions": ["Janna", "Jinx"], "kind": "synergy"}) == 2
+
+
+def test_verdict_names_the_best_measured_pair_not_the_kit_favourite(catalog):
+    """Pas de « Synergie forte avec Malphite » à côté d'un « Duo défavorable avec Malphite »."""
+    from app.models.champion import ChampionRatings
+    from app.models.draft import DraftState
+    from app.services.reasons import generate_verdict
+    jinx = catalog.get_by_id(222).model_copy(update={"ratings": ChampionRatings(dps=4)})
+    draft = DraftState(my_role="bot", my_pick_order=3,
+                       ally_picks=[{"champion_id": 54, "role": "top"}, {"champion_id": 40, "role": "support"}])
+    details = [{"ally_name": "Malphite", "ally_role": "top", "delta": -1.2, "games": 9000, "source": "observed"},
+               {"ally_name": "Janna", "ally_role": "support", "delta": 2.1, "games": 30000, "source": "observed"}]
+    verdict = generate_verdict(cand=jinx, draft=draft, db=catalog, matchup=0.0, synergy=2.0, composition=0.0,
+                               future=0.0, synergy_details=details)
+    assert verdict.startswith("Synergie forte avec Janna")
+
+
+def test_verdict_names_no_ally_when_no_measured_pair_is_positive(catalog):
+    from app.models.champion import ChampionRatings
+    from app.models.draft import DraftState
+    from app.services.reasons import generate_verdict
+    jinx = catalog.get_by_id(222).model_copy(update={"ratings": ChampionRatings(dps=4)})
+    draft = DraftState(my_role="bot", my_pick_order=3, ally_picks=[{"champion_id": 54, "role": "top"}])
+    details = [{"ally_name": "Malphite", "ally_role": "top", "delta": -0.4, "games": 9000, "source": "observed"}]
+    verdict = generate_verdict(cand=jinx, draft=draft, db=catalog, matchup=0.0, synergy=2.0, composition=0.0,
+                               future=0.0, synergy_details=details)
+    assert "Malphite" not in verdict

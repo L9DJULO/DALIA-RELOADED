@@ -487,7 +487,8 @@ class DraftEngine:
             edge_reason = {"text": strongest["text"], "kind": strongest["kind"], "champions": strongest["champions"]}
             reasons = ([edge_reason] + [r for r in reasons if r["text"] != edge_reason["text"]])[:3]
         verdict = generate_verdict(cand=champ, draft=draft, db=self.db, matchup=val("matchup"), synergy=val("synergy"),
-                                   composition=val("composition"), future=val("future_opponent"), tags=tags, is_pool=is_pool)
+                                   composition=val("composition"), future=val("future_opponent"), tags=tags, is_pool=is_pool,
+                                   synergy_details=syn_details_raw)
         stats = self.meta.stats(champ.id, role, tier)
         return Recommendation(
             champion_id=champ.id, champion_key=champ.key, champion_name=champ.name,
