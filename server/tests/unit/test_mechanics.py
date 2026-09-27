@@ -116,3 +116,23 @@ def test_ally_synergies_validated_by_the_player(catalog):
     assert analyzer.evaluate(lulu, draft(allies=[carry], role="support"))[0] > 0
     assert analyzer.evaluate(lulu, draft([carry], role="support"))[0] == 0, "un hypercarry ennemi ne compte pas"
     assert analyzer.evaluate(_custom("Yone", tags=("Fighter",)), draft(allies=[54], role="mid"))[0] > 0   # Malphite
+
+
+def test_free_poke_against_a_comp_without_engage(catalog):
+    """Paquet 7 (joueur, 27/09) : Ezreal et Caitlyn pokent librement face à une composition sans
+    engage. Heimerdinger écarté (« le champ est trash »)."""
+    analyzer = MechanicsAnalyzer(catalog)
+    ezreal = _custom("Ezreal", properties=["poke_sans_engage"], tags=("Marksman",))
+    no_engage = draft([103, 61, 222], role="bot")          # Ahri, Orianna, Jinx : engage 2
+    with_engage = draft([103, 61, 59], role="bot")         # Jarvan IV : engage 4
+    assert any(r["id"] == "free_poke" for r in analyzer.evaluate(ezreal, no_engage)[1])
+    assert not any(r["id"] == "free_poke" for r in analyzer.evaluate(ezreal, with_engage)[1])
+
+
+def test_safe_first_pick_only_in_blind(catalog):
+    """Pantheon et Lissandra, premiers picks sûrs (joueur, 27/09)."""
+    analyzer = MechanicsAnalyzer(catalog)
+    liss = _custom("Lissandra", properties=["sur_en_blind"])
+    blind = DraftState(my_role="mid", my_pick_order=1)
+    assert any(r["id"] == "safe_first_pick" for r in analyzer.evaluate(liss, blind)[1])
+    assert not any(r["id"] == "safe_first_pick" for r in analyzer.evaluate(liss, draft([103], role="mid"))[1])

@@ -160,6 +160,19 @@ class MechanicsAnalyzer:
                 add("ignore_cc", sources, min(7, 2 * len(sources)),
                     "Peut se libérer ou s'immuniser des contrôles de {targets}.",
                     "Fenêtre limitée par le temps de recharge ; les ralentissements et les dégâts restent.")
+        # Situationnels repris avec le joueur (27/09, paquet 7).
+        if "poke_sans_engage" in candidate.properties and len(enemies) >= 3 \
+                and not any(c.ratings.engage >= 4 for c in enemies):
+            add("free_poke", enemies, 4,
+                "Aucun engage dur chez {targets} : le poke s'exerce sans risque d'être plongé.",
+                "Un flanc du jungler ou un flash agressif peut quand même punir un mauvais placement.")
+        if "sur_en_blind" in candidate.properties and draft.my_pick_order == 1 \
+                and not any(p.champion_id for p in draft.enemy_picks):
+            rules.append({"id": "safe_first_pick", "kind": "info", "score_delta": 3.0,
+                          "text": "Premier pick sûr : peu de counters directs à redouter en blind.",
+                          "champions": [], "caveat": "Reste un pick révélé en premier ; la composition adverse s'adaptera.",
+                          "source_url": SOURCE + candidate.key.lower() + "/", "evidence": "kit_rule",
+                          "reviewed_patch": REVIEWED_PATCH})
         delta = max(-12.0, min(12.0, sum(r["score_delta"] for r in rules)))
         return delta, rules
 

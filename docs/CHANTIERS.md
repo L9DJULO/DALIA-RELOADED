@@ -636,10 +636,10 @@ propriétés (`docs/TAXONOMIES_CHAMPIONS.md`). Faits le 27/09 : encaisser un typ
 ignorer le CC, contre les tanks et les auto-attaqueurs (inchangés), dashs (en cours). Écartés :
 Sylas, Aphelios sans CC, compos fragiles (« trop vague, tous les assassins rentrent dedans »).
 
-**Reste** : cibles immobiles (Fiora, Singed, Tahm — sans réponse du joueur), synergies d'alliés
-(Yuumi/Lulu avec un hypercarry, Kalista avec Thresh ou Rell, Yone avec un knock-up, Soraka en
-lane de poke…), situationnels (Ezreal, Caitlyn, Heimerdinger contre une composition sans engage ;
-Pantheon et Lissandra en premier pick ; Cassiopeia contre une composition AD).
+**Terminé le 27/09.** Synergies : protection d'hypercarry et Yone appliqués ; Kalista, Soraka,
+Twitch non appliqués (concordance en recul). Situationnels : poke libre (Ezreal, Caitlyn) et
+premier pick sûr (Pantheon, Lissandra) appliqués, top-3 pro +0,5 point. Non appliqués mais
+consignés : ruées (Janna, Milio, Taliyah, Vex). Sans réponse : cibles immobiles.
 
 **Chantier ouvert par la reprise** : les profils de dégâts viennent des tags (Diana 82 %
 physique). Les corriger seuls coûte 1,2 point de concordance top-10, la composition étant réglée

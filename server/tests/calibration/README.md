@@ -806,3 +806,7 @@ concordance top-3 14,3 % (+5 −8), top-10 37,2 % (+4 −11, z −1,8). Non appl
 **Synergies d'alliés (paquet 6)** : protection d'hypercarry et Yone sur knock-up appliqués
 (calibration 46/56 inchangée, concordance neutre) ; Kalista, Soraka et Twitch non appliqués
 (top-10 z −2,2).
+
+**Situationnels (paquet 7)** : poke libre face à une composition sans engage (Ezreal, Caitlyn),
+premier pick sûr (Pantheon, Lissandra). Calibration 46/56 ; concordance top-3 14,8 % (+59 −36,
+z +2,4), top-10 37,3 % (+83 −89). Appliqué.

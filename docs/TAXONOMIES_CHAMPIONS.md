@@ -193,5 +193,14 @@ calibration dédiés. Cibles immobiles (Fiora, Singed, Tahm) : sans réponse.
 | Kalista avec Thresh ou Rell, Soraka avec une lane de poke, Twitch derrière un engage | 37,2 % (+5 −15, z −2,2) | non appliqué, comme les ruées |
 
 Écartés d'office : Akshan (effet trop faible), Senna avec Tahm Kench (« outdated »). Liste des
-hypercarries tirée des anciennes étiquettes, à relire par le joueur (Kassadin, Veigar, Nasus,
-Master Yi).
+hypercarries tirée des anciennes étiquettes ; Veigar et Nasus retirés par le joueur (27/09).
+
+**Paquet 7 — situationnels** (27/09). Ezreal et Caitlyn pokent librement face à une composition
+sans engage (`poke_sans_engage`, ≥ 3 ennemis connus sans engage ≥ 4) ; Heimerdinger écarté
+(« le champ est trash »). Pantheon et Lissandra, premiers picks sûrs (`sur_en_blind`, premier
+pick de l'équipe sans ennemi révélé). Cassiopeia contre une composition AD : abandonné — sa force
+est contre les ruées (règle existante). Équilibre AP/AD de sa propre équipe : déjà porté par les
+avertissements de composition.
+
+Calibration 46/56 inchangée ; concordance **top-3 14,8 % (+59 −36, z +2,4)**, top-10 37,3 %.
+Appliqué. **Reprise des 48 règles terminée.**

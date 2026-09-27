@@ -532,7 +532,8 @@
     "ratings_source": "joueur",
     "damage_type": "physical",
     "properties": [
-      "hypercarry"
+      "hypercarry",
+      "poke_sans_engage"
     ]
   },
   "Camille": {
@@ -873,7 +874,9 @@
     ],
     "ratings_source": "joueur",
     "damage_type": "physical",
-    "properties": []
+    "properties": [
+      "poke_sans_engage"
+    ]
   },
   "Fiddlesticks": {
     "roles": [
@@ -1973,7 +1976,8 @@
       2
     ],
     "properties": [
-      "reception"
+      "reception",
+      "sur_en_blind"
     ],
     "damage_type": "magic"
   },
@@ -2401,9 +2405,7 @@
       5
     ],
     "damage_type": "physical",
-    "properties": [
-      "hypercarry"
-    ]
+    "properties": []
   },
   "Nautilus": {
     "roles": [
@@ -2660,7 +2662,10 @@
       3
     ],
     "ratings_source": "joueur",
-    "damage_type": "physical"
+    "damage_type": "physical",
+    "properties": [
+      "sur_en_blind"
+    ]
   },
   "Poppy": {
     "roles": [
@@ -3902,9 +3907,7 @@
       1
     ],
     "damage_type": "magic",
-    "properties": [
-      "hypercarry"
-    ]
+    "properties": []
   },
   "Velkoz": {
     "roles": [
