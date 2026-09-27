@@ -1,0 +1,124 @@
+{
+  "measured_at": "2026-09-28",
+  "window_days": 30,
+  "source": "Lolalytics ep=build-team, d2 ; scripts/refresh_synergy_priors.py",
+  "tiers": {
+    "bronze": {
+      "tau": {
+        "bot_support": 1.12,
+        "other": 0.527
+      },
+      "pairs": {
+        "bot_support": 1572,
+        "other": 17326
+      },
+      "pages": 100,
+      "bot_support": 1992,
+      "other": 8985
+    },
+    "d2_plus": {
+      "tau": {
+        "bot_support": 1.374,
+        "other": 0.613
+      },
+      "pairs": {
+        "bot_support": 1342,
+        "other": 15769
+      },
+      "pages": 100,
+      "bot_support": 1324,
+      "other": 6658
+    },
+    "diamond_plus": {
+      "tau": {
+        "bot_support": 1.383,
+        "other": 0.596
+      },
+      "pairs": {
+        "bot_support": 1437,
+        "other": 16909
+      },
+      "pages": 100,
+      "bot_support": 1307,
+      "other": 7043
+    },
+    "emerald_plus": {
+      "tau": {
+        "bot_support": 1.377,
+        "other": 0.558
+      },
+      "pairs": {
+        "bot_support": 1912,
+        "other": 22756
+      },
+      "pages": 100,
+      "bot_support": 1318,
+      "other": 8017
+    },
+    "gold_plus": {
+      "tau": {
+        "bot_support": 1.426,
+        "other": 0.707
+      },
+      "pairs": {
+        "bot_support": 2785,
+        "other": 31773
+      },
+      "pages": 100,
+      "bot_support": 1230,
+      "other": 5007
+    },
+    "iron": {
+      "tau": {
+        "bot_support": 1.147,
+        "other": 0.872
+      },
+      "pairs": {
+        "bot_support": 828,
+        "other": 9296
+      },
+      "pages": 100,
+      "bot_support": 1900,
+      "other": 3288
+    },
+    "master_plus": {
+      "tau": {
+        "bot_support": 1.123,
+        "other": 0.568
+      },
+      "pairs": {
+        "bot_support": 999,
+        "other": 11903
+      },
+      "pages": 100,
+      "bot_support": 1982,
+      "other": 7743
+    },
+    "platinum_plus": {
+      "tau": {
+        "bot_support": 1.415,
+        "other": 0.651
+      },
+      "pairs": {
+        "bot_support": 2388,
+        "other": 27886
+      },
+      "pages": 100,
+      "bot_support": 1248,
+      "other": 5898
+    },
+    "silver": {
+      "tau": {
+        "bot_support": 1.092,
+        "other": 0.567
+      },
+      "pairs": {
+        "bot_support": 1810,
+        "other": 20482
+      },
+      "pages": 100,
+      "bot_support": 2095,
+      "other": 7776
+    }
+  }
+}

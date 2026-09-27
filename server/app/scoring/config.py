@@ -130,6 +130,13 @@ class ScoringConstants(BaseModel):
     synergy_scale: float = 0.12
     synergy_cap: float = 3.0
     synergy_duo_factor: float = 1.5
+    # Synergie mesurée par paire (chantier 3, spec 2026-09-28). k = 2500 / τ², τ estimé
+    # sur les paires Lolalytics par scripts/refresh_synergy_priors.py ; ces valeurs
+    # (Master+, 28/09/2026 : τ 1,12 et 0,57 pt) ne servent que si
+    # app/data/synergy_priors.json manque.
+    synergy_k_default: Dict[str, int] = {"bot_support": 1982, "other": 7743}
+    synergy_observed_scale: float = 1.0
+    synergy_reason_threshold: float = 1.0
     mechanics_scale: float = 0.3
     model_cap: float = 4.0
     # Agrégation
