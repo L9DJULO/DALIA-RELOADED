@@ -34,6 +34,7 @@ export default function DraftScreen() {
 
   return (
     <div className="draft">
+      <h1 className="visually-hidden">Draft</h1>
       <DraftStrip/>
       {mode === 'replay' && <ReplayBar/>}
       <div className="draft__main">

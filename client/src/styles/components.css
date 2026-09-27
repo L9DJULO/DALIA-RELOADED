@@ -37,7 +37,6 @@
 .btn--lg    { padding: 13px 20px; font-size: 14px; letter-spacing: 0.22em; }
 .btn--block { width: 100%; }
 .btn--icon  { padding: 8px; letter-spacing: 0; }
-.btn .kbd   { font: 500 10px/1 var(--f-mono); letter-spacing: 0.04em; opacity: 0.7; text-transform: none; }
 
 /* ── Champs ──────────────────────────────────── */
 .field-label {
@@ -250,7 +249,7 @@
 .num { font-variant-numeric: tabular-nums; }
 .kbd {
   display: inline-block; padding: 1px 5px;
-  font: 500 10.5px/1.3 var(--f-mono); color: var(--bone-0);
+  font: 500 var(--fs-label)/1.3 var(--f-mono); color: var(--bone-0);
   border: 1px solid var(--ink-5);
 }
 .empty {

@@ -16,6 +16,7 @@ export default function DuoPanel() {
   const [linkCode, setLinkCode] = useState('');
   const [copied, setCopied] = useState(false);
   const [confirmRegen, setConfirmRegen] = useState(false);
+  const [confirmUnlink, setConfirmUnlink] = useState(false);
   const codeId = useId();
 
   useEffect(() => { loadDuoState(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -114,7 +115,14 @@ export default function DuoPanel() {
                 <p className="duo__partner-name">{partner?.username || '—'}</p>
                 <p className="duo__linked"><span className="dot dot--on" aria-hidden="true"/>Lié</p>
               </div>
-              <button className="btn btn--sm btn--danger" onClick={unlink} disabled={linking}>Délier</button>
+              {confirmUnlink ? (
+                <span className="duo__confirm-actions" role="group" aria-label="Confirmer">
+                  <button className="btn btn--sm btn--danger" onClick={() => { unlink(); setConfirmUnlink(false); }} disabled={linking}>Délier {partner?.username || ''}</button>
+                  <button className="btn btn--sm btn--ghost" onClick={() => setConfirmUnlink(false)}>Annuler</button>
+                </span>
+              ) : (
+                <button className="btn btn--sm btn--danger" onClick={() => setConfirmUnlink(true)} disabled={linking}>Délier</button>
+              )}
             </div>
             <p className="field-label">Rôle du partenaire</p>
             <div className="seg seg--fill" role="group" aria-label="Rôle du partenaire">

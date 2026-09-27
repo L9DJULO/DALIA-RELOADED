@@ -23,7 +23,7 @@ body::before {
 }
 #root { position: relative; z-index: 1; }
 
-h1, h2, h3, h4, h5, h6 { font-size: inherit; font-weight: inherit; }
+h1, h2, h3, h4, h5, h6 { font-size: inherit; font-weight: inherit; text-wrap: balance; }
 a { color: inherit; text-decoration: inherit; }
 b, strong { font-weight: 700; }
 small { font-size: 85%; }

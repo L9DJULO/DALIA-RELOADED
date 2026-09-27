@@ -20,38 +20,40 @@ Contraintes fermes :
 Le joueur attend d'abord des **idées et des propositions à valider**, pas une refonte appliquée
 d'office. Il décide de la direction ; présenter des options avec leurs compromis.
 
-## 2. État actuel
+## 2. État actuel (après la refonte du 27/09/2026)
 
-**Application** : React + Vite + Tailwind, empaquetée en application de bureau avec Tauri
+**Application** : React + Vite, empaquetée en application de bureau avec Tauri
 (`client/src-tauri`). Elle se connecte au client League (LCU) pendant la sélection des champions.
+Tailwind a été retiré : le style vit dans des feuilles CSS par couche.
 
-**Design system existant** — `client/src/index.css`, section « TOKENS — Soul Eater design
-system » :
+**Design system** — `client/src/styles/`, importé par `client/src/index.css` :
 
-| Famille | Tokens |
+| Feuille | Contenu |
 |---|---|
-| Fond (encre) | `--ink-0` #000 → `--ink-5` #3a3a42 |
-| Texte (os) | `--bone-0` #f4efe6 → `--bone-3` #6e6a61 |
-| Accent | `--accent` #d91e2b, hover, pressed, muted, subtle, glow, ring |
-| États | `--ok` #9cd36b, `--warn` #f5b027, `--bad` #ff4d56 |
-| Équipes | `--blue-team` #4a8bff, `--red-team` = accent |
-| Polices | Oswald (titres), Inter (texte), JetBrains Mono (chiffres, labels) |
-| Signature | `--edge-weight` 2.5px, `--hatch-opacity` 0.18 (hachures), `--skew` −1deg, `--radius` 2px |
+| `tokens.css` | Encre `--ink-0` #000 → `--ink-5` #3a3a42 ; os `--bone-0` #f4efe6 → `--bone-3` #8a857a ; **un seul rouge** : `--accent` #d91e2b (fonds), `--accent-text` #f23b47 (rouge écrit), `--accent-deep` #c41a26 (fond sous texte os) ; états `--ok`, `--warn`, `--bad` ; `--blue-team` ; tailles (`--fs-label` 11 px minimum) ; motifs (`--edge-weight`, `--lift`, `--skew`, hachures) ; z-index |
+| `base.css` | Reset, focus os 2 px décalé, `prefers-reduced-motion` |
+| `motifs.css` | `.se-edge` (structure), `.se-lift` (premier plan), `.se-chosen` (le choix, −1°), `.se-hatch` (estimé / incertain / vide / périmé), `.se-slash` (en-tête), `.se-corners` (là où agir) |
+| `components.css` | Boutons (`.btn--primary` = fond os + ombre rouge), champs, cases, segmentés, onglets, panneaux, étiquettes, niveaux, divulgation, bandeaux |
+| `shell.css`, `draft.css`, `pages.css` | Barre du haut, écran de draft, autres pages |
 
-La couleur d'accent est personnalisable et persistée (`stores/themeStore.js`).
+Règle du rouge : le pick conseillé, l'urgence (chrono ≤ 10 s), ce qui joue contre toi,
+l'équipe rouge. Le reste est en os. Le choix de couleur d'accent a été supprimé.
 
-**Dette de design** : **605 styles en ligne** (`style={{…}}`) dans `client/src/components`. La
-plupart réécrivent à la main tailles, couleurs et espacements au lieu d'utiliser les tokens ou
-des classes : c'est le premier frein à toute évolution cohérente.
+Un test (`client/src/styles/design-system.test.js`) échoue si une variable CSS lue n'est
+déclarée nulle part, si une `transition: all` réapparaît ou si l'accent redevient réglable.
+Il reste 8 styles en ligne, tous des valeurs calculées (positions de barres, illustration).
 
-**Écrans** (`client/src/components`) : `Layout`, `DraftBoard` (tableau de sélection),
-`Recommendations` (cartes de conseil), `HeroPanel`, `DraftPanel`, `DraftWorkshop` (comparer deux
-champions), `ChampionPool` et `PoolAdvisor` (pool du joueur), `Insights`, `HistoryPage` et
-replays, `DuoQ`, `Settings`, `Auth`. Primitives partagées dans `Primitives.jsx` (dont `TermBar`,
-barre signée d'un terme de score, et `TERM_LABELS`).
+**Écrans** (`client/src/components`) : `Topbar` ; `Draft/` (`DraftScreen`, `DraftStrip`
+bandeau éditable, `ChampionSearch` au clavier, `WhyPanel`, `StatusBar`, `ReplayBar`,
+`DraftStates`) ; `HeroPanel` (héros + shortlist à intervalles) ; `DraftWorkshop`
+(comparaison, interactions de kits) ; `ChampionPool` + `PoolAdvisor` ; `HistoryPage`
+(Replays, qui absorbe l'ancienne page Données) ; `DuoQ` ; `Settings` ; `Auth`.
+Primitives dans `Primitives.jsx`. Logique d'affichage testée dans `client/src/lib/` :
+`terms.js` (familles et libellés en clair des termes, barres, intervalles), `draftView.js`,
+`championSearch.js`, `timer.js`, `replaysView.js`.
 
-**Maquette de référence** : `DALIA DESIGN/react-export/` (export React d'une maquette antérieure,
-avec son propre `tailwind.config.js`) — à comparer avec l'application actuelle.
+**Maquette de référence** : `DALIA DESIGN/react-export/` (maquette antérieure, dépassée par
+la refonte).
 
 **Ce que l'interface doit expliquer** (vocabulaire du moteur, `docs/CHANTIERS.md`) : avantage en
 points de win rate relatif au pool, incertitude (±σ), groupe de tête (« choix équivalents »),
@@ -80,13 +82,13 @@ Depuis `client/` :
 
 - `npm run dev` — serveur Vite. L'API (`server/`) doit tourner pour les vraies données ; sinon
   les parcours Playwright existants simulent l'API (`client/e2e/workflows.spec.js`).
-- `npx vitest run` — 24 tests (jsdom, 15-50 s).
+- `npx vitest run` — 81 tests (jsdom, 15-50 s).
 - `PLAYWRIGHT_CHANNEL=chrome npx playwright test` — 3 parcours de bout en bout (édition et
   analyse, conseil de pool, sauvegarde et relecture).
 - Lancer les deux suites après chaque lot de modifications : le design ne doit casser aucun
   parcours.
 
-## 5. Pistes à proposer au joueur (non validées)
+## 5. Pistes proposées au joueur (validées et appliquées le 27/09/2026)
 
 1. **Résorber les styles en ligne** vers les tokens et des classes : préalable à tout le reste,
    invisible pour l'utilisateur mais rend la DA cohérente et modifiable.
@@ -120,3 +122,17 @@ Depuis `client/` :
 > captures `playwright-cli` des écrans principaux, audit `web-design-guidelines`), puis
 > propose-moi des pistes d'amélioration classées par impact, avec des exemples visuels, avant de
 > modifier quoi que ce soit.
+
+## 8. Refonte appliquée (27/09/2026)
+
+Audit et maquettes : https://claude.ai/artifact/XMFa7pSg2M5ZACQmiK9Cag. Plan :
+`docs/superpowers/plans/2026-09-27-refonte-design-soul-eater.md`. Le joueur a validé toutes les
+pistes et demandé **une seule couleur, le rouge**. Choix faits pendant l'exécution :
+
+- L'analyse reste lancée par le joueur (ANALYSER, ou Entrée quand rien n'a le focus).
+- Libellés de termes en clair (« Contre leurs picks », « Risque de counter »…), nom du moteur
+  dans l'infobulle ; barres vert (pour) / rouge (contre), pleines si mesurées, hachurées si
+  estimées, moustache = ±σ.
+- Win rate des Replays = victoires / (victoires + défaites).
+- Niveaux de pool en échelle d'os (S plein → D pointillé), sans rouge ni vert.
+

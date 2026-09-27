@@ -95,6 +95,16 @@
 }
 .drain--danger { background: var(--accent); }
 
+/* Lien d'évitement, visible au clavier */
+.skip-link {
+  position: absolute; left: 12px; top: -60px; z-index: var(--z-dialog);
+  padding: 8px 12px;
+  font: 600 12px/1 var(--f-display); letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--ink-0); background: var(--bone-0);
+  box-shadow: 3px 3px 0 var(--accent);
+}
+.skip-link:focus { top: 8px; }
+
 /* Alerte ANALYSER, sous la barre du haut */
 .app-alert { position: absolute; top: 44px; left: 0; right: 0; z-index: var(--z-banner); }
 

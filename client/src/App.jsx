@@ -44,6 +44,7 @@ export default function App() {
   const fallback = <div className="empty" role="status">Chargement…</div>;
   return (
     <div className="app">
+      <a className="skip-link" href="#contenu">Aller au contenu</a>
       <Topbar page={page} onPage={setPage}/>
 
       {draftError && (
@@ -53,7 +54,7 @@ export default function App() {
         </div>
       )}
 
-      <main className="app__page">
+      <main className="app__page" id="contenu" tabIndex={-1}>
         {page === 'draft' && <DraftScreen/>}
         <Suspense fallback={fallback}>
           {page === 'pool' && <ChampionPoolEditor/>}
