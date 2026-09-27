@@ -799,3 +799,6 @@ Malphite contre full AD reste en échec : tous les tanks prennent le même bonus
 plus un cas à part (choix du joueur) ; Sett passe par son palier A.
 
 Référence suivante : `snapshots/baseline_v12.json`, 46/56, même gel.
+
+**Ruées (paquet 4)** : `anti_dash` pour Janna, Milio, Taliyah, Vex — calibration 46/56 inchangée,
+concordance top-3 14,3 % (+5 −8), top-10 37,2 % (+4 −11, z −1,8). Non appliqué (choix du joueur).

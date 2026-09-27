@@ -175,3 +175,12 @@ Riot (CommunityDragon `tacticalInfo.damageType` : 87 magiques, 78 physiques, 8 m
 **Paquet 3 — contre les tanks, contre les auto-attaqueurs.** Le moteur garde ses règles telles
 quelles : dégâts liés aux PV contre les tanks pour Vayne, Fiora, Gwen, Kog'Maw, Brand (« oui ») ;
 esquive des attaques pour Jax (E) et Nilah (W) seulement — Fiora et Pantheon « non ».
+
+**Paquet 4 — composition à ruées.** Le joueur valide et ajoute **Janna, Milio, Taliyah, Vex** à
+Poppy et Cassiopeia (déjà codées). Codé puis mesuré (règle `anti_dash`, ≥ 3 ennemis à ruée ou
+téléportation d'après le wiki) : calibration inchangée, concordance top-10 −0,2 point (z −1,8).
+**Non appliqué** à la demande du joueur ; liste gardée ici, à reprendre avec des cas de
+calibration dédiés. Cibles immobiles (Fiora, Singed, Tahm) : sans réponse.
+
+**Paquet 5 — compositions fragiles** (Veigar, Master Yi, Karthus, Mordekaiser, Pyke) : écarté,
+« trop vague, genre tous les assassins rentrent dedans ».
