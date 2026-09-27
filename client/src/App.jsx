@@ -1,226 +1,20 @@
 // ─────────────────────────────────────────────
-// App.jsx — shell + topbar + navigation
+// App.jsx — coquille : barre du haut, alerte, pages
 // ─────────────────────────────────────────────
 import React, { useState, useEffect, lazy, Suspense } from 'react';
+import Topbar              from './components/Topbar';
 import HeroPanel           from './components/HeroPanel';
 import DraftPanel          from './components/DraftPanel';
+import useDraftStore       from './stores/draftStore';
+import useUserStore        from './stores/userStore';
+import useAuthStore        from './stores/authStore';
+import useDuoStore         from './stores/duoStore';
+import { startDraftSession } from './services/draftSession';
 const ChampionPoolEditor = lazy(() => import('./components/ChampionPool/ChampionPoolEditor'));
 const SettingsPage       = lazy(() => import('./components/Settings/SettingsPage'));
 const DuoPanel           = lazy(() => import('./components/DuoQ/DuoPanel'));
 const AuthPage           = lazy(() => import('./components/Auth/AuthPage'));
-import { LCUBadge }        from './components/Primitives';
-import useDraftStore       from './stores/draftStore';
-import useLCUStore         from './stores/lcuStore';
-import useUserStore        from './stores/userStore';
-import useAuthStore        from './stores/authStore';
-import logoSrc             from './assets/logo.png';
-import { startDraftSession } from './services/draftSession';
-import useDuoStore from './stores/duoStore';
-const HistoryPage = lazy(() => import('./components/HistoryPage'));
-const InsightsPage = lazy(() => import('./components/Insights/InsightsPage'));
-
-// ── Logo ────────────────────────────────────────
-function DaliaMoon({ size = 32 }) {
-  return (
-    <img src={logoSrc} alt="DALIA" width={size} height={size}
-      style={{ objectFit: 'contain', display: 'block', flexShrink: 0 }}/>
-  );
-}
-
-const NAV_TABS = [
-  { id: 'draft',    label: 'DRAFT'      },
-  { id: 'pool',     label: 'POOL'       },
-  { id: 'duo',      label: 'DUO Q'      },
-  { id: 'history', label: 'REPLAYS' },
-  { id: 'insights', label: 'DONNÉES' },
-  { id: 'settings', label: 'PARAMÈTRES' },
-];
-
-const ROLES = ['top', 'jungle', 'mid', 'bot', 'support'];
-const ROLE_SHORT = { top: 'TOP', jungle: 'JGL', mid: 'MID', bot: 'ADC', support: 'SUP' };
-
-// ── Live timer — branché sur lcuStore ────────────
-function LiveTimerChip() {
-  const connected     = useLCUStore(s => s.connected);
-  const inChampSelect = useLCUStore(s => s.inChampSelect);
-  const raw           = useLCUStore(s => s.timerRemaining);
-  const active = connected && inChampSelect;
-  const t      = active ? Math.max(0, Math.round(raw)) : null;
-  const danger = active && t !== null && t <= 10;
-
-  return (
-    <div style={{
-      display: 'inline-flex', alignItems: 'baseline', gap: 6,
-      padding: '6px 12px',
-      border: `var(--edge-weight) solid ${danger ? 'var(--accent)' : 'var(--bone-0)'}`,
-      background: danger ? 'var(--accent)' : 'var(--ink-2)',
-    }}>
-      <span style={{
-        fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 22,
-        color: danger ? 'var(--accent-ink)' : active ? 'var(--bone-0)' : 'var(--bone-3)',
-        fontVariantNumeric: 'tabular-nums', lineHeight: 1,
-      }}>
-        {active ? String(t).padStart(2, '0') : '--'}
-      </span>
-      <span style={{
-        fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.2em',
-        color: danger ? 'var(--accent-ink)' : 'var(--bone-2)',
-      }}>
-        SEC
-      </span>
-    </div>
-  );
-}
-
-// ── Side + Role selector ────────────────────────
-function SideRoleChip() {
-  const myTeam   = useDraftStore(s => s.myTeam);
-  const myRole   = useDraftStore(s => s.myRole);
-  const setMyTeam = useDraftStore(s => s.setMyTeam);
-  const setMyRole = useDraftStore(s => s.setMyRole);
-  const autoDetected = useDraftStore(s => s.autoDetected);
-  const [roleOpen, setRoleOpen] = useState(false);
-
-  return (
-    <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-      {/* Side toggle */}
-      <div style={{ display:'flex', gap:0 }}>
-        {['blue','red'].map(side => {
-          const active = myTeam === side;
-          return (
-            <button
-              key={side}
-              onClick={() => setMyTeam(side)}
-              style={{
-                padding:'4px 10px',
-                fontFamily:'var(--f-display)', fontSize:10, fontWeight:700, letterSpacing:'0.14em',
-                background: active ? (side==='blue' ? '#3a7fff' : 'var(--accent)') : 'var(--ink-3)',
-                color: active ? (side==='blue' ? '#fff' : 'var(--accent-ink)') : 'var(--bone-3)',
-                border:`1.5px solid ${active ? (side==='blue' ? '#6aa0ff' : 'var(--accent)') : 'var(--ink-5)'}`,
-                borderRight: side==='blue' ? 0 : undefined,
-                cursor:'pointer', transition: 'background-color 0.1s, color 0.1s, border-color 0.1s',
-              }}
-            >{side.toUpperCase()}</button>
-          );
-        })}
-      </div>
-
-      {/* Role dropdown */}
-      <div style={{ position:'relative' }}>
-        <button
-          onClick={() => setRoleOpen(v => !v)}
-          style={{
-            display:'flex', alignItems:'center', gap:5,
-            padding:'4px 10px',
-            fontFamily:'var(--f-display)', fontSize:10, fontWeight:700, letterSpacing:'0.14em',
-            background:'var(--ink-3)',
-            color:'var(--bone-0)',
-            border:'1.5px solid var(--ink-5)',
-            cursor:'pointer',
-          }}
-        >
-          {ROLE_SHORT[myRole]} <span style={{ fontSize:8, color:'var(--bone-3)' }}>▾</span>
-        </button>
-        {roleOpen && (
-          <>
-            <div style={{ position:'fixed', inset:0, zIndex:30 }} onClick={() => setRoleOpen(false)}/>
-            <div style={{
-              position:'absolute', left:0, top:'calc(100% + 4px)',
-              background:'var(--ink-2)', border:'var(--edge-weight) solid var(--bone-0)',
-              boxShadow:'4px 4px 0 var(--ink-0)',
-              zIndex:40, minWidth:80,
-            }}>
-              {ROLES.map(r => (
-                <button
-                  key={r}
-                  onClick={() => { setMyRole(r); setRoleOpen(false); }}
-                  style={{
-                    display:'block', width:'100%',
-                    padding:'7px 14px',
-                    fontFamily:'var(--f-display)', fontSize:11, letterSpacing:'0.1em',
-                    background: myRole===r ? 'var(--accent-muted)' : 'transparent',
-                    color: myRole===r ? 'var(--accent)' : 'var(--bone-1)',
-                    border:'none',
-                    borderBottom:'1px solid var(--ink-5)',
-                    cursor:'pointer', textAlign:'left',
-                  }}
-                >{ROLE_SHORT[r]}</button>
-              ))}
-            </div>
-          </>
-        )}
-      </div>
-
-      {autoDetected && (
-        <span style={{ fontFamily:'var(--f-mono)', fontSize:9, letterSpacing:'0.1em', color:'var(--ok)', opacity:0.8 }}>LCU</span>
-      )}
-    </div>
-  );
-}
-
-// ── Topbar ──────────────────────────────────────
-function Topbar({ page, onPage }) {
-  const connected = useLCUStore(s => s.connected);
-
-  return (
-    <header style={{
-      height: 48, display:'flex', alignItems:'center', gap:0,
-      padding:'0 20px', flexShrink:0,
-      background:'var(--ink-1)',
-      borderBottom:'var(--edge-weight) solid var(--bone-0)',
-      position:'relative', zIndex:20,
-    }}>
-      {/* Brand */}
-      <div style={{ display:'flex', alignItems:'center', gap:10, flexShrink:0 }}>
-        <DaliaMoon size={28}/>
-        <span style={{ fontFamily:'var(--f-display)', fontWeight:700, fontSize:16, letterSpacing:'0.3em', color:'var(--bone-0)' }}>DALIA</span>
-        <span style={{ fontFamily:'var(--f-mono)', fontSize:11, color:'var(--bone-2)', letterSpacing:'0.15em' }}>/ DRAFT</span>
-      </div>
-
-      {/* Nav tabs */}
-      <div style={{ display:'flex', alignItems:'stretch', height:'100%', marginLeft:28, gap:0 }}>
-        {NAV_TABS.map(({ id, label }) => {
-          const active = page === id;
-          return (
-            <button
-              key={id}
-              onClick={() => onPage(id)}
-              style={{
-                padding: '0 18px',
-                fontFamily: 'var(--f-display)', fontSize: 11, fontWeight: 700, letterSpacing: '0.18em',
-                background: active ? 'var(--accent)' : 'transparent',
-                color: active ? 'var(--accent-ink)' : 'var(--bone-2)',
-                border: 'none',
-                borderBottom: active ? 'none' : '3px solid transparent',
-                cursor: 'pointer',
-                transition: 'background-color 0.1s, color 0.1s, border-color 0.1s',
-              }}
-              onMouseEnter={e => { if (!active) e.currentTarget.style.color = 'var(--bone-0)'; }}
-              onMouseLeave={e => { if (!active) e.currentTarget.style.color = 'var(--bone-2)'; }}
-            >
-              {label}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Side + Role (always visible — affects ANALYSER payload) */}
-      <div style={{ marginLeft:20 }}>
-        <SideRoleChip/>
-      </div>
-
-      {/* Right controls */}
-      <div style={{ marginLeft:'auto', display:'flex', alignItems:'center', gap:14 }}>
-        <LCUBadge connected={connected}/>
-
-        <div style={{ width:1, height:22, background:'var(--ink-5)' }}/>
-
-
-        <LiveTimerChip/>
-      </div>
-    </header>
-  );
-}
+const HistoryPage        = lazy(() => import('./components/HistoryPage'));
 
 // ── État vide avant premier ANALYSER ────────────
 function EmptyRecsPanel({ loading }) {
@@ -291,70 +85,38 @@ export default function App() {
 
   // Not logged in → auth page (replaces the whole shell).
   if (!isAuthed) {
-    return (
-      <Suspense fallback={<div style={{height:'100vh',background:'var(--ink-0)'}}/>}>
-        <AuthPage/>
-      </Suspense>
-    );
+    return <Suspense fallback={<div className="app"/>}><AuthPage/></Suspense>;
   }
 
+  const fallback = <div className="empty" role="status">Chargement…</div>;
   return (
-    <div style={{ height:'100vh', display:'grid', gridTemplateRows:'48px 1fr', background:'var(--ink-0)', position:'relative' }}>
+    <div className="app">
       <Topbar page={page} onPage={setPage}/>
 
-      {/* Bandeau d'erreur ANALYSER */}
       {draftError && (
-        <div
-          onClick={() => useDraftStore.setState({ error: null })}
-          style={{
-            position: 'absolute', top: 48, left: 0, right: 0, zIndex: 100,
-            background: 'rgba(255,40,50,0.92)', color: '#fff',
-            fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.08em',
-            padding: '8px 20px',
-            borderBottom: '2px solid var(--bad)',
-            cursor: 'pointer',
-          }}
-        >
-          ! ANALYSER — {draftError} &nbsp;·&nbsp; <span style={{ opacity: 0.7 }}>cliquer pour fermer</span>
+        <div className="app-alert banner banner--bad" role="alert">
+          <span>Analyse impossible<span className="banner__detail">{draftError}</span></span>
+          <button className="btn btn--sm btn--ghost" onClick={() => useDraftStore.setState({ error: null })}>Fermer</button>
         </div>
       )}
 
-      {page === 'draft' && (
-        <div className="draft-layout" style={{ display:'grid', gridTemplateColumns:'40% 60%', overflow:'hidden' }}>
-          {hasRecs
-            ? <HeroPanel selected={selected} onSelect={setSelected}/>
-            : <EmptyRecsPanel loading={draftLoading}/>
-          }
-          <DraftPanel selected={selected}/>
-        </div>
-      )}
-
-      {page === 'pool' && (
-        <div style={{ overflow: 'hidden' }}>
-          <Suspense fallback={<div style={{height:'100%'}}/>}>
-            <ChampionPoolEditor/>
-          </Suspense>
-        </div>
-      )}
-
-      {page === 'duo' && (
-        <div style={{ overflow: 'auto' }}>
-          <Suspense fallback={<div style={{height:'100%'}}/>}>
-            <DuoPanel/>
-          </Suspense>
-        </div>
-      )}
-
-      {page === 'history' && <Suspense fallback={<p>Chargement…</p>}><HistoryPage onReplay={() => setPage('draft')}/></Suspense>}
-      {page === 'insights' && <Suspense fallback={<p>Chargement…</p>}><InsightsPage/></Suspense>}
-
-      {page === 'settings' && (
-        <div style={{ overflow: 'hidden' }}>
-          <Suspense fallback={<div style={{height:'100%'}}/>}>
-            <SettingsPage/>
-          </Suspense>
-        </div>
-      )}
+      <main className="app__page">
+        {page === 'draft' && (
+          <div className="draft-layout" style={{ display:'grid', gridTemplateColumns:'40% 60%', height:'100%', overflow:'hidden' }}>
+            {hasRecs
+              ? <HeroPanel selected={selected} onSelect={setSelected}/>
+              : <EmptyRecsPanel loading={draftLoading}/>
+            }
+            <DraftPanel selected={selected}/>
+          </div>
+        )}
+        <Suspense fallback={fallback}>
+          {page === 'pool' && <ChampionPoolEditor/>}
+          {page === 'duo' && <div className="page"><DuoPanel/></div>}
+          {page === 'history' && <div className="page"><HistoryPage onReplay={() => setPage('draft')}/></div>}
+          {page === 'settings' && <SettingsPage/>}
+        </Suspense>
+      </main>
     </div>
   );
 }

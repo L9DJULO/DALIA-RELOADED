@@ -1,0 +1,106 @@
+/* ─────────────────────────────────────────────
+   COQUILLE — barre du haut, navigation, chrono, alerte
+   ───────────────────────────────────────────── */
+.app { position: relative; height: 100%; display: grid; grid-template-rows: 44px minmax(0, 1fr); background: var(--ink-0); }
+.app__page { position: relative; min-height: 0; overflow: hidden; }
+.app__page--scroll { overflow-y: auto; }
+
+.logo { display: block; object-fit: contain; flex-shrink: 0; }
+
+.topbar {
+  position: relative; z-index: var(--z-sticky);
+  display: flex; align-items: stretch;
+  height: 44px; padding-left: 16px;
+  background: var(--ink-1);
+  border-bottom: var(--edge-weight) solid var(--bone-0);
+}
+.brand { display: flex; align-items: center; gap: 9px; margin-right: 22px; flex-shrink: 0; }
+.brand__name { font: 700 16px/1 var(--f-display); letter-spacing: 0.3em; }
+
+.nav { display: flex; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.nav::-webkit-scrollbar { display: none; }
+.nav__tab {
+  display: flex; align-items: center; padding: 0 14px;
+  font: 600 13px/1 var(--f-display); letter-spacing: 0.14em; white-space: nowrap;
+  color: var(--bone-2);
+  transition: color var(--dur-fast), box-shadow var(--dur-fast);
+}
+.nav__tab:hover { color: var(--bone-0); }
+.nav__tab[aria-current="page"] { color: var(--bone-0); box-shadow: inset 0 -4px 0 var(--bone-0); }
+.nav__tab:focus-visible { outline-offset: -4px; }
+
+.topbar__right { margin-left: auto; display: flex; align-items: center; gap: 14px; flex-shrink: 0; padding-left: 14px; }
+
+/* Équipe, rôle, ordre de pick */
+.ctx { display: flex; align-items: center; gap: 6px; }
+.side-seg > button { padding: 6px 10px; }
+.side-seg > button[data-side="blue"][aria-pressed="true"] { background: var(--blue-team); color: var(--ink-0); }
+.side-seg > button[data-side="red"][aria-pressed="true"]  { background: var(--accent-deep); color: var(--bone-0); }
+.role-menu { position: relative; }
+.role-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 10px;
+  font: 600 var(--fs-label)/1 var(--f-display); letter-spacing: 0.12em;
+  color: var(--bone-0); background: var(--ink-2);
+  border: var(--edge-thin) solid var(--ink-5);
+  transition: border-color var(--dur-fast);
+}
+.role-btn:hover { border-color: var(--bone-2); }
+.role-btn__caret { font-size: 9px; color: var(--bone-2); }
+.menu {
+  position: absolute; top: calc(100% + 6px); left: 0; z-index: var(--z-menu);
+  min-width: 96px;
+  background: var(--ink-2);
+  border: var(--edge-weight) solid var(--bone-0);
+  box-shadow: var(--lift) var(--lift) 0 var(--ink-0);
+}
+.menu > button {
+  display: block; width: 100%; padding: 8px 12px; text-align: left;
+  font: 600 12px/1 var(--f-display); letter-spacing: 0.1em;
+  color: var(--bone-1); border-bottom: 1px solid var(--ink-5);
+}
+.menu > button:last-child { border-bottom: 0; }
+.menu > button:hover { background: var(--ink-3); color: var(--bone-0); }
+.menu > button[aria-checked="true"] { background: var(--bone-0); color: var(--ink-0); }
+.pick-order {
+  padding: 6px 8px;
+  font: 500 var(--fs-label)/1 var(--f-mono); letter-spacing: 0.1em; white-space: nowrap;
+  color: var(--bone-1); border: var(--edge-thin) solid var(--ink-5);
+}
+.auto-flag { font: 500 var(--fs-label)/1 var(--f-mono); letter-spacing: 0.1em; color: var(--ok); }
+
+/* Client League */
+.lcu { display: flex; align-items: center; gap: 7px; font: 500 var(--fs-label)/1 var(--f-mono); letter-spacing: 0.1em; color: var(--bone-2); white-space: nowrap; }
+.lcu--on { color: var(--bone-1); }
+
+/* Chrono */
+.timer {
+  align-self: stretch;
+  display: flex; align-items: center; justify-content: center; gap: 4px;
+  min-width: 86px; padding: 0 14px;
+  background: var(--ink-2);
+  border-left: var(--edge-weight) solid var(--bone-0);
+  transition: background-color var(--dur), border-color var(--dur);
+}
+.timer__n { font: 700 28px/1 var(--f-display); font-variant-numeric: tabular-nums; color: var(--bone-0); }
+.timer__u { font: 500 var(--fs-label)/1 var(--f-mono); color: var(--bone-2); align-self: flex-end; padding-bottom: 11px; }
+.timer--idle .timer__n { color: var(--bone-3); }
+.timer--danger { background: var(--accent); border-left-color: var(--accent); }
+.timer--danger .timer__n, .timer--danger .timer__u { color: var(--bone-0); }
+.drain {
+  position: absolute; left: 0; bottom: calc(-1 * var(--edge-weight)); height: 4px;
+  background: var(--bone-0);
+  transition: width 1s linear, background-color var(--dur);
+  pointer-events: none;
+}
+.drain--danger { background: var(--accent); }
+
+/* Alerte ANALYSER, sous la barre du haut */
+.app-alert { position: absolute; top: 44px; left: 0; right: 0; z-index: var(--z-banner); }
+
+@media (max-width: 1100px) {
+  .brand__name, .lcu__label { display: none; }
+  .brand { margin-right: 10px; }
+  .nav__tab { padding: 0 10px; font-size: 12px; }
+  .topbar__right { gap: 10px; }
+}
