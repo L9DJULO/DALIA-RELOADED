@@ -304,6 +304,42 @@ class LolalyticsFetcher:
             logger.error("Lolalytics counter fetch failed (%s %s vs %s): %s", champion_slug, lane, vs_lane_api, exc)
             return {}
 
+    # ── Lolalytics — Synergies de paire (ep=build-team) ─────────────────
+    async def fetch_team_page(
+        self, champion_slug: str, role: str, tier: Optional[str] = None, patch: str = "counter_default",
+    ) -> Dict[str, Any]:
+        """Win rate du candidat avec chaque allié, par poste de l'allié.
+
+        Returns: {team_h: [id, wr, d1, d2, pr, n], team: {lane: [[...], ...]}}.
+        Même fenêtre, même tier et même cache que les pages de counters. Une panne
+        rend {} ; FrozenCacheMiss (BaseException) remonte, à dessein.
+        """
+        lane = role_to_lane(role)
+        tier = tier or self.TIER
+        if patch == "counter_default":
+            patch = config.counter_patch
+        elif patch == "current":
+            patch = await self.get_current_patch()
+
+        cache_key = f"lola_team_{champion_slug}_{lane}_{patch}_{tier}_{self.QUEUE}_{self.REGION}"
+        cached = self._cache.get(cache_key)
+        if cached:
+            return cached
+
+        params = {"ep": "build-team", "v": "1", "patch": patch, "c": champion_slug.lower(), "lane": lane,
+                  "tier": tier, "queue": self.QUEUE, "region": self.REGION}
+        try:
+            resp = await self._get(f"{self.LOLA}/mega/", params=params)
+            data = resp.json()
+            if not isinstance(data, dict) or not isinstance(data.get("team"), dict):
+                logger.warning("No team data for %s %s", champion_slug, lane)
+                return {}
+            self._cache.set(cache_key, data)
+            return data
+        except Exception as exc:
+            logger.error("Lolalytics team fetch failed (%s %s): %s", champion_slug, lane, exc)
+            return {}
+
     # ── Parsing helpers ──────────────────────────────────────────────────
     @staticmethod
     def parse_tierlist(raw: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -394,6 +430,40 @@ class LolalyticsFetcher:
                 "opponent_overall_wr": overall,
                 "opponent_default_lane": entry.get("defaultLane", ""), "our_wr": our_wr})
         return results
+
+    @staticmethod
+    def parse_team(raw: Dict[str, Any]) -> Dict[str, Dict[int, Tuple[float, int, float]]]:
+        """Parse ep=build-team : {poste de l'allié: {ally_id: (d2, parties, WR du duo)}}.
+
+        d2 = WR du duo − (WR du candidat + WR de l'allié − WR moyen) : la part non
+        additive de la paire, vérifiée le 27/09/2026 sur Xayah et ses supports. Les
+        colonnes sont lues par leur nom dans team_h ; une ligne invalide est écartée
+        sans faire tomber la page.
+        """
+        if not isinstance(raw, dict) or not isinstance(raw.get("team"), dict):
+            return {}
+        header = raw.get("team_h") if isinstance(raw.get("team_h"), list) else ["id", "wr", "d1", "d2", "pr", "n"]
+        col = {name: i for i, name in enumerate(header)}
+        if not {"id", "wr", "d2", "n"} <= col.keys():
+            return {}
+        result: Dict[str, Dict[int, Tuple[float, int, float]]] = {}
+        for lane, rows in raw["team"].items():
+            if not isinstance(rows, list):
+                continue
+            parsed: Dict[int, Tuple[float, int, float]] = {}
+            for row in rows:
+                try:
+                    cid, games = int(row[col["id"]]), int(row[col["n"]])
+                    d2, wr = float(row[col["d2"]]), float(row[col["wr"]])
+                except (TypeError, ValueError, IndexError, KeyError, OverflowError):
+                    continue
+                if not 1 <= cid <= 10000 or games <= 0:
+                    continue
+                if not (math.isfinite(d2) and math.isfinite(wr)) or not 0 <= wr <= 100 or abs(d2) > 50:
+                    continue
+                parsed[cid] = (d2, games, wr)
+            result[lane_to_role(lane)] = parsed
+        return result
 
     # ── Champion slug helper ─────────────────────────────────────────────
     # Clés Data Dragon dont le slug Lolalytics n'est pas la clé en minuscules.

@@ -16,6 +16,7 @@ class FakeFetcher:
     async def get_current_patch(self): return "16.17"
     async def fetch_counter_page(self, *args, **kwargs): return {}
     async def fetch_tierlist(self, *args, **kwargs): return {}
+    async def fetch_team_page(self, *args, **kwargs): return {}
 
 
 @pytest.fixture
