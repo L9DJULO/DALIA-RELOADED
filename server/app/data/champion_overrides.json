@@ -261,7 +261,10 @@
       1
     ],
     "ratings_source": "joueur",
-    "damage_type": "physical"
+    "damage_type": "physical",
+    "properties": [
+      "hypercarry"
+    ]
   },
   "Ashe": {
     "roles": [
@@ -458,7 +461,8 @@
       1
     ],
     "ratings_source": "joueur",
-    "damage_type": "magic"
+    "damage_type": "magic",
+    "properties": []
   },
   "Braum": {
     "roles": [
@@ -526,7 +530,10 @@
       3
     ],
     "ratings_source": "joueur",
-    "damage_type": "physical"
+    "damage_type": "physical",
+    "properties": [
+      "hypercarry"
+    ]
   },
   "Camille": {
     "roles": [
@@ -865,7 +872,8 @@
       3
     ],
     "ratings_source": "joueur",
-    "damage_type": "physical"
+    "damage_type": "physical",
+    "properties": []
   },
   "Fiddlesticks": {
     "roles": [
@@ -1198,7 +1206,8 @@
       1
     ],
     "ratings_source": "joueur",
-    "damage_type": "magic"
+    "damage_type": "magic",
+    "properties": []
   },
   "Hwei": {
     "roles": [
@@ -1327,7 +1336,8 @@
     ],
     "ratings_source": "joueur",
     "properties": [
-      "reception"
+      "reception",
+      "protege_carry"
     ],
     "damage_type": "magic"
   },
@@ -1435,7 +1445,8 @@
       1
     ],
     "ratings_source": "joueur",
-    "damage_type": "physical"
+    "damage_type": "physical",
+    "properties": []
   },
   "Jinx": {
     "roles": [
@@ -1453,7 +1464,10 @@
       1
     ],
     "ratings_source": "joueur",
-    "damage_type": "physical"
+    "damage_type": "physical",
+    "properties": [
+      "hypercarry"
+    ]
   },
   "Kaisa": {
     "roles": [
@@ -1559,7 +1573,8 @@
       3
     ],
     "properties": [
-      "encaisse_ap"
+      "encaisse_ap",
+      "hypercarry"
     ],
     "damage_type": "magic"
   },
@@ -1620,7 +1635,10 @@
       5,
       1
     ],
-    "damage_type": "magic"
+    "damage_type": "magic",
+    "properties": [
+      "hypercarry"
+    ]
   },
   "Kayn": {
     "roles": [
@@ -1785,7 +1803,10 @@
       1
     ],
     "ratings_source": "joueur",
-    "damage_type": "mixed"
+    "damage_type": "mixed",
+    "properties": [
+      "hypercarry"
+    ]
   },
   "KSante": {
     "roles": [
@@ -2020,7 +2041,8 @@
     ],
     "ratings_source": "joueur",
     "properties": [
-      "reception"
+      "reception",
+      "protege_carry"
     ],
     "damage_type": "magic"
   },
@@ -2147,7 +2169,10 @@
       5,
       2
     ],
-    "damage_type": "physical"
+    "damage_type": "physical",
+    "properties": [
+      "hypercarry"
+    ]
   },
   "Mel": {
     "roles": [
@@ -2375,7 +2400,10 @@
       3,
       5
     ],
-    "damage_type": "physical"
+    "damage_type": "physical",
+    "properties": [
+      "hypercarry"
+    ]
   },
   "Nautilus": {
     "roles": [
@@ -2440,7 +2468,8 @@
       2,
       3
     ],
-    "damage_type": "magic"
+    "damage_type": "magic",
+    "properties": []
   },
   "Nilah": {
     "roles": [
@@ -3269,7 +3298,10 @@
       3
     ],
     "ratings_source": "joueur",
-    "damage_type": "physical"
+    "damage_type": "physical",
+    "properties": [
+      "hypercarry"
+    ]
   },
   "Skarner": {
     "roles": [
@@ -3319,7 +3351,10 @@
       3
     ],
     "ratings_source": "joueur",
-    "damage_type": "physical"
+    "damage_type": "physical",
+    "properties": [
+      "hypercarry"
+    ]
   },
   "Sona": {
     "roles": [
@@ -3465,7 +3500,8 @@
     ],
     "ratings_source": "joueur",
     "properties": [
-      "reception"
+      "reception",
+      "protege_carry"
     ],
     "damage_type": "magic"
   },
@@ -3619,7 +3655,10 @@
       4
     ],
     "ratings_source": "joueur",
-    "damage_type": "physical"
+    "damage_type": "physical",
+    "properties": [
+      "hypercarry"
+    ]
   },
   "Trundle": {
     "roles": [
@@ -3725,7 +3764,10 @@
       2
     ],
     "ratings_source": "joueur",
-    "damage_type": "physical"
+    "damage_type": "physical",
+    "properties": [
+      "hypercarry"
+    ]
   },
   "Udyr": {
     "roles": [
@@ -3806,7 +3848,8 @@
       1
     ],
     "ratings_source": "joueur",
-    "damage_type": "physical"
+    "damage_type": "physical",
+    "properties": []
   },
   "Vayne": {
     "roles": [
@@ -3825,7 +3868,10 @@
       3
     ],
     "ratings_source": "joueur",
-    "damage_type": "physical"
+    "damage_type": "physical",
+    "properties": [
+      "hypercarry"
+    ]
   },
   "Veigar": {
     "roles": [
@@ -3855,7 +3901,10 @@
       2,
       1
     ],
-    "damage_type": "magic"
+    "damage_type": "magic",
+    "properties": [
+      "hypercarry"
+    ]
   },
   "Velkoz": {
     "roles": [
@@ -4285,7 +4334,10 @@
       5
     ],
     "ratings_source": "joueur",
-    "damage_type": "magic"
+    "damage_type": "magic",
+    "properties": [
+      "protege_carry"
+    ]
   },
   "Zaahen": {
     "roles": [
@@ -4464,7 +4516,8 @@
       2,
       2
     ],
-    "damage_type": "magic"
+    "damage_type": "magic",
+    "properties": []
   },
   "Zyra": {
     "roles": [

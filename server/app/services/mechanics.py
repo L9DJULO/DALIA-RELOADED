@@ -118,11 +118,17 @@ class MechanicsAnalyzer:
                 min(7, 2 * sum(c.key in BLOCKABLE_CC for c in enemies)),
                 "E peut protéger un allié des contrôles de {targets}.",
                 "Un seul allié à la fois ; la protection disparaît si les dégâts magiques détruisent le bouclier.")
-        if key == "Yasuo":
+        if key in {"Yasuo", "Yone"}:   # Yone ajouté par le joueur le 27/09
             add("yasuo_knockup_followup", [c for c in allies if c.key in KNOCKUPS],
                 min(7, 3 * sum(c.key in KNOCKUPS for c in allies)),
-                "Les projections de {targets} offrent une fenêtre pour R sans devoir toucher ta propre tornade.",
-                "L'allié doit toucher, et Yasuo doit pouvoir suivre à portée ; un pré-pick n'est pas un engagement confirmé.", "synergy")
+                "Les projections de {targets} offrent une fenêtre pour R" + (" sans devoir toucher ta propre tornade." if key == "Yasuo" else "."),
+                f"L'allié doit toucher, et {key} doit pouvoir suivre à portée ; un pré-pick n'est pas un engagement confirmé.", "synergy")
+        # Synergies d'alliés reprises avec le joueur (27/09, paquet 6 des anciens cas particuliers).
+        if "protege_carry" in candidate.properties:
+            carries = [c for c in allies if "hypercarry" in c.properties]
+            add("protect_hypercarry", carries, min(6, 3 * len(carries)),
+                "Peut accompagner et protéger {targets} jusqu'à sa fin de partie.",
+                "Suppose de rester collé au carry ; ne protège pas du contrôle qui l'atteint avant.", "synergy")
         # Brand : le passif inflige des dégâts en % des PV max (arbitrage du joueur, 25/09).
         if key in {"Vayne", "Fiora", "Gwen", "KogMaw", "Brand"}:
             targets = [c for c in enemies if c.is_tank]

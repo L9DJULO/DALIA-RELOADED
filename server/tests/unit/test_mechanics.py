@@ -97,3 +97,22 @@ def test_ignoring_cc_pays_against_three_hard_cc_sources(catalog):
     score, rules = analyzer.evaluate(olaf, draft([54, 59, 25], role="jungle"))
     assert score > 0 and any(r["id"] == "ignore_cc" for r in rules)
     assert analyzer.evaluate(olaf, draft([222, 81], role="jungle"))[0] == 0
+
+
+def test_ally_synergies_validated_by_the_player(catalog):
+    """Paquet 6 (joueur, 27/09) : protéger un hypercarry, Yone sur knock-up. Alliés seulement.
+    Kalista, Soraka et Twitch, validés aussi, dégradaient la concordance : non appliqués."""
+    from app.models.champion import Champion, ChampionRatings
+    analyzer = MechanicsAnalyzer(catalog)
+
+    def ally(key, cid, **kw):
+        c = Champion(id=cid, key=key, name=key, tags=["Marksman"], properties=kw.pop("properties", []),
+                     ratings=ChampionRatings(engage=kw.pop("engage", 1)))
+        catalog._by_id[cid] = c
+        return cid
+
+    carry = ally("Hyper", 7001, properties=["hypercarry"])
+    lulu = _custom("Lulu", properties=["protege_carry"])
+    assert analyzer.evaluate(lulu, draft(allies=[carry], role="support"))[0] > 0
+    assert analyzer.evaluate(lulu, draft([carry], role="support"))[0] == 0, "un hypercarry ennemi ne compte pas"
+    assert analyzer.evaluate(_custom("Yone", tags=("Fighter",)), draft(allies=[54], role="mid"))[0] > 0   # Malphite

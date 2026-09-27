@@ -184,3 +184,14 @@ calibration dédiés. Cibles immobiles (Fiora, Singed, Tahm) : sans réponse.
 
 **Paquet 5 — compositions fragiles** (Veigar, Master Yi, Karthus, Mordekaiser, Pyke) : écarté,
 « trop vague, genre tous les assassins rentrent dedans ».
+
+**Paquet 6 — synergies d'alliés** (« je valide »). Mesurées séparément :
+
+| Règle | Concordance top-10 | Décision |
+|---|---|---|
+| Protéger un hypercarry (`protege_carry` : Yuumi, Lulu, Janna, Tahm Kench ; `hypercarry` : Vayne, Kog'Maw, Tristana, Jinx, Twitch, Kayle, Smolder, Aphelios, Caitlyn, Sivir, Kassadin, Veigar, Nasus, Master Yi) et Yone sur knock-up | 37,4 % (+16 −16, z 0,0) | **appliqué** |
+| Kalista avec Thresh ou Rell, Soraka avec une lane de poke, Twitch derrière un engage | 37,2 % (+5 −15, z −2,2) | non appliqué, comme les ruées |
+
+Écartés d'office : Akshan (effet trop faible), Senna avec Tahm Kench (« outdated »). Liste des
+hypercarries tirée des anciennes étiquettes, à relire par le joueur (Kassadin, Veigar, Nasus,
+Master Yi).

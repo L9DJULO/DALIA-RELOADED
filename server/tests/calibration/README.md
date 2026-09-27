@@ -802,3 +802,7 @@ Référence suivante : `snapshots/baseline_v12.json`, 46/56, même gel.
 
 **Ruées (paquet 4)** : `anti_dash` pour Janna, Milio, Taliyah, Vex — calibration 46/56 inchangée,
 concordance top-3 14,3 % (+5 −8), top-10 37,2 % (+4 −11, z −1,8). Non appliqué (choix du joueur).
+
+**Synergies d'alliés (paquet 6)** : protection d'hypercarry et Yone sur knock-up appliqués
+(calibration 46/56 inchangée, concordance neutre) ; Kalista, Soraka et Twitch non appliqués
+(top-10 z −2,2).
