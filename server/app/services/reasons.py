@@ -16,6 +16,7 @@ from __future__ import annotations
 
 from typing import Dict, List, Optional, Tuple
 
+from app.config import config
 from app.models.champion import Champion
 from app.models.draft import DraftState
 
@@ -231,15 +232,29 @@ def _synergy_reason(
     ally_role: Optional[str],
     cand_role: str,
     delta: float,
+    source: str = "kit_heuristic",
 ) -> Optional[Dict]:
-    """Mechanical synergy reasoning. Same priority logic as matchup:
+    """Mechanical synergy reasoning.
 
+    Paire mesurée : la mesure seule parle, et seulement au-delà du seuil. Un
+    gabarit de kit (« Engage Nautilus setup la DPS d'Ashe ») s'afficherait sinon à
+    côté d'un −3 mesuré.
+
+    Repli de kit, same priority logic as matchup:
     1. Ally-specific kit pointer (Senna roots, Leona stuns, Lulu peel…).
     2. Generic candidate-pattern × ally-pattern templates.
     3. Delta fallback.
     """
     an = ally.name
     cn = cand.name
+    if source == "observed":
+        threshold = config.scoring.synergy_reason_threshold
+        shown = f"{delta:+.1f}".replace(".", ",").replace("-", "−")
+        if delta >= threshold:
+            return _mk(f"Duo favorable avec {an} ({shown})", "synergy", an, cn)
+        if delta <= -threshold:
+            return _mk(f"Duo défavorable avec {an} ({shown})", "warning", an, cn)
+        return None
     c_pats = _cand_patterns(cand)
     a_pats = _ally_patterns(ally)
 
@@ -335,7 +350,8 @@ def _specificity(r: Dict) -> int:
         return 2
     # Delta fallback templates — recognisable opening words
     if any(text.startswith(p) for p in (
-        "Lane favorable", "Matchup favorable", "Bon fit avec", "Attention :"
+        "Lane favorable", "Matchup favorable", "Bon fit avec", "Attention :",
+        "Duo favorable", "Duo défavorable",
     )):
         return 2
     # Composition reasons mention a champion ("Peel pour protéger Caitlyn")
@@ -407,6 +423,7 @@ def generate_reasons(
         if ally:
             _add(_synergy_reason(
                 cand, ally, pick.role, role, syn.get("delta", 0.0),
+                source=syn.get("source", "kit_heuristic"),
             ))
 
     # 3. Composition fillers
