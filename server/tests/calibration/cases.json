@@ -852,17 +852,15 @@
     "confidence": "low"
   },
   {
-    "id": "synergy_senna_tahmkench",
+    "id": "synergy_braum_yunara_over_jhin",
     "category": "synergy",
-    "description": "Senna ADC with Tahm Kench support ally — well-known synergy lane",
+    "description": "Braum support allié : Yunara passe devant Jhin. Interaction de paire Lolalytics (30 j) : +4,46 (6 702 parties) contre −5,63 (1 521) en Master+, +4,41 contre −4,29 en Émeraude+. Jhin est plus joué (16,8 % contre 12,4 %). Validé par le joueur le 27/09/2026.",
     "setup": {
       "my_team": "blue",
       "my_role": "bot",
       "my_pick_order": 3,
       "ally_picks": {
-        "top": "Ornn",
-        "jungle": "Sejuani",
-        "support": "Tahm Kench"
+        "support": "Braum"
       },
       "enemy_picks": {
         "jungle": "Lee Sin"
@@ -871,11 +869,56 @@
       "champion_pool": {
         "bot": [
           {
-            "champion": "Senna",
+            "champion": "Yunara",
+            "tier": "A"
+          },
+          {
+            "champion": "Jhin",
             "tier": "A"
           },
           {
             "champion": "Caitlyn",
+            "tier": "A"
+          },
+          {
+            "champion": "Ezreal",
+            "tier": "B"
+          }
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "must_rank_higher_than",
+        "champion_a": "Yunara",
+        "champion_b": "Jhin"
+      }
+    ],
+    "confidence": "medium"
+  },
+  {
+    "id": "synergy_nautilus_samira_over_ashe",
+    "category": "synergy",
+    "description": "Nautilus support allié : Samira passe devant Ashe. Interaction de paire Lolalytics (30 j) : +2,14 (5 163 parties) contre −3,17 (1 377) en Master+, +2,38 contre −2,97 en Émeraude+. Ashe a le meilleur win rate et plus de picks. Validé par le joueur le 27/09/2026.",
+    "setup": {
+      "my_team": "blue",
+      "my_role": "bot",
+      "my_pick_order": 3,
+      "ally_picks": {
+        "support": "Nautilus"
+      },
+      "enemy_picks": {
+        "jungle": "Lee Sin"
+      },
+      "bans": [],
+      "champion_pool": {
+        "bot": [
+          {
+            "champion": "Samira",
+            "tier": "A"
+          },
+          {
+            "champion": "Ashe",
             "tier": "A"
           },
           {
@@ -885,9 +928,50 @@
           {
             "champion": "Ezreal",
             "tier": "B"
+          }
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "must_rank_higher_than",
+        "champion_a": "Samira",
+        "champion_b": "Ashe"
+      }
+    ],
+    "confidence": "medium"
+  },
+  {
+    "id": "synergy_rakan_xayah_over_jinx",
+    "category": "synergy",
+    "description": "Rakan support allié : Xayah passe devant Jinx. Interaction de paire Lolalytics (30 j) : +2,31 (8 816 parties) contre −2,76 (2 042) en Master+, +1,26 contre −1,98 en Émeraude+. Jinx : 54,3 % de win rate, 17,7 % de pick. La paire du chantier 3. Validé par le joueur le 27/09/2026.",
+    "setup": {
+      "my_team": "blue",
+      "my_role": "bot",
+      "my_pick_order": 3,
+      "ally_picks": {
+        "support": "Rakan"
+      },
+      "enemy_picks": {
+        "jungle": "Lee Sin"
+      },
+      "bans": [],
+      "champion_pool": {
+        "bot": [
+          {
+            "champion": "Xayah",
+            "tier": "A"
           },
           {
-            "champion": "Aphelios",
+            "champion": "Jinx",
+            "tier": "A"
+          },
+          {
+            "champion": "Kai'Sa",
+            "tier": "A"
+          },
+          {
+            "champion": "Caitlyn",
             "tier": "B"
           }
         ]
@@ -895,8 +979,99 @@
     },
     "assertions": [
       {
-        "type": "must_be_in_top_3",
-        "champion": "Senna"
+        "type": "must_rank_higher_than",
+        "champion_a": "Xayah",
+        "champion_b": "Jinx"
+      }
+    ],
+    "confidence": "medium"
+  },
+  {
+    "id": "synergy_senna_jhin_over_tristana",
+    "category": "synergy",
+    "description": "Senna support allié : Jhin passe devant Tristana. Interaction de paire Lolalytics (30 j) : +2,88 (5 375 parties) contre −1,27 (1 592) en Master+, +2,70 contre −1,98 en Émeraude+. Tristana a deux points de win rate de plus. Remplace synergy_senna_tahmkench, jugé périmé par le joueur. Validé le 27/09/2026.",
+    "setup": {
+      "my_team": "blue",
+      "my_role": "bot",
+      "my_pick_order": 3,
+      "ally_picks": {
+        "support": "Senna"
+      },
+      "enemy_picks": {
+        "jungle": "Lee Sin"
+      },
+      "bans": [],
+      "champion_pool": {
+        "bot": [
+          {
+            "champion": "Jhin",
+            "tier": "A"
+          },
+          {
+            "champion": "Tristana",
+            "tier": "A"
+          },
+          {
+            "champion": "Caitlyn",
+            "tier": "A"
+          },
+          {
+            "champion": "Ezreal",
+            "tier": "B"
+          }
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "must_rank_higher_than",
+        "champion_a": "Jhin",
+        "champion_b": "Tristana"
+      }
+    ],
+    "confidence": "medium"
+  },
+  {
+    "id": "synergy_lulu_twitch_over_jhin",
+    "category": "synergy",
+    "description": "Lulu support allié : Twitch passe devant Jhin. Interaction de paire Lolalytics (30 j) : +0,84 (7 484 parties) contre −2,87 (1 141) en Master+, +0,67 contre −4,05 en Émeraude+. Jhin est trois fois plus joué. Proposé par le joueur (« lulu / yuumi et twitch ») et validé le 28/09/2026.",
+    "setup": {
+      "my_team": "blue",
+      "my_role": "bot",
+      "my_pick_order": 3,
+      "ally_picks": {
+        "support": "Lulu"
+      },
+      "enemy_picks": {
+        "jungle": "Lee Sin"
+      },
+      "bans": [],
+      "champion_pool": {
+        "bot": [
+          {
+            "champion": "Twitch",
+            "tier": "A"
+          },
+          {
+            "champion": "Jhin",
+            "tier": "A"
+          },
+          {
+            "champion": "Jinx",
+            "tier": "A"
+          },
+          {
+            "champion": "Ezreal",
+            "tier": "B"
+          }
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "must_rank_higher_than",
+        "champion_a": "Twitch",
+        "champion_b": "Jhin"
       }
     ],
     "confidence": "medium"

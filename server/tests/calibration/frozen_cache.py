@@ -58,6 +58,31 @@ def freeze(live: Path, frozen: Path, ddragon_version: str = "", tier: str = "") 
     return manifest
 
 
+def extend(live: Path, frozen: Path) -> Dict[str, Any]:
+    """Ajoute au gel les seules entrées du cache vivant qu'il n'a pas. Renvoie le manifeste.
+
+    Rien d'existant n'est réécrit : un moteur qui ne lit pas les entrées ajoutées
+    rejoue son baseline à l'identique sur le gel étendu. C'est ce qui permet de
+    comparer l'ancien et le nouveau moteur quand le nouveau lit une source de plus.
+    """
+    live, frozen = Path(live), Path(frozen)
+    manifest = load_manifest(frozen)
+    if manifest is None:
+        raise FileNotFoundError(f"Aucun gel dans {frozen} : --freeze-cache d'abord")
+    added = 0
+    for entry in live.glob("*.json"):
+        target = frozen / entry.name
+        if entry.name == MANIFEST or target.exists():
+            continue
+        shutil.copy2(entry, target)
+        added += 1
+    manifest["entries"] = sum(1 for p in frozen.glob("*.json") if p.name != MANIFEST)
+    manifest["added"] = added
+    manifest.setdefault("extended", []).append({"at": time.time(), "added": added})
+    (frozen / MANIFEST).write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+    return manifest
+
+
 def load_manifest(frozen: Path) -> Optional[Dict[str, Any]]:
     try:
         return json.loads((Path(frozen) / MANIFEST).read_text(encoding="utf-8"))

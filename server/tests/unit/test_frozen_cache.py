@@ -74,3 +74,30 @@ def test_the_run_never_builds_its_fetcher_behind_the_cache_mode():
     source = inspect.getsource(run_calibration.main)
     assert "build_fetcher(" in source
     assert "LolalyticsFetcher()" not in source
+
+
+def test_extend_adds_only_missing_entries_and_dates_it(tmp_path):
+    """Étendre le gel ne réécrit jamais une entrée : l'ancien moteur rejoue son baseline."""
+    live, frozen = tmp_path / "cache", tmp_path / "frozen"
+    live.mkdir()
+    FileCache(str(live)).set("lola_list_middle", {"cid": {"1": "old"}})
+    frozen_cache.freeze(live, frozen, ddragon_version="16.19.1", tier="master_plus")
+    FileCache(str(live)).set("lola_list_middle", {"cid": {"1": "fresh"}})
+    FileCache(str(live)).set("lola_team_xayah_bottom", {"team": {}})
+
+    manifest = frozen_cache.extend(live, frozen)
+
+    kept = json.loads((frozen / f"{cache_key('lola_list_middle')}.json").read_text(encoding="utf-8"))
+    assert kept["cid"]["1"] == "old"
+    assert (frozen / f"{cache_key('lola_team_xayah_bottom')}.json").exists()
+    assert manifest["entries"] == 2 and manifest["added"] == 1
+    assert manifest["extended"][-1]["added"] == 1 and manifest["tier"] == "master_plus"
+    on_disk = json.loads((frozen / "MANIFEST.json").read_text(encoding="utf-8"))
+    assert on_disk["entries"] == 2
+
+
+def test_extend_refuses_a_missing_snapshot(tmp_path):
+    (tmp_path / "cache").mkdir()
+    import pytest
+    with pytest.raises(FileNotFoundError):
+        frozen_cache.extend(tmp_path / "cache", tmp_path / "frozen")

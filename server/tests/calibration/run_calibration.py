@@ -418,6 +418,8 @@ async def main() -> int:
                         help="Sort ordering assertions by decidability instead of judging pass/fail")
     parser.add_argument("--freeze-cache", action="store_true",
                         help="Snapshot the live cache into cache-frozen/ and exit")
+    parser.add_argument("--extend-frozen", action="store_true",
+                        help="Add the live cache entries missing from the snapshot, without touching the others, and exit")
     parser.add_argument("--live-cache", action="store_true",
                         help="Ignore the frozen snapshot and read the live cache (data may drift)")
     parser.add_argument("--snapshot", metavar="PATH",
@@ -428,6 +430,11 @@ async def main() -> int:
 
     if args.freeze_cache:
         return await freeze_live_cache(FROZEN_DIR, args.rank)
+
+    if args.extend_frozen:
+        manifest = frozen_cache.extend(Path(config.cache_dir), FROZEN_DIR)
+        print(f"{C.GREEN}Gel étendu : {manifest['added']} entrées ajoutées, {manifest['entries']} au total{C.RESET}")
+        return 0
 
     if args.rank:
         error = validate_rank(args.rank)
