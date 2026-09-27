@@ -46,11 +46,14 @@ async function pick(page, slot, name) {
   await page.getByText(name.toUpperCase(), { exact: true }).click();
 }
 
-test('manual editing, analysis, comparison and stale results', async ({ page }) => {
+test('manual editing, automatic analysis, comparison and refresh after a change', async ({ page }) => {
   const errors = []; page.on('pageerror', e => errors.push(e.message));
+  const analyses = []; page.on('request', req => { if (req.url().endsWith('/api/draft/recommend')) analyses.push(req.postDataJSON().draft_state); });
   await pick(page, 'red P1 : vide', 'Jarvan IV');
-  await page.getByRole('button', { name: 'ANALYSER', exact: true }).click();
+  // No click on ANALYSER: each pick launches the analysis on its own.
   await expect(page.getByText('+2.1', { exact: false }).first()).toBeVisible();
+  expect(analyses).toHaveLength(1);
+  expect(analyses[0].enemy_picks.map(p => p.champion_id)).toEqual([59]);
   await expect(page.getByText('WPA indisponible', { exact: false }).first()).toBeVisible();
   await page.locator('summary').filter({ hasText: 'Comparer deux champions' }).click();
   await page.getByLabel('Champion A', { exact: true }).selectOption('103');
@@ -61,8 +64,14 @@ test('manual editing, analysis, comparison and stale results', async ({ page }) 
   await page.locator('summary').filter({ hasText: 'Comparer deux champions' }).click();
   await page.getByRole('button', { name: 'red P1 : Jarvan IV', exact: true }).click();
   await page.getByRole('button', { name: 'Vider cet emplacement' }).click();
-  await expect(page.getByText('La draft a changé', { exact: false })).toBeVisible();
   await expect(page.getByRole('button', { name: 'red P1 : vide' })).toBeVisible();
+  // The edit makes the advice stale, then a new analysis refreshes it without a click.
+  await expect.poll(() => analyses.length).toBe(2);
+  expect(analyses[1].enemy_picks).toEqual([]);
+  await expect(page.getByText('La draft a changé', { exact: false })).toBeHidden();
+  // ANALYSER still relaunches it by hand.
+  await page.getByRole('button', { name: 'ANALYSER', exact: true }).click();
+  await expect.poll(() => analyses.length).toBe(3);
   expect(errors).toEqual([]);
 });
 

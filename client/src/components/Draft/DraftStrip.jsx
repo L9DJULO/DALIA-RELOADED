@@ -49,7 +49,7 @@ function AnalyseButton() {
       className="btn btn--primary analyse-btn"
       onClick={() => useDraftStore.getState().getRecommendations()}
       disabled={loading}
-      title="Raccourci : Entrée"
+      title="L'analyse se relance à chaque pick. Ce bouton la relance à la main (raccourci : Entrée)."
     >
       {loading ? 'ANALYSE…' : 'ANALYSER'}
     </button>

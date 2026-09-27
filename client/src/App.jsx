@@ -9,6 +9,7 @@ import useUserStore        from './stores/userStore';
 import useAuthStore        from './stores/authStore';
 import useDuoStore         from './stores/duoStore';
 import { startDraftSession } from './services/draftSession';
+import { startAutoAnalysis } from './services/autoAnalysis';
 const ChampionPoolEditor = lazy(() => import('./components/ChampionPool/ChampionPoolEditor'));
 const SettingsPage       = lazy(() => import('./components/Settings/SettingsPage'));
 const DuoPanel           = lazy(() => import('./components/DuoQ/DuoPanel'));
@@ -33,7 +34,9 @@ export default function App() {
     useAuthStore.getState().refreshUser();
     useUserStore.getState().loadProfile(userId);
     useDuoStore.getState().loadDuoState();
-    return startDraftSession();
+    const stopSession = startDraftSession();
+    const stopAutoAnalysis = startAutoAnalysis();
+    return () => { stopAutoAnalysis(); stopSession(); };
   }, [isAuthed, userId]);
 
   // Not logged in → auth page (replaces the whole shell).

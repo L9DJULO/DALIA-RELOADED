@@ -129,7 +129,10 @@ Audit et maquettes : https://claude.ai/artifact/XMFa7pSg2M5ZACQmiK9Cag. Plan :
 `docs/superpowers/plans/2026-09-27-refonte-design-soul-eater.md`. Le joueur a validé toutes les
 pistes et demandé **une seule couleur, le rouge**. Choix faits pendant l'exécution :
 
-- L'analyse reste lancée par le joueur (ANALYSER, ou Entrée quand rien n'a le focus).
+- Analyse automatique (demande du joueur, 27/09) : chaque pick, ban, changement d'équipe, de rôle
+  ou d'ordre relance l'analyse après 350 ms (`client/src/services/autoAnalysis.js`), en direct,
+  en manuel et à chaque étape d'un replay. Les survols du client League ne comptent pas.
+  ANALYSER et Entrée la relancent à la main (après une erreur ou un changement de préférences).
 - Libellés de termes en clair (« Contre leurs picks », « Risque de counter »…), nom du moteur
   dans l'infobulle ; barres vert (pour) / rouge (contre), pleines si mesurées, hachurées si
   estimées, moustache = ±σ.

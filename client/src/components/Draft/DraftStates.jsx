@@ -50,7 +50,7 @@ export function BeforeAnalysis() {
         {enemies.length > 0 && <> {frenchList(enemies)} {enemies.length > 1 ? 'sont' : 'est'} déjà en face.</>}
       </p>
       <p className="before__hint">
-        Complète la draft dans le bandeau, puis lance <b>ANALYSER</b> ou appuie sur <span className="kbd">Entrée</span>.
+        L'analyse se lance d'elle-même à chaque pick ou ban. <b>ANALYSER</b> ou <span className="kbd">Entrée</span> la relance à la main.
       </p>
     </div>
   );
@@ -69,14 +69,16 @@ export function AnalysisSkeleton() {
 }
 
 // ── Conseils périmés ────────────────────────────
+// L'analyse se relance d'elle-même à chaque pick : le bouton ne sert que si rien ne tourne
+// (préférences modifiées, analyse en erreur).
 export function StaleBanner() {
   const loading = useDraftStore(s => s.loading);
   return (
     <div className="banner banner--warn stale-banner" role="status">
-      <span>La draft a changé : relance l'analyse pour actualiser les conseils.</span>
-      <button className="btn btn--sm" disabled={loading} onClick={() => useDraftStore.getState().getRecommendations()}>
-        {loading ? 'Analyse…' : 'Relancer'}
-      </button>
+      {loading
+        ? <span>La draft a changé : nouvelle analyse en cours…</span>
+        : <span>La draft a changé : relance l'analyse pour actualiser les conseils.</span>}
+      {!loading && <button className="btn btn--sm" onClick={() => useDraftStore.getState().getRecommendations()}>Relancer</button>}
     </div>
   );
 }
@@ -88,7 +90,7 @@ export function WhyEmpty() {
       <p className="lbl">Pourquoi</p>
       <p>Après l'analyse, cette colonne explique le pick sélectionné : les raisons du moteur, puis ce qui pèse pour et contre lui.</p>
       <ul className="why-empty__tips">
-        <li>Clique sur un emplacement du bandeau pour saisir un champion ; tape son nom puis <span className="kbd">Entrée</span>.</li>
+        <li>Clique sur un emplacement du bandeau pour saisir un champion ; tape son nom puis <span className="kbd">Entrée</span>. L'analyse suit chaque pick.</li>
         <li>Les hachures signalent une estimation : bande d'incertitude, terme estimé, emplacement vide.</li>
       </ul>
     </div>
