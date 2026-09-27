@@ -4,7 +4,7 @@ Tout ce qu'on a identifié et volontairement mis de côté, avec ce qui le bloqu
 pas le faire. Tenu à jour au fil des découvertes : rien ne doit disparaître dans l'historique de
 conversation.
 
-Dernière mise à jour : 25 septembre 2026, score méta 0-100 aligné et suites de la revue du chantier 14.
+Dernière mise à jour : 28 septembre 2026, synergie mesurée par paire (chantier 3).
 
 ---
 
@@ -70,6 +70,29 @@ lit que les notes du support, jamais la paire.
 
 **Bloqué par** : les notes de champions (chantier 4). Un terme d'interaction sur des entrées
 identiques rend des sorties identiques.
+
+**Soldé le 28/09** autrement que prévu : l'interaction n'est pas déduite des notes, elle est
+**mesurée**. La page de duo Lolalytics (`ep=build-team`), que l'en-tête de `synergy.py` disait
+inaccessible, donne `d2` = WR du duo − (WR du candidat + WR de l'allié − WR moyen). Chaque allié
+connu apporte `shrink(d2, parties, k)`, `k` par palier et type de paire ; la synergie de kit ne
+sert plus que de repli. Spec `2026-09-28-synergie-observee`, bilan dans le `README.md` de la
+calibration :
+
+- Part d'interaction sur 10 ADC × 10 supports : 5 % → **78 %**. Avec Rakan, Xayah passe n°1.
+- Calibration 48/60 → **51/60** (les trois cas de synergie en échec passent, rien de perdu).
+- Concordance pro top-3 14,7 → **16,3 %** (z +4,4), top-10 37,2 → **40,4 %** (z +7,2) ; le
+  support gagne 5 points de top-3.
+
+**Reste ouvert** :
+
+- **Paire quasi exclusive** : Kog'Maw n'a que deux supports à plus de 1 000 parties en Master+ ;
+  son win rate est presque celui du duo avec Lulu, la synergie y est déjà et l'interaction sort
+  à 0. Le moteur surestime Kog'Maw avec un support qui n'est pas un enchanteur. Piste : rétrécir
+  vers l'estimation de kit plutôt que vers 0 (option écartée le 27/09).
+- **Duos premade** : la soloqueue mêle joueurs seuls et duos ; `d2` mêle l'effet de la paire et
+  la coordination.
+- La concordance monte encore au-delà de l'échelle retenue (1,5 : top-3 17,2 %) mais la
+  calibration y perd Vayne contre les tanks.
 
 ---
 
@@ -180,9 +203,9 @@ inventer, les lui faire préciser.
    changer face à un engage à skillshot plutôt qu'à un engage dur ?
 5. **Généraliser `edge_case_tryndamere_no_cc`** — la règle « aucun CC dur en face » ne devrait pas
    être propre à Tryndamere.
-6. **Remplacer `synergy_senna_tahmkench`** — « outdated de fou, ça marche qu'à low elo ». Le cas
-   passait parce que Tahm Kench score 86-90 avec **tous** les ADC. Bloqué par le chantier 3 : tout cas
-   de synergie testerait un terme incapable de répondre.
+6. ~~**Remplacer `synergy_senna_tahmkench`**~~ — fait le 28/09 : remplacé par
+   `synergy_senna_jhin_over_tristana`, avec quatre autres cas de synergie tirés des données et
+   validés par le joueur (chantier 3).
 
 ---
 

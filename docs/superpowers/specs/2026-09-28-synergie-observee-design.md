@@ -244,3 +244,23 @@ le 28/09, consigné dans `docs/ARBITRAGE_JOUEUR.md`) :
 | `server/tests/calibration/cases.json`, `run_calibration.py`, `frozen_cache.py` | 5 cas, retrait, `--extend-frozen` |
 | `client/src/data/mock.js`, `client/src/components/Draft/WhyPanel.jsx` | parties affichées |
 | `docs/CHANTIERS.md`, `docs/ARBITRAGE_JOUEUR.md`, `server/tests/calibration/README.md` | bilan |
+
+## 13. Mise en œuvre (28/09/2026)
+
+Plan `docs/superpowers/plans/2026-09-28-synergie-observee.md`. Écarts à cette spec :
+
+- **k de repli** (§4) : 1 982 / 7 743, mesure Master+ sur les pages de tous les postes, au lieu
+  de 2 251 / 11 589 (pages bot et support seules, 27/09).
+- **Pas de préchargement dédié** (§5) : les candidats sont déjà notés en parallèle, la page de
+  chacun se charge en parallèle des autres.
+- **Raisons** (§6) : « Duo favorable / défavorable » se classent comme « Lane favorable dans les
+  matchs observés », sous les raisons de kit.
+- **Gel** (§7) : le passage vivant ne récupère pas toutes les pages de duo — les wildcards
+  dépendent de la méta, qui diffère entre le cache vivant et le gel. Les 3 manquantes ont été
+  prises en lisant le gel sans expiration (entrées absentes seulement).
+- **Palier** : la calibration se joue au palier par défaut, Émeraude+ ; « master_plus » dans le
+  manifeste du gel est une étiquette. Les `d2` Émeraude+ des cinq cas ont le même signe que les
+  valeurs Master+ du §8.
+
+Résultat : échelle retenue 1,0 ; calibration 48 → 51/60, concordance top-3 14,7 → 16,3 %
+(z +4,4). Détail dans le `README.md` de la calibration.

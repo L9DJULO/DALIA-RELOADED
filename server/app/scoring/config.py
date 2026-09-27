@@ -135,6 +135,11 @@ class ScoringConstants(BaseModel):
     # (Master+, 28/09/2026 : τ 1,12 et 0,57 pt) ne servent que si
     # app/data/synergy_priors.json manque.
     synergy_k_default: Dict[str, int] = {"bot_support": 1982, "other": 7743}
+    # Balayage du 28/09 (gel du 25/09 étendu, concordance appariée sur 5 250 décisions) :
+    # 0 -> 48/60, top-3 14,5 % ; 0,5 -> 51/60, 15,1 % ; 1,0 -> 51/60, 16,3 % (z +4,4 contre
+    # l'ancienne synergie de kit), top-10 40,4 % (z +7,2) ; 1,5 -> 50/60 (Vayne contre les
+    # tanks perdu), 17,2 %. Retenu 1,0 : meilleur point sans cas perdu, et l'estimation
+    # bayésienne prise telle quelle plutôt qu'amplifiée.
     synergy_observed_scale: float = 1.0
     synergy_reason_threshold: float = 1.0
     mechanics_scale: float = 0.3

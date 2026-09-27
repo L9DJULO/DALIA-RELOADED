@@ -158,6 +158,21 @@ rend des sorties identiques.
 Noter à la main le bot lane d'abord (ADC + supports), par paquets de 10, proposition puis correction.
 Le terme d'interaction de synergie ne sera traité qu'ensuite, sur des entrées qui discriminent.
 
+## Synergie mesurée par paire — 27 et 28/09 (chantier 3)
+
+Cas de synergie tirés des données Lolalytics (`d2` des pages de duo : ce que la paire gagne
+au-delà de la force de chacun), validés un par un : Braum → Yunara > Jhin, Nautilus → Samira >
+Ashe, Rakan → Xayah > Jinx, Senna → Jhin > Tristana (remplace `synergy_senna_tahmkench`),
+Lulu → Twitch > Jhin. Le dernier vient du joueur : « lulu / yuumi et twitch ».
+
+Deux paires proposées par le joueur sans cas. Il a délégué l'arbitrage : « je comprends les
+stats, à toi de trancher (mon avis est celui d'un master adc) ».
+
+| Paire | Avis du joueur | Données (30 jours) | Tranché |
+|---|---|---|---|
+| Kai'Sa + Nautilus | « c'est strong » | −0,67 en Master+ (23 323 parties), −0,35 en Émeraude+ (120 388) ; 28ᵉ support de Kai'Sa sur 38 | Pas de cas. Le duo est fort parce que chacun l'est — `meta` et `popularity` le récompensent déjà — mais il ne gagne pas plus que la somme des deux. |
+| Kog'Maw + Lulu | strong « malgré ce que disent les stats » | −0,65 en Master+ (5 286), +0,59 en Émeraude+ (30 347) | Pas de cas : la mesure ne peut pas voir cette synergie. Kog'Maw n'a que deux supports à plus de 1 000 parties en Master+ ; son win rate est presque celui du duo avec Lulu, donc la synergie est déjà dans son score méta et l'interaction sort à 0. Limite consignée (chantier 3). |
+
 ## Grille de notation — 25/09
 
 | Question | Décision | Mot du joueur |

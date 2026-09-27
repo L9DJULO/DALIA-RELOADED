@@ -810,3 +810,68 @@ concordance top-3 14,3 % (+5 −8), top-10 37,2 % (+4 −11, z −1,8). Non appl
 **Situationnels (paquet 7)** : poke libre face à une composition sans engage (Ezreal, Caitlyn),
 premier pick sûr (Pantheon, Lissandra). Calibration 46/56 ; concordance top-3 14,8 % (+59 −36,
 z +2,4), top-10 37,3 % (+83 −89). Appliqué.
+
+## Synergie mesurée par paire (28/09/2026)
+
+Chantier 3, spec `docs/superpowers/specs/2026-09-28-synergie-observee-design.md`. Le terme
+`synergy` lisait les notes des champions et restait additif. Il lit maintenant la page de duo
+Lolalytics (`ep=build-team`), dont la colonne `d2` mesure ce qu'une paire gagne au-delà de la
+force de chacun. Chaque allié connu apporte `shrink(d2, parties, k)`, avec
+`k = 2500 / τ²` estimé par palier et type de paire (`scripts/refresh_synergy_priors.py`, τ
+de 1,1 à 1,4 pt pour le duo bot + support, de 0,5 à 0,9 pt pour les autres paires). La
+synergie de kit ne sert plus que de repli, sans le mélange des dégâts ni la frontline que
+`composition` compte déjà.
+
+**Cas.** Cinq cas de synergie validés par le joueur (Braum → Yunara > Jhin, Nautilus →
+Samira > Ashe, Rakan → Xayah > Jinx, Senna → Jhin > Tristana, Lulu → Twitch > Jhin),
+`synergy_senna_tahmkench` retiré. Sur l'ancien moteur : 3 des 5 échouent, les deux autres
+passent de 0,7 et 1,2 pt, sous l'incertitude.
+
+**Gel.** `--extend-frozen` ajoute au gel les seules entrées absentes (113 pages de duo au
+total ; 3 manquantes, dues à des wildcards différents entre le cache vivant et le gel, ont
+été récupérées en lisant le gel sans expiration). L'ancien moteur, rejoué depuis un worktree
+au commit `6e18305` sur le gel étendu : **0 assertion basculée, 0 changement de rang, 0
+déplacement de score** contre `baseline_v13_pre` (48/60).
+
+**Concordance.** 5 250 décisions pros, cache vivant sans expiration pour apparier les runs
+(les deux moteurs lisent les mêmes entrées ; aucun échec de collecte des pages de duo).
+McNemar apparié contre l'ancienne synergie de kit :
+
+| `synergy_observed_scale` | Calibration | Top-3 | Top-10 | z top-3 | z top-10 | Rang moyen |
+|---|---|---|---|---|---|---|
+| ancien moteur | 48/60 | 14,7 % | 37,2 % | — | — | 11,48 |
+| 0 (ni kit ni mesure) | 48/60 | 14,5 % | 38,1 % | −0,9 | +2,9 | 11,42 |
+| 0,5 | 51/60 | 15,1 % | 39,7 % | +1,3 | +6,6 | 11,22 |
+| **1,0** | **51/60** | **16,3 %** | **40,4 %** | **+4,4** | **+7,2** | **11,09** |
+| 1,5 | 50/60 | 17,2 % | 40,7 % | +6,0 | +7,3 | 11,01 |
+
+À 0,5, 1,0 et 1,5, les trois cas en échec passent ; à 1,5, `edge_case_vayne_vs_tank_comp`
+tombe. **Retenu : 1,0**, le meilleur point sans cas perdu, qui prend l'estimation bayésienne
+telle quelle au lieu de l'amplifier. Top-3 par poste à 1,0 : support 13,1 → 18,1 %, bot
+20,4 → 24,5 %, jungle 20,0 → 20,3 %, mid 13,3 → 12,8 %, top 6,6 → 6,0 %.
+
+L'échelle 0 montre que l'ancienne synergie de kit ne valait à peu près rien (top-3 −0,2
+point sans elle) : le gain vient de la mesure.
+
+**Additivité, re-mesurée** sur 10 ADC × 10 supports, Émeraude+ : la part de variance du terme
+due à l'interaction passe de **5 % à 78 %**. Avec Rakan, Xayah est n°1 des 10 ADC (+1,23),
+Jinx n°9 (−1,78).
+
+**Cas des cinq.** À 1,0, quatre se décident nettement (écarts 7,6 / 3,9 / 4,1 / 3,8 pour une
+incertitude de 1,9 à 2,4). Xayah > Jinx passe de 1,8 pour 2,1 : la synergie donne bien 3,0 pts
+à Xayah, mais l'ancienne heuristique lui en donnait déjà environ 2,4 par hasard, et la
+popularité de Jinx (+5,8 contre +4,6) les garde proches.
+
+**Cas de référence `comp_engage_mid_peel`** : l'écart Zed − Orianna passe de 4,23 à 2,48 pts
+(Zed perd 1,6 pt de synergie, −1,06 avec Garen, −0,75 avec Jinx). Orianna reste n°6.
+
+**Limites.** Une paire presque exclusive (Kog'Maw et Lulu en Master+) a sa synergie déjà
+dans le win rate du champion : l'interaction sort à 0. Les duos premade de la soloqueue
+mêlent l'effet de la paire et la coordination.
+
+Référence suivante : `snapshots/baseline_v13.json`, **51/60**, gel du 25/09 13h29 étendu le
+28/09 (2 577 entrées).
+
+**Palier des mesures** : sans `rank_bucket`, un cas se joue au palier par défaut du fetcher,
+Émeraude+. Le « master_plus » du manifeste est l'étiquette posée au gel (`--rank master_plus`),
+pas le palier des requêtes.
