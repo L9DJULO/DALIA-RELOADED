@@ -33,6 +33,7 @@ from app.models.draft import (
 from app.scoring.aggregate import apply_preferences, confidence_from_sd, reference_mean, top_group
 from app.scoring.composition_term import archetype_term, composition_term
 from app.scoring.heuristic_terms import mechanics_term, model_term, synergy_term, teamfight_term
+from app.scoring.synergy_term import observed_synergy_term
 from app.scoring.mastery_term import MasteryInputs, mastery_term
 from app.scoring.matchup_term import matchup_term
 from app.scoring.meta_term import meta_term, popularity_term
@@ -433,8 +434,11 @@ class DraftEngine:
             if tempo:
                 terms.append(tempo)
         if allies:
-            duo_bonus = bool(duo_partner_role) and any(a.role == duo_partner_role and a.champion_id for a in draft.ally_picks)
-            terms.append(synergy_term(await self.synergy.score(champ.id, role, draft), duo_bonus))
+            syn = await observed_synergy_term(self.synergy, champ.id, role, draft, tier, duo_partner_role)
+            if syn is None:  # page de duo indisponible : repli sur les notes de kit
+                duo_bonus = bool(duo_partner_role) and any(a.role == duo_partner_role and a.champion_id for a in draft.ally_picks)
+                syn = synergy_term(await self.synergy.score(champ.id, role, draft), duo_bonus)
+            terms.append(syn)
         mechanics_delta, mechanics = self.mechanics.evaluate(champ, draft)
         terms.append(mechanics_term(mechanics_delta))
         if config.scoring.teamfight_scale:
@@ -463,13 +467,15 @@ class DraftEngine:
         )
 
         mu_details_raw = await self.matchup.details(champ.id, role, draft, tier) if has_enemies else []
-        syn_details_raw = await self.synergy.details(champ.id, role, draft) if allies else []
+        syn_details_raw = await self.synergy.details(champ.id, role, draft, tier) if allies else []
         matchup_details = [MatchupDetail(opponent_name=d["opponent_name"], opponent_role=d["opponent_role"],
                                          win_rate=d["win_rate"] if d.get("games", 0) > 0 else None, delta=d["delta"],
                                          is_lane_opponent=d["is_lane_opponent"], games=d.get("games", 0),
                                          source="Lolalytics" if d.get("games", 0) > 0 else "heuristic",
                                          lane_probability=d.get("lane_probability", 0)) for d in mu_details_raw]
-        synergy_details = [SynergyDetail(ally_name=d["ally_name"], ally_role=d["ally_role"], delta=d["delta"]) for d in syn_details_raw]
+        synergy_details = [SynergyDetail(ally_name=d["ally_name"], ally_role=d["ally_role"], delta=d["delta"],
+                                         games=d.get("games", 0), source=d.get("source", "kit_heuristic"))
+                           for d in syn_details_raw]
         comp_warnings = self.composition.warnings(champ, draft)
         tags = self._assign_tags(champ, draft, by_name)
 

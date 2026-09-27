@@ -327,3 +327,27 @@ async def test_scaling_term_reaches_the_breakdown_against_scalers(catalog, monke
                         champion_pool={"top": [{"champion_id": 78}, {"champion_id": 75}]}, enable_wildcard=False)
     result = await DraftEngine(catalog, catalog.fetcher).recommend(body)
     assert _terms(result, 78)["scaling"].value > 0 > _terms(result, 75)["scaling"].value
+
+
+def _bot_request(allies):
+    return DraftRequest(draft_state={"my_role": "bot", "ally_picks": [{"champion_id": c, "role": r} for c, r in allies]},
+                        champion_pool={"bot": [{"champion_id": 222}, {"champion_id": 22}]}, enable_wildcard=False)
+
+
+@pytest.mark.asyncio
+async def test_observed_synergy_reaches_the_breakdown_and_the_details(catalog):
+    page = {"team_h": ["id", "wr", "d1", "d2", "pr", "n"], "team": {"support": [[40, 56.0, 0, 3.0, 5, 50000]]}}
+    catalog.fetcher.fetch_team_page = AsyncMock(return_value=page)
+    result = await DraftEngine(catalog, catalog.fetcher).recommend(_bot_request([(40, "support")]))
+    term = _terms(result, 222)["synergy"]
+    assert term.source == "observed" and term.value > 0 and term.sample == 50000
+    rec = next(r for r in result.recommendations if r.champion_id == 222)
+    assert rec.synergy_details[0].source == "observed" and rec.synergy_details[0].games == 50000
+
+
+@pytest.mark.asyncio
+async def test_synergy_falls_back_to_kit_rules_without_a_page(catalog):
+    result = await DraftEngine(catalog, catalog.fetcher).recommend(_bot_request([(40, "support")]))
+    assert _terms(result, 222)["synergy"].source == "heuristic"
+    rec = next(r for r in result.recommendations if r.champion_id == 222)
+    assert rec.synergy_details[0].source == "kit_heuristic" and rec.synergy_details[0].games == 0

@@ -174,7 +174,8 @@ class SynergyDetail(BaseModel):
     ally_name: str
     ally_role: str
     delta: float
-    source: str = "kit_heuristic"
+    games: int = 0                   # parties de la paire, quand la synergie est mesurée
+    source: str = "kit_heuristic"    # ou "observed"
 
 
 class CompositionWarning(BaseModel):
