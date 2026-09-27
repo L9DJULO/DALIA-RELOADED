@@ -11,6 +11,8 @@ import WhyPanel from './WhyPanel';
 import StatusBar from './StatusBar';
 import { AnalysisSkeleton, BeforeAnalysis } from './DraftStates';
 
+const INTERACTIVE = 'input, select, textarea, button, a[href], summary, [role="button"], [role="option"], [role="menuitemradio"], [contenteditable]';
+
 export default function DraftScreen() {
   const [selected, setSelected] = useState(0);
   const recommendations = useDraftStore(s => s.recommendations);
@@ -20,11 +22,11 @@ export default function DraftScreen() {
 
   useEffect(() => { setSelected(0); }, [recommendations]);
 
-  // Entrée, quand rien n'a le focus, lance l'analyse.
+  // Entrée lance l'analyse quand aucun contrôle n'a le focus (page, zone vide, conteneur principal).
   useEffect(() => {
     const onKey = e => {
       if (e.key !== 'Enter' || e.defaultPrevented || e.repeat || e.ctrlKey || e.altKey || e.metaKey) return;
-      if (document.activeElement && document.activeElement !== document.body) return;
+      if (document.activeElement?.closest(INTERACTIVE)) return;
       const draft = useDraftStore.getState();
       if (!draft.loading) draft.getRecommendations();
     };

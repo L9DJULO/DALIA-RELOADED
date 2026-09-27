@@ -63,3 +63,13 @@ it('launches the analysis with Enter when nothing has the focus', async () => {
   await user.keyboard('{Enter}');
   expect(analyse).toHaveBeenCalledTimes(1);
 });
+
+it('still launches the analysis with Enter after a click on an empty part of the page', async () => {
+  const analyse = vi.fn();
+  useDraftStore.setState({ getRecommendations: analyse });
+  const user = userEvent.setup();
+  render(<main id="contenu" tabIndex={-1} data-testid="page"><DraftScreen/></main>);
+  await user.click(screen.getByTestId('page'));
+  await user.keyboard('{Enter}');
+  expect(analyse).toHaveBeenCalledTimes(1);
+});
