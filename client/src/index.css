@@ -3,6 +3,7 @@
 @import './styles/motifs.css';
 @import './styles/components.css';
 @import './styles/shell.css';
+@import './styles/draft.css';
 
 /* ─────────────────────────────────────────────
    ANIMATIONS — courtes, coupées par prefers-reduced-motion (base.css)

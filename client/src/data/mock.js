@@ -11,9 +11,12 @@ import useUserStore       from '../stores/userStore';
 import { getDDragonChampUrl } from '../lib/constants';
 
 const DD_LOADING = 'https://ddragon.leagueoflegends.com/cdn/img/champion/loading';
+const DD_SPLASH = 'https://ddragon.leagueoflegends.com/cdn/img/champion/splash';
 
 export const champIcon = getDDragonChampUrl;
 export const champLoading = (key) => `${DD_LOADING}/${key}_0.jpg`;
+/** Wide splash art, for the hero. */
+export const champSplash = (key) => `${DD_SPLASH}/${key}_0.jpg`;
 
 // Normalize a store champion {id, key, name} (or null) for component consumption.
 function norm(c) {
@@ -194,10 +197,10 @@ export const TAG_CFG = {
 };
 
 export const KIND_CFG = {
-  synergy: { bullet: '⟳', color: 'var(--ok)',     bg: 'rgba(156,211,107,0.08)', border: 'rgba(156,211,107,0.28)' },
-  counter: { bullet: '⚔', color: 'var(--accent)', bg: 'var(--accent-subtle)',   border: 'var(--accent-muted)'    },
-  // API uses 'warning' while mock uses 'warn' — KIND_CFG handles both
-  warn:    { bullet: '!', color: 'var(--warn)',    bg: 'rgba(245,176,39,0.08)',  border: 'rgba(245,176,39,0.3)'   },
-  warning: { bullet: '!', color: 'var(--warn)',    bg: 'rgba(245,176,39,0.08)',  border: 'rgba(245,176,39,0.3)'   },
-  info:    { bullet: '▸', color: 'var(--accent)',  bg: 'transparent',            border: 'rgba(217,30,43,0.18)'   },
+  synergy: { bullet: '⟳', tone: 'synergy' },
+  counter: { bullet: '⚔', tone: 'counter' },
+  // API uses 'warning' while older payloads use 'warn' — both map to the same tone
+  warn:    { bullet: '!', tone: 'warning' },
+  warning: { bullet: '!', tone: 'warning' },
+  info:    { bullet: '▸', tone: 'info' },
 };

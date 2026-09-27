@@ -18,4 +18,3 @@
 .pool-advisor { flex-shrink: 0; max-height: 45vh; overflow: auto; border-bottom: 1px solid var(--ink-5); }
 .history-page { overflow: auto; }
 .history-page > .controls { position: sticky; top: 0; background: var(--ink-1); padding: 8px 0; }
-@media (max-width: 1000px) { header { overflow-x: auto; } .draft-layout { grid-template-columns: 1fr !important; overflow: auto !important; } }
