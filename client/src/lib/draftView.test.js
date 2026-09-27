@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { turnView, showBanAdvice, topGroupSize, groupPeer, rankLabel, dataStatusParts } from './draftView';
+import { turnView, showBanAdvice, topGroupSize, groupPeer, rankLabel, dataStatusParts, synergyNote } from './draftView';
 
 describe('turnView', () => {
   const live = { live: true, inChampSelect: true, myTeam: 'blue' };
@@ -75,5 +75,23 @@ describe('status bar', () => {
 
   it('shows nothing before the first analysis', () => {
     expect(dataStatusParts(null)).toEqual([]);
+  });
+});
+
+describe('synergyNote', () => {
+  it('shows the games behind a measured pair', () => {
+    const note = synergyNote({ games: 8816, source: 'observed' });
+    expect(note.label.replace(/\s/g, ' ')).toBe('8 816 parties');
+    expect(note.title).toMatch(/au-delà de la force de chacun/);
+  });
+
+  it('says when a measured pair was never played', () => {
+    expect(synergyNote({ games: 0, source: 'observed' }).label).toBe('jamais jouée');
+  });
+
+  it('keeps the kit label for the fallback', () => {
+    expect(synergyNote({ source: 'kit_heuristic' }).label).toBe('synergie kit');
+    expect(synergyNote({}).label).toBe('synergie kit');
+    expect(synergyNote().title).toMatch(/pas un gain de win rate/);
   });
 });

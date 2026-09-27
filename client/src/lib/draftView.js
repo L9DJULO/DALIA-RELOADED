@@ -63,3 +63,15 @@ export function dataStatusParts(status) {
   parts.push(status.wpa_available ? { text: 'WPA estimé DALIA' } : { text: 'WPA indisponible', warn: true });
   return parts;
 }
+
+/** What the number next to an ally means: a measured pair, or the kit fallback. */
+export function synergyNote({ games = 0, source } = {}) {
+  if (source !== 'observed') {
+    return { label: 'synergie kit', title: 'Complémentarité estimée des kits, pas un gain de win rate' };
+  }
+  if (!games) return { label: 'jamais jouée', title: 'Paire sans partie observée : aucun effet retenu' };
+  return {
+    label: `${games.toLocaleString('fr-FR')} parties`,
+    title: 'Interaction mesurée : win rate du duo au-delà de la force de chacun',
+  };
+}

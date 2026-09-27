@@ -139,9 +139,11 @@ export function mapRec(rec) {
       isLane: m.is_lane_opponent,
     })),
     synergies: (rec.synergy_details || []).map((s) => ({
-      name:  s.ally_name,
-      role:  s.ally_role,
-      delta: s.delta,
+      name:   s.ally_name,
+      role:   s.ally_role,
+      delta:  s.delta,
+      games:  s.games || 0,
+      source: s.source,
     })),
   };
 }

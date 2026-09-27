@@ -11,7 +11,7 @@ import { ComparePanel, MechanicsDetails } from '../DraftWorkshop';
 import { WhyEmpty } from './DraftStates';
 import { formatAdvantage, formatSd } from '../../lib/scores';
 import { groupTerms, termBar, TERM_SOURCE_LABEL } from '../../lib/terms';
-import { showBanAdvice } from '../../lib/draftView';
+import { showBanAdvice, synergyNote } from '../../lib/draftView';
 
 const pct = n => `${n.toFixed(1).replace('.', ',')} %`;
 
@@ -98,13 +98,16 @@ function Lane({ pick }) {
             </li>
           );
         })}
-        {pick.synergies.map((s, i) => (
-          <li key={`s${i}`} className="mu mu--ally" title="Complémentarité estimée des kits, pas un gain de win rate">
-            <span className="mu__who"><span className="mu__lane" aria-label="allié">⟳</span>{s.name}</span>
-            <b className={`mu__v mu__v--${s.delta > 0 ? 'pos' : s.delta < 0 ? 'neg' : 'zero'}`}>{formatAdvantage(s.delta)}</b>
-            <small>synergie kit</small>
-          </li>
-        ))}
+        {pick.synergies.map((s, i) => {
+          const note = synergyNote(s);
+          return (
+            <li key={`s${i}`} className="mu mu--ally" title={note.title}>
+              <span className="mu__who"><span className="mu__lane" aria-label="allié">⟳</span>{s.name}</span>
+              <b className={`mu__v mu__v--${s.delta > 0 ? 'pos' : s.delta < 0 ? 'neg' : 'zero'}`}>{formatAdvantage(s.delta)}</b>
+              <small>{note.label}</small>
+            </li>
+          );
+        })}
       </ul>
     </section>
   );
