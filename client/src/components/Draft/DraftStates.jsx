@@ -50,7 +50,7 @@ export function BeforeAnalysis() {
         {enemies.length > 0 && <> {frenchList(enemies)} {enemies.length > 1 ? 'sont' : 'est'} déjà en face.</>}
       </p>
       <p className="before__hint">
-        L'analyse se lance d'elle-même à chaque pick ou ban. <b>ANALYSER</b> ou <span className="kbd">Entrée</span> la relance à la main.
+        L'analyse se lance d'elle-même à chaque pick ou ban et suit tes préférences. <b>ANALYSER</b> ou <span className="kbd">Entrée</span> la relance à la main.
       </p>
     </div>
   );
@@ -69,16 +69,16 @@ export function AnalysisSkeleton() {
 }
 
 // ── Conseils périmés ────────────────────────────
-// L'analyse se relance d'elle-même à chaque pick : le bouton ne sert que si rien ne tourne
-// (préférences modifiées, analyse en erreur).
+// L'analyse se relance d'elle-même (pick, ban, survol, préférences) : le bouton ne sert
+// qu'après un échec, que l'automatisme ne retente pas en boucle.
 export function StaleBanner() {
-  const loading = useDraftStore(s => s.loading);
+  const failed = useDraftStore(s => !s.loading && !!s.error);
   return (
     <div className="banner banner--warn stale-banner" role="status">
-      {loading
-        ? <span>La draft a changé : nouvelle analyse en cours…</span>
-        : <span>La draft a changé : relance l'analyse pour actualiser les conseils.</span>}
-      {!loading && <button className="btn btn--sm" onClick={() => useDraftStore.getState().getRecommendations()}>Relancer</button>}
+      {failed
+        ? <span>La draft a changé et l'analyse n'a pas abouti.</span>
+        : <span>La draft a changé : nouvelle analyse en cours…</span>}
+      {failed && <button className="btn btn--sm" onClick={() => useDraftStore.getState().getRecommendations()}>Relancer</button>}
     </div>
   );
 }

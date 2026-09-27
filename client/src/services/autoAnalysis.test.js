@@ -1,10 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import useDraftStore from '../stores/draftStore';
-import { draftSignature, startAutoAnalysis, AUTO_ANALYSIS_DELAY } from './autoAnalysis';
+import useUserStore from '../stores/userStore';
+import useDuoStore from '../stores/duoStore';
+import { draftSignature, startAutoAnalysis, AUTO_ANALYSIS_DELAY, AUTO_REFRESH_DELAY } from './autoAnalysis';
 
 const ahri = { id: 103, key: 'Ahri', name: 'Ahri' };
 const jarvan = { id: 59, key: 'JarvanIV', name: 'Jarvan IV' };
 const zed = { id: 238, key: 'Zed', name: 'Zed' };
+const advice = [{ champion_id: 61, champion_key: 'Orianna', champion_name: 'Orianna', total_score: 2.4 }];
 
 describe('draftSignature', () => {
   const base = () => ({ ...useDraftStore.getState() });
@@ -52,7 +55,7 @@ describe('startAutoAnalysis', () => {
     expect(analyse).toHaveBeenCalledTimes(1);
   });
 
-  it('does not analyse again for a hover from the League client', () => {
+  it('does not analyse for a hover before any advice exists', () => {
     useDraftStore.getState().change({ allyPrepicks: { ...useDraftStore.getState().allyPrepicks, top: jarvan } });
     vi.advanceTimersByTime(AUTO_ANALYSIS_DELAY * 2);
     expect(analyse).not.toHaveBeenCalled();
@@ -80,5 +83,56 @@ describe('startAutoAnalysis', () => {
     useDraftStore.getState().setEnemyPick(0, jarvan);
     vi.advanceTimersByTime(AUTO_ANALYSIS_DELAY * 2);
     expect(analyse).not.toHaveBeenCalled();
+  });
+
+  it('refreshes the advice after a preference change', () => {
+    useDraftStore.setState({ recommendations: advice });
+    useUserStore.setState({ rankTier: 'gold' });
+    vi.advanceTimersByTime(AUTO_REFRESH_DELAY);
+    expect(analyse).toHaveBeenCalledTimes(1);
+  });
+
+  it('refreshes the advice when the duo is switched on', () => {
+    useDraftStore.setState({ recommendations: advice });
+    useDuoStore.setState({ duoActive: !useDuoStore.getState().duoActive });
+    vi.advanceTimersByTime(AUTO_REFRESH_DELAY);
+    expect(analyse).toHaveBeenCalledTimes(1);
+  });
+
+  it('refreshes the advice after a hover once advice exists', () => {
+    useDraftStore.setState({ recommendations: advice });
+    useDraftStore.getState().change({ allyPrepicks: { ...useDraftStore.getState().allyPrepicks, top: jarvan } });
+    vi.advanceTimersByTime(AUTO_REFRESH_DELAY);
+    expect(analyse).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not analyse when the profile loads before any advice', () => {
+    useUserStore.setState({ rankTier: 'emerald' });
+    vi.advanceTimersByTime(AUTO_REFRESH_DELAY * 2);
+    expect(analyse).not.toHaveBeenCalled();
+  });
+
+  it('lets the analysis in flight land before refreshing', () => {
+    useDraftStore.setState({ recommendations: advice, loading: true });
+    useUserStore.setState({ rankTier: 'silver' });
+    vi.advanceTimersByTime(AUTO_REFRESH_DELAY * 2);
+    expect(analyse).not.toHaveBeenCalled();
+    useDraftStore.setState({ loading: false, stale: true });
+    vi.advanceTimersByTime(AUTO_REFRESH_DELAY);
+    expect(analyse).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not retry in a loop after a failed analysis', () => {
+    useDraftStore.setState({ recommendations: advice, loading: true });
+    useDraftStore.setState({ loading: false, stale: true, error: 'Analyse indisponible' });
+    vi.advanceTimersByTime(AUTO_REFRESH_DELAY * 3);
+    expect(analyse).not.toHaveBeenCalled();
+  });
+
+  it('still answers a pick at once while an analysis is in flight', () => {
+    useDraftStore.setState({ recommendations: advice, loading: true });
+    useDraftStore.getState().setEnemyPick(0, jarvan);
+    vi.advanceTimersByTime(AUTO_ANALYSIS_DELAY);
+    expect(analyse).toHaveBeenCalledTimes(1);
   });
 });

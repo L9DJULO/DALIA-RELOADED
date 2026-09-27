@@ -75,6 +75,19 @@ test('manual editing, automatic analysis, comparison and refresh after a change'
   expect(errors).toEqual([]);
 });
 
+test('a preference change refreshes the advice without a click', async ({ page }) => {
+  const analyses = []; page.on('request', req => { if (req.url().endsWith('/api/draft/recommend')) analyses.push(req.postDataJSON()); });
+  await pick(page, 'red P1 : vide', 'Jarvan IV');
+  await expect(page.getByText('+2.1', { exact: false }).first()).toBeVisible();
+  await page.getByRole('button', { name: 'PARAMÈTRES', exact: true }).click();
+  await page.getByLabel('Mon rang', { exact: true }).selectOption('gold');
+  await expect.poll(() => analyses.length).toBe(2);
+  expect(analyses[1].rank_bucket).toBe('gold');
+  await page.getByRole('button', { name: 'DRAFT', exact: true }).click();
+  await expect(page.getByText('La draft a changé', { exact: false })).toBeHidden();
+  await expect(page.getByText('+2.1', { exact: false }).first()).toBeVisible();
+});
+
 test('pool advice adds a champion at the learning tier', async ({ page }) => {
   await page.getByRole('button', { name: 'POOL', exact: true }).click();
   await page.locator('summary').filter({ hasText: 'Améliorer mon pool' }).click();
