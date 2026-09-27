@@ -17,7 +17,8 @@
     "ranged": false,
     "subclasses": [
       "Juggernaut"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Ahri": {
     "damage": 3,
@@ -29,7 +30,8 @@
     "ranged": true,
     "subclasses": [
       "Burst"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Akali": {
     "damage": 3,
@@ -41,7 +43,8 @@
     "ranged": false,
     "subclasses": [
       "Assassin"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Akshan": {
     "damage": 3,
@@ -54,7 +57,8 @@
     "subclasses": [
       "Assassin",
       "Marksman"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Alistar": {
     "damage": 1,
@@ -66,7 +70,8 @@
     "ranged": false,
     "subclasses": [
       "Vanguard"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Ambessa": {
     "damage": 3,
@@ -79,7 +84,8 @@
     "subclasses": [
       "Diver",
       "Skirmisher"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Amumu": {
     "damage": 2,
@@ -91,7 +97,8 @@
     "ranged": false,
     "subclasses": [
       "Vanguard"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Anivia": {
     "damage": 3,
@@ -103,7 +110,8 @@
     "ranged": true,
     "subclasses": [
       "Battlemage"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Annie": {
     "damage": 3,
@@ -115,7 +123,8 @@
     "ranged": true,
     "subclasses": [
       "Burst"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Aphelios": {
     "damage": 3,
@@ -127,7 +136,8 @@
     "ranged": true,
     "subclasses": [
       "Marksman"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Ashe": {
     "damage": 2,
@@ -139,7 +149,8 @@
     "ranged": true,
     "subclasses": [
       "Marksman"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "AurelionSol": {
     "damage": 3,
@@ -151,7 +162,8 @@
     "ranged": true,
     "subclasses": [
       "Battlemage"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Aurora": {
     "damage": 3,
@@ -164,7 +176,8 @@
     "subclasses": [
       "Assassin",
       "Burst"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Azir": {
     "damage": 3,
@@ -176,7 +189,8 @@
     "ranged": true,
     "subclasses": [
       "Specialist"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Bard": {
     "damage": 1,
@@ -188,7 +202,8 @@
     "ranged": true,
     "subclasses": [
       "Catcher"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Belveth": {
     "damage": 3,
@@ -200,7 +215,8 @@
     "ranged": false,
     "subclasses": [
       "Skirmisher"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Blitzcrank": {
     "damage": 1,
@@ -212,7 +228,8 @@
     "ranged": false,
     "subclasses": [
       "Catcher"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Brand": {
     "damage": 3,
@@ -224,7 +241,8 @@
     "ranged": true,
     "subclasses": [
       "Burst"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Braum": {
     "damage": 1,
@@ -236,7 +254,8 @@
     "ranged": false,
     "subclasses": [
       "Warden"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Briar": {
     "damage": 2,
@@ -248,7 +267,8 @@
     "ranged": false,
     "subclasses": [
       "Diver"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Caitlyn": {
     "damage": 3,
@@ -260,7 +280,8 @@
     "ranged": true,
     "subclasses": [
       "Marksman"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Camille": {
     "damage": 3,
@@ -272,7 +293,8 @@
     "ranged": false,
     "subclasses": [
       "Diver"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Cassiopeia": {
     "damage": 3,
@@ -284,7 +306,8 @@
     "ranged": true,
     "subclasses": [
       "Battlemage"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Chogath": {
     "damage": 2,
@@ -296,7 +319,8 @@
     "ranged": false,
     "subclasses": [
       "Specialist"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Corki": {
     "damage": 3,
@@ -308,7 +332,8 @@
     "ranged": true,
     "subclasses": [
       "Marksman"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Darius": {
     "damage": 3,
@@ -320,7 +345,8 @@
     "ranged": false,
     "subclasses": [
       "Juggernaut"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Diana": {
     "damage": 3,
@@ -333,7 +359,8 @@
     "subclasses": [
       "Assassin",
       "Diver"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "DrMundo": {
     "damage": 2,
@@ -345,7 +372,8 @@
     "ranged": false,
     "subclasses": [
       "Juggernaut"
-    ]
+    ],
+    "damage_type": "kMixed"
   },
   "Draven": {
     "damage": 3,
@@ -357,7 +385,8 @@
     "ranged": true,
     "subclasses": [
       "Marksman"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Ekko": {
     "damage": 3,
@@ -369,7 +398,8 @@
     "ranged": false,
     "subclasses": [
       "Assassin"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Elise": {
     "damage": 2,
@@ -381,7 +411,8 @@
     "ranged": true,
     "subclasses": [
       "Diver"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Evelynn": {
     "damage": 2,
@@ -393,7 +424,8 @@
     "ranged": false,
     "subclasses": [
       "Assassin"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Ezreal": {
     "damage": 1,
@@ -405,7 +437,8 @@
     "ranged": true,
     "subclasses": [
       "Marksman"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Fiddlesticks": {
     "damage": 3,
@@ -417,7 +450,8 @@
     "ranged": true,
     "subclasses": [
       "Specialist"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Fiora": {
     "damage": 3,
@@ -429,7 +463,8 @@
     "ranged": false,
     "subclasses": [
       "Skirmisher"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Fizz": {
     "damage": 3,
@@ -441,7 +476,8 @@
     "ranged": false,
     "subclasses": [
       "Assassin"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Galio": {
     "damage": 2,
@@ -453,7 +489,8 @@
     "ranged": false,
     "subclasses": [
       "Warden"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Gangplank": {
     "damage": 3,
@@ -465,7 +502,8 @@
     "ranged": false,
     "subclasses": [
       "Specialist"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Garen": {
     "damage": 2,
@@ -477,7 +515,8 @@
     "ranged": false,
     "subclasses": [
       "Juggernaut"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Gnar": {
     "damage": 2,
@@ -489,7 +528,8 @@
     "ranged": true,
     "subclasses": [
       "Specialist"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Gragas": {
     "damage": 2,
@@ -501,7 +541,8 @@
     "ranged": false,
     "subclasses": [
       "Vanguard"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Graves": {
     "damage": 3,
@@ -513,7 +554,8 @@
     "ranged": true,
     "subclasses": [
       "Specialist"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Gwen": {
     "damage": 3,
@@ -525,7 +567,8 @@
     "ranged": false,
     "subclasses": [
       "Skirmisher"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Hecarim": {
     "damage": 2,
@@ -537,7 +580,8 @@
     "ranged": false,
     "subclasses": [
       "Diver"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Heimerdinger": {
     "damage": 3,
@@ -549,7 +593,8 @@
     "ranged": true,
     "subclasses": [
       "Specialist"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Hwei": {
     "damage": 3,
@@ -561,7 +606,8 @@
     "ranged": true,
     "subclasses": [
       "Artillery"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Illaoi": {
     "damage": 3,
@@ -573,7 +619,8 @@
     "ranged": false,
     "subclasses": [
       "Juggernaut"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Irelia": {
     "damage": 2,
@@ -585,7 +632,8 @@
     "ranged": false,
     "subclasses": [
       "Diver"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Ivern": {
     "damage": 1,
@@ -597,7 +645,8 @@
     "ranged": true,
     "subclasses": [
       "Catcher"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Janna": {
     "damage": 1,
@@ -609,7 +658,8 @@
     "ranged": true,
     "subclasses": [
       "Enchanter"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "JarvanIV": {
     "damage": 2,
@@ -621,7 +671,8 @@
     "ranged": false,
     "subclasses": [
       "Diver"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Jax": {
     "damage": 3,
@@ -633,7 +684,8 @@
     "ranged": false,
     "subclasses": [
       "Skirmisher"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Jayce": {
     "damage": 3,
@@ -645,7 +697,8 @@
     "ranged": true,
     "subclasses": [
       "Artillery"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Jhin": {
     "damage": 3,
@@ -658,7 +711,8 @@
     "subclasses": [
       "Catcher",
       "Marksman"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Jinx": {
     "damage": 3,
@@ -670,7 +724,8 @@
     "ranged": true,
     "subclasses": [
       "Marksman"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "KSante": {
     "damage": 2,
@@ -683,7 +738,8 @@
     "subclasses": [
       "Skirmisher",
       "Warden"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Kaisa": {
     "damage": 3,
@@ -695,7 +751,8 @@
     "ranged": true,
     "subclasses": [
       "Marksman"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Kalista": {
     "damage": 3,
@@ -707,7 +764,8 @@
     "ranged": true,
     "subclasses": [
       "Marksman"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Karma": {
     "damage": 2,
@@ -720,7 +778,8 @@
     "subclasses": [
       "Burst",
       "Enchanter"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Karthus": {
     "damage": 3,
@@ -732,7 +791,8 @@
     "ranged": true,
     "subclasses": [
       "Battlemage"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Kassadin": {
     "damage": 3,
@@ -744,7 +804,8 @@
     "ranged": false,
     "subclasses": [
       "Assassin"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Katarina": {
     "damage": 3,
@@ -756,7 +817,8 @@
     "ranged": false,
     "subclasses": [
       "Assassin"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Kayle": {
     "damage": 3,
@@ -768,7 +830,8 @@
     "ranged": false,
     "subclasses": [
       "Specialist"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Kayn": {
     "damage": 3,
@@ -780,7 +843,8 @@
     "ranged": false,
     "subclasses": [
       "Skirmisher"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Kennen": {
     "damage": 3,
@@ -792,7 +856,8 @@
     "ranged": true,
     "subclasses": [
       "Specialist"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Khazix": {
     "damage": 3,
@@ -804,7 +869,8 @@
     "ranged": false,
     "subclasses": [
       "Assassin"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Kindred": {
     "damage": 3,
@@ -816,7 +882,8 @@
     "ranged": true,
     "subclasses": [
       "Marksman"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Kled": {
     "damage": 3,
@@ -828,7 +895,8 @@
     "ranged": false,
     "subclasses": [
       "Skirmisher"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "KogMaw": {
     "damage": 3,
@@ -840,7 +908,8 @@
     "ranged": true,
     "subclasses": [
       "Marksman"
-    ]
+    ],
+    "damage_type": "kMixed"
   },
   "Leblanc": {
     "damage": 3,
@@ -853,7 +922,8 @@
     "subclasses": [
       "Assassin",
       "Burst"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "LeeSin": {
     "damage": 3,
@@ -865,7 +935,8 @@
     "ranged": false,
     "subclasses": [
       "Diver"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Leona": {
     "damage": 1,
@@ -877,7 +948,8 @@
     "ranged": false,
     "subclasses": [
       "Vanguard"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Lillia": {
     "damage": 3,
@@ -889,7 +961,8 @@
     "ranged": false,
     "subclasses": [
       "Skirmisher"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Lissandra": {
     "damage": 3,
@@ -901,7 +974,8 @@
     "ranged": true,
     "subclasses": [
       "Burst"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Locke": {
     "damage": 3,
@@ -913,7 +987,8 @@
     "ranged": false,
     "subclasses": [
       "Assassin"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Lucian": {
     "damage": 3,
@@ -925,7 +1000,8 @@
     "ranged": true,
     "subclasses": [
       "Marksman"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Lulu": {
     "damage": 2,
@@ -937,7 +1013,8 @@
     "ranged": true,
     "subclasses": [
       "Enchanter"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Lux": {
     "damage": 3,
@@ -950,7 +1027,8 @@
     "subclasses": [
       "Artillery",
       "Burst"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Malphite": {
     "damage": 1,
@@ -962,7 +1040,8 @@
     "ranged": false,
     "subclasses": [
       "Vanguard"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Malzahar": {
     "damage": 3,
@@ -974,7 +1053,8 @@
     "ranged": true,
     "subclasses": [
       "Battlemage"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Maokai": {
     "damage": 1,
@@ -986,7 +1066,8 @@
     "ranged": false,
     "subclasses": [
       "Vanguard"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "MasterYi": {
     "damage": 3,
@@ -998,7 +1079,8 @@
     "ranged": false,
     "subclasses": [
       "Skirmisher"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Mel": {
     "damage": 3,
@@ -1010,7 +1092,8 @@
     "ranged": true,
     "subclasses": [
       "Artillery"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Milio": {
     "damage": 1,
@@ -1022,7 +1105,8 @@
     "ranged": true,
     "subclasses": [
       "Enchanter"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "MissFortune": {
     "damage": 3,
@@ -1034,7 +1118,8 @@
     "ranged": true,
     "subclasses": [
       "Marksman"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "MonkeyKing": {
     "damage": 2,
@@ -1046,7 +1131,8 @@
     "ranged": false,
     "subclasses": [
       "Diver"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Mordekaiser": {
     "damage": 3,
@@ -1058,7 +1144,8 @@
     "ranged": false,
     "subclasses": [
       "Juggernaut"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Morgana": {
     "damage": 2,
@@ -1070,7 +1157,8 @@
     "ranged": true,
     "subclasses": [
       "Catcher"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Naafiri": {
     "damage": 3,
@@ -1082,7 +1170,8 @@
     "ranged": false,
     "subclasses": [
       "Assassin"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Nami": {
     "damage": 1,
@@ -1094,7 +1183,8 @@
     "ranged": true,
     "subclasses": [
       "Enchanter"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Nasus": {
     "damage": 2,
@@ -1106,7 +1196,8 @@
     "ranged": false,
     "subclasses": [
       "Juggernaut"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Nautilus": {
     "damage": 1,
@@ -1118,7 +1209,8 @@
     "ranged": false,
     "subclasses": [
       "Vanguard"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Neeko": {
     "damage": 3,
@@ -1131,7 +1223,8 @@
     "subclasses": [
       "Burst",
       "Catcher"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Nidalee": {
     "damage": 3,
@@ -1143,7 +1236,8 @@
     "ranged": true,
     "subclasses": [
       "Specialist"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Nilah": {
     "damage": 3,
@@ -1155,7 +1249,8 @@
     "ranged": false,
     "subclasses": [
       "Skirmisher"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Nocturne": {
     "damage": 3,
@@ -1167,7 +1262,8 @@
     "ranged": false,
     "subclasses": [
       "Assassin"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Nunu": {
     "damage": 1,
@@ -1179,7 +1275,8 @@
     "ranged": false,
     "subclasses": [
       "Vanguard"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Olaf": {
     "damage": 2,
@@ -1191,7 +1288,8 @@
     "ranged": false,
     "subclasses": [
       "Diver"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Orianna": {
     "damage": 2,
@@ -1203,7 +1301,8 @@
     "ranged": true,
     "subclasses": [
       "Burst"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Ornn": {
     "damage": 1,
@@ -1215,7 +1314,8 @@
     "ranged": false,
     "subclasses": [
       "Vanguard"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Pantheon": {
     "damage": 3,
@@ -1227,7 +1327,8 @@
     "ranged": false,
     "subclasses": [
       "Diver"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Poppy": {
     "damage": 2,
@@ -1239,7 +1340,8 @@
     "ranged": false,
     "subclasses": [
       "Warden"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Pyke": {
     "damage": 2,
@@ -1252,7 +1354,8 @@
     "subclasses": [
       "Assassin",
       "Catcher"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Qiyana": {
     "damage": 3,
@@ -1264,7 +1367,8 @@
     "ranged": false,
     "subclasses": [
       "Assassin"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Quinn": {
     "damage": 3,
@@ -1276,7 +1380,8 @@
     "ranged": true,
     "subclasses": [
       "Specialist"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Rakan": {
     "damage": 1,
@@ -1288,7 +1393,8 @@
     "ranged": false,
     "subclasses": [
       "Catcher"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Rammus": {
     "damage": 2,
@@ -1300,7 +1406,8 @@
     "ranged": false,
     "subclasses": [
       "Vanguard"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "RekSai": {
     "damage": 2,
@@ -1312,7 +1419,8 @@
     "ranged": false,
     "subclasses": [
       "Diver"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Rell": {
     "damage": 1,
@@ -1324,7 +1432,8 @@
     "ranged": false,
     "subclasses": [
       "Vanguard"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Renata": {
     "damage": 2,
@@ -1336,7 +1445,8 @@
     "ranged": true,
     "subclasses": [
       "Enchanter"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Renekton": {
     "damage": 2,
@@ -1348,7 +1458,8 @@
     "ranged": false,
     "subclasses": [
       "Diver"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Rengar": {
     "damage": 3,
@@ -1361,7 +1472,8 @@
     "subclasses": [
       "Assassin",
       "Diver"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Riven": {
     "damage": 3,
@@ -1373,7 +1485,8 @@
     "ranged": false,
     "subclasses": [
       "Skirmisher"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Rumble": {
     "damage": 3,
@@ -1385,7 +1498,8 @@
     "ranged": false,
     "subclasses": [
       "Battlemage"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Ryze": {
     "damage": 3,
@@ -1397,7 +1511,8 @@
     "ranged": true,
     "subclasses": [
       "Battlemage"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Samira": {
     "damage": 3,
@@ -1409,7 +1524,8 @@
     "ranged": true,
     "subclasses": [
       "Marksman"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Sejuani": {
     "damage": 2,
@@ -1421,7 +1537,8 @@
     "ranged": false,
     "subclasses": [
       "Vanguard"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Senna": {
     "damage": 2,
@@ -1434,7 +1551,8 @@
     "subclasses": [
       "Enchanter",
       "Marksman"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Seraphine": {
     "damage": 3,
@@ -1447,7 +1565,8 @@
     "subclasses": [
       "Burst",
       "Enchanter"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Sett": {
     "damage": 2,
@@ -1459,7 +1578,8 @@
     "ranged": false,
     "subclasses": [
       "Juggernaut"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Shaco": {
     "damage": 3,
@@ -1471,7 +1591,8 @@
     "ranged": false,
     "subclasses": [
       "Assassin"
-    ]
+    ],
+    "damage_type": "kMixed"
   },
   "Shen": {
     "damage": 2,
@@ -1483,7 +1604,8 @@
     "ranged": false,
     "subclasses": [
       "Warden"
-    ]
+    ],
+    "damage_type": "kMixed"
   },
   "Shyvana": {
     "damage": 2,
@@ -1495,7 +1617,8 @@
     "ranged": false,
     "subclasses": [
       "Diver"
-    ]
+    ],
+    "damage_type": "kMixed"
   },
   "Singed": {
     "damage": 2,
@@ -1507,7 +1630,8 @@
     "ranged": false,
     "subclasses": [
       "Specialist"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Sion": {
     "damage": 2,
@@ -1519,7 +1643,8 @@
     "ranged": false,
     "subclasses": [
       "Vanguard"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Sivir": {
     "damage": 3,
@@ -1531,7 +1656,8 @@
     "ranged": true,
     "subclasses": [
       "Marksman"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Skarner": {
     "damage": 2,
@@ -1544,7 +1670,8 @@
     "subclasses": [
       "Juggernaut",
       "Vanguard"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Smolder": {
     "damage": 3,
@@ -1556,7 +1683,8 @@
     "ranged": true,
     "subclasses": [
       "Marksman"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Sona": {
     "damage": 2,
@@ -1568,7 +1696,8 @@
     "ranged": true,
     "subclasses": [
       "Enchanter"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Soraka": {
     "damage": 1,
@@ -1580,7 +1709,8 @@
     "ranged": true,
     "subclasses": [
       "Enchanter"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Swain": {
     "damage": 2,
@@ -1592,7 +1722,8 @@
     "ranged": true,
     "subclasses": [
       "Battlemage"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Sylas": {
     "damage": 2,
@@ -1605,7 +1736,8 @@
     "subclasses": [
       "Burst",
       "Skirmisher"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Syndra": {
     "damage": 3,
@@ -1617,7 +1749,8 @@
     "ranged": true,
     "subclasses": [
       "Burst"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "TahmKench": {
     "damage": 2,
@@ -1629,7 +1762,8 @@
     "ranged": false,
     "subclasses": [
       "Warden"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Taliyah": {
     "damage": 3,
@@ -1641,7 +1775,8 @@
     "ranged": true,
     "subclasses": [
       "Battlemage"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Talon": {
     "damage": 3,
@@ -1653,7 +1788,8 @@
     "ranged": false,
     "subclasses": [
       "Assassin"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Taric": {
     "damage": 1,
@@ -1666,7 +1802,8 @@
     "subclasses": [
       "Enchanter",
       "Warden"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Teemo": {
     "damage": 3,
@@ -1679,7 +1816,8 @@
     "subclasses": [
       "Marksman",
       "Specialist"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Thresh": {
     "damage": 1,
@@ -1691,7 +1829,8 @@
     "ranged": true,
     "subclasses": [
       "Catcher"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Tristana": {
     "damage": 3,
@@ -1703,7 +1842,8 @@
     "ranged": true,
     "subclasses": [
       "Marksman"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Trundle": {
     "damage": 2,
@@ -1715,7 +1855,8 @@
     "ranged": false,
     "subclasses": [
       "Juggernaut"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Tryndamere": {
     "damage": 3,
@@ -1727,7 +1868,8 @@
     "ranged": false,
     "subclasses": [
       "Skirmisher"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "TwistedFate": {
     "damage": 3,
@@ -1739,7 +1881,8 @@
     "ranged": true,
     "subclasses": [
       "Burst"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Twitch": {
     "damage": 3,
@@ -1751,7 +1894,8 @@
     "ranged": true,
     "subclasses": [
       "Marksman"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Udyr": {
     "damage": 2,
@@ -1763,7 +1907,8 @@
     "ranged": false,
     "subclasses": [
       "Juggernaut"
-    ]
+    ],
+    "damage_type": "kMixed"
   },
   "Urgot": {
     "damage": 2,
@@ -1775,7 +1920,8 @@
     "ranged": true,
     "subclasses": [
       "Juggernaut"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Varus": {
     "damage": 3,
@@ -1788,7 +1934,8 @@
     "subclasses": [
       "Artillery",
       "Marksman"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Vayne": {
     "damage": 3,
@@ -1800,7 +1947,8 @@
     "ranged": true,
     "subclasses": [
       "Marksman"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Veigar": {
     "damage": 3,
@@ -1812,7 +1960,8 @@
     "ranged": true,
     "subclasses": [
       "Burst"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Velkoz": {
     "damage": 3,
@@ -1824,7 +1973,8 @@
     "ranged": true,
     "subclasses": [
       "Artillery"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Vex": {
     "damage": 3,
@@ -1836,7 +1986,8 @@
     "ranged": true,
     "subclasses": [
       "Burst"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Vi": {
     "damage": 2,
@@ -1848,7 +1999,8 @@
     "ranged": false,
     "subclasses": [
       "Diver"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Viego": {
     "damage": 3,
@@ -1860,7 +2012,8 @@
     "ranged": false,
     "subclasses": [
       "Skirmisher"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Viktor": {
     "damage": 3,
@@ -1872,7 +2025,8 @@
     "ranged": true,
     "subclasses": [
       "Battlemage"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Vladimir": {
     "damage": 3,
@@ -1884,7 +2038,8 @@
     "ranged": true,
     "subclasses": [
       "Battlemage"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Volibear": {
     "damage": 2,
@@ -1896,7 +2051,8 @@
     "ranged": false,
     "subclasses": [
       "Juggernaut"
-    ]
+    ],
+    "damage_type": "kMixed"
   },
   "Warwick": {
     "damage": 2,
@@ -1908,7 +2064,8 @@
     "ranged": false,
     "subclasses": [
       "Diver"
-    ]
+    ],
+    "damage_type": "kMixed"
   },
   "Xayah": {
     "damage": 3,
@@ -1920,7 +2077,8 @@
     "ranged": true,
     "subclasses": [
       "Marksman"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Xerath": {
     "damage": 3,
@@ -1932,7 +2090,8 @@
     "ranged": true,
     "subclasses": [
       "Artillery"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "XinZhao": {
     "damage": 2,
@@ -1944,7 +2103,8 @@
     "ranged": false,
     "subclasses": [
       "Diver"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Yasuo": {
     "damage": 3,
@@ -1956,7 +2116,8 @@
     "ranged": false,
     "subclasses": [
       "Skirmisher"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Yone": {
     "damage": 3,
@@ -1969,7 +2130,8 @@
     "subclasses": [
       "Assassin",
       "Skirmisher"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Yorick": {
     "damage": 2,
@@ -1981,7 +2143,8 @@
     "ranged": false,
     "subclasses": [
       "Juggernaut"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Yunara": {
     "damage": 3,
@@ -1993,7 +2156,8 @@
     "ranged": true,
     "subclasses": [
       "Marksman"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Yuumi": {
     "damage": 1,
@@ -2005,7 +2169,8 @@
     "ranged": true,
     "subclasses": [
       "Enchanter"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Zaahen": {
     "damage": 2,
@@ -2017,7 +2182,8 @@
     "ranged": false,
     "subclasses": [
       "Skirmisher"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Zac": {
     "damage": 2,
@@ -2029,7 +2195,8 @@
     "ranged": false,
     "subclasses": [
       "Vanguard"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Zed": {
     "damage": 3,
@@ -2041,7 +2208,8 @@
     "ranged": false,
     "subclasses": [
       "Assassin"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Zeri": {
     "damage": 2,
@@ -2053,7 +2221,8 @@
     "ranged": true,
     "subclasses": [
       "Marksman"
-    ]
+    ],
+    "damage_type": "kPhysical"
   },
   "Ziggs": {
     "damage": 3,
@@ -2065,7 +2234,8 @@
     "ranged": true,
     "subclasses": [
       "Artillery"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Zilean": {
     "damage": 2,
@@ -2077,7 +2247,8 @@
     "ranged": true,
     "subclasses": [
       "Specialist"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Zoe": {
     "damage": 3,
@@ -2089,7 +2260,8 @@
     "ranged": true,
     "subclasses": [
       "Burst"
-    ]
+    ],
+    "damage_type": "kMagic"
   },
   "Zyra": {
     "damage": 3,
@@ -2101,6 +2273,7 @@
     "ranged": true,
     "subclasses": [
       "Catcher"
-    ]
+    ],
+    "damage_type": "kMagic"
   }
 }

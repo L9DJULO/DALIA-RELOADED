@@ -3,6 +3,10 @@
 Scores are bounded design weights, not causal win-probability estimates.
 Unknown champions never inherit mobility/attack traits from their Riot class.
 """
+import json
+from functools import lru_cache
+from pathlib import Path
+
 from app.models.draft import DraftState
 
 REVIEWED_PATCH = "16.17"
@@ -30,6 +34,32 @@ KNOCKUPS = {"Alistar", "Blitzcrank", "Diana", "Gragas", "JarvanIV", "Malphite", 
 BLOCKABLE_CC = {"Ashe", "Blitzcrank", "Elise", "Leona", "Lux", "Morgana", "Nautilus",
                 "Thresh", "Sejuani", "TwistedFate", "Veigar"}
 SUSTAIN = {"Aatrox", "Briar", "DrMundo", "Illaoi", "Maokai", "Soraka", "Swain", "Vladimir", "Warwick", "Yuumi", "Zac"}
+# Seuils des anciennes règles de cas particuliers (edge_cases.json), repris le 27/09.
+AD_HEAVY, AP_HEAVY = 0.75, 0.60
+# CC dur : mécaniques du wiki (scripts/refresh_kit_mechanics.py). Le ralentissement n'en est pas.
+HARD_CC = {"Stun", "Knockup", "Knockback", "Pull", "Root", "Suppress", "Taunt", "Charm", "Flee",
+           "Sleep", "Polymorph", "Knockdown", "Knock aside"}
+_KIT_PATH = Path(__file__).resolve().parent.parent / "data" / "kit_mechanics.json"
+
+
+@lru_cache(maxsize=1)
+def kit_mechanics() -> dict:
+    if not _KIT_PATH.exists():
+        return {}
+    raw = json.loads(_KIT_PATH.read_text(encoding="utf-8"))
+    return {k.lower(): set(v) for k, v in raw.items() if not k.startswith("_")}
+
+
+def physical_share(champion) -> float:
+    """Part physique des dégâts : type Riot s'il est connu, sinon le profil des tags."""
+    share = {"physical": 0.9, "magic": 0.1, "mixed": 0.5}.get(champion.damage_type or "")
+    if share is not None:
+        return share
+    return champion.damage.physical / max(1.0, champion.damage.physical + champion.damage.magical)
+
+
+def hard_cc(key: str) -> bool:
+    return bool(kit_mechanics().get(key.lower(), set()) & HARD_CC)
 
 
 class MechanicsAnalyzer:
@@ -104,6 +134,26 @@ class MechanicsAnalyzer:
                 min(5, 2 * sum(c.key in SUSTAIN for c in enemies)),
                 "Le kit dispose d'une réduction des soins utile contre {targets}.",
                 "Condition d'application propre au sort ; cela ne supprime ni les boucliers ni toute la régénération.")
+        # Encaisser un type de dégâts (joueur, 27/09) : « c'est plus les tanks », avec des
+        # exceptions nommées par le joueur (Kassadin contre l'AP : passif et Q).
+        if len(enemies) >= 3:
+            ad = sum(physical_share(c) for c in enemies) / len(enemies)
+            props = set(candidate.properties)
+            if ad >= AD_HEAVY and (candidate.is_tank or "encaisse_ad" in props):
+                add("resists_damage_profile", enemies, 5,
+                    f"Composition adverse à {ad:.0%} de dégâts physiques : l'armure encaisse {{targets}}.",
+                    "Suppose de construire l'armure ; les dégâts bruts et les pourcentages de PV passent quand même.")
+            elif 1 - ad >= AP_HEAVY and (candidate.is_tank or "encaisse_ap" in props):
+                add("resists_damage_profile", enemies, 5,
+                    f"Composition adverse à {1 - ad:.0%} de dégâts magiques : la résistance magique encaisse {{targets}}.",
+                    "Suppose de construire la résistance magique ; ne protège pas des dégâts physiques restants.")
+        # Ignorer le CC (joueur, 27/09) : Olaf (R), Gangplank (W). Morgana garde sa règle propre.
+        if "ignore_cc" in candidate.properties:
+            sources = [c for c in enemies if hard_cc(c.key)]
+            if len(sources) >= 3:
+                add("ignore_cc", sources, min(7, 2 * len(sources)),
+                    "Peut se libérer ou s'immuniser des contrôles de {targets}.",
+                    "Fenêtre limitée par le temps de recharge ; les ralentissements et les dégâts restent.")
         delta = max(-12.0, min(12.0, sum(r["score_delta"] for r in rules)))
         return delta, rules
 

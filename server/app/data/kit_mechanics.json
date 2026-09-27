@@ -1,0 +1,1361 @@
+{
+ "_meta": {
+  "source": "wiki LoL, Category:{Mécanique} champion",
+  "fetched": "2026-09-27",
+  "ddragon": "16.19.1",
+  "mechanics": [
+   "Stun",
+   "Knockup",
+   "Knockback",
+   "Pull",
+   "Root",
+   "Suppress",
+   "Taunt",
+   "Charm",
+   "Flee",
+   "Sleep",
+   "Polymorph",
+   "Knockdown",
+   "Knock aside",
+   "Silence",
+   "Ground",
+   "Blind",
+   "Disarm",
+   "Nearsight",
+   "Cripple",
+   "Slow",
+   "Shield",
+   "Healer",
+   "Cleanse",
+   "Resurrection",
+   "Stasis",
+   "Invulnerable",
+   "Immune",
+   "Untargetable",
+   "Blocker",
+   "Dash",
+   "Blink",
+   "Haste",
+   "Global",
+   "Stealth",
+   "Execution",
+   "Self Heal"
+  ]
+ },
+ "Aatrox": [
+  "Dash",
+  "Flee",
+  "Haste",
+  "Knockback",
+  "Knockup",
+  "Pull",
+  "Self Heal",
+  "Slow"
+ ],
+ "Ahri": [
+  "Charm",
+  "Dash",
+  "Haste",
+  "Knockdown",
+  "Self Heal",
+  "Slow"
+ ],
+ "Akali": [
+  "Dash",
+  "Execution",
+  "Global",
+  "Haste",
+  "Slow",
+  "Stealth"
+ ],
+ "Akshan": [
+  "Dash",
+  "Execution",
+  "Haste",
+  "Shield",
+  "Stealth"
+ ],
+ "Alistar": [
+  "Cleanse",
+  "Dash",
+  "Healer",
+  "Knockback",
+  "Knockup",
+  "Stun"
+ ],
+ "Ambessa": [
+  "Blink",
+  "Dash",
+  "Immune",
+  "Self Heal",
+  "Shield",
+  "Slow",
+  "Stun",
+  "Suppress"
+ ],
+ "Amumu": [
+  "Dash",
+  "Knockdown",
+  "Stun"
+ ],
+ "Anivia": [
+  "Blocker",
+  "Knockback",
+  "Resurrection",
+  "Slow",
+  "Stun"
+ ],
+ "Annie": [
+  "Haste",
+  "Shield",
+  "Stun"
+ ],
+ "Aphelios": [
+  "Global",
+  "Haste",
+  "Root",
+  "Self Heal",
+  "Shield",
+  "Slow"
+ ],
+ "Ashe": [
+  "Global",
+  "Slow",
+  "Stun"
+ ],
+ "AurelionSol": [
+  "Dash",
+  "Execution",
+  "Knockup",
+  "Slow",
+  "Stun"
+ ],
+ "Aurora": [
+  "Dash",
+  "Execution",
+  "Global",
+  "Haste",
+  "Immune",
+  "Self Heal",
+  "Slow",
+  "Stealth",
+  "Untargetable"
+ ],
+ "Azir": [
+  "Blocker",
+  "Dash",
+  "Knockback",
+  "Shield",
+  "Slow"
+ ],
+ "Bard": [
+  "Dash",
+  "Haste",
+  "Healer",
+  "Invulnerable",
+  "Slow",
+  "Stasis",
+  "Stun",
+  "Untargetable"
+ ],
+ "Belveth": [
+  "Dash",
+  "Execution",
+  "Haste",
+  "Knockup",
+  "Self Heal",
+  "Slow"
+ ],
+ "Blitzcrank": [
+  "Haste",
+  "Knockup",
+  "Pull",
+  "Shield",
+  "Silence",
+  "Stun"
+ ],
+ "Brand": [
+  "Slow",
+  "Stun"
+ ],
+ "Braum": [
+  "Dash",
+  "Haste",
+  "Knockup",
+  "Slow",
+  "Stun"
+ ],
+ "Briar": [
+  "Dash",
+  "Execution",
+  "Flee",
+  "Global",
+  "Haste",
+  "Immune",
+  "Knockback",
+  "Knockup",
+  "Self Heal",
+  "Slow"
+ ],
+ "Caitlyn": [
+  "Dash",
+  "Root",
+  "Slow"
+ ],
+ "Camille": [
+  "Dash",
+  "Haste",
+  "Immune",
+  "Knockback",
+  "Self Heal",
+  "Shield",
+  "Slow",
+  "Stun",
+  "Untargetable"
+ ],
+ "Cassiopeia": [
+  "Ground",
+  "Haste",
+  "Self Heal",
+  "Slow",
+  "Stun"
+ ],
+ "Chogath": [
+  "Knockup",
+  "Self Heal",
+  "Silence",
+  "Slow"
+ ],
+ "Corki": [
+  "Dash"
+ ],
+ "Darius": [
+  "Flee",
+  "Pull",
+  "Self Heal",
+  "Slow"
+ ],
+ "Diana": [
+  "Dash",
+  "Pull",
+  "Shield",
+  "Slow"
+ ],
+ "DrMundo": [
+  "Haste",
+  "Self Heal",
+  "Slow"
+ ],
+ "Draven": [
+  "Global",
+  "Haste",
+  "Knock aside",
+  "Slow"
+ ],
+ "Ekko": [
+  "Blink",
+  "Dash",
+  "Execution",
+  "Global",
+  "Haste",
+  "Immune",
+  "Invulnerable",
+  "Self Heal",
+  "Shield",
+  "Slow",
+  "Stasis",
+  "Stun",
+  "Untargetable"
+ ],
+ "Elise": [
+  "Blink",
+  "Dash",
+  "Execution",
+  "Self Heal",
+  "Stun",
+  "Untargetable"
+ ],
+ "Evelynn": [
+  "Blink",
+  "Charm",
+  "Dash",
+  "Execution",
+  "Haste",
+  "Self Heal",
+  "Slow",
+  "Stealth",
+  "Untargetable"
+ ],
+ "Ezreal": [
+  "Blink",
+  "Global"
+ ],
+ "Fiddlesticks": [
+  "Blink",
+  "Flee",
+  "Haste",
+  "Self Heal",
+  "Silence",
+  "Slow"
+ ],
+ "Fiora": [
+  "Cripple",
+  "Dash",
+  "Haste",
+  "Healer",
+  "Immune",
+  "Self Heal",
+  "Slow",
+  "Stun"
+ ],
+ "Fizz": [
+  "Dash",
+  "Knockback",
+  "Knockup",
+  "Slow",
+  "Untargetable"
+ ],
+ "Galio": [
+  "Dash",
+  "Immune",
+  "Knockup",
+  "Shield",
+  "Slow",
+  "Taunt",
+  "Untargetable"
+ ],
+ "Gangplank": [
+  "Cleanse",
+  "Global",
+  "Haste",
+  "Self Heal",
+  "Slow"
+ ],
+ "Garen": [
+  "Cleanse",
+  "Execution",
+  "Haste",
+  "Self Heal",
+  "Shield",
+  "Silence"
+ ],
+ "Gnar": [
+  "Dash",
+  "Haste",
+  "Knockback",
+  "Slow",
+  "Stun"
+ ],
+ "Gragas": [
+  "Dash",
+  "Knockback",
+  "Self Heal",
+  "Slow",
+  "Stun"
+ ],
+ "Graves": [
+  "Dash",
+  "Knockback",
+  "Nearsight",
+  "Slow"
+ ],
+ "Gwen": [
+  "Dash",
+  "Self Heal",
+  "Slow",
+  "Untargetable"
+ ],
+ "Hecarim": [
+  "Dash",
+  "Flee",
+  "Haste",
+  "Immune",
+  "Knockback",
+  "Self Heal",
+  "Slow",
+  "Stun"
+ ],
+ "Heimerdinger": [
+  "Haste",
+  "Slow",
+  "Stun"
+ ],
+ "Hwei": [
+  "Execution",
+  "Flee",
+  "Haste",
+  "Knockdown",
+  "Pull",
+  "Root",
+  "Shield",
+  "Slow"
+ ],
+ "Illaoi": [
+  "Dash",
+  "Immune",
+  "Self Heal",
+  "Slow"
+ ],
+ "Irelia": [
+  "Dash",
+  "Global",
+  "Self Heal",
+  "Slow",
+  "Stun"
+ ],
+ "Ivern": [
+  "Dash",
+  "Knockup",
+  "Root",
+  "Shield",
+  "Slow",
+  "Stun"
+ ],
+ "Janna": [
+  "Haste",
+  "Healer",
+  "Knockback",
+  "Knockup",
+  "Shield",
+  "Slow"
+ ],
+ "JarvanIV": [
+  "Blocker",
+  "Dash",
+  "Immune",
+  "Knockup",
+  "Shield",
+  "Slow"
+ ],
+ "Jax": [
+  "Dash",
+  "Stun"
+ ],
+ "Jayce": [
+  "Dash",
+  "Haste",
+  "Knockback",
+  "Slow"
+ ],
+ "Jhin": [
+  "Execution",
+  "Haste",
+  "Root",
+  "Slow"
+ ],
+ "Jinx": [
+  "Execution",
+  "Global",
+  "Haste",
+  "Knockdown",
+  "Root",
+  "Slow"
+ ],
+ "KSante": [
+  "Blink",
+  "Dash",
+  "Immune",
+  "Knockback",
+  "Knockup",
+  "Pull",
+  "Root",
+  "Shield",
+  "Slow",
+  "Stun",
+  "Untargetable"
+ ],
+ "Kaisa": [
+  "Dash",
+  "Execution",
+  "Haste",
+  "Shield",
+  "Stealth"
+ ],
+ "Kalista": [
+  "Cleanse",
+  "Dash",
+  "Immune",
+  "Invulnerable",
+  "Knockup",
+  "Slow",
+  "Untargetable"
+ ],
+ "Karma": [
+  "Haste",
+  "Root",
+  "Self Heal",
+  "Shield",
+  "Slow"
+ ],
+ "Karthus": [
+  "Global",
+  "Immune",
+  "Slow",
+  "Untargetable"
+ ],
+ "Kassadin": [
+  "Blink",
+  "Shield",
+  "Slow"
+ ],
+ "Katarina": [
+  "Blink",
+  "Haste"
+ ],
+ "Kayle": [
+  "Haste",
+  "Healer",
+  "Invulnerable",
+  "Slow"
+ ],
+ "Kayn": [
+  "Dash",
+  "Haste",
+  "Invulnerable",
+  "Knockup",
+  "Self Heal",
+  "Slow",
+  "Untargetable"
+ ],
+ "Kennen": [
+  "Haste",
+  "Stun"
+ ],
+ "Khazix": [
+  "Dash",
+  "Haste",
+  "Self Heal",
+  "Slow",
+  "Stealth"
+ ],
+ "Kindred": [
+  "Dash",
+  "Execution",
+  "Healer",
+  "Invulnerable",
+  "Self Heal",
+  "Slow"
+ ],
+ "Kled": [
+  "Cleanse",
+  "Dash",
+  "Haste",
+  "Immune",
+  "Knockback",
+  "Pull",
+  "Shield",
+  "Slow",
+  "Untargetable"
+ ],
+ "KogMaw": [
+  "Execution",
+  "Haste",
+  "Immune",
+  "Invulnerable",
+  "Slow",
+  "Untargetable"
+ ],
+ "Leblanc": [
+  "Blink",
+  "Dash",
+  "Root",
+  "Stealth"
+ ],
+ "LeeSin": [
+  "Dash",
+  "Execution",
+  "Knockback",
+  "Knockup",
+  "Root",
+  "Shield",
+  "Slow"
+ ],
+ "Leona": [
+  "Dash",
+  "Root",
+  "Slow",
+  "Stun"
+ ],
+ "Lillia": [
+  "Dash",
+  "Global",
+  "Haste",
+  "Self Heal",
+  "Sleep",
+  "Slow"
+ ],
+ "Lissandra": [
+  "Blink",
+  "Invulnerable",
+  "Knockdown",
+  "Root",
+  "Self Heal",
+  "Slow",
+  "Stasis",
+  "Stun",
+  "Untargetable"
+ ],
+ "Locke": [
+  "Blink",
+  "Dash",
+  "Execution",
+  "Haste",
+  "Self Heal",
+  "Slow"
+ ],
+ "Lucian": [
+  "Dash",
+  "Haste"
+ ],
+ "Lulu": [
+  "Disarm",
+  "Haste",
+  "Knockup",
+  "Polymorph",
+  "Shield",
+  "Slow"
+ ],
+ "Lux": [
+  "Root",
+  "Shield",
+  "Slow"
+ ],
+ "Malphite": [
+  "Cripple",
+  "Dash",
+  "Haste",
+  "Immune",
+  "Knockup",
+  "Shield",
+  "Slow"
+ ],
+ "Malzahar": [
+  "Immune",
+  "Knockdown",
+  "Silence",
+  "Suppress"
+ ],
+ "Maokai": [
+  "Dash",
+  "Knockback",
+  "Root",
+  "Self Heal",
+  "Slow",
+  "Untargetable"
+ ],
+ "MasterYi": [
+  "Blink",
+  "Cleanse",
+  "Haste",
+  "Immune",
+  "Self Heal",
+  "Untargetable"
+ ],
+ "Mel": [
+  "Global",
+  "Haste",
+  "Root",
+  "Shield",
+  "Slow"
+ ],
+ "Milio": [
+  "Cleanse",
+  "Haste",
+  "Healer",
+  "Knockback",
+  "Shield",
+  "Slow",
+  "Stun"
+ ],
+ "MissFortune": [
+  "Haste",
+  "Slow"
+ ],
+ "MonkeyKing": [
+  "Dash",
+  "Haste",
+  "Knockup",
+  "Stealth"
+ ],
+ "Mordekaiser": [
+  "Haste",
+  "Pull",
+  "Self Heal",
+  "Shield",
+  "Slow"
+ ],
+ "Morgana": [
+  "Execution",
+  "Immune",
+  "Root",
+  "Self Heal",
+  "Shield",
+  "Slow",
+  "Stun"
+ ],
+ "Naafiri": [
+  "Dash",
+  "Execution",
+  "Haste",
+  "Healer",
+  "Shield",
+  "Slow",
+  "Untargetable"
+ ],
+ "Nami": [
+  "Haste",
+  "Healer",
+  "Knockup",
+  "Slow"
+ ],
+ "Nasus": [
+  "Cripple",
+  "Self Heal",
+  "Slow"
+ ],
+ "Nautilus": [
+  "Dash",
+  "Knockup",
+  "Pull",
+  "Root",
+  "Shield",
+  "Slow",
+  "Stun"
+ ],
+ "Neeko": [
+  "Haste",
+  "Root",
+  "Shield",
+  "Stealth",
+  "Stun"
+ ],
+ "Nidalee": [
+  "Dash",
+  "Execution",
+  "Haste",
+  "Healer"
+ ],
+ "Nilah": [
+  "Dash",
+  "Haste",
+  "Healer",
+  "Pull",
+  "Self Heal",
+  "Shield",
+  "Slow"
+ ],
+ "Nocturne": [
+  "Dash",
+  "Flee",
+  "Global",
+  "Haste",
+  "Immune",
+  "Nearsight",
+  "Self Heal",
+  "Slow"
+ ],
+ "Nunu": [
+  "Cleanse",
+  "Haste",
+  "Immune",
+  "Knockup",
+  "Pull",
+  "Root",
+  "Self Heal",
+  "Shield",
+  "Slow",
+  "Stun"
+ ],
+ "Olaf": [
+  "Cleanse",
+  "Haste",
+  "Immune",
+  "Self Heal",
+  "Slow"
+ ],
+ "Orianna": [
+  "Haste",
+  "Pull",
+  "Shield",
+  "Slow",
+  "Stun"
+ ],
+ "Ornn": [
+  "Blocker",
+  "Dash",
+  "Immune",
+  "Knockback",
+  "Knockup",
+  "Slow"
+ ],
+ "Pantheon": [
+  "Blink",
+  "Dash",
+  "Execution",
+  "Immune",
+  "Invulnerable",
+  "Slow",
+  "Stun",
+  "Untargetable"
+ ],
+ "Poppy": [
+  "Dash",
+  "Ground",
+  "Haste",
+  "Knockback",
+  "Knockup",
+  "Shield",
+  "Slow",
+  "Stun",
+  "Untargetable"
+ ],
+ "Pyke": [
+  "Blink",
+  "Dash",
+  "Execution",
+  "Haste",
+  "Pull",
+  "Self Heal",
+  "Slow",
+  "Stealth",
+  "Stun"
+ ],
+ "Qiyana": [
+  "Dash",
+  "Execution",
+  "Haste",
+  "Knockback",
+  "Root",
+  "Slow",
+  "Stealth",
+  "Stun"
+ ],
+ "Quinn": [
+  "Dash",
+  "Disarm",
+  "Haste",
+  "Knockback",
+  "Nearsight",
+  "Slow"
+ ],
+ "Rakan": [
+  "Charm",
+  "Dash",
+  "Haste",
+  "Healer",
+  "Knockup",
+  "Shield",
+  "Slow"
+ ],
+ "Rammus": [
+  "Dash",
+  "Haste",
+  "Knockback",
+  "Slow",
+  "Stun",
+  "Taunt"
+ ],
+ "RekSai": [
+  "Dash",
+  "Execution",
+  "Haste",
+  "Immune",
+  "Knockup",
+  "Self Heal",
+  "Slow",
+  "Untargetable"
+ ],
+ "Rell": [
+  "Dash",
+  "Haste",
+  "Healer",
+  "Knockup",
+  "Pull",
+  "Shield",
+  "Stun"
+ ],
+ "Renata": [
+  "Haste",
+  "Knockback",
+  "Pull",
+  "Root",
+  "Shield",
+  "Slow",
+  "Stun"
+ ],
+ "Renekton": [
+  "Dash",
+  "Self Heal",
+  "Stun"
+ ],
+ "Rengar": [
+  "Cleanse",
+  "Dash",
+  "Haste",
+  "Root",
+  "Self Heal",
+  "Slow",
+  "Stealth"
+ ],
+ "Riven": [
+  "Dash",
+  "Execution",
+  "Knockup",
+  "Shield",
+  "Stun"
+ ],
+ "Rumble": [
+  "Haste",
+  "Shield",
+  "Slow"
+ ],
+ "Ryze": [
+  "Blink",
+  "Haste",
+  "Root",
+  "Slow",
+  "Untargetable"
+ ],
+ "Samira": [
+  "Dash",
+  "Execution",
+  "Haste",
+  "Knockup"
+ ],
+ "Sejuani": [
+  "Dash",
+  "Immune",
+  "Knockback",
+  "Knockdown",
+  "Knockup",
+  "Slow",
+  "Stun"
+ ],
+ "Senna": [
+  "Global",
+  "Haste",
+  "Healer",
+  "Root",
+  "Shield",
+  "Stealth"
+ ],
+ "Seraphine": [
+  "Charm",
+  "Execution",
+  "Haste",
+  "Healer",
+  "Root",
+  "Shield",
+  "Slow",
+  "Stun"
+ ],
+ "Sett": [
+  "Haste",
+  "Immune",
+  "Pull",
+  "Shield",
+  "Slow",
+  "Stun",
+  "Suppress"
+ ],
+ "Shaco": [
+  "Blink",
+  "Execution",
+  "Flee",
+  "Root",
+  "Slow",
+  "Stealth",
+  "Untargetable"
+ ],
+ "Shen": [
+  "Blink",
+  "Dash",
+  "Global",
+  "Shield",
+  "Slow",
+  "Taunt"
+ ],
+ "Shyvana": [
+  "Dash",
+  "Haste",
+  "Immune",
+  "Knockback"
+ ],
+ "Singed": [
+  "Ground",
+  "Haste",
+  "Pull",
+  "Root",
+  "Slow"
+ ],
+ "Sion": [
+  "Haste",
+  "Immune",
+  "Invulnerable",
+  "Knockback",
+  "Knockup",
+  "Pull",
+  "Self Heal",
+  "Shield",
+  "Slow",
+  "Stasis",
+  "Stun",
+  "Untargetable"
+ ],
+ "Sivir": [
+  "Haste",
+  "Immune",
+  "Self Heal"
+ ],
+ "Skarner": [
+  "Haste",
+  "Immune",
+  "Shield",
+  "Slow",
+  "Stun",
+  "Suppress"
+ ],
+ "Smolder": [
+  "Haste",
+  "Self Heal",
+  "Slow"
+ ],
+ "Sona": [
+  "Haste",
+  "Healer",
+  "Shield",
+  "Slow",
+  "Stun"
+ ],
+ "Soraka": [
+  "Global",
+  "Haste",
+  "Healer",
+  "Root",
+  "Self Heal",
+  "Silence",
+  "Slow"
+ ],
+ "Swain": [
+  "Pull",
+  "Root",
+  "Self Heal",
+  "Slow"
+ ],
+ "Sylas": [
+  "Dash",
+  "Knockup",
+  "Self Heal",
+  "Slow",
+  "Stun"
+ ],
+ "Syndra": [
+  "Cleanse",
+  "Invulnerable",
+  "Knockback",
+  "Slow",
+  "Stasis",
+  "Stun",
+  "Untargetable"
+ ],
+ "TahmKench": [
+  "Blink",
+  "Immune",
+  "Self Heal",
+  "Shield",
+  "Slow",
+  "Stun",
+  "Suppress",
+  "Untargetable"
+ ],
+ "Taliyah": [
+  "Blocker",
+  "Dash",
+  "Haste",
+  "Knock aside",
+  "Knockback",
+  "Knockup",
+  "Pull",
+  "Slow"
+ ],
+ "Talon": [
+  "Dash",
+  "Haste",
+  "Self Heal",
+  "Slow",
+  "Stealth"
+ ],
+ "Taric": [
+  "Healer",
+  "Invulnerable",
+  "Shield",
+  "Stun"
+ ],
+ "Teemo": [
+  "Blind",
+  "Haste",
+  "Slow",
+  "Stealth"
+ ],
+ "Thresh": [
+  "Dash",
+  "Knockback",
+  "Pull",
+  "Shield",
+  "Slow",
+  "Stun"
+ ],
+ "Tristana": [
+  "Dash",
+  "Knockback",
+  "Slow"
+ ],
+ "Trundle": [
+  "Blocker",
+  "Haste",
+  "Knockback",
+  "Self Heal",
+  "Slow"
+ ],
+ "Tryndamere": [
+  "Dash",
+  "Self Heal",
+  "Slow"
+ ],
+ "TwistedFate": [
+  "Blink",
+  "Global",
+  "Slow",
+  "Stun"
+ ],
+ "Twitch": [
+  "Haste",
+  "Slow",
+  "Stealth"
+ ],
+ "Udyr": [
+  "Haste",
+  "Immune",
+  "Self Heal",
+  "Shield",
+  "Slow",
+  "Stun"
+ ],
+ "Urgot": [
+  "Dash",
+  "Execution",
+  "Flee",
+  "Knock aside",
+  "Pull",
+  "Shield",
+  "Slow",
+  "Stun",
+  "Suppress",
+  "Untargetable"
+ ],
+ "Varus": [
+  "Root",
+  "Slow"
+ ],
+ "Vayne": [
+  "Dash",
+  "Haste",
+  "Knockback",
+  "Stealth",
+  "Stun"
+ ],
+ "Veigar": [
+  "Execution",
+  "Knockdown",
+  "Stun"
+ ],
+ "Velkoz": [
+  "Knockback",
+  "Knockup",
+  "Slow",
+  "Stun"
+ ],
+ "Vex": [
+  "Dash",
+  "Flee",
+  "Global",
+  "Immune",
+  "Knockdown",
+  "Shield",
+  "Slow"
+ ],
+ "Vi": [
+  "Dash",
+  "Immune",
+  "Knock aside",
+  "Knockback",
+  "Knockup",
+  "Shield"
+ ],
+ "Viego": [
+  "Blink",
+  "Dash",
+  "Execution",
+  "Haste",
+  "Immune",
+  "Knockback",
+  "Self Heal",
+  "Slow",
+  "Stealth",
+  "Stun",
+  "Untargetable"
+ ],
+ "Viktor": [
+  "Haste",
+  "Knockdown",
+  "Shield",
+  "Slow",
+  "Stun"
+ ],
+ "Vladimir": [
+  "Haste",
+  "Self Heal",
+  "Slow",
+  "Untargetable"
+ ],
+ "Volibear": [
+  "Dash",
+  "Haste",
+  "Immune",
+  "Self Heal",
+  "Shield",
+  "Slow",
+  "Stun"
+ ],
+ "Warwick": [
+  "Dash",
+  "Flee",
+  "Global",
+  "Haste",
+  "Immune",
+  "Knockdown",
+  "Self Heal",
+  "Slow",
+  "Suppress"
+ ],
+ "Xayah": [
+  "Global",
+  "Haste",
+  "Root",
+  "Untargetable"
+ ],
+ "Xerath": [
+  "Slow",
+  "Stun"
+ ],
+ "XinZhao": [
+  "Dash",
+  "Invulnerable",
+  "Knockback",
+  "Knockup",
+  "Self Heal",
+  "Slow",
+  "Stun"
+ ],
+ "Yasuo": [
+  "Blink",
+  "Dash",
+  "Knockup",
+  "Shield"
+ ],
+ "Yone": [
+  "Blink",
+  "Dash",
+  "Global",
+  "Haste",
+  "Immune",
+  "Knockdown",
+  "Knockup",
+  "Pull",
+  "Shield",
+  "Stun"
+ ],
+ "Yorick": [
+  "Blocker",
+  "Haste",
+  "Knock aside",
+  "Self Heal",
+  "Slow"
+ ],
+ "Yunara": [
+  "Dash",
+  "Haste",
+  "Slow"
+ ],
+ "Yuumi": [
+  "Dash",
+  "Haste",
+  "Healer",
+  "Shield",
+  "Slow",
+  "Untargetable"
+ ],
+ "Zaahen": [
+  "Dash",
+  "Immune",
+  "Invulnerable",
+  "Knockup",
+  "Pull",
+  "Resurrection",
+  "Self Heal",
+  "Stun",
+  "Untargetable"
+ ],
+ "Zac": [
+  "Dash",
+  "Haste",
+  "Knockback",
+  "Knockdown",
+  "Knockup",
+  "Pull",
+  "Resurrection",
+  "Root",
+  "Self Heal",
+  "Slow",
+  "Stun",
+  "Untargetable"
+ ],
+ "Zed": [
+  "Blink",
+  "Dash",
+  "Global",
+  "Slow",
+  "Untargetable"
+ ],
+ "Zeri": [
+  "Dash",
+  "Haste",
+  "Slow"
+ ],
+ "Ziggs": [
+  "Dash",
+  "Knockback",
+  "Slow"
+ ],
+ "Zilean": [
+  "Haste",
+  "Healer",
+  "Invulnerable",
+  "Resurrection",
+  "Slow",
+  "Stasis",
+  "Stun",
+  "Untargetable"
+ ],
+ "Zoe": [
+  "Blink",
+  "Haste",
+  "Sleep",
+  "Slow"
+ ],
+ "Zyra": [
+  "Knockup",
+  "Root",
+  "Slow"
+ ]
+}

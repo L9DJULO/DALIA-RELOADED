@@ -146,3 +146,16 @@ def test_measured_teamfight_also_updates_the_computed_vector():
                           "ratings_source": "calcul"}}
     out = derive_ratings.apply_teamfight(overrides, {"Yone": 1})
     assert out["Yone"]["ratings"][4] == 1 and out["Yone"]["ratings_calcul"][4] == 1
+
+
+def test_damage_type_follows_riot_and_leaves_the_tag_profile_alone():
+    """Diana (Fighter/Assassin) sortait à 82 % physique d'après ses tags. Le type Riot est un
+    champ à part : le profil `damage`, sur lequel la composition est réglée, n'est pas touché."""
+    overrides = {"Diana": {"roles": ["jungle"]}, "Garen": {"roles": ["top"]}, "Kayle": {"roles": ["top"]},
+                 "Mine": {"damage_type": "magic", "damage_type_source": "joueur"}}
+    facts = {"Diana": {"damage_type": "kMagic"}, "Garen": {"damage_type": "kPhysical"},
+             "Kayle": {"damage_type": "kMixed"}, "Mine": {"damage_type": "kPhysical"}}
+    out = derive_ratings.apply_damage(overrides, facts)
+    assert (out["Diana"]["damage_type"], out["Garen"]["damage_type"], out["Kayle"]["damage_type"]) ==         ("magic", "physical", "mixed")
+    assert "damage" not in out["Diana"]
+    assert out["Mine"]["damage_type"] == "magic", "un type posé par le joueur n'est jamais réécrit"

@@ -39,6 +39,9 @@ class Champion(BaseModel):
     # Propriétés de draft définies et validées par le joueur (docs/TAXONOMIES_CHAMPIONS.md) :
     # les règles lisent une propriété au lieu de nommer des champions (chantier 2).
     properties: List[str] = []
+    # Type de dégâts publié par Riot (physical / magic / mixed) ; `damage` reste le profil
+    # déduit des tags, sur lequel la composition est réglée.
+    damage_type: Optional[str] = None
     image_url: str = ""
 
     @property

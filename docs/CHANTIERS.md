@@ -625,3 +625,22 @@ les matchups n'en voient rien (pires matchups ≈ 46 % pour les deux, en Émerau
 Diamant 2+). Le correctif « flex à sa part réelle » n'a rien gagné (concordance en léger recul) et
 n'est pas retenu. Piste : mesurer le risque autrement que par les matchups — dépendance au
 jungler, dispersion des résultats, niveau requis.
+
+---
+
+## 18. Règles de cas particuliers : 48 règles débranchées depuis la reprise
+
+`app/data/edge_cases.json` n'est lu par aucun module depuis la reprise du 09/09 (`mechanics.py`
+l'a remplacé en n'en reprenant qu'une dizaine). Reprise par paquets avec le joueur, en
+propriétés (`docs/TAXONOMIES_CHAMPIONS.md`). Faits le 27/09 : encaisser un type de dégâts,
+ignorer le CC, contre les tanks et les auto-attaqueurs (inchangés), dashs (en cours). Écartés :
+Sylas, Aphelios sans CC, compos fragiles (« trop vague, tous les assassins rentrent dedans »).
+
+**Reste** : cibles immobiles (Fiora, Singed, Tahm — sans réponse du joueur), synergies d'alliés
+(Yuumi/Lulu avec un hypercarry, Kalista avec Thresh ou Rell, Yone avec un knock-up, Soraka en
+lane de poke…), situationnels (Ezreal, Caitlyn, Heimerdinger contre une composition sans engage ;
+Pantheon et Lissandra en premier pick ; Cassiopeia contre une composition AD).
+
+**Chantier ouvert par la reprise** : les profils de dégâts viennent des tags (Diana 82 %
+physique). Les corriger seuls coûte 1,2 point de concordance top-10, la composition étant réglée
+dessus : à corriger avec un réglage de la composition, pas avant.

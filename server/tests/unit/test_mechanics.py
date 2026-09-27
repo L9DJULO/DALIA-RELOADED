@@ -11,8 +11,8 @@ def draft(enemies=(), allies=(), role="top"):
 
 def test_poppy_distinguishes_dashes_blinks_and_unstoppable(catalog):
     analyzer = MechanicsAnalyzer(catalog)
-    score, rules = analyzer.evaluate(catalog.get_by_key("Poppy"), draft([59, 81, 54]))
-    assert score == 3
+    _, rules = analyzer.evaluate(catalog.get_by_key("Poppy"), draft([59, 81, 54]))
+    assert rules[0]["id"] == "poppy_interrupt_dash" and rules[0]["score_delta"] == 3
     assert rules[0]["champions"] == ["JarvanIV"]
     assert rules[1]["champions"] == ["Ezreal"]
     assert "imparables" in rules[0]["caveat"]
@@ -57,3 +57,43 @@ def test_brand_answers_high_health_targets_where_velkoz_does_not(catalog):
     assert "anti_tank" not in analyzer.coverage(velkoz)
     _, rules = analyzer.evaluate(brand, draft([54, 78], role="support"))
     assert any(r["id"] == "health_scaling_damage" for r in rules)
+
+
+def _custom(key, properties=(), tags=("Mage",), magical=85):
+    from app.models.champion import Champion, ChampionRatings, DamageProfile
+    return Champion(id=9000 + len(key), key=key, name=key, tags=list(tags), properties=list(properties),
+                    ratings=ChampionRatings(tankiness=2), damage=DamageProfile(physical=100 - magical, magical=magical))
+
+
+def test_a_tank_answers_a_full_ad_comp_and_a_squishy_does_not(catalog):
+    """Joueur (27/09) : encaisser un type de dégâts, « c'est plus les tanks ». Jinx, Ezreal,
+    Vayne, Ashe : composition physique."""
+    analyzer = MechanicsAnalyzer(catalog)
+    full_ad = draft([222, 81, 67, 22])
+    _, tank_rules = analyzer.evaluate(catalog.get_by_key("Malphite"), full_ad)
+    _, mage_rules = analyzer.evaluate(catalog.get_by_key("Ahri"), full_ad)
+    assert any(r["id"] == "resists_damage_profile" for r in tank_rules)
+    assert not any(r["id"] == "resists_damage_profile" for r in mage_rules)
+
+
+def test_kassadin_is_the_exception_against_ap(catalog):
+    """« Kassadin c'est son passif et son Q » : encaisse l'AP sans être un tank."""
+    analyzer = MechanicsAnalyzer(catalog)
+    full_ap = draft([103, 61, 69], role="mid")
+    kassadin = _custom("Kassadin", properties=["encaisse_ap"])
+    assert any(r["id"] == "resists_damage_profile" for r in analyzer.evaluate(kassadin, full_ap)[1])
+    assert not any(r["id"] == "resists_damage_profile" for r in analyzer.evaluate(kassadin, draft([222, 81, 67]))[1])
+
+
+def test_the_damage_profile_needs_three_known_enemies(catalog):
+    _, rules = MechanicsAnalyzer(catalog).evaluate(catalog.get_by_key("Malphite"), draft([222, 81]))
+    assert not any(r["id"] == "resists_damage_profile" for r in rules)
+
+
+def test_ignoring_cc_pays_against_three_hard_cc_sources(catalog):
+    """Olaf et Gangplank (joueur, 27/09). Sources de CC dur : mécaniques du wiki."""
+    analyzer = MechanicsAnalyzer(catalog)
+    olaf = _custom("Olaf", properties=["ignore_cc"], tags=("Fighter",), magical=10)
+    score, rules = analyzer.evaluate(olaf, draft([54, 59, 25], role="jungle"))
+    assert score > 0 and any(r["id"] == "ignore_cc" for r in rules)
+    assert analyzer.evaluate(olaf, draft([222, 81], role="jungle"))[0] == 0

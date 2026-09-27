@@ -30,7 +30,8 @@
     ],
     "properties": [
       "reception_partielle"
-    ]
+    ],
+    "damage_type": "physical"
   },
   "Ahri": {
     "roles": [
@@ -58,7 +59,8 @@
       5,
       2,
       3
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Akali": {
     "roles": [
@@ -87,7 +89,8 @@
       4,
       2,
       3
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Akshan": {
     "roles": [
@@ -115,7 +118,8 @@
       5,
       5,
       3
-    ]
+    ],
+    "damage_type": "physical"
   },
   "Alistar": {
     "roles": [
@@ -135,7 +139,8 @@
     "ratings_source": "joueur",
     "properties": [
       "reception"
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Ambessa": {
     "roles": [
@@ -167,7 +172,8 @@
     ],
     "properties": [
       "reception"
-    ]
+    ],
+    "damage_type": "physical"
   },
   "Amumu": {
     "roles": [
@@ -185,7 +191,8 @@
       2,
       5
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "damage_type": "magic"
   },
   "Anivia": {
     "roles": [
@@ -217,7 +224,8 @@
     ],
     "properties": [
       "reception"
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Annie": {
     "roles": [
@@ -234,7 +242,8 @@
       2,
       2
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "damage_type": "magic"
   },
   "Aphelios": {
     "roles": [
@@ -251,7 +260,8 @@
       5,
       1
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "damage_type": "physical"
   },
   "Ashe": {
     "roles": [
@@ -268,7 +278,8 @@
       5,
       1
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "damage_type": "physical"
   },
   "AurelionSol": {
     "roles": [
@@ -297,7 +308,8 @@
       4,
       2,
       2
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Aurora": {
     "roles": [
@@ -326,7 +338,8 @@
       5,
       2,
       3
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Azir": {
     "roles": [
@@ -357,7 +370,8 @@
     ],
     "properties": [
       "reception"
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Bard": {
     "roles": [
@@ -377,7 +391,8 @@
     "ratings_source": "joueur",
     "properties": [
       "reception"
-    ]
+    ],
+    "damage_type": "magic"
   },
   "BelVeth": {
     "roles": [
@@ -405,7 +420,8 @@
       4,
       5,
       3
-    ]
+    ],
+    "damage_type": "physical"
   },
   "Blitzcrank": {
     "roles": [
@@ -422,7 +438,8 @@
       1,
       3
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "damage_type": "magic"
   },
   "Brand": {
     "roles": [
@@ -440,7 +457,8 @@
       2,
       1
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "damage_type": "magic"
   },
   "Braum": {
     "roles": [
@@ -460,7 +478,8 @@
     "ratings_source": "joueur",
     "properties": [
       "reception"
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Briar": {
     "roles": [
@@ -488,7 +507,8 @@
       4,
       3,
       3
-    ]
+    ],
+    "damage_type": "physical"
   },
   "Caitlyn": {
     "roles": [
@@ -505,7 +525,8 @@
       4,
       3
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "damage_type": "physical"
   },
   "Camille": {
     "roles": [
@@ -534,7 +555,8 @@
       4,
       5,
       3
-    ]
+    ],
+    "damage_type": "physical"
   },
   "Cassiopeia": {
     "roles": [
@@ -567,7 +589,8 @@
     ],
     "properties": [
       "reception"
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Chogath": {
     "roles": [
@@ -596,7 +619,8 @@
       2,
       1,
       5
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Corki": {
     "roles": [
@@ -624,7 +648,8 @@
       4,
       4,
       2
-    ]
+    ],
+    "damage_type": "physical"
   },
   "Darius": {
     "roles": [
@@ -655,7 +680,8 @@
     ],
     "properties": [
       "reception"
-    ]
+    ],
+    "damage_type": "physical"
   },
   "Diana": {
     "roles": [
@@ -684,7 +710,8 @@
       4,
       3,
       3
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Draven": {
     "roles": [
@@ -701,7 +728,8 @@
       5,
       2
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "damage_type": "physical"
   },
   "DrMundo": {
     "roles": [
@@ -729,7 +757,8 @@
       4,
       3,
       5
-    ]
+    ],
+    "damage_type": "mixed"
   },
   "Ekko": {
     "roles": [
@@ -758,7 +787,8 @@
       4,
       2,
       3
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Elise": {
     "roles": [
@@ -787,7 +817,8 @@
       4,
       3,
       3
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Evelynn": {
     "roles": [
@@ -815,7 +846,8 @@
       4,
       1,
       3
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Ezreal": {
     "roles": [
@@ -832,7 +864,8 @@
       4,
       3
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "damage_type": "physical"
   },
   "Fiddlesticks": {
     "roles": [
@@ -861,7 +894,8 @@
       4,
       2,
       1
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Fiora": {
     "roles": [
@@ -889,7 +923,8 @@
       4,
       5,
       3
-    ]
+    ],
+    "damage_type": "physical"
   },
   "Fizz": {
     "roles": [
@@ -918,7 +953,8 @@
       4,
       2,
       3
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Galio": {
     "roles": [
@@ -938,7 +974,8 @@
     "ratings_source": "joueur",
     "properties": [
       "reception"
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Gangplank": {
     "roles": [
@@ -966,7 +1003,11 @@
       4,
       2,
       1
-    ]
+    ],
+    "properties": [
+      "ignore_cc"
+    ],
+    "damage_type": "physical"
   },
   "Garen": {
     "roles": [
@@ -994,7 +1035,8 @@
       4,
       3,
       5
-    ]
+    ],
+    "damage_type": "physical"
   },
   "Gnar": {
     "roles": [
@@ -1025,7 +1067,8 @@
     ],
     "properties": [
       "reception"
-    ]
+    ],
+    "damage_type": "physical"
   },
   "Gragas": {
     "roles": [
@@ -1046,7 +1089,8 @@
     "ratings_source": "joueur",
     "properties": [
       "reception"
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Graves": {
     "roles": [
@@ -1074,7 +1118,8 @@
       4,
       5,
       3
-    ]
+    ],
+    "damage_type": "physical"
   },
   "Gwen": {
     "roles": [
@@ -1103,7 +1148,8 @@
       4,
       4,
       3
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Hecarim": {
     "roles": [
@@ -1131,7 +1177,8 @@
       4,
       3,
       3
-    ]
+    ],
+    "damage_type": "physical"
   },
   "Heimerdinger": {
     "roles": [
@@ -1150,7 +1197,8 @@
       3,
       1
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "damage_type": "magic"
   },
   "Hwei": {
     "roles": [
@@ -1171,7 +1219,8 @@
     "ratings_source": "joueur",
     "properties": [
       "reception"
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Illaoi": {
     "roles": [
@@ -1199,7 +1248,8 @@
       4,
       3,
       3
-    ]
+    ],
+    "damage_type": "physical"
   },
   "Irelia": {
     "roles": [
@@ -1228,7 +1278,8 @@
       4,
       3,
       3
-    ]
+    ],
+    "damage_type": "physical"
   },
   "Ivern": {
     "roles": [
@@ -1256,7 +1307,8 @@
       2,
       1,
       2
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Janna": {
     "roles": [
@@ -1276,7 +1328,8 @@
     "ratings_source": "joueur",
     "properties": [
       "reception"
-    ]
+    ],
+    "damage_type": "magic"
   },
   "JarvanIV": {
     "roles": [
@@ -1304,7 +1357,8 @@
       4,
       3,
       3
-    ]
+    ],
+    "damage_type": "physical"
   },
   "Jax": {
     "roles": [
@@ -1332,7 +1386,8 @@
       4,
       5,
       3
-    ]
+    ],
+    "damage_type": "physical"
   },
   "Jayce": {
     "roles": [
@@ -1361,7 +1416,8 @@
       4,
       4,
       2
-    ]
+    ],
+    "damage_type": "physical"
   },
   "Jhin": {
     "roles": [
@@ -1378,7 +1434,8 @@
       4,
       1
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "damage_type": "physical"
   },
   "Jinx": {
     "roles": [
@@ -1395,7 +1452,8 @@
       5,
       1
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "damage_type": "physical"
   },
   "Kaisa": {
     "roles": [
@@ -1412,7 +1470,8 @@
       5,
       3
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "damage_type": "physical"
   },
   "Kalista": {
     "roles": [
@@ -1429,7 +1488,8 @@
       5,
       2
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "damage_type": "physical"
   },
   "Karma": {
     "roles": [
@@ -1449,7 +1509,8 @@
     "ratings_source": "joueur",
     "properties": [
       "reception"
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Karthus": {
     "roles": [
@@ -1467,7 +1528,8 @@
       3,
       2
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "damage_type": "magic"
   },
   "Kassadin": {
     "roles": [
@@ -1495,7 +1557,11 @@
       4,
       2,
       3
-    ]
+    ],
+    "properties": [
+      "encaisse_ap"
+    ],
+    "damage_type": "magic"
   },
   "Katarina": {
     "roles": [
@@ -1523,7 +1589,8 @@
       4,
       2,
       3
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Kayle": {
     "roles": [
@@ -1552,7 +1619,8 @@
       4,
       5,
       1
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Kayn": {
     "roles": [
@@ -1580,7 +1648,8 @@
       4,
       5,
       3
-    ]
+    ],
+    "damage_type": "physical"
   },
   "Kennen": {
     "roles": [
@@ -1609,7 +1678,8 @@
       4,
       2,
       1
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Khazix": {
     "roles": [
@@ -1637,7 +1707,8 @@
       4,
       2,
       2
-    ]
+    ],
+    "damage_type": "physical"
   },
   "Kindred": {
     "roles": [
@@ -1665,7 +1736,8 @@
       5,
       5,
       3
-    ]
+    ],
+    "damage_type": "physical"
   },
   "Kled": {
     "roles": [
@@ -1693,7 +1765,8 @@
       4,
       5,
       3
-    ]
+    ],
+    "damage_type": "physical"
   },
   "KogMaw": {
     "roles": [
@@ -1711,7 +1784,8 @@
       5,
       1
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "damage_type": "mixed"
   },
   "KSante": {
     "roles": [
@@ -1742,7 +1816,8 @@
     ],
     "properties": [
       "reception"
-    ]
+    ],
+    "damage_type": "physical"
   },
   "Leblanc": {
     "roles": [
@@ -1770,7 +1845,8 @@
       5,
       2,
       3
-    ]
+    ],
+    "damage_type": "magic"
   },
   "LeeSin": {
     "roles": [
@@ -1798,7 +1874,8 @@
       4,
       3,
       3
-    ]
+    ],
+    "damage_type": "physical"
   },
   "Leona": {
     "roles": [
@@ -1815,7 +1892,8 @@
       1,
       5
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "damage_type": "magic"
   },
   "Lillia": {
     "roles": [
@@ -1843,7 +1921,8 @@
       4,
       3,
       2
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Lissandra": {
     "roles": [
@@ -1874,7 +1953,8 @@
     ],
     "properties": [
       "reception"
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Locke": {
     "roles": [
@@ -1902,7 +1982,8 @@
       4,
       2,
       3
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Lucian": {
     "roles": [
@@ -1919,7 +2000,8 @@
       5,
       2
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "damage_type": "physical"
   },
   "Lulu": {
     "roles": [
@@ -1939,7 +2021,8 @@
     "ratings_source": "joueur",
     "properties": [
       "reception"
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Lux": {
     "roles": [
@@ -1961,7 +2044,8 @@
     "ratings_source": "joueur",
     "properties": [
       "reception_partielle"
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Malphite": {
     "roles": [
@@ -1978,7 +2062,8 @@
       1,
       5
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "damage_type": "magic"
   },
   "Malzahar": {
     "roles": [
@@ -2009,7 +2094,8 @@
     ],
     "properties": [
       "reception"
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Maokai": {
     "roles": [
@@ -2031,7 +2117,8 @@
     "ratings_source": "joueur",
     "properties": [
       "reception_partielle"
-    ]
+    ],
+    "damage_type": "magic"
   },
   "MasterYi": {
     "roles": [
@@ -2059,7 +2146,8 @@
       4,
       5,
       2
-    ]
+    ],
+    "damage_type": "physical"
   },
   "Mel": {
     "roles": [
@@ -2088,7 +2176,8 @@
       4,
       2,
       1
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Milio": {
     "roles": [
@@ -2108,7 +2197,8 @@
     "ratings_source": "joueur",
     "properties": [
       "reception"
-    ]
+    ],
+    "damage_type": "magic"
   },
   "MissFortune": {
     "roles": [
@@ -2125,7 +2215,8 @@
       4,
       1
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "damage_type": "physical"
   },
   "MonkeyKing": {
     "roles": [
@@ -2153,7 +2244,8 @@
       4,
       3,
       3
-    ]
+    ],
+    "damage_type": "physical"
   },
   "Mordekaiser": {
     "roles": [
@@ -2181,7 +2273,8 @@
       4,
       3,
       3
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Morgana": {
     "roles": [
@@ -2201,7 +2294,8 @@
     "ratings_source": "joueur",
     "properties": [
       "reception"
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Naafiri": {
     "roles": [
@@ -2229,7 +2323,8 @@
       4,
       2,
       3
-    ]
+    ],
+    "damage_type": "physical"
   },
   "Nami": {
     "roles": [
@@ -2249,7 +2344,8 @@
     "ratings_source": "joueur",
     "properties": [
       "reception"
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Nasus": {
     "roles": [
@@ -2278,7 +2374,8 @@
       4,
       3,
       5
-    ]
+    ],
+    "damage_type": "physical"
   },
   "Nautilus": {
     "roles": [
@@ -2295,7 +2392,8 @@
       1,
       5
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "damage_type": "magic"
   },
   "Neeko": {
     "roles": [
@@ -2312,7 +2410,8 @@
       2,
       2
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "damage_type": "magic"
   },
   "Nidalee": {
     "roles": [
@@ -2340,7 +2439,8 @@
       4,
       2,
       3
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Nilah": {
     "roles": [
@@ -2357,7 +2457,8 @@
       5,
       3
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "damage_type": "physical"
   },
   "Nocturne": {
     "roles": [
@@ -2385,7 +2486,8 @@
       4,
       5,
       2
-    ]
+    ],
+    "damage_type": "physical"
   },
   "Nunu": {
     "roles": [
@@ -2413,7 +2515,8 @@
       2,
       1,
       5
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Olaf": {
     "roles": [
@@ -2441,7 +2544,11 @@
       4,
       3,
       3
-    ]
+    ],
+    "properties": [
+      "ignore_cc"
+    ],
+    "damage_type": "physical"
   },
   "Orianna": {
     "roles": [
@@ -2472,7 +2579,8 @@
     ],
     "properties": [
       "reception"
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Ornn": {
     "roles": [
@@ -2503,7 +2611,8 @@
     ],
     "properties": [
       "reception"
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Pantheon": {
     "roles": [
@@ -2521,7 +2630,8 @@
       2,
       3
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "damage_type": "physical"
   },
   "Poppy": {
     "roles": [
@@ -2542,7 +2652,8 @@
     "ratings_source": "joueur",
     "properties": [
       "reception"
-    ]
+    ],
+    "damage_type": "physical"
   },
   "Pyke": {
     "roles": [
@@ -2562,7 +2673,8 @@
     "ratings_source": "joueur",
     "properties": [
       "reception_partielle"
-    ]
+    ],
+    "damage_type": "physical"
   },
   "Qiyana": {
     "roles": [
@@ -2594,7 +2706,8 @@
     ],
     "properties": [
       "reception"
-    ]
+    ],
+    "damage_type": "physical"
   },
   "Quinn": {
     "roles": [
@@ -2623,7 +2736,8 @@
       4,
       5,
       3
-    ]
+    ],
+    "damage_type": "physical"
   },
   "Rakan": {
     "roles": [
@@ -2643,7 +2757,8 @@
     "ratings_source": "joueur",
     "properties": [
       "reception"
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Rammus": {
     "roles": [
@@ -2674,7 +2789,8 @@
     ],
     "properties": [
       "reception"
-    ]
+    ],
+    "damage_type": "magic"
   },
   "RekSai": {
     "roles": [
@@ -2702,7 +2818,8 @@
       4,
       3,
       3
-    ]
+    ],
+    "damage_type": "physical"
   },
   "Rell": {
     "roles": [
@@ -2719,7 +2836,8 @@
       1,
       4
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "damage_type": "magic"
   },
   "Renata": {
     "roles": [
@@ -2739,7 +2857,8 @@
     "ratings_source": "joueur",
     "properties": [
       "reception"
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Renekton": {
     "roles": [
@@ -2767,7 +2886,8 @@
       4,
       3,
       3
-    ]
+    ],
+    "damage_type": "physical"
   },
   "Rengar": {
     "roles": [
@@ -2795,7 +2915,8 @@
       4,
       5,
       2
-    ]
+    ],
+    "damage_type": "physical"
   },
   "Riven": {
     "roles": [
@@ -2824,7 +2945,8 @@
       4,
       3,
       3
-    ]
+    ],
+    "damage_type": "physical"
   },
   "Rumble": {
     "roles": [
@@ -2852,7 +2974,8 @@
       4,
       2,
       3
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Ryze": {
     "roles": [
@@ -2881,7 +3004,8 @@
       4,
       2,
       2
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Samira": {
     "roles": [
@@ -2898,7 +3022,8 @@
       5,
       2
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "damage_type": "physical"
   },
   "Sejuani": {
     "roles": [
@@ -2930,7 +3055,8 @@
     ],
     "properties": [
       "reception"
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Senna": {
     "roles": [
@@ -2947,7 +3073,8 @@
       3,
       2
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "damage_type": "physical"
   },
   "Seraphine": {
     "roles": [
@@ -2968,7 +3095,8 @@
     "ratings_source": "joueur",
     "properties": [
       "reception"
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Sett": {
     "roles": [
@@ -2988,7 +3116,8 @@
     "ratings_source": "joueur",
     "properties": [
       "reception"
-    ]
+    ],
+    "damage_type": "physical"
   },
   "Shaco": {
     "roles": [
@@ -3006,7 +3135,8 @@
       3,
       2
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "damage_type": "mixed"
   },
   "Shen": {
     "roles": [
@@ -3027,7 +3157,8 @@
     "ratings_source": "joueur",
     "properties": [
       "reception"
-    ]
+    ],
+    "damage_type": "mixed"
   },
   "Shyvana": {
     "roles": [
@@ -3058,7 +3189,8 @@
     ],
     "properties": [
       "reception"
-    ]
+    ],
+    "damage_type": "mixed"
   },
   "Singed": {
     "roles": [
@@ -3086,7 +3218,8 @@
       2,
       1,
       5
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Sion": {
     "roles": [
@@ -3117,7 +3250,8 @@
     ],
     "properties": [
       "reception"
-    ]
+    ],
+    "damage_type": "physical"
   },
   "Sivir": {
     "roles": [
@@ -3134,7 +3268,8 @@
       5,
       3
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "damage_type": "physical"
   },
   "Skarner": {
     "roles": [
@@ -3165,7 +3300,8 @@
     ],
     "properties": [
       "reception"
-    ]
+    ],
+    "damage_type": "physical"
   },
   "Smolder": {
     "roles": [
@@ -3182,7 +3318,8 @@
       4,
       3
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "damage_type": "physical"
   },
   "Sona": {
     "roles": [
@@ -3202,7 +3339,8 @@
     "ratings_source": "joueur",
     "properties": [
       "reception"
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Soraka": {
     "roles": [
@@ -3222,7 +3360,8 @@
     "ratings_source": "joueur",
     "properties": [
       "reception"
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Swain": {
     "roles": [
@@ -3242,7 +3381,8 @@
       3,
       4
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "damage_type": "magic"
   },
   "Sylas": {
     "roles": [
@@ -3271,7 +3411,8 @@
       3,
       3,
       3
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Syndra": {
     "roles": [
@@ -3303,7 +3444,8 @@
     ],
     "properties": [
       "reception"
-    ]
+    ],
+    "damage_type": "magic"
   },
   "TahmKench": {
     "roles": [
@@ -3324,7 +3466,8 @@
     "ratings_source": "joueur",
     "properties": [
       "reception"
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Taliyah": {
     "roles": [
@@ -3356,7 +3499,8 @@
     ],
     "properties": [
       "reception"
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Talon": {
     "roles": [
@@ -3385,7 +3529,8 @@
       4,
       2,
       2
-    ]
+    ],
+    "damage_type": "physical"
   },
   "Taric": {
     "roles": [
@@ -3405,7 +3550,8 @@
     "ratings_source": "joueur",
     "properties": [
       "reception"
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Teemo": {
     "roles": [
@@ -3433,7 +3579,8 @@
       3,
       5,
       1
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Thresh": {
     "roles": [
@@ -3453,7 +3600,8 @@
     "ratings_source": "joueur",
     "properties": [
       "reception"
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Tristana": {
     "roles": [
@@ -3470,7 +3618,8 @@
       5,
       4
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "damage_type": "physical"
   },
   "Trundle": {
     "roles": [
@@ -3499,7 +3648,8 @@
       4,
       3,
       5
-    ]
+    ],
+    "damage_type": "physical"
   },
   "Tryndamere": {
     "roles": [
@@ -3527,7 +3677,8 @@
       4,
       5,
       3
-    ]
+    ],
+    "damage_type": "physical"
   },
   "TwistedFate": {
     "roles": [
@@ -3555,7 +3706,8 @@
       5,
       2,
       2
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Twitch": {
     "roles": [
@@ -3572,7 +3724,8 @@
       5,
       2
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "damage_type": "physical"
   },
   "Udyr": {
     "roles": [
@@ -3601,7 +3754,8 @@
       4,
       3,
       5
-    ]
+    ],
+    "damage_type": "mixed"
   },
   "Urgot": {
     "roles": [
@@ -3632,7 +3786,8 @@
     ],
     "properties": [
       "reception"
-    ]
+    ],
+    "damage_type": "physical"
   },
   "Varus": {
     "roles": [
@@ -3650,7 +3805,8 @@
       5,
       1
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "damage_type": "physical"
   },
   "Vayne": {
     "roles": [
@@ -3668,7 +3824,8 @@
       5,
       3
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "damage_type": "physical"
   },
   "Veigar": {
     "roles": [
@@ -3697,7 +3854,8 @@
       5,
       2,
       1
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Velkoz": {
     "roles": [
@@ -3719,7 +3877,8 @@
     "ratings_source": "joueur",
     "properties": [
       "reception"
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Vex": {
     "roles": [
@@ -3750,7 +3909,8 @@
     ],
     "properties": [
       "reception"
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Vi": {
     "roles": [
@@ -3781,7 +3941,8 @@
     ],
     "properties": [
       "reception_partielle"
-    ]
+    ],
+    "damage_type": "physical"
   },
   "Viego": {
     "roles": [
@@ -3812,7 +3973,8 @@
     ],
     "properties": [
       "reception_partielle"
-    ]
+    ],
+    "damage_type": "physical"
   },
   "Viktor": {
     "roles": [
@@ -3844,7 +4006,8 @@
     ],
     "properties": [
       "reception"
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Vladimir": {
     "roles": [
@@ -3873,7 +4036,8 @@
       4,
       2,
       3
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Volibear": {
     "roles": [
@@ -3902,7 +4066,8 @@
       4,
       3,
       5
-    ]
+    ],
+    "damage_type": "mixed"
   },
   "Warwick": {
     "roles": [
@@ -3931,7 +4096,8 @@
       4,
       3,
       3
-    ]
+    ],
+    "damage_type": "mixed"
   },
   "Xayah": {
     "roles": [
@@ -3948,7 +4114,8 @@
       5,
       4
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "damage_type": "physical"
   },
   "Xerath": {
     "roles": [
@@ -3970,7 +4137,8 @@
     "ratings_source": "joueur",
     "properties": [
       "reception"
-    ]
+    ],
+    "damage_type": "magic"
   },
   "XinZhao": {
     "roles": [
@@ -4001,7 +4169,8 @@
     ],
     "properties": [
       "reception"
-    ]
+    ],
+    "damage_type": "physical"
   },
   "Yasuo": {
     "roles": [
@@ -4020,7 +4189,8 @@
       5,
       3
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "damage_type": "physical"
   },
   "Yone": {
     "roles": [
@@ -4049,7 +4219,8 @@
       4,
       4,
       3
-    ]
+    ],
+    "damage_type": "physical"
   },
   "Yorick": {
     "roles": [
@@ -4077,7 +4248,8 @@
       4,
       3,
       3
-    ]
+    ],
+    "damage_type": "physical"
   },
   "Yunara": {
     "roles": [
@@ -4094,7 +4266,8 @@
       5,
       3
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "damage_type": "physical"
   },
   "Yuumi": {
     "roles": [
@@ -4111,7 +4284,8 @@
       1,
       5
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "damage_type": "magic"
   },
   "Zaahen": {
     "roles": [
@@ -4139,7 +4313,8 @@
       2,
       3,
       3
-    ]
+    ],
+    "damage_type": "physical"
   },
   "Zac": {
     "roles": [
@@ -4167,7 +4342,8 @@
       2,
       1,
       5
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Zed": {
     "roles": [
@@ -4196,7 +4372,8 @@
       4,
       2,
       3
-    ]
+    ],
+    "damage_type": "physical"
   },
   "Zeri": {
     "roles": [
@@ -4213,7 +4390,8 @@
       5,
       2
     ],
-    "ratings_source": "joueur"
+    "ratings_source": "joueur",
+    "damage_type": "physical"
   },
   "Ziggs": {
     "roles": [
@@ -4234,7 +4412,8 @@
     "ratings_source": "joueur",
     "properties": [
       "reception"
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Zilean": {
     "roles": [
@@ -4254,7 +4433,8 @@
     "ratings_source": "joueur",
     "properties": [
       "reception"
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Zoe": {
     "roles": [
@@ -4283,7 +4463,8 @@
       5,
       2,
       2
-    ]
+    ],
+    "damage_type": "magic"
   },
   "Zyra": {
     "roles": [
@@ -4304,6 +4485,7 @@
     "ratings_source": "joueur",
     "properties": [
       "reception"
-    ]
+    ],
+    "damage_type": "magic"
   }
 }

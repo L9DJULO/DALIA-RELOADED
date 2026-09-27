@@ -776,3 +776,26 @@ Même au pire (l'adversaire prend toujours son meilleur counter), Yasuo et Syndr
 (−2,7) ; leurs pires matchups joués sont au même niveau en Émeraude+ comme en Diamant 2+ (≈ 46 %).
 Le joueur maintient le cas (« Syndra c'est bien mieux ») : le risque de Yasuo en blind n'est pas
 dans les matchups. Cas passé en confiance basse, signal à instruire.
+
+## Règles de cas particuliers reprises : paquets 1 à 3 (27/09/2026)
+
+`edge_cases.json` (48 règles nommant un champion) n'était plus lu depuis la reprise du 09/09 ; la
+catégorie `edge_case` testait des règles absentes. Reprises avec le joueur sous forme de
+propriétés (`docs/TAXONOMIES_CHAMPIONS.md`) :
+
+- **Encaisser un type de dégâts** : tout tank contre ≥ 75 % AD ou ≥ 60 % AP (au moins trois
+  ennemis) ; Kassadin contre l'AP.
+- **Ignorer le CC** : Olaf, Gangplank, contre ≥ 3 sources de CC dur (mécaniques du wiki,
+  `app/data/kit_mechanics.json`).
+
+**Profils de dégâts** : les 173 venaient des tags (Diana 82 % physique). Remplacés par le type
+Riot : calibration 46/56 mais concordance top-10 36,2 % (+119 −180, z −3,5) — la composition est
+réglée sur les anciens profils. **Retenu** : le type Riot en champ séparé (`damage_type`), lu par
+la seule règle d'encaissement ; la composition garde les profils des tags.
+
+Gel du 25/09 13h29 contre `baseline_v11` : **46/56** (+ Olaf top 3 contre le CC, + Galio top 3
+contre l'AP), aucune perte. Concordance : top-3 14,4 % (+18 −14, z +0,7), top-10 37,4 % (+19 −20).
+Malphite contre full AD reste en échec : tous les tanks prennent le même bonus, Malphite n'est
+plus un cas à part (choix du joueur) ; Sett passe par son palier A.
+
+Référence suivante : `snapshots/baseline_v12.json`, 46/56, même gel.

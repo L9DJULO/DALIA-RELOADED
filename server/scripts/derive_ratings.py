@@ -107,7 +107,8 @@ def fetch_facts() -> Tuple[Dict[str, dict], List[str]]:
             facts[key] = {"damage": p.get("damage", 0), "durability": p.get("durability", 0),
                           "crowd_control": p.get("crowdControl", 0), "mobility": p.get("mobility", 0),
                           "utility": p.get("utility", 0), "style": t.get("style", 5),
-                          "ranged": t.get("attackType") == "ranged", "subclasses": subclasses.get(key, [])}
+                          "ranged": t.get("attackType") == "ranged", "damage_type": t.get("damageType"),
+                          "subclasses": subclasses.get(key, [])}
     return {"_meta": {"ddragon": version, "fetched": time.strftime("%Y-%m-%d"), "unmatched_wiki": unmatched},
             **facts}, unmatched
 
@@ -202,6 +203,36 @@ def apply_teamfight(overrides: dict, teamfight: Dict[str, int]) -> dict:
     return out
 
 
+# Type de dégâts publié par Riot (CommunityDragon, tacticalInfo.damageType). Le profil
+# `damage` du chargeur vient des tags (Diana, Fighter/Assassin, y sort à 82 % physique),
+# mais la composition a été réglée dessus : le remplacer a coûté 1,2 point de
+# concordance top-10 (27/09). Le type Riot est donc un champ à part, `damage_type`,
+# lu par les règles qui jugent le profil de dégâts adverse.
+DAMAGE_TYPES = {"kPhysical": "physical", "kMagic": "magic", "kMixed": "mixed"}
+
+
+def apply_damage(overrides: dict, facts: dict) -> dict:
+    """Écrit le type de dégâts Riot ; un type posé par le joueur n'est jamais réécrit."""
+    facts = {k.lower(): v for k, v in facts.items() if not k.startswith("_")}
+    out = {}
+    for key, entry in overrides.items():
+        if isinstance(entry, dict) and not key.startswith("_") and entry.get("damage_type_source") != "joueur":
+            damage_type = DAMAGE_TYPES.get((facts.get(key.lower()) or {}).get("damage_type"))
+            if damage_type:
+                entry = {**entry, "damage_type": damage_type}
+        out[key] = entry
+    return out
+
+
+def fetch_damage_types() -> Dict[str, str]:
+    """Type de dégâts Riot de chaque champion, sans recollecter le reste des faits."""
+    with httpx.Client() as client:
+        version = _get_json(client, "https://ddragon.leagueoflegends.com/api/versions.json")[0]
+        ddragon = _get_json(client, f"https://ddragon.leagueoflegends.com/cdn/{version}/data/en_US/champion.json")["data"]
+        return {key: (_get_json(client, CDRAGON.format(info["key"])).get("tacticalInfo") or {}).get("damageType")
+                for key, info in sorted(ddragon.items())}
+
+
 def dump_overrides(data: dict) -> str:
     """Même format que le fichier versionné : indentation 2, LF (.gitattributes), sans saut de ligne final."""
     return json.dumps(data, indent=2)
@@ -240,6 +271,8 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--fetch", action="store_true", help="recollecter les faits publiés")
     ap.add_argument("--write", action="store_true", help="écrire les notes calculées dans les overrides")
+    ap.add_argument("--fetch-damage", action="store_true",
+                    help="ajouter aux faits le type de dégâts Riot, sans recollecter le reste")
     args = ap.parse_args()
     if args.fetch or not FACTS_PATH.exists():
         facts, unmatched = fetch_facts()
@@ -257,8 +290,16 @@ def main() -> int:
         rows = json.loads(pro_stats.read_text(encoding="utf-8"))["rows"]
         (DATA / "ratings_review.md").write_text(format_review(review_order(overrides, rows), overrides),
                                                 encoding="utf-8", newline="\n")
+    if args.fetch_damage:
+        raw = json.loads(FACTS_PATH.read_text(encoding="utf-8"))
+        for key, damage_type in fetch_damage_types().items():
+            if key in raw:
+                raw[key]["damage_type"] = damage_type
+        FACTS_PATH.write_text(json.dumps(raw, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
+        print("Types de dégâts Riot ajoutés aux faits")
     if args.write:
-        merged = merge_ratings(overrides, derived)
+        raw_facts = json.loads(FACTS_PATH.read_text(encoding="utf-8"))
+        merged = apply_damage(merge_ratings(overrides, derived), raw_facts)
         OVERRIDES.write_bytes(dump_overrides(merged).encode("utf-8"))
         print(f"Écrit : {OVERRIDES}")
     return 0

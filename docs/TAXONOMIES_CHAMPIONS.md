@@ -149,3 +149,29 @@ La réception partielle compte à moitié (bonus et malus « free kill »).
 - [arXiv 2605.18338 — Robust Player-Conditional Champion Ranking](https://arxiv.org/abs/2605.18338).
 - [Dignitas — The Disengage Playstyle](https://dignitas.gg/articles/the-good-ol-bait-and-switch-the-disengage-playstyle-in-lol),
   [Dignitas — Countering Engages](https://dignitas.gg/articles/countering-engages-a-quick-guide-on-countering-engage-champions).
+
+## Règles de cas particuliers reprises avec le joueur (27/09)
+
+`app/data/edge_cases.json` (48 règles nommant un champion) n'est plus lu par le moteur depuis la
+reprise du 09/09 ; `mechanics.py` n'en avait repris qu'une dizaine. Le joueur les reprend par
+paquets, sous forme de propriétés.
+
+**Paquet 1 — encaisser un type de dégâts.** « C'est plus les tanks, à quelques exceptions. »
+Contre une composition à ≥ 75 % de dégâts physiques ou ≥ 60 % magiques (au moins trois ennemis
+connus), tout tank (`Champion.is_tank`) encaisse ; exception nommée : **Kassadin** contre l'AP
+(`encaisse_ap` : « son passif et son Q »). Malphite n'est plus un cas à part.
+
+**Paquet 2 — ignorer le CC.** « Tricky » : **Olaf** et **Gangplank** seulement (`ignore_cc`),
+contre au moins trois sources de CC dur. Morgana garde sa règle propre (bouclier noir). CC dur :
+mécaniques du wiki (`app/data/kit_mechanics.json`, `scripts/refresh_kit_mechanics.py`) —
+l'ancien tag `hard_cc` comptait Master Yi, Olaf lui-même, Veigar et Zoe.
+**Écartés** : Sylas (« ça dépend des ultis en question »), Aphelios contre une composition sans
+CC (« non complètement »).
+
+**Profils de dégâts.** Aucun n'était saisi : les 173 venaient des tags Riot, et Diana
+(Fighter/Assassin) sortait à 82 % physique. Ils suivent désormais le type de dégâts publié par
+Riot (CommunityDragon `tacticalInfo.damageType` : 87 magiques, 78 physiques, 8 mixtes).
+
+**Paquet 3 — contre les tanks, contre les auto-attaqueurs.** Le moteur garde ses règles telles
+quelles : dégâts liés aux PV contre les tanks pour Vayne, Fiora, Gwen, Kog'Maw, Brand (« oui ») ;
+esquive des attaques pour Jax (E) et Nilah (W) seulement — Fiora et Pantheon « non ».
