@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import useUserStore from '../stores/userStore';
 import { fetchPoolAdvice, apiErrorText } from '../services/api';
-import '../workshop.css';
+import { ROLE_LABEL } from '../data/mock';
 
 export default function PoolAdvisor({ role }) {
   const championPool = useUserStore(s => s.championPool);
@@ -21,20 +21,33 @@ export default function PoolAdvisor({ role }) {
     catch (e) { if (!controller.signal.aborted) setError(apiErrorText(e, 'Analyse du pool indisponible. Réessaie.')); }
     finally { if (!controller.signal.aborted) setLoading(false); }
   }
-  return <details className="workshop pool-advisor"><summary>Améliorer mon pool {role}</summary>
-    <p>Cherche un champion qui apporte de nouvelles réponses de draft.</p>
-    <button onClick={analyze} disabled={loading || userLoading}>{loading ? 'Analyse…' : 'Identifier les manques'}</button>
-    {error && <p role="alert">{error}</p>}
-    {data && <div aria-live="polite">
-      <p><strong>Déjà couvert :</strong> {data.covered.join(', ') || 'aucun outil renseigné'}</p>
-      <p><strong>Options manquantes :</strong> {data.gaps.join(', ') || 'ton pool couvre les dimensions étudiées'}</p>
-      {data.suggestions.map(c => <article key={c.champion_id}><h4>{c.champion_name}</h4><p>{c.reason}</p>
-        <ol>{c.learning_plan.map(step => <li key={step}>{step}</li>)}</ol>
-        {inPool(c.champion_id)
-          ? <p className="muted">Ajouté au pool. Relance l’analyse pour recalculer les manques.</p>
-          : <button disabled={!profileAvailable} onClick={() => addToPool(role, { id: c.champion_id, key: c.champion_key }, 'D')}>Ajouter au niveau D — à apprendre</button>}
-      </article>)}
-      <p className="muted">{data.method} {data.note}</p>
-    </div>}
-  </details>;
+  return (
+    <details className="disclosure pool-advisor">
+      <summary>Améliorer mon pool {ROLE_LABEL[role] || role}</summary>
+      <div className="disclosure__body">
+        <p className="muted">Cherche un champion qui apporte de nouvelles réponses de draft.</p>
+        <div><button className="btn btn--sm" onClick={analyze} disabled={loading || userLoading}>{loading ? 'Analyse…' : 'Identifier les manques'}</button></div>
+        {error && <p className="notice notice--bad" role="alert">{error}</p>}
+        {data && (
+          <div className="advice" aria-live="polite">
+            <p><strong>Déjà couvert :</strong> {data.covered.join(', ') || 'aucun outil renseigné'}</p>
+            <p><strong>Options manquantes :</strong> {data.gaps.join(', ') || 'ton pool couvre les dimensions étudiées'}</p>
+            <ul className="advice__list">
+              {data.suggestions.map(c => (
+                <li key={c.champion_id} className="advice__item">
+                  <h4>{c.champion_name}</h4>
+                  <p>{c.reason}</p>
+                  <ol>{c.learning_plan.map(step => <li key={step}>{step}</li>)}</ol>
+                  {inPool(c.champion_id)
+                    ? <p className="muted">Ajouté au pool. Relance l'analyse pour recalculer les manques.</p>
+                    : <button className="btn btn--sm" disabled={!profileAvailable} onClick={() => addToPool(role, { id: c.champion_id, key: c.champion_key }, 'D')}>Ajouter au niveau D — à apprendre</button>}
+                </li>
+              ))}
+            </ul>
+            <p className="muted">{data.method} {data.note}</p>
+          </div>
+        )}
+      </div>
+    </details>
+  );
 }

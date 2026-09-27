@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────
-// Settings page — Soul Eater design tokens
+// Settings page — compte, client League, préférences d'analyse
 // ─────────────────────────────────────────────
 import React, { useState } from 'react';
 import useLCUStore from '../../stores/lcuStore';
@@ -8,27 +8,13 @@ import useUserStore from '../../stores/userStore';
 import { SectionLbl } from '../Primitives';
 import DraftPreferences from './DraftPreferences';
 
-function Card({ children }) {
-  return (
-    <section style={{
-      marginBottom: 18, padding: '16px 20px',
-      background: 'var(--ink-2)',
-      border: 'var(--edge-weight) solid var(--ink-5)',
-      boxShadow: '4px 4px 0 var(--ink-0)',
-    }}>
-      {children}
-    </section>
-  );
-}
-
 export default function SettingsPage() {
   const [connecting, setConnecting] = useState(false);
-
   const lcuConnected = useLCUStore(s => s.connected);
-  const summoner     = useLCUStore(s => s.summoner);
-  const lcuConnect   = useLCUStore(s => s.connect);
-  const user         = useAuthStore(s => s.user);
-  const userLogout   = useUserStore(s => s.logout);
+  const summoner = useLCUStore(s => s.summoner);
+  const lcuConnect = useLCUStore(s => s.connect);
+  const user = useAuthStore(s => s.user);
+  const userLogout = useUserStore(s => s.logout);
 
   const handleLCUConnect = async () => {
     setConnecting(true);
@@ -36,119 +22,52 @@ export default function SettingsPage() {
     setConnecting(false);
   };
 
-  const handleLogout = () => {
-    // userStore.logout() clears pool + dispatches `dalia:logout` which is
-    // also listened to by authStore + duoStore (token, profile, duo state cleared).
-    userLogout();
-  };
-
   return (
-    <div style={{ height: '100%', overflowY: 'auto', background: 'var(--ink-0)' }}>
-      <div style={{ maxWidth: 720, margin: '0 auto', padding: '24px 20px 64px' }}>
-
-        {/* Header */}
-        <div style={{ marginBottom: 22 }}>
-          <div style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 24, letterSpacing: '0.18em', color: 'var(--bone-0)', marginBottom: 4 }}>
-            PARAMÈTRES
-          </div>
-          <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--bone-2)', letterSpacing: '0.08em' }}>
-            CONFIGURATION DE L'APPLICATION
-          </div>
+    <div className="page settings">
+      <header className="page-head">
+        <div>
+          <h1 className="page-head__title">Paramètres</h1>
+          <p className="page-head__sub">Compte, client League et préférences d'analyse.</p>
         </div>
+      </header>
 
-        {/* Account */}
+      <div className="settings__body">
         {user && (
-          <Card>
-            <SectionLbl n={1}>COMPTE</SectionLbl>
-            <div>
-              <div style={{ fontFamily: 'var(--f-display)', fontSize: 16, letterSpacing: '0.06em', color: 'var(--bone-0)' }}>
-                {user.username}
-              </div>
-              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--bone-2)', marginTop: 2 }}>
-                {user.email}
-              </div>
-            </div>
-          </Card>
+          <section className="panel">
+            <SectionLbl n={1}>Compte</SectionLbl>
+            <p className="settings__user">{user.username}</p>
+            <p className="muted">{user.email}</p>
+          </section>
         )}
 
-        {/* LCU */}
-        <Card>
-          <SectionLbl n={2}>CLIENT LEAGUE (LCU)</SectionLbl>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12 }}>
-            <span className={`dot ${lcuConnected ? 'dot--on' : ''}`}/>
-            <span style={{
-              fontFamily: 'var(--f-display)', fontSize: 12, letterSpacing: '0.1em',
-              color: lcuConnected ? 'var(--ok)' : 'var(--bone-2)',
-            }}>
-              {lcuConnected ? 'CONNECTÉ' : 'DÉCONNECTÉ'}
-            </span>
+        <section className="panel">
+          <SectionLbl n={2}>Client League</SectionLbl>
+          <div className="settings__lcu">
+            <span className={`dot ${lcuConnected ? 'dot--on' : ''}`} aria-hidden="true"/>
+            <span className={lcuConnected ? 'settings__lcu-on' : 'muted'}>{lcuConnected ? 'Connecté' : 'Non connecté'}</span>
             {!lcuConnected && (
-              <button
-                onClick={handleLCUConnect}
-                disabled={connecting}
-                style={{
-                  marginLeft: 'auto',
-                  padding: '6px 14px',
-                  fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.18em',
-                  background: 'transparent', color: 'var(--accent)',
-                  border: '1.5px solid var(--accent)',
-                  cursor: connecting ? 'wait' : 'pointer',
-                  opacity: connecting ? 0.6 : 1,
-                }}
-              >
-                {connecting ? 'CONNEXION…' : '◇ CONNECTER'}
+              <button className="btn btn--sm" onClick={handleLCUConnect} disabled={connecting}>
+                {connecting ? 'Connexion…' : 'Connecter'}
               </button>
             )}
           </div>
-
           {summoner && (
-            <div style={{ padding: '10px 14px', background: 'var(--ink-3)', border: '1.5px solid var(--ink-5)', marginBottom: 10 }}>
-              <div style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 14, letterSpacing: '0.06em', color: 'var(--bone-0)' }}>
-                {summoner.gameName}
-                <span style={{ color: 'var(--bone-2)', fontSize: 12, marginLeft: 4 }}>#{summoner.tagLine}</span>
-              </div>
-              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--bone-2)', letterSpacing: '0.08em', marginTop: 2 }}>
-                NIV {summoner.summonerLevel} · {summoner.region || 'EUW'}
-              </div>
+            <div className="settings__summoner">
+              <p>{summoner.gameName}<span className="muted"> #{summoner.tagLine}</span></p>
+              <p className="lbl">Niveau {summoner.summonerLevel} · {summoner.region || 'EUW'}</p>
             </div>
           )}
+          <p className="muted settings__note">DALIA lit la sélection des champions dans le client League pour remplir la draft. Disponible uniquement dans l'application de bureau.</p>
+        </section>
 
-          <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--bone-3)', lineHeight: 1.7, letterSpacing: '0.05em' }}>
-            Le LCU se connecte au client League pour détecter les drafts en cours. Disponible uniquement dans l'application desktop (Tauri).
-          </div>
-        </Card>
+        <DraftPreferences n={3}/>
 
-        <DraftPreferences/>
-        {/* Logout — bouton clairement visible en bas */}
         {user && (
-          <div style={{ marginTop: 32, padding: '20px 0', borderTop: '1px solid var(--ink-5)' }}>
-            <button
-              onClick={handleLogout}
-              style={{
-                width: '100%', padding: '14px 0',
-                fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 13, letterSpacing: '0.28em',
-                background: 'var(--bad)',
-                color: '#fff',
-                border: 'var(--edge-weight) solid var(--bone-0)',
-                boxShadow: '5px 5px 0 var(--ink-0)',
-                cursor: 'pointer',
-                transition: 'transform 0.1s, box-shadow 0.1s',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.transform = 'translate(-2px,-2px)'; e.currentTarget.style.boxShadow = '7px 7px 0 var(--ink-0)'; }}
-              onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '5px 5px 0 var(--ink-0)'; }}
-            >
-              ↩ SE DÉCONNECTER
-            </button>
-            <div style={{ marginTop: 8, textAlign: 'center', fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--bone-3)', letterSpacing: '0.08em' }}>
-              Vide le token, le profil et le pool · retour à la page de connexion
-            </div>
-          </div>
+          <section className="settings__logout">
+            <button className="btn btn--danger btn--block" onClick={userLogout}>Se déconnecter</button>
+            <p className="muted">Vide le jeton, le profil et le pool de cet appareil, puis revient à la connexion.</p>
+          </section>
         )}
-
-        <div style={{ textAlign: 'center', fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--bone-3)', letterSpacing: '0.12em', marginTop: 24 }}>
-          DALIA v2.0 · DRAFT INTELLIGENCE
-        </div>
       </div>
     </div>
   );
