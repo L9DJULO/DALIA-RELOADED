@@ -87,6 +87,7 @@ Ce sont des pistes, pas des assertions : l'attente exacte n'a pas été tranché
 
 2. **`blind_pick_mid_no_zed_akali` — Lux > Akali.** « Je dirais Akali, je trouve Lux vraiment useless. »
    → Assertion à **inverser** : `Akali > Lux`. Contexte donné : « ici tous les blinds sont mauvais ».
+   *Inversée le 28/09 seulement* : le cas testait encore Lux > Akali ; elle échoue (Lux n°1).
 
 ## En suspens — ne pas trancher sans lui
 

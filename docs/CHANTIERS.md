@@ -671,6 +671,21 @@ Diamant 2+). Le correctif « flex à sa part réelle » n'a rien gagné (concord
 n'est pas retenu. Piste : mesurer le risque autrement que par les matchups — dépendance au
 jungler, dispersion des résultats, niveau requis.
 
+**Exploré le 28/09 : aucun signal ne confirme le joueur.** Quatre assertions en échec sur six
+disent la même chose (Yasuo, Zed, Malzahar trop haut en blind ou en premier pick) :
+
+| Signal | Mesure | Verdict |
+|---|---|---|
+| Matchups (27/09) | pires matchups, Émeraude+ et Diamant 2+ | ≈ 46 % pour Yasuo comme pour Syndra |
+| Dépendance au reste de la draft | écart-type des `d2` contre les ennemis des cinq postes et avec les alliés, pondéré par le pick rate | ne sépare pas : Annie 4,31 (la plus dispersée), Malzahar 4,29, Yasuo 4,19, Orianna 3,73, Syndra 3,61, Zed 3,52 |
+| Choix des pros | part des picks faits en phase blind, 1 050 picks mid (moyenne 26 %) | sépare Orianna (55 %, 121 picks) d'Akali (11 %) ou Ahri (4 %), mais Yasuo, Zed, Malzahar n'ont aucun pick pro mid : muet sur eux ; circulaire avec la concordance |
+| Résilience quand on est derrière | article d'iTero (1 M+ parties, retard d'or à 12 min) | demanderait les timelines Riot (clé, chantier 15) ; iTero range Malzahar parmi les picks sûrs |
+
+Décision du joueur (28/09) : **consigner et passer**. Les cas Yasuo, Zed et Malzahar restent en
+confiance basse. Au passage, `blind_pick_mid_no_zed_akali` testait encore Lux > Akali, attente
+rejetée par le joueur le 14/09 (« je trouve Lux vraiment useless ») : inversée, elle échoue
+(Lux n°1), calibration 58 → 57/64 (`baseline_v16`), moteur inchangé.
+
 ---
 
 ## 18. Règles de cas particuliers : 48 règles débranchées depuis la reprise

@@ -111,7 +111,7 @@
   {
     "id": "blind_pick_mid_no_zed_akali",
     "category": "blind_pick",
-    "description": "Mid blind — le terme adversaire futur doit placer Zed et Akali derriere des mages moins exposes",
+    "description": "Mid blind — Annie devant Zed ; Akali devant Lux (joueur, 14/09 : « je trouve Lux vraiment useless », « ici tous les blinds sont mauvais »)",
     "setup": {
       "my_team": "blue",
       "my_role": "mid",
@@ -153,8 +153,8 @@
       },
       {
         "type": "must_rank_higher_than",
-        "champion_a": "Lux",
-        "champion_b": "Akali"
+        "champion_a": "Akali",
+        "champion_b": "Lux"
       }
     ]
   },

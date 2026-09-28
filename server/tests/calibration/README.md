@@ -953,3 +953,12 @@ la référence : bot 24,6 → 24,4, jungle 20,7 → 20,7, mid 13,2 → 13,6, sup
 règle du joueur ; la calibration, sans biais de popularité, tranche.
 
 Référence suivante : `snapshots/baseline_v15.json`, **58/64**, même gel.
+
+## Risque du blind : quatre signaux sans résultat (28/09/2026)
+
+Détail dans `docs/CHANTIERS.md` (chantier 17). Aucun signal mesuré ne place Yasuo, Zed ou
+Malzahar derrière Syndra ou Annie en blind ; le joueur consigne et passe. Correction de la suite
+au passage : `blind_pick_mid_no_zed_akali` testait Lux > Akali, attente rejetée le 14/09 ;
+inversée en Akali > Lux, elle échoue (Lux n°1, Akali n°3). Moteur inchangé.
+
+Référence suivante : `snapshots/baseline_v16.json`, **57/64**, même gel.
