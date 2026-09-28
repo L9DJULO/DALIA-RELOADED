@@ -96,8 +96,13 @@ class ScoringConstants(BaseModel):
         "emerald": 1.0, "diamond": 0.8, "master_plus": 0.8,
     }
     # Composition marginale
+    # magic_damage / physical_damage à 1,5 depuis les sources comptées (28/09) : grille
+    # 3 x 3 x 3 (frontline, dégâts, avertissement) sur la calibration, 57 -> 58/64
+    # (Orianna > Zed contre une composition engage), concordance top-3 16,6 % (z +0,1
+    # contre la référence) ; un avertissement à 2,0 gagnait le même cas mais coûtait
+    # 2,5 points de top-3 au support. La frontline ne départage rien : laissée à 1,5.
     comp_tool_weights: Dict[str, float] = {
-        "frontline": 1.5, "engage": 1.5, "magic_damage": 1.0, "physical_damage": 1.0, "range": 1.0,
+        "frontline": 1.5, "engage": 1.5, "magic_damage": 1.5, "physical_damage": 1.5, "range": 1.0,
         "peel": 1.0, "anti_mobility": 0.5, "anti_tank": 0.5, "anti_attacks": 0.5,
     }
     comp_warning_penalty: Dict[str, float] = {"critical": 2.0, "warning": 1.0}

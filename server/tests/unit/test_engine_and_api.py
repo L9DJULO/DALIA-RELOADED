@@ -368,4 +368,9 @@ async def test_damage_sources_reach_the_composition_term(catalog):
         champion_pool={"mid": [{"champion_id": 103}, {"champion_id": 157}]}, enable_wildcard=False)
     result = await DraftEngine(catalog, catalog.fetcher).recommend(body)
     ahri, yasuo = _terms(result, 103)["composition"], _terms(result, 157)["composition"]
-    assert ahri.value - yasuo.value == pytest.approx(2.0)
+    # Ahri couvre l'AP (outil magic_damage) et laisse une seule source (avertissement) ;
+    # Yasuo n'en laisse aucune (critique). Quatre alliés : pas d'atténuation.
+    from app.config import config
+    s = config.scoring
+    expected = s.comp_tool_weights["magic_damage"] + s.comp_warning_penalty["critical"] - s.comp_warning_penalty["warning"]
+    assert expected > 0 and ahri.value - yasuo.value == pytest.approx(expected)
