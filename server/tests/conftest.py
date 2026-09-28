@@ -35,6 +35,7 @@ def catalog():
     for cid, key, roles in rows:
         tank = key in {"Poppy", "Malphite", "JarvanIV"}
         champion = Champion(id=cid, key=key, name=key, roles=roles, tags=["Tank"] if tank else ["Mage"],
+            properties=["tank"] if key in {"Poppy", "Malphite"} else [],   # Warden, Vanguard ; Jarvan IV est un Diver
             ratings=ChampionRatings(tankiness=5 if tank else 2, cc=4 if tank else 3, engage=4 if tank else 2),
             attack_range=ranges[key],
             damage=DamageProfile(physical=10 if "mid" in roles else 80, magical=85 if "mid" in roles else 15))

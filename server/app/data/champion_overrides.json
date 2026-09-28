@@ -29,7 +29,8 @@
       5
     ],
     "properties": [
-      "reception_partielle"
+      "reception_partielle",
+      "tank"
     ],
     "damage_type": "physical"
   },
@@ -138,7 +139,8 @@
     ],
     "ratings_source": "joueur",
     "properties": [
-      "reception"
+      "reception",
+      "tank"
     ],
     "damage_type": "magic"
   },
@@ -192,7 +194,10 @@
       5
     ],
     "ratings_source": "joueur",
-    "damage_type": "magic"
+    "damage_type": "magic",
+    "properties": [
+      "tank"
+    ]
   },
   "Anivia": {
     "roles": [
@@ -481,7 +486,8 @@
     ],
     "ratings_source": "joueur",
     "properties": [
-      "reception"
+      "reception",
+      "tank"
     ],
     "damage_type": "magic"
   },
@@ -687,7 +693,8 @@
       3
     ],
     "properties": [
-      "reception"
+      "reception",
+      "tank"
     ],
     "damage_type": "physical"
   },
@@ -766,7 +773,10 @@
       3,
       5
     ],
-    "damage_type": "mixed"
+    "damage_type": "mixed",
+    "properties": [
+      "tank"
+    ]
   },
   "Ekko": {
     "roles": [
@@ -984,7 +994,8 @@
     ],
     "ratings_source": "joueur",
     "properties": [
-      "reception"
+      "reception",
+      "tank"
     ],
     "damage_type": "magic"
   },
@@ -1047,7 +1058,10 @@
       3,
       5
     ],
-    "damage_type": "physical"
+    "damage_type": "physical",
+    "properties": [
+      "tank"
+    ]
   },
   "Gnar": {
     "roles": [
@@ -1099,7 +1113,8 @@
     ],
     "ratings_source": "joueur",
     "properties": [
-      "reception"
+      "reception",
+      "tank"
     ],
     "damage_type": "magic"
   },
@@ -1261,7 +1276,10 @@
       3,
       3
     ],
-    "damage_type": "physical"
+    "damage_type": "physical",
+    "properties": [
+      "tank"
+    ]
   },
   "Irelia": {
     "roles": [
@@ -1839,7 +1857,8 @@
       5
     ],
     "properties": [
-      "reception"
+      "reception",
+      "tank"
     ],
     "damage_type": "physical"
   },
@@ -1917,7 +1936,10 @@
       5
     ],
     "ratings_source": "joueur",
-    "damage_type": "magic"
+    "damage_type": "magic",
+    "properties": [
+      "tank"
+    ]
   },
   "Lillia": {
     "roles": [
@@ -2089,7 +2111,10 @@
       5
     ],
     "ratings_source": "joueur",
-    "damage_type": "magic"
+    "damage_type": "magic",
+    "properties": [
+      "tank"
+    ]
   },
   "Malzahar": {
     "roles": [
@@ -2142,7 +2167,8 @@
     ],
     "ratings_source": "joueur",
     "properties": [
-      "reception_partielle"
+      "reception_partielle",
+      "tank"
     ],
     "damage_type": "magic"
   },
@@ -2303,7 +2329,10 @@
       3,
       3
     ],
-    "damage_type": "magic"
+    "damage_type": "magic",
+    "properties": [
+      "tank"
+    ]
   },
   "Morgana": {
     "roles": [
@@ -2405,7 +2434,9 @@
       5
     ],
     "damage_type": "physical",
-    "properties": []
+    "properties": [
+      "tank"
+    ]
   },
   "Nautilus": {
     "roles": [
@@ -2423,7 +2454,10 @@
       5
     ],
     "ratings_source": "joueur",
-    "damage_type": "magic"
+    "damage_type": "magic",
+    "properties": [
+      "tank"
+    ]
   },
   "Neeko": {
     "roles": [
@@ -2547,7 +2581,10 @@
       1,
       5
     ],
-    "damage_type": "magic"
+    "damage_type": "magic",
+    "properties": [
+      "tank"
+    ]
   },
   "Olaf": {
     "roles": [
@@ -2641,7 +2678,8 @@
       5
     ],
     "properties": [
-      "reception"
+      "reception",
+      "tank"
     ],
     "damage_type": "magic"
   },
@@ -2685,7 +2723,8 @@
     ],
     "ratings_source": "joueur",
     "properties": [
-      "reception"
+      "reception",
+      "tank"
     ],
     "damage_type": "physical"
   },
@@ -2822,7 +2861,8 @@
       5
     ],
     "properties": [
-      "reception"
+      "reception",
+      "tank"
     ],
     "damage_type": "magic"
   },
@@ -2871,7 +2911,10 @@
       4
     ],
     "ratings_source": "joueur",
-    "damage_type": "magic"
+    "damage_type": "magic",
+    "properties": [
+      "tank"
+    ]
   },
   "Renata": {
     "roles": [
@@ -3088,7 +3131,8 @@
       3
     ],
     "properties": [
-      "reception"
+      "reception",
+      "tank"
     ],
     "damage_type": "magic"
   },
@@ -3149,7 +3193,8 @@
     ],
     "ratings_source": "joueur",
     "properties": [
-      "reception"
+      "reception",
+      "tank"
     ],
     "damage_type": "physical"
   },
@@ -3190,7 +3235,8 @@
     ],
     "ratings_source": "joueur",
     "properties": [
-      "reception"
+      "reception",
+      "tank"
     ],
     "damage_type": "mixed"
   },
@@ -3283,7 +3329,8 @@
       5
     ],
     "properties": [
-      "reception"
+      "reception",
+      "tank"
     ],
     "damage_type": "physical"
   },
@@ -3336,7 +3383,8 @@
       5
     ],
     "properties": [
-      "reception"
+      "reception",
+      "tank"
     ],
     "damage_type": "physical"
   },
@@ -3506,7 +3554,8 @@
     "ratings_source": "joueur",
     "properties": [
       "reception",
-      "protege_carry"
+      "protege_carry",
+      "tank"
     ],
     "damage_type": "magic"
   },
@@ -3590,7 +3639,8 @@
     ],
     "ratings_source": "joueur",
     "properties": [
-      "reception"
+      "reception",
+      "tank"
     ],
     "damage_type": "magic"
   },
@@ -3693,7 +3743,10 @@
       3,
       5
     ],
-    "damage_type": "physical"
+    "damage_type": "physical",
+    "properties": [
+      "tank"
+    ]
   },
   "Tryndamere": {
     "roles": [
@@ -3802,7 +3855,10 @@
       3,
       5
     ],
-    "damage_type": "mixed"
+    "damage_type": "mixed",
+    "properties": [
+      "tank"
+    ]
   },
   "Urgot": {
     "roles": [
@@ -3832,7 +3888,8 @@
       3
     ],
     "properties": [
-      "reception"
+      "reception",
+      "tank"
     ],
     "damage_type": "physical"
   },
@@ -4119,7 +4176,10 @@
       3,
       5
     ],
-    "damage_type": "mixed"
+    "damage_type": "mixed",
+    "properties": [
+      "tank"
+    ]
   },
   "Warwick": {
     "roles": [
@@ -4301,7 +4361,10 @@
       3,
       3
     ],
-    "damage_type": "physical"
+    "damage_type": "physical",
+    "properties": [
+      "tank"
+    ]
   },
   "Yunara": {
     "roles": [
@@ -4398,7 +4461,10 @@
       1,
       5
     ],
-    "damage_type": "magic"
+    "damage_type": "magic",
+    "properties": [
+      "tank"
+    ]
   },
   "Zed": {
     "roles": [

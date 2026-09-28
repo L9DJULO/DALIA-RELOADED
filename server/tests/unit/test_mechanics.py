@@ -136,3 +136,36 @@ def test_safe_first_pick_only_in_blind(catalog):
     blind = DraftState(my_role="mid", my_pick_order=1)
     assert any(r["id"] == "safe_first_pick" for r in analyzer.evaluate(liss, blind)[1])
     assert not any(r["id"] == "safe_first_pick" for r in analyzer.evaluate(liss, draft([103], role="mid"))[1])
+
+
+def _built(key, properties=(), tags=("Marksman",), tankiness=2, physical=80):
+    from app.models.champion import Champion, ChampionRatings, DamageProfile
+    return Champion(id=9100 + len(key), key=key, name=key, tags=list(tags), properties=list(properties),
+                    ratings=ChampionRatings(tankiness=tankiness),
+                    damage=DamageProfile(physical=physical, magical=100 - physical))
+
+
+def test_survivability_alone_does_not_make_a_tank(catalog):
+    """Joueur (28/09) : tank = Vanguard, Warden, Juggernaut. Xayah (tankiness 4 : R
+    intouchable) n'encaisse pas une composition physique."""
+    xayah = _built("Xayah", tankiness=4)
+    _, rules = MechanicsAnalyzer(catalog).evaluate(xayah, draft([222, 81, 67, 22], role="bot"))
+    assert not any(r["id"] == "resists_damage_profile" for r in rules)
+
+
+def test_a_juggernaut_counts_as_a_tank_without_the_riot_tag(catalog):
+    """Garen porte le tag Fighter et une tankiness moyenne, mais c'est un Juggernaut."""
+    garen = _built("Garen", properties=["tank"], tags=("Fighter",), tankiness=3)
+    _, rules = MechanicsAnalyzer(catalog).evaluate(garen, draft([222, 81, 67, 22]))
+    assert any(r["id"] == "resists_damage_profile" for r in rules)
+
+
+def test_health_scaling_damage_targets_tanks_not_survivable_carries(catalog):
+    """Vayne contre les tanks : Jarvan IV (Diver) et un carry à tankiness 4 ne comptent pas."""
+    analyzer = MechanicsAnalyzer(catalog)
+    tristana = _built("Tristana", tankiness=4)
+    catalog._by_id[tristana.id] = tristana
+    _, rules = analyzer.evaluate(catalog.get_by_key("Vayne"), draft([59, tristana.id], role="bot"))
+    assert not any(r["id"] == "health_scaling_damage" for r in rules)
+    _, rules = analyzer.evaluate(catalog.get_by_key("Vayne"), draft([54], role="bot"))
+    assert any(r["id"] == "health_scaling_damage" and r["champions"] == ["Malphite"] for r in rules)

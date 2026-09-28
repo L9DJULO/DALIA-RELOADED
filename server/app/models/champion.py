@@ -63,7 +63,12 @@ class Champion(BaseModel):
 
     @property
     def is_tank(self) -> bool:
-        return "Tank" in self.tags or self.ratings.tankiness >= 4
+        """Propriété `tank` du joueur (28/09) : Vanguard, Warden et Juggernaut du wiki.
+
+        Ni le tag Riot Tank ni la tankiness : celle-ci mesure la survie (dash,
+        intouchabilité), et faisait de Xayah, Tristana ou Yuumi des tanks.
+        """
+        return "tank" in self.properties
 
     @property
     def primary_damage_type(self) -> str:
