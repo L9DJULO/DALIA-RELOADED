@@ -62,10 +62,9 @@ server/app/data/models/
 # ── Cache (regenerated at runtime) ──
 server/app/data/cache/
 !server/app/data/cache/.gitkeep
-# Snapshot gelé du cache pour la calibration : local, régénérable par --freeze-cache
-server/app/data/cache-frozen*/
-# Snapshots de comparaison de la calibration : locaux, regenerables
-server/tests/calibration/snapshots/
+# Le gel de calibration (cache-frozen/) et ses snapshots de comparaison sont versionnés
+# depuis le chantier 9 ; seules les copies de secours datées restent locales.
+server/app/data/cache-frozen-*/
 # Collecte pro interrompue, gardée à côté de la dernière complète pour inspection
 server/app/data/*.incomplete.json
 

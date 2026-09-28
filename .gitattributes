@@ -2,3 +2,7 @@
 # l'éditeur. Les scripts PowerShell restent en CRLF pour Windows PowerShell 5.1.
 * text=auto eol=lf
 *.ps1 text eol=crlf
+
+# Gel de calibration et snapshots : données générées, pas de diff ligne à ligne.
+server/app/data/cache-frozen/** -diff linguist-generated=true
+server/tests/calibration/snapshots/** -diff linguist-generated=true

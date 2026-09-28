@@ -1,0 +1,36 @@
+{
+  "frozen_at": 1790335766.2020128,
+  "entries": 684,
+  "source": "C:\\Users\\Ordi\\Desktop\\TRAVAIL\\PROJETPERSO\\DALIA-RELOADED\\server\\app\\data\\cache",
+  "ddragon_version": "16.19.1",
+  "tier": "master_plus",
+  "added": 0,
+  "extended": [
+    {
+      "at": 1790548877.1912668,
+      "added": 0
+    },
+    {
+      "at": 1790549960.5225413,
+      "added": 110
+    },
+    {
+      "at": 1790550020.5491602,
+      "added": 0
+    },
+    {
+      "at": 1790554926.7426968,
+      "added": 133
+    },
+    {
+      "at": 1790601618.3257334,
+      "added": 0
+    }
+  ],
+  "pruned": [
+    {
+      "at": 1790609534.1539605,
+      "removed": 2026
+    }
+  ]
+}
