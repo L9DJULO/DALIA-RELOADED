@@ -202,3 +202,14 @@ Présentés avec le classement du moteur (gel du 25/09) et les données Lolalyti
 
 Généraliser `edge_case_tryndamere_no_cc` : sans objet, le cas est retiré depuis le 27/09 (les
 données avaient raison). Brand et Vel'Koz : déjà départagés le 25/09.
+
+## Composition sur des dégâts mesurés — 28/09
+
+| Question | Décision du joueur |
+|---|---|
+| Approche | Profils mesurés, sources comptées, tank et frontline unifiés, mesure par étapes puis réglage |
+| Qui tient le front | Tank + Divers du wiki, sans Elise ni Rengar |
+| Quand une compo est-elle trop AD | « Une seule vraie source AP » : à cinq, aucune est critique, une seule avertit ; symétrique |
+| Seuil d'une vraie source | 10 000 dégâts du type par partie, validé sur l'échantillon (Seraphine et Kai'Sa au-dessus, Karma et les supports en dessous) |
+| Cas de calibration | `comp_full_ad_allies_mid_ap_source` : alliés Darius, Lee Sin, Jinx, Leona ; Syndra > Zed |
+| Mise en œuvre | « Go direct implémente » : sans document de plan, spec validée telle quelle |

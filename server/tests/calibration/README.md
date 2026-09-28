@@ -911,3 +911,45 @@ support 18,1 → 18,6, top 6,2 → 5,9.
 
 Référence suivante : `snapshots/baseline_v14.json`, **55/63**, gel du 25/09 13h29 étendu le
 28/09 (2 710 entrées).
+
+## Composition sur des dégâts mesurés (28/09/2026)
+
+Spec `docs/superpowers/specs/2026-09-28-composition-mesuree-design.md`. Cas ajouté avant toute
+mesure : `comp_full_ad_allies_mid_ap_source` (Syndra > Zed face à des alliés sans source AP),
+qui passait déjà (écart 5,3). Référence : **56/64** (`baseline_v15_pre`, gel du 25/09 étendu).
+
+**Concordance.** Le cache vivant avait été rafraîchi par un run `--live-cache` (114 entrées,
+dont une tier list) : la concordance de la veille n'était plus appariable. Copie du cache
+vivant dans un répertoire réservé, lue sans expiration par tous les runs du chantier ; chaque
+étape rejouée depuis un worktree git à son commit. 5 250 décisions, McNemar apparié.
+
+| État | Calibration | Top-3 | Top-10 | Contre l'état précédent |
+|---|---|---|---|---|
+| référence | 56/64 | 16,6 % | 40,7 % | — |
+| 1. profils mesurés | 57/64 | 16,3 % | 40,8 % | top-3 +27 −40 (z −1,6), top-10 +71 −63 (z +0,7) |
+| 2. tank et frontline | 57/64 | 16,3 % | 41,0 % | top-3 +51 −53 (z −0,2), top-10 +111 −100 (z +0,8) |
+| 3. sources comptées | 57/64 | 16,4 % | 40,5 % | top-3 +37 −31 (z +0,7), top-10 +53 −82 (**z −2,5**) |
+| **3 + dégâts à 1,5** | **58/64** | **16,6 %** | **40,4 %** | contre la référence : top-3 +80 −79 (z +0,1), top-10 +140 −157 (z −1,0) |
+
+Étape 1 : Lulu > Nautilus contre un engage passe (en échec depuis le 14/09) ; Malphite passe
+n°1 contre le full AD, Galio monte contre l'AP. Étape 2 : 12 rangs, aucun basculement (Xayah
+perd le bonus de tank de l'archétype, Pantheon devient frontline). Étape 3 : 6 rangs.
+
+**Réglage.** L'étape 3 seule recule en top-10 (z −2,5) ; grille 3 × 3 × 3 sur la calibration
+(`frontline` ∈ {0,75 ; 1,5 ; 2,25}, `magic_damage` = `physical_damage` ∈ {0,5 ; 1,0 ; 1,5},
+avertissement ∈ {0,5 ; 1,0 ; 2,0}, critique au double). La frontline ne change rien ; 58/64 dès
+que l'outil dégâts pèse 1,5 ou l'avertissement 2,0, toujours par `comp_engage_mid_peel`
+(Orianna > Zed, cas de référence du chantier 5). Concordance des trois meilleurs points :
+
+| Point | Top-3 | Top-10 | Support top-3 |
+|---|---|---|---|
+| avertissement 2,0 | 16,0 % (z −2,2) | 40,2 % (z −1,5) | 18,6 → 16,1 % |
+| **dégâts 1,5** | **16,6 % (z +0,1)** | **40,4 % (z −1,0)** | 18,6 → 18,4 % |
+| les deux | 16,2 % (z −1,5) | 40,1 % (z −1,7) | 18,6 → 16,6 % |
+
+**Retenu : dégâts à 1,5**, seul point à 58/64 sans recul significatif. Top-3 par poste contre
+la référence : bot 24,6 → 24,4, jungle 20,7 → 20,7, mid 13,2 → 13,6, support 18,6 → 18,4, top
+5,8 → 6,0. Par rapport à l'étape 2 seule, le top-10 perd 0,6 point (z −3,0) pour ce cas et la
+règle du joueur ; la calibration, sans biais de popularité, tranche.
+
+Référence suivante : `snapshots/baseline_v15.json`, **58/64**, même gel.

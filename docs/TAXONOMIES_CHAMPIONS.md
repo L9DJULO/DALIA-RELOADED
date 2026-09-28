@@ -172,6 +172,20 @@ Trundle, Udyr, Urgot, Volibear, Yorick, Zac. Hors liste : Cho'Gath et Singed (Sp
 les Divers (Jarvan IV, Vi, Hecarim…). Un test vérifie que la propriété suit les sous-classes ;
 un écart voulu par le joueur s'y nomme.
 
+**Frontline** (28/09, joueur) : ce qui **tient le contact**, là où le tank est ce qui encaisse.
+Tank + Divers du wiki, sans Elise ni Rengar (assassins en pratique) : 52 champions, propriété
+`frontline` (`Champion.is_frontline`). Les 17 Divers retenus : Ambessa, Briar, Camille, Diana,
+Hecarim, Irelia, Jarvan IV, Lee Sin, Olaf, Pantheon, Rek'Sai, Renekton, Shyvana, Vi, Warwick,
+Wukong, Xin Zhao. Lue par la couverture et l'avertissement de composition, les manques de la
+composition adverse et les raisons ; l'archétype et le repli de synergie lisent le tank.
+
+**Sources de dégâts** (28/09, joueur : « trop AD, c'est une seule vraie source AP ») : un
+champion est une vraie source d'un type s'il en inflige au moins 10 000 par partie (mesure
+Master+). La coupure de l'échantillon tombe là : Seraphine 10,1 k et Kai'Sa 10,0 k au-dessus,
+Karma 8,5 k et les supports enchanteurs ou tanks (5,7 à 7,2 k) en dessous. Kai'Sa, Varus et
+Dr. Mundo sont sources des deux types. `scripts/refresh_damage.py` imprime les deux listes à
+chaque collecte.
+
 **Paquet 2 — ignorer le CC.** « Tricky » : **Olaf** et **Gangplank** seulement (`ignore_cc`),
 contre au moins trois sources de CC dur. Morgana garde sa règle propre (bouclier noir). CC dur :
 mécaniques du wiki (`app/data/kit_mechanics.json`, `scripts/refresh_kit_mechanics.py`) —
@@ -182,6 +196,9 @@ CC (« non complètement »).
 **Profils de dégâts.** Aucun n'était saisi : les 173 venaient des tags Riot, et Diana
 (Fighter/Assassin) sortait à 82 % physique. Ils suivent désormais le type de dégâts publié par
 Riot (CommunityDragon `tacticalInfo.damageType` : 87 magiques, 78 physiques, 8 mixtes).
+**Mesurés depuis le 28/09** : dégâts infligés aux champions par partie et par type, Lolalytics
+(chiffres Mobalytics), Master+, 30 jours — Diana 8 % physique, Kog'Maw 31 % (son W est
+magique). Le type Riot reste le repli d'un champion non mesuré.
 
 **Paquet 3 — contre les tanks, contre les auto-attaqueurs.** Le moteur garde ses règles telles
 quelles : dégâts liés aux PV contre les tanks pour Vayne, Fiora, Gwen, Kog'Maw, Brand (« oui ») ;

@@ -4,8 +4,7 @@ Tout ce qu'on a identifié et volontairement mis de côté, avec ce qui le bloqu
 pas le faire. Tenu à jour au fil des découvertes : rien ne doit disparaître dans l'historique de
 conversation.
 
-Dernière mise à jour : 28 septembre 2026, arbitrages des cas en attente et définition du tank
-(chantiers 4, 6, 7, 17 et 18).
+Dernière mise à jour : 28 septembre 2026, composition sur des dégâts mesurés (chantiers 5 et 18).
 
 ---
 
@@ -197,6 +196,11 @@ concordance pro (z = −3,9). Détail dans le `README.md` de la calibration.
 L'écart Zed − Orianna est passé de +5,23 à **+1,51**, Orianna de n°5 à **n°2** — par le signal
 méta corrigé (chantier 13), pas par ces leviers. **Reste ouvert** : le cas de référence échoue
 encore. Suite : réarbitrer `teamfight` et noter les mids (chantier 4), puis re-mesurer le terme.
+
+**Le cas de référence passe le 28/09**, par la composition mesurée (chantier 18) : la composition
+alliée n'a qu'une vraie source AP, Zed n'en apporte pas, Orianna si. Orianna n°4, Zed n°5,
+écart 0,52 — sous l'incertitude : le cas passe sans se décider. Le défaut de fond (le duel de
+couloir pèse plus que l'apport à la partie) reste ouvert ; aucun levier du chantier 5 n'y a servi.
 
 ---
 
@@ -684,7 +688,8 @@ consignés : ruées (Janna, Milio, Taliyah, Vex). Sans réponse : cibles immobil
 
 **Chantier ouvert par la reprise** : les profils de dégâts viennent des tags (Diana 82 %
 physique). Les corriger seuls coûte 1,2 point de concordance top-10, la composition étant réglée
-dessus : à corriger avec un réglage de la composition, pas avant.
+dessus : à corriger avec un réglage de la composition, pas avant. **Soldé le 28/09**, voir
+« Composition sur des dégâts mesurés » plus bas.
 
 **Tank redéfini le 28/09.** « Encaisser » et « contre les tanks » lisaient `is_tank` = tag Riot
 Tank ou `tankiness` ≥ 4 : 53 champions, dont Xayah, Tristana, Yuumi et Bard ; dans le cas
@@ -696,4 +701,32 @@ Calibration 55/63 inchangée (0 assertion basculée, 3 rangs) ; concordance top-
 **Reste ouvert** : deux copies de l'ancienne définition vivent hors de `Champion.is_tank`.
 `composition_archetype.py` donne au « tank » un bonus d'archétype (encaisser l'engage ou le
 poke) et `reasons.py` écrit « Frontline {allié} protège {candidat} », qui peut nommer Xayah. Les
-aligner touche le scoring de composition : à mesurer comme une vague.
+aligner touche le scoring de composition : à mesurer comme une vague. **Soldé le 28/09** (six
+copies en fait), ci-dessous.
+
+### Composition sur des dégâts mesurés (28/09)
+
+Spec `2026-09-28-composition-mesuree`, arbitrée avec le joueur. Trois étapes mesurées chacune,
+puis un réglage ; détail dans le `README.md` de la calibration.
+
+1. **Profils mesurés** : dégâts infligés par type, Lolalytics (chiffres Mobalytics), Master+,
+   30 jours, 173/173 (`scripts/refresh_damage.py`, `app/data/damage_profiles.json`). Diana
+   passe de 82 % physique à 8 %. Calibration 56 → 57/64 (Lulu > Nautilus contre un engage, en
+   échec depuis le 14/09) ; concordance neutre (top-3 z −1,6, top-10 z +0,7) — là où le type
+   Riot seul coûtait 1,2 point de top-10 le 27/09.
+2. **Tank et frontline** : frontline = tank + Divers, sans Elise ni Rengar (52). Six copies de
+   l'ancienne définition remplacées. Neutre sur les deux instruments.
+3. **Sources de dégâts** : ≥ 10 000 dégâts du type par partie ; à cinq, aucune source AP est
+   critique, une seule avertit (joueur : « trop AD, c'est une seule vraie source AP »).
+   Réglage : outils `magic_damage` / `physical_damage` à 1,5 → Orianna > Zed passe (chantier 5).
+
+Bilan contre la référence du 28/09 : calibration **56 → 58/64**, concordance top-3 16,6 → 16,6 %
+(z +0,1), top-10 40,7 → 40,4 % (z −1,0).
+
+**Reste ouvert** :
+
+- L'étape 3 coûte du top-10 par rapport à l'étape 2 seule (41,0 → 40,4 %, z −3,0) pour un cas
+  de calibration et la règle du joueur ; la calibration, sans biais de popularité, a tranché.
+- Profils par poste et variantes de build : Kai'Sa, Varus et Dr. Mundo sortent sources des deux
+  types (chantier 8).
+- La note `tankiness` ne définit plus rien mais reste lue ailleurs comme survie (chantier 1).
