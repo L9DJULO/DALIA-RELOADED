@@ -1,0 +1,872 @@
+{
+ "_meta": {
+  "source": "Lolalytics (Mobalytics), dégâts infligés aux champions par partie, master_plus, 30 jours",
+  "fetched": "2026-09-28",
+  "failed": []
+ },
+ "Aatrox": {
+  "physical": 20044,
+  "magic": 1836,
+  "true": 973
+ },
+ "Ahri": {
+  "physical": 1823,
+  "magic": 17267,
+  "true": 5027
+ },
+ "Akali": {
+  "physical": 1463,
+  "magic": 21329,
+  "true": 1818
+ },
+ "Akshan": {
+  "physical": 22630,
+  "magic": 2169,
+  "true": 1449
+ },
+ "Alistar": {
+  "physical": 1098,
+  "magic": 5964,
+  "true": 492
+ },
+ "Ambessa": {
+  "physical": 22166,
+  "magic": 441,
+  "true": 1189
+ },
+ "Amumu": {
+  "physical": 1478,
+  "magic": 12711,
+  "true": 2234
+ },
+ "Anivia": {
+  "physical": 1484,
+  "magic": 18719,
+  "true": 1113
+ },
+ "Annie": {
+  "physical": 1054,
+  "magic": 22617,
+  "true": 1167
+ },
+ "Aphelios": {
+  "physical": 23652,
+  "magic": 1076,
+  "true": 414
+ },
+ "Ashe": {
+  "physical": 20017,
+  "magic": 1781,
+  "true": 299
+ },
+ "AurelionSol": {
+  "physical": 258,
+  "magic": 24917,
+  "true": 603
+ },
+ "Aurora": {
+  "physical": 1710,
+  "magic": 24498,
+  "true": 1534
+ },
+ "Azir": {
+  "physical": 694,
+  "magic": 24927,
+  "true": 492
+ },
+ "Bard": {
+  "physical": 3534,
+  "magic": 6753,
+  "true": 1008
+ },
+ "BelVeth": {
+  "physical": 11835,
+  "magic": 1762,
+  "true": 3806
+ },
+ "Blitzcrank": {
+  "physical": 2778,
+  "magic": 5347,
+  "true": 735
+ },
+ "Brand": {
+  "physical": 984,
+  "magic": 19184,
+  "true": 754
+ },
+ "Braum": {
+  "physical": 1427,
+  "magic": 5832,
+  "true": 242
+ },
+ "Briar": {
+  "physical": 18735,
+  "magic": 2087,
+  "true": 2124
+ },
+ "Caitlyn": {
+  "physical": 23409,
+  "magic": 663,
+  "true": 432
+ },
+ "Camille": {
+  "physical": 14338,
+  "magic": 1353,
+  "true": 7848
+ },
+ "Cassiopeia": {
+  "physical": 424,
+  "magic": 22284,
+  "true": 323
+ },
+ "Chogath": {
+  "physical": 3822,
+  "magic": 9501,
+  "true": 5685
+ },
+ "Corki": {
+  "physical": 17828,
+  "magic": 4999,
+  "true": 3957
+ },
+ "Darius": {
+  "physical": 15920,
+  "magic": 53,
+  "true": 4627
+ },
+ "Diana": {
+  "physical": 2063,
+  "magic": 21231,
+  "true": 1566
+ },
+ "DrMundo": {
+  "physical": 10865,
+  "magic": 13094,
+  "true": 296
+ },
+ "Draven": {
+  "physical": 25676,
+  "magic": 67,
+  "true": 420
+ },
+ "Ekko": {
+  "physical": 2350,
+  "magic": 16566,
+  "true": 2243
+ },
+ "Elise": {
+  "physical": 1382,
+  "magic": 16880,
+  "true": 1714
+ },
+ "Evelynn": {
+  "physical": 634,
+  "magic": 20078,
+  "true": 1490
+ },
+ "Ezreal": {
+  "physical": 18969,
+  "magic": 7776,
+  "true": 432
+ },
+ "Fiddlesticks": {
+  "physical": 226,
+  "magic": 18316,
+  "true": 1301
+ },
+ "Fiora": {
+  "physical": 13802,
+  "magic": 1117,
+  "true": 8332
+ },
+ "Fizz": {
+  "physical": 2700,
+  "magic": 17657,
+  "true": 2139
+ },
+ "Galio": {
+  "physical": 337,
+  "magic": 18206,
+  "true": 578
+ },
+ "Gangplank": {
+  "physical": 17998,
+  "magic": 5099,
+  "true": 4392
+ },
+ "Garen": {
+  "physical": 17002,
+  "magic": 49,
+  "true": 4964
+ },
+ "Gnar": {
+  "physical": 18325,
+  "magic": 3682,
+  "true": 376
+ },
+ "Gragas": {
+  "physical": 1831,
+  "magic": 19610,
+  "true": 505
+ },
+ "Graves": {
+  "physical": 19529,
+  "magic": 796,
+  "true": 2295
+ },
+ "Gwen": {
+  "physical": 3491,
+  "magic": 16924,
+  "true": 4523
+ },
+ "Hecarim": {
+  "physical": 16776,
+  "magic": 3008,
+  "true": 631
+ },
+ "Heimerdinger": {
+  "physical": 1392,
+  "magic": 26036,
+  "true": 691
+ },
+ "Hwei": {
+  "physical": 1110,
+  "magic": 25272,
+  "true": 309
+ },
+ "Illaoi": {
+  "physical": 26567,
+  "magic": 783,
+  "true": 421
+ },
+ "Irelia": {
+  "physical": 16046,
+  "magic": 5336,
+  "true": 989
+ },
+ "Ivern": {
+  "physical": 2719,
+  "magic": 6364,
+  "true": 1068
+ },
+ "Janna": {
+  "physical": 1224,
+  "magic": 6206,
+  "true": 481
+ },
+ "JarvanIV": {
+  "physical": 15059,
+  "magic": 1200,
+  "true": 1327
+ },
+ "Jax": {
+  "physical": 10989,
+  "magic": 9267,
+  "true": 851
+ },
+ "Jayce": {
+  "physical": 19308,
+  "magic": 4772,
+  "true": 802
+ },
+ "Jhin": {
+  "physical": 20951,
+  "magic": 1356,
+  "true": 341
+ },
+ "Jinx": {
+  "physical": 23222,
+  "magic": 736,
+  "true": 386
+ },
+ "KSante": {
+  "physical": 16995,
+  "magic": 1633,
+  "true": 1174
+ },
+ "Kaisa": {
+  "physical": 14263,
+  "magic": 10013,
+  "true": 378
+ },
+ "Kalista": {
+  "physical": 18620,
+  "magic": 4219,
+  "true": 1744
+ },
+ "Karma": {
+  "physical": 992,
+  "magic": 8454,
+  "true": 251
+ },
+ "Karthus": {
+  "physical": 270,
+  "magic": 30076,
+  "true": 2654
+ },
+ "Kassadin": {
+  "physical": 2337,
+  "magic": 20998,
+  "true": 1651
+ },
+ "Katarina": {
+  "physical": 4905,
+  "magic": 19300,
+  "true": 1886
+ },
+ "Kayle": {
+  "physical": 5884,
+  "magic": 14459,
+  "true": 386
+ },
+ "Kayn": {
+  "physical": 19405,
+  "magic": 1314,
+  "true": 1932
+ },
+ "Kennen": {
+  "physical": 3238,
+  "magic": 19606,
+  "true": 947
+ },
+ "Khazix": {
+  "physical": 19002,
+  "magic": 1316,
+  "true": 2898
+ },
+ "Kindred": {
+  "physical": 17511,
+  "magic": 3210,
+  "true": 2218
+ },
+ "Kled": {
+  "physical": 20180,
+  "magic": 1435,
+  "true": 1087
+ },
+ "KogMaw": {
+  "physical": 9567,
+  "magic": 18564,
+  "true": 3071
+ },
+ "Leblanc": {
+  "physical": 1460,
+  "magic": 22001,
+  "true": 2273
+ },
+ "LeeSin": {
+  "physical": 14952,
+  "magic": 2463,
+  "true": 1390
+ },
+ "Leona": {
+  "physical": 2668,
+  "magic": 6030,
+  "true": 642
+ },
+ "Lillia": {
+  "physical": 900,
+  "magic": 16386,
+  "true": 4684
+ },
+ "Lissandra": {
+  "physical": 1238,
+  "magic": 20574,
+  "true": 932
+ },
+ "Locke": {
+  "physical": 1186,
+  "magic": 20270,
+  "true": 2493
+ },
+ "Lucian": {
+  "physical": 22253,
+  "magic": 3120,
+  "true": 406
+ },
+ "Lulu": {
+  "physical": 1129,
+  "magic": 5709,
+  "true": 157
+ },
+ "Lux": {
+  "physical": 1262,
+  "magic": 15584,
+  "true": 747
+ },
+ "Malphite": {
+  "physical": 5626,
+  "magic": 14071,
+  "true": 422
+ },
+ "Malzahar": {
+  "physical": 580,
+  "magic": 21836,
+  "true": 342
+ },
+ "Maokai": {
+  "physical": 1550,
+  "magic": 9616,
+  "true": 647
+ },
+ "MasterYi": {
+  "physical": 14353,
+  "magic": 624,
+  "true": 6658
+ },
+ "Mel": {
+  "physical": 1701,
+  "magic": 23080,
+  "true": 300
+ },
+ "Milio": {
+  "physical": 1036,
+  "magic": 4098,
+  "true": 134
+ },
+ "MissFortune": {
+  "physical": 23257,
+  "magic": 959,
+  "true": 689
+ },
+ "MonkeyKing": {
+  "physical": 14865,
+  "magic": 2496,
+  "true": 1203
+ },
+ "Mordekaiser": {
+  "physical": 2842,
+  "magic": 19020,
+  "true": 1123
+ },
+ "Morgana": {
+  "physical": 981,
+  "magic": 11717,
+  "true": 639
+ },
+ "Naafiri": {
+  "physical": 18664,
+  "magic": 27,
+  "true": 1812
+ },
+ "Nami": {
+  "physical": 1160,
+  "magic": 7630,
+  "true": 173
+ },
+ "Nasus": {
+  "physical": 14571,
+  "magic": 4519,
+  "true": 243
+ },
+ "Nautilus": {
+  "physical": 2676,
+  "magic": 5653,
+  "true": 618
+ },
+ "Neeko": {
+  "physical": 1239,
+  "magic": 13098,
+  "true": 490
+ },
+ "Nidalee": {
+  "physical": 1356,
+  "magic": 16124,
+  "true": 2363
+ },
+ "Nilah": {
+  "physical": 20791,
+  "magic": 88,
+  "true": 577
+ },
+ "Nocturne": {
+  "physical": 16640,
+  "magic": 1059,
+  "true": 2194
+ },
+ "Nunu": {
+  "physical": 966,
+  "magic": 13291,
+  "true": 767
+ },
+ "Olaf": {
+  "physical": 16284,
+  "magic": 73,
+  "true": 6770
+ },
+ "Orianna": {
+  "physical": 1257,
+  "magic": 21044,
+  "true": 238
+ },
+ "Ornn": {
+  "physical": 6550,
+  "magic": 11807,
+  "true": 428
+ },
+ "Pantheon": {
+  "physical": 16288,
+  "magic": 455,
+  "true": 1531
+ },
+ "Poppy": {
+  "physical": 9458,
+  "magic": 1454,
+  "true": 1016
+ },
+ "Pyke": {
+  "physical": 9024,
+  "magic": 22,
+  "true": 3186
+ },
+ "Qiyana": {
+  "physical": 18526,
+  "magic": 1634,
+  "true": 3225
+ },
+ "Quinn": {
+  "physical": 22292,
+  "magic": 69,
+  "true": 2554
+ },
+ "Rakan": {
+  "physical": 1470,
+  "magic": 4930,
+  "true": 377
+ },
+ "Rammus": {
+  "physical": 4292,
+  "magic": 8897,
+  "true": 585
+ },
+ "RekSai": {
+  "physical": 10729,
+  "magic": 2410,
+  "true": 4733
+ },
+ "Rell": {
+  "physical": 1893,
+  "magic": 6161,
+  "true": 445
+ },
+ "Renata": {
+  "physical": 1627,
+  "magic": 5243,
+  "true": 1659
+ },
+ "Renekton": {
+  "physical": 16937,
+  "magic": 3691,
+  "true": 1074
+ },
+ "Rengar": {
+  "physical": 19232,
+  "magic": 1037,
+  "true": 2284
+ },
+ "Riven": {
+  "physical": 17952,
+  "magic": 30,
+  "true": 1289
+ },
+ "Rumble": {
+  "physical": 999,
+  "magic": 22397,
+  "true": 1028
+ },
+ "Ryze": {
+  "physical": 988,
+  "magic": 22294,
+  "true": 257
+ },
+ "Samira": {
+  "physical": 22396,
+  "magic": 2639,
+  "true": 784
+ },
+ "Sejuani": {
+  "physical": 9870,
+  "magic": 5939,
+  "true": 1024
+ },
+ "Senna": {
+  "physical": 16601,
+  "magic": 1560,
+  "true": 304
+ },
+ "Seraphine": {
+  "physical": 1572,
+  "magic": 10114,
+  "true": 164
+ },
+ "Sett": {
+  "physical": 17937,
+  "magic": 81,
+  "true": 5927
+ },
+ "Shaco": {
+  "physical": 6569,
+  "magic": 11589,
+  "true": 3417
+ },
+ "Shen": {
+  "physical": 9723,
+  "magic": 7762,
+  "true": 966
+ },
+ "Shyvana": {
+  "physical": 9672,
+  "magic": 7830,
+  "true": 3770
+ },
+ "Singed": {
+  "physical": 910,
+  "magic": 18294,
+  "true": 738
+ },
+ "Sion": {
+  "physical": 12966,
+  "magic": 7657,
+  "true": 453
+ },
+ "Sivir": {
+  "physical": 24939,
+  "magic": 187,
+  "true": 357
+ },
+ "Skarner": {
+  "physical": 12115,
+  "magic": 5786,
+  "true": 1288
+ },
+ "Smolder": {
+  "physical": 19015,
+  "magic": 5371,
+  "true": 2853
+ },
+ "Sona": {
+  "physical": 2508,
+  "magic": 8486,
+  "true": 160
+ },
+ "Soraka": {
+  "physical": 749,
+  "magic": 4268,
+  "true": 322
+ },
+ "Swain": {
+  "physical": 1533,
+  "magic": 14432,
+  "true": 1038
+ },
+ "Sylas": {
+  "physical": 615,
+  "magic": 18412,
+  "true": 1576
+ },
+ "Syndra": {
+  "physical": 928,
+  "magic": 22401,
+  "true": 1495
+ },
+ "TahmKench": {
+  "physical": 2942,
+  "magic": 10265,
+  "true": 600
+ },
+ "Taliyah": {
+  "physical": 1038,
+  "magic": 22829,
+  "true": 415
+ },
+ "Talon": {
+  "physical": 21453,
+  "magic": 25,
+  "true": 2881
+ },
+ "Taric": {
+  "physical": 2083,
+  "magic": 3875,
+  "true": 323
+ },
+ "Teemo": {
+  "physical": 4633,
+  "magic": 20718,
+  "true": 1522
+ },
+ "Thresh": {
+  "physical": 1220,
+  "magic": 6429,
+  "true": 560
+ },
+ "Tristana": {
+  "physical": 22336,
+  "magic": 1976,
+  "true": 429
+ },
+ "Trundle": {
+  "physical": 15861,
+  "magic": 2372,
+  "true": 924
+ },
+ "Tryndamere": {
+  "physical": 20421,
+  "magic": 194,
+  "true": 2277
+ },
+ "TwistedFate": {
+  "physical": 2035,
+  "magic": 16623,
+  "true": 466
+ },
+ "Twitch": {
+  "physical": 21816,
+  "magic": 1244,
+  "true": 3963
+ },
+ "Udyr": {
+  "physical": 10425,
+  "magic": 7556,
+  "true": 853
+ },
+ "Urgot": {
+  "physical": 20141,
+  "magic": 103,
+  "true": 2398
+ },
+ "Varus": {
+  "physical": 13888,
+  "magic": 10263,
+  "true": 403
+ },
+ "Vayne": {
+  "physical": 17601,
+  "magic": 1007,
+  "true": 4359
+ },
+ "Veigar": {
+  "physical": 840,
+  "magic": 23348,
+  "true": 489
+ },
+ "Velkoz": {
+  "physical": 633,
+  "magic": 16296,
+  "true": 5570
+ },
+ "Vex": {
+  "physical": 1736,
+  "magic": 23015,
+  "true": 953
+ },
+ "Vi": {
+  "physical": 15343,
+  "magic": 43,
+  "true": 1170
+ },
+ "Viego": {
+  "physical": 16221,
+  "magic": 1651,
+  "true": 1658
+ },
+ "Viktor": {
+  "physical": 694,
+  "magic": 26345,
+  "true": 330
+ },
+ "Vladimir": {
+  "physical": 965,
+  "magic": 25370,
+  "true": 555
+ },
+ "Volibear": {
+  "physical": 10874,
+  "magic": 9866,
+  "true": 877
+ },
+ "Warwick": {
+  "physical": 8787,
+  "magic": 8377,
+  "true": 834
+ },
+ "Xayah": {
+  "physical": 24760,
+  "magic": 170,
+  "true": 365
+ },
+ "Xerath": {
+  "physical": 723,
+  "magic": 27299,
+  "true": 468
+ },
+ "XinZhao": {
+  "physical": 17404,
+  "magic": 1391,
+  "true": 1075
+ },
+ "Yasuo": {
+  "physical": 19655,
+  "magic": 2010,
+  "true": 667
+ },
+ "Yone": {
+  "physical": 17866,
+  "magic": 3786,
+  "true": 2995
+ },
+ "Yorick": {
+  "physical": 15135,
+  "magic": 6826,
+  "true": 604
+ },
+ "Yunara": {
+  "physical": 16640,
+  "magic": 8674,
+  "true": 418
+ },
+ "Yuumi": {
+  "physical": 381,
+  "magic": 7230,
+  "true": 216
+ },
+ "Zaahen": {
+  "physical": 20167,
+  "magic": 1218,
+  "true": 1411
+ },
+ "Zac": {
+  "physical": 1046,
+  "magic": 14693,
+  "true": 1056
+ },
+ "Zed": {
+  "physical": 24594,
+  "magic": 945,
+  "true": 2631
+ },
+ "Zeri": {
+  "physical": 20328,
+  "magic": 5501,
+  "true": 581
+ },
+ "Ziggs": {
+  "physical": 990,
+  "magic": 26638,
+  "true": 374
+ },
+ "Zilean": {
+  "physical": 1330,
+  "magic": 6182,
+  "true": 323
+ },
+ "Zoe": {
+  "physical": 2044,
+  "magic": 19605,
+  "true": 4096
+ },
+ "Zyra": {
+  "physical": 1143,
+  "magic": 20350,
+  "true": 2522
+ }
+}

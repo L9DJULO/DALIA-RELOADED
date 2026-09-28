@@ -11,6 +11,22 @@ class DamageProfile(BaseModel):
     true_dmg: float = 5.0
 
 
+class DamageDealt(BaseModel):
+    """Dégâts infligés aux champions par partie, par type (scripts/refresh_damage.py).
+
+    `measured` faux : estimation (médiane du poste principal répartie selon le type
+    Riot ou le profil des tags), faute de mesure.
+    """
+    physical: float = 0.0
+    magic: float = 0.0
+    true: float = 0.0
+    measured: bool = False
+
+    @property
+    def total(self) -> float:
+        return self.physical + self.magic + self.true
+
+
 class ChampionRatings(BaseModel):
     """Gameplay attribute ratings (1-5 scale)."""
     cc: int = Field(3, ge=1, le=5, description="Crowd-control strength")
@@ -39,9 +55,10 @@ class Champion(BaseModel):
     # Propriétés de draft définies et validées par le joueur (docs/TAXONOMIES_CHAMPIONS.md) :
     # les règles lisent une propriété au lieu de nommer des champions (chantier 2).
     properties: List[str] = []
-    # Type de dégâts publié par Riot (physical / magic / mixed) ; `damage` reste le profil
-    # déduit des tags, sur lequel la composition est réglée.
+    # Type de dégâts publié par Riot (physical / magic / mixed) : repli quand la mesure manque.
     damage_type: Optional[str] = None
+    # Dégâts mesurés (ou estimés) par partie ; `damage` en est la répartition en %.
+    damage_dealt: Optional[DamageDealt] = None
     image_url: str = ""
 
     @property

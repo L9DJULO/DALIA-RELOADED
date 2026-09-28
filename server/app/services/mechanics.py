@@ -51,7 +51,10 @@ def kit_mechanics() -> dict:
 
 
 def physical_share(champion) -> float:
-    """Part physique des dégâts : type Riot s'il est connu, sinon le profil des tags."""
+    """Part physique des dégâts : mesurée, sinon type Riot, sinon profil des tags."""
+    dealt = champion.damage_dealt
+    if dealt is not None and dealt.measured and dealt.physical + dealt.magic > 0:
+        return dealt.physical / (dealt.physical + dealt.magic)
     share = {"physical": 0.9, "magic": 0.1, "mixed": 0.5}.get(champion.damage_type or "")
     if share is not None:
         return share

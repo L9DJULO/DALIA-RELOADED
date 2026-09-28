@@ -3,20 +3,46 @@
 Roles come from champion_overrides.json. Ratings are hand-arbitrated there for
 the bot-lane champions (ADC and supports); every other champion still falls
 back to _auto_ratings, derived from Riot's tags alone (see docs/CHANTIERS.md, 4).
+Damage by type is measured (damage_profiles.json, scripts/refresh_damage.py);
+_auto_damage only serves champions with neither a measure nor a Riot type.
 """
 from __future__ import annotations
 
 import json
 import logging
 from pathlib import Path
+from statistics import median
 from typing import Any, Dict, List, Optional
 
-from app.models.champion import Champion, ChampionRatings, ChampionStats, DamageProfile
+from app.models.champion import Champion, ChampionRatings, ChampionStats, DamageDealt, DamageProfile
 from app.services.data_fetcher import LolalyticsFetcher
 
 logger = logging.getLogger("dalia.champion_data")
 
 OVERRIDES_PATH = Path(__file__).resolve().parent.parent / "data" / "champion_overrides.json"
+DAMAGE_PATH = Path(__file__).resolve().parent.parent / "data" / "damage_profiles.json"
+# Répartition physique / magique d'un champion non mesuré, selon son type Riot
+# (mêmes parts que mechanics.physical_share avant la mesure).
+_RIOT_TYPE_SPLIT = {"physical": (0.9, 0.1), "magic": (0.1, 0.9), "mixed": (0.5, 0.5)}
+
+
+def _profile_of(dealt: DamageDealt) -> DamageProfile:
+    total = dealt.total or 1.0
+    return DamageProfile(physical=round(100 * dealt.physical / total, 1),
+                         magical=round(100 * dealt.magic / total, 1),
+                         true_dmg=round(100 * dealt.true / total, 1))
+
+
+def _estimate_damage(champ: Champion, role_medians: Dict[str, float], overall: float) -> DamageDealt:
+    """Sans mesure : dégâts médians du poste principal, répartis selon le type Riot,
+    à défaut selon le profil des tags."""
+    total = role_medians.get(champ.roles[0] if champ.roles else "", overall)
+    split = _RIOT_TYPE_SPLIT.get(champ.damage_type or "")
+    if split is None:
+        d = champ.damage
+        return DamageDealt(physical=total * d.physical / 100, magic=total * d.magical / 100,
+                           true=total * d.true_dmg / 100)
+    return DamageDealt(physical=total * split[0], magic=total * split[1])
 
 
 def _auto_damage(tags: List[str]) -> DamageProfile:
@@ -110,6 +136,7 @@ class ChampionDatabase:
         if not raw:
             raise RuntimeError("Catalogue de champions vide : nouvelle tentative nécessaire")
         overrides_raw = self._load_overrides()
+        measured = {k.lower(): v for k, v in self._load_damage_profiles().items() if not k.startswith("_")}
         # Build case-insensitive lookup so "KhaZix" matches DDragon's "Khazix"
         overrides: Dict[str, Any] = {}
         by_id, by_key, by_name = {}, {}, {}
@@ -131,6 +158,13 @@ class ChampionDatabase:
             damage = _auto_damage(tags)
             ratings = _auto_ratings(tags)
             roles = _default_roles(tags, key)
+
+            # Dégâts mesurés (spec composition mesurée) : ils remplacent le profil des tags.
+            dealt = None
+            m = measured.get(key.lower())
+            if isinstance(m, dict) and all(isinstance(m.get(k), (int, float)) for k in ("physical", "magic", "true")):
+                dealt = DamageDealt(physical=m["physical"], magic=m["magic"], true=m["true"], measured=True)
+                damage = _profile_of(dealt)
 
             # Apply overrides (case-insensitive)
             ov = overrides.get(key.lower(), {})
@@ -162,12 +196,14 @@ class ChampionDatabase:
                 attack_range=attack_range,
                 properties=list(ov.get("properties", [])),
                 damage_type=ov.get("damage_type"),
+                damage_dealt=dealt,
                 image_url=self.fetcher.champion_image_url(key),
             )
             by_id[cid] = champ
             by_key[key] = champ
             by_name[name.lower()] = champ
 
+        self._estimate_missing_damage(list(by_id.values()))
         self._by_id, self._by_key, self._by_name = by_id, by_key, by_name
 
         # Une clé qui ne correspond à aucun champion n'est jamais lue : « Wukong »
@@ -214,6 +250,32 @@ class ChampionDatabase:
         return self._stats_cache.get(f"{cid}_{role}")
 
     # ── Private ──────────────────────────────────────────────────────────
+    @staticmethod
+    def _estimate_missing_damage(champions: List[Champion]) -> None:
+        """Estime les dégâts des champions non mesurés, depuis les médianes par poste."""
+        by_role: Dict[str, List[float]] = {}
+        for c in champions:
+            if c.damage_dealt is not None and c.roles:
+                by_role.setdefault(c.roles[0], []).append(c.damage_dealt.total)
+        role_medians = {r: median(v) for r, v in by_role.items()}
+        everyone = [t for v in by_role.values() for t in v]
+        overall = median(everyone) if everyone else 20000.0
+        for c in champions:
+            if c.damage_dealt is None:
+                c.damage_dealt = _estimate_damage(c, role_medians, overall)
+                if c.damage_type in _RIOT_TYPE_SPLIT:
+                    c.damage = _profile_of(c.damage_dealt)
+
+    @staticmethod
+    def _load_damage_profiles() -> Dict[str, Any]:
+        if not DAMAGE_PATH.exists():
+            return {}
+        try:
+            return json.loads(DAMAGE_PATH.read_text(encoding="utf-8"))
+        except Exception as exc:
+            logger.warning("Failed to load damage profiles: %s", exc)
+            return {}
+
     @staticmethod
     def _load_overrides() -> Dict[str, Any]:
         if not OVERRIDES_PATH.exists():
