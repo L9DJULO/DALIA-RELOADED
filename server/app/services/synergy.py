@@ -208,9 +208,8 @@ class SynergyAnalyzer:
                 if "Mage" in ally.tags and ally.ratings.poke >= 3:
                     delta += 1.5  # poke mage support
 
-            # Damage diversity
-            phys_mix = abs(candidate.damage.physical - ally.damage.physical)
-            if phys_mix > 30:
+            # Damage diversity : l'un est source d'un type dont l'autre ne l'est pas
+            if any(candidate.is_source(kind) != ally.is_source(kind) for kind in ("physical", "magic")):
                 delta += 1.0
 
             # CC chain

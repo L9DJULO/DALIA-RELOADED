@@ -62,31 +62,24 @@ class CompositionAnalyzer:
         if n < 2:
             return warns
 
-        # ── 1. Damage distribution ───────────────────────────────────────
-        total_phys = sum(c.damage.physical for c in team) / n
-        total_mag  = sum(c.damage.magical for c in team) / n
-        ad_ratio = total_phys / (total_phys + total_mag + 0.01)
-
-        if ad_ratio > 0.78:
-            warns.append(CompositionWarning(
-                severity="critical",
-                message=f"Comp trop AD ({ad_ratio*100:.0f}% physique) — l'ennemi peut stacker armure.",
-            ))
-        elif ad_ratio > 0.68:
-            warns.append(CompositionWarning(
-                severity="warning",
-                message=f"Comp à tendance AD ({ad_ratio*100:.0f}% physique) — attention à l'équilibre de dégâts.",
-            ))
-        elif ad_ratio < 0.22:
-            warns.append(CompositionWarning(
-                severity="critical",
-                message=f"Comp trop AP ({(1-ad_ratio)*100:.0f}% magique) — l'ennemi peut stacker MR.",
-            ))
-        elif ad_ratio < 0.32:
-            warns.append(CompositionWarning(
-                severity="warning",
-                message=f"Comp à tendance AP ({(1-ad_ratio)*100:.0f}% magique) — attention à l'équilibre.",
-            ))
+        # ── 1. Sources de dégâts ─────────────────────────────────────────
+        # « Trop AD, c'est une seule vraie source AP » (joueur, 28/09). À cinq :
+        # aucune source d'un type est critique, une seule est un avertissement.
+        # À quatre, le dernier pick peut encore l'apporter : seule l'absence avertit.
+        if n >= 4:
+            for kind, other, resist in (("magic", "AD", "armure"), ("physical", "AP", "résistance magique")):
+                sources = sum(c.is_source(kind) for c in team)
+                missing = "AP" if kind == "magic" else "AD"
+                if sources == 0:
+                    warns.append(CompositionWarning(
+                        severity="critical" if n >= 5 else "warning",
+                        message=f"Comp full {other} : aucune vraie source {missing} — l'ennemi peut stacker {resist}.",
+                    ))
+                elif sources == 1 and n >= 5:
+                    warns.append(CompositionWarning(
+                        severity="warning",
+                        message=f"Comp à tendance {other} : une seule vraie source {missing}.",
+                    ))
 
         # ── 2. Frontline ─────────────────────────────────────────────────
         # Tank + Divers (joueur, 28/09) : quelqu'un qui tient le contact.
@@ -138,49 +131,35 @@ class CompositionAnalyzer:
 
         return warns
 
-    # Role-based damage weight: carries contribute more than supports
-    _ROLE_DAMAGE_WEIGHT = {
-        "top": 1.0, "jungle": 1.0, "mid": 1.2, "bot": 1.2, "support": 0.4,
-    }
+    @staticmethod
+    def _damage_shares(team: List[Champion]) -> Dict[str, float]:
+        """Parts de dégâts de l'équipe, chacun pesant ce qu'il inflige réellement
+        (mesure Master+). Remplace le poids fixe de poste (support × 0,4)."""
+        phys = mag = true = 0.0
+        for c in team:
+            d = c.damage_dealt
+            if d is None:   # sans mesure ni estimation : son profil, pour ~20 000 dégâts
+                phys, mag, true = phys + 200 * c.damage.physical, mag + 200 * c.damage.magical, true + 200 * c.damage.true_dmg
+            else:
+                phys, mag, true = phys + d.physical, mag + d.magic, true + d.true
+        total = phys + mag + true
+        if total <= 0:
+            return {"damage_physical": 0.0, "damage_magical": 0.0, "damage_true": 0.0}
+        return {"damage_physical": round(100 * phys / total, 1),
+                "damage_magical": round(100 * mag / total, 1),
+                "damage_true": round(100 * true / total, 1)}
 
     def team_summary_from_list(self, team: List[Champion], draft: DraftState, candidate_role: str = "") -> Dict[str, float]:
         """Return a breakdown of team attributes for the UI, based on provided team list.
-        
+
         Used to show the current team state WITHOUT adding a candidate.
-        Damage values are *weighted* totals so that supports don't skew
-        the AD/AP distribution as much as carries.
         """
         n = max(len(team), 1)
         if n == 0:
             return {}
 
-        # Build (champion, role) pairs for weighted damage calculation
-        ally_roles = {ap.champion_id: ap.role for ap in draft.ally_picks if ap.champion_id}
-        champ_roles = []
-        for c in team:
-            role = ally_roles.get(c.id, "") or ""
-            champ_roles.append((c, role))
-
-        # Weighted damage distribution
-        total_w = 0.0
-        w_phys = 0.0
-        w_mag = 0.0
-        w_true = 0.0
-        for c, role in champ_roles:
-            w = self._ROLE_DAMAGE_WEIGHT.get(role, 1.0)
-            total_w += w
-            w_phys += c.damage.physical * w
-            w_mag += c.damage.magical * w
-            w_true += c.damage.true_dmg * w
-        if total_w > 0:
-            w_phys /= total_w
-            w_mag /= total_w
-            w_true /= total_w
-
         return {
-            "damage_physical": round(w_phys, 1),
-            "damage_magical": round(w_mag, 1),
-            "damage_true": round(w_true, 1),
+            **self._damage_shares(team),
             "team_size": n,
             "cc": round(sum(c.ratings.cc for c in team) / n, 1),
             "engage": round(sum(c.ratings.engage for c in team) / n, 1),
@@ -194,43 +173,12 @@ class CompositionAnalyzer:
         }
 
     def team_summary(self, candidate: Champion, draft: DraftState, candidate_role: str = "") -> Dict[str, float]:
-        """Return a breakdown of team attributes for the UI.
-
-        Damage values are *weighted* totals so that supports don't skew
-        the AD/AP distribution as much as carries.
-        """
+        """Return a breakdown of team attributes for the UI."""
         team = self._resolve_team(draft, candidate)
         n = max(len(team), 1)
 
-        # Build (champion, role) pairs for weighted damage calculation
-        ally_roles = {ap.champion_id: ap.role for ap in draft.ally_picks if ap.champion_id}
-        champ_roles = []
-        for c in team:
-            role = ally_roles.get(c.id, "") or ""
-            if c.id == candidate.id and candidate_role:
-                role = candidate_role
-            champ_roles.append((c, role))
-
-        # Weighted damage distribution
-        total_w = 0.0
-        w_phys = 0.0
-        w_mag = 0.0
-        w_true = 0.0
-        for c, role in champ_roles:
-            w = self._ROLE_DAMAGE_WEIGHT.get(role, 1.0)
-            total_w += w
-            w_phys += c.damage.physical * w
-            w_mag += c.damage.magical * w
-            w_true += c.damage.true_dmg * w
-        if total_w > 0:
-            w_phys /= total_w
-            w_mag /= total_w
-            w_true /= total_w
-
         return {
-            "damage_physical": round(w_phys, 1),
-            "damage_magical": round(w_mag, 1),
-            "damage_true": round(w_true, 1),
+            **self._damage_shares(team),
             "team_size": n,
             "cc": round(sum(c.ratings.cc for c in team) / n, 1),
             "engage": round(sum(c.ratings.engage for c in team) / n, 1),

@@ -87,6 +87,14 @@ class Champion(BaseModel):
         """
         return "tank" in self.properties
 
+    def is_source(self, kind: str) -> bool:
+        """Vraie source de dégâts `physical` ou `magic` : assez de dégâts de ce type par
+        partie (config.scoring.damage_source_min). Un hybride peut l'être des deux."""
+        from app.config import config
+        if self.damage_dealt is None:
+            return False
+        return getattr(self.damage_dealt, kind) >= config.scoring.damage_source_min
+
     @property
     def is_frontline(self) -> bool:
         """Propriété `frontline` du joueur (28/09) : tank + Divers du wiki, sans Elise ni

@@ -351,3 +351,21 @@ async def test_synergy_falls_back_to_kit_rules_without_a_page(catalog):
     assert _terms(result, 222)["synergy"].source == "heuristic"
     rec = next(r for r in result.recommendations if r.champion_id == 222)
     assert rec.synergy_details[0].source == "kit_heuristic" and rec.synergy_details[0].games == 0
+
+
+@pytest.mark.asyncio
+async def test_damage_sources_reach_the_composition_term(catalog):
+    """Spec composition mesurée : sans vraie source AP chez les alliés, la source AP passe
+    devant par le terme de composition (couverture + avertissement évité)."""
+    from app.models.champion import DamageDealt
+    dealt = {75: (15000, 0), 254: (15000, 0), 222: (23000, 700), 40: (1200, 6200),
+             103: (1800, 17000), 157: (20000, 500)}
+    for cid, (phys, mag) in dealt.items():
+        catalog.get_by_id(cid).damage_dealt = DamageDealt(physical=phys, magic=mag, measured=True)
+    body = DraftRequest(draft_state={"my_role": "mid", "ally_picks": [
+        {"champion_id": 75, "role": "top"}, {"champion_id": 254, "role": "jungle"},
+        {"champion_id": 222, "role": "bot"}, {"champion_id": 40, "role": "support"}]},
+        champion_pool={"mid": [{"champion_id": 103}, {"champion_id": 157}]}, enable_wildcard=False)
+    result = await DraftEngine(catalog, catalog.fetcher).recommend(body)
+    ahri, yasuo = _terms(result, 103)["composition"], _terms(result, 157)["composition"]
+    assert ahri.value - yasuo.value == pytest.approx(2.0)

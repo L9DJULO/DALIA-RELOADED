@@ -101,6 +101,12 @@ class ScoringConstants(BaseModel):
         "peel": 1.0, "anti_mobility": 0.5, "anti_tank": 0.5, "anti_attacks": 0.5,
     }
     comp_warning_penalty: Dict[str, float] = {"critical": 2.0, "warning": 1.0}
+    # Vraie source d'un type de dégâts : au moins autant de dégâts de ce type par
+    # partie (mesure Master+, scripts/refresh_damage.py). Coupure de l'échantillon du
+    # 28/09 : Seraphine 10,1 k et Kai'Sa 10,0 k au-dessus, Karma 8,5 k et les supports
+    # enchanteurs ou tanks (5,7 à 7,2 k) en dessous. « Trop AD, c'est une seule vraie
+    # source AP » (joueur, 28/09).
+    damage_source_min: float = 10_000.0
     comp_cap: float = 4.0
     archetype_scale: float = 15.0
     # Impact en teamfight. Terme permanent et de faible amplitude : un champion

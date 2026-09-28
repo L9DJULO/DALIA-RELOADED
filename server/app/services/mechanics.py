@@ -183,8 +183,8 @@ class MechanicsAnalyzer:
         """Pool dimensions represent explicit tools or reviewed attribute ratings."""
         r = champion.ratings
         result = set()
-        if champion.damage.magical >= 60: result.add("magic_damage")
-        if champion.damage.physical >= 60: result.add("physical_damage")
+        if champion.is_source("magic"): result.add("magic_damage")
+        if champion.is_source("physical"): result.add("physical_damage")
         if champion.is_frontline: result.add("frontline")
         if r.engage >= 4 and r.cc >= 3: result.add("engage")
         if r.poke >= 4: result.add("range")

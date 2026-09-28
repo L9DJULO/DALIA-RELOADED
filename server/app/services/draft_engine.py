@@ -759,11 +759,9 @@ class DraftEngine:
         max_engage = max((c.ratings.engage for c in enemies), default=0)
         if max_engage < 4:
             gaps.append("no_engage")
-        avg_phys = sum(c.damage.physical for c in enemies) / n
-        avg_mag = sum(c.damage.magical for c in enemies) / n
-        if avg_mag < 25:
+        if not any(c.is_source("magic") for c in enemies):
             gaps.append("no_ap")
-        if avg_phys < 25:
+        if not any(c.is_source("physical") for c in enemies):
             gaps.append("no_ad")
         if not any(c.is_frontline for c in enemies):
             gaps.append("no_frontline")
@@ -775,9 +773,9 @@ class DraftEngine:
         if gap == "no_engage":
             return champ.ratings.engage >= 4
         if gap == "no_ap":
-            return champ.damage.magical >= 60
+            return champ.is_source("magic")
         if gap == "no_ad":
-            return champ.damage.physical >= 60
+            return champ.is_source("physical")
         if gap == "no_frontline":
             return champ.is_frontline
         if gap == "no_dps":

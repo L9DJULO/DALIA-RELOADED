@@ -282,15 +282,12 @@ def _composition_reasons(
     c = cand.ratings
     c_tags = set(cand.tags)
 
-    # Damage diversity — based on team WITHOUT candidate
-    if comp_summary:
-        phys = comp_summary.get("damage_physical", 50.0)
-        mag = comp_summary.get("damage_magical", 50.0)
-        denom = phys + mag + 0.01
-        ad_ratio = phys / denom
-        if ad_ratio > 0.70 and cand.damage.magical >= 55:
+    # Sources de dégâts des alliés connus, sans le candidat (joueur, 28/09 : une seule
+    # vraie source AP, c'est déjà trop AD).
+    if len(team) >= 3:
+        if cand.is_source("magic") and sum(t.is_source("magic") for t in team) <= 1:
             reasons.append(_mk("Apporte de l'AP dans une comp AD-heavy", "info"))
-        elif ad_ratio < 0.30 and cand.damage.physical >= 55:
+        elif cand.is_source("physical") and sum(t.is_source("physical") for t in team) <= 1:
             reasons.append(_mk("Apporte de l'AD dans une comp AP-heavy", "info"))
 
     # Missing frontline (tank + Divers, joueur, 28/09)
