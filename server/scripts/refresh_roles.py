@@ -45,22 +45,28 @@ DISTRIBUTION = Path(__file__).resolve().parent.parent / "app" / "data" / "role_d
 ROLES = ("top", "jungle", "mid", "bot", "support")
 TIER = "master_plus"
 DIST_FLOOR = 3.0
+# Postes que le joueur retire malgré la donnée. La distribution des rôles adverses
+# les garde : un Shaco adverse peut toujours jouer support.
+ROLE_EXCLUSIONS = {
+    "Shaco": {"support"},  # 20 % de ses parties Master+, tier le plus bas (joueur, 28/09)
+}
 
 
-def roles_from_shares(shares: Dict[str, float], threshold: float) -> List[str]:
+def roles_from_shares(shares: Dict[str, float], threshold: float, excluded=frozenset()) -> List[str]:
+    """Postes au-dessus du seuil, hors exclusions du joueur ; le principal toujours."""
     ranked = sorted((r for r in ROLES if shares.get(r, 0.0) > 0.0), key=lambda r: -shares[r])
-    return ranked[:1] + [r for r in ranked[1:] if shares[r] >= threshold]
+    return ranked[:1] + [r for r in ranked[1:] if shares[r] >= threshold and r not in excluded]
 
 
 def roles_or_previous(shares: Dict[str, float], threshold: float,
-                       previous: Optional[List[str]]) -> Optional[List[str]]:
+                       previous: Optional[List[str]], excluded=frozenset()) -> Optional[List[str]]:
     """Postes tirés des parts ; un champion absent des données garde les siens.
 
     Un champion que Lolalytics Master+ ne liste pas encore (sortie récente) aurait
     sinon `roles: []` et disparaîtrait de tous les postes. Sans postes connus non
     plus, None : l'entrée n'en porte pas et le chargeur retombe sur les tags.
     """
-    return roles_from_shares(shares, threshold) or previous
+    return roles_from_shares(shares, threshold, excluded) or previous
 
 
 def distribution_from_shares(shares: Dict[str, float], floor: float = DIST_FLOOR) -> Dict[str, float]:
@@ -112,7 +118,7 @@ async def main() -> int:
             old_key = by_lower.pop(ddragon[key]["name"].lower())
         entry = dict(overrides.get(old_key, {})) if old_key else {}
         old_roles = entry.get("roles")
-        roles = roles_or_previous(shares, args.threshold, old_roles)
+        roles = roles_or_previous(shares, args.threshold, old_roles, ROLE_EXCLUSIONS.get(key, frozenset()))
         # Garde l'orthographe existante quand elle est lue ; sinon la clé Data Dragon.
         new_key = old_key if old_key and old_key.lower() == key.lower() else key
         rest = {k: v for k, v in entry.items() if k != "roles"}

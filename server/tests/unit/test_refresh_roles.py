@@ -41,3 +41,17 @@ def test_a_champion_absent_from_the_data_keeps_its_roles():
     assert refresh_roles.roles_or_previous({"top": 0, "mid": 0}, 15.0, ["top", "jungle"]) == ["top", "jungle"]
     assert refresh_roles.roles_or_previous({"top": 0}, 15.0, None) is None
     assert refresh_roles.roles_or_previous({"top": 80, "mid": 20}, 15.0, ["jungle"]) == ["top", "mid"]
+
+
+def test_a_role_excluded_by_the_player_is_not_proposed_above_the_threshold():
+    """Shaco se joue à 20 % support en Master+, mais le joueur le sort du poste (28/09)."""
+    shares = {"jungle": 78, "support": 20, "top": 1}
+    assert refresh_roles.roles_from_shares(shares, 15.0, excluded={"support"}) == ["jungle"]
+
+
+def test_the_committed_overrides_respect_the_player_exclusions():
+    import json
+    overrides = json.loads(refresh_roles.OVERRIDES.read_text(encoding="utf-8"))
+    assert refresh_roles.ROLE_EXCLUSIONS, "au moins Shaco support"
+    for key, excluded in refresh_roles.ROLE_EXCLUSIONS.items():
+        assert not set(excluded) & set(overrides[key]["roles"]), key
