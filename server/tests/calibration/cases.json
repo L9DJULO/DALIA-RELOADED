@@ -2077,5 +2077,48 @@
       }
     ],
     "confidence": "medium"
+  },
+  {
+    "id": "comp_full_ad_allies_mid_ap_source",
+    "category": "composition",
+    "description": "Mid last pick with no real AP source among allies (Darius, Lee Sin, Jinx, Leona) — the AP source first",
+    "setup": {
+      "my_team": "blue",
+      "my_role": "mid",
+      "my_pick_order": 5,
+      "ally_picks": {
+        "top": "Darius",
+        "jungle": "Lee Sin",
+        "bot": "Jinx",
+        "support": "Leona"
+      },
+      "enemy_picks": {
+        "top": "Ornn",
+        "jungle": "Vi",
+        "bot": "Caitlyn",
+        "support": "Lulu"
+      },
+      "bans": [],
+      "champion_pool": {
+        "mid": [
+          {
+            "champion": "Syndra",
+            "tier": "A"
+          },
+          {
+            "champion": "Zed",
+            "tier": "A"
+          }
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "must_rank_higher_than",
+        "champion_a": "Syndra",
+        "champion_b": "Zed"
+      }
+    ],
+    "confidence": "medium"
   }
 ]
