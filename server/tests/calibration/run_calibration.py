@@ -19,7 +19,7 @@ import sys
 import traceback
 from collections import Counter, defaultdict
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 # Le rapport utilise des symboles hors cp1252 (OK, KO, ~) : sans cela, un run Windows
 # meurt d'UnicodeEncodeError au premier cas qui echoue.
@@ -407,6 +407,43 @@ def build_fetcher(frozen_dir: Path, live: bool = False):
     return LolalyticsFetcher(**mode.fetcher_kwargs()), mode
 
 
+def record_reads(fetcher) -> Set[str]:
+    """Note le nom de fichier de chaque entrée lue par le fetcher du run."""
+    read: Set[str] = set()
+    cache = fetcher._cache
+    get = cache.get
+
+    def recording_get(key):
+        read.add(cache._path(key).name)
+        return get(key)
+
+    cache.get = recording_get
+    return read
+
+
+async def prune_frozen(frozen_dir: Path, cases_path: Path) -> int:
+    """Rejoue toute la suite sur le gel en notant ce qu'elle lit, puis élague le reste."""
+    fetcher, mode = build_fetcher(frozen_dir)
+    if not mode.offline:
+        await fetcher.close()
+        print(f"{C.RED}Aucun gel dans {frozen_dir} : rien à élaguer{C.RESET}")
+        return 1
+    read = record_reads(fetcher)
+    cases = json.loads(cases_path.read_text(encoding="utf-8"))
+    db = ChampionDatabase(fetcher)
+    try:
+        await db.initialize()
+        engine = DraftEngine(db, fetcher)
+        for case in cases:
+            await run_case(case, engine, db)   # une erreur arrête tout : pas d'élagage partiel
+    finally:
+        await fetcher.close()
+    manifest = frozen_cache.prune(frozen_dir, read)
+    print(f"{C.GREEN}Gel élagué : {manifest['entries']} entrées lues gardées, "
+          f"{manifest['pruned'][-1]['removed']} retirées{C.RESET}")
+    return 0
+
+
 async def freeze_live_cache(frozen_dir: Path, tier: Optional[str]) -> int:
     """Prend le snapshot du cache vivant et sort. Le baseline devient rejouable."""
     fetcher = LolalyticsFetcher()
@@ -441,6 +478,8 @@ async def main() -> int:
                         help="Snapshot the live cache into cache-frozen/ and exit")
     parser.add_argument("--extend-frozen", action="store_true",
                         help="Add the live cache entries missing from the snapshot, without touching the others, and exit")
+    parser.add_argument("--prune-frozen", action="store_true",
+                        help="Replay the whole suite on the snapshot, keep only the entries it reads, and exit")
     parser.add_argument("--live-cache", action="store_true",
                         help="Ignore the frozen snapshot and read the live cache (data may drift)")
     parser.add_argument("--snapshot", metavar="PATH",
@@ -456,6 +495,14 @@ async def main() -> int:
         manifest = frozen_cache.extend(Path(config.cache_dir), FROZEN_DIR)
         print(f"{C.GREEN}Gel étendu : {manifest['added']} entrées ajoutées, {manifest['entries']} au total{C.RESET}")
         return 0
+
+    if args.prune_frozen:
+        # Toute la suite, telle quelle : un sous-ensemble élaguerait ce que les autres cas lisent.
+        if args.filter or args.rank or args.live_cache or Path(args.cases) != Path(__file__).parent / "cases.json":
+            print(f"{C.RED}--prune-frozen rejoue toute la suite par défaut : sans --filter, --rank, "
+                  f"--cases ni --live-cache{C.RESET}")
+            return 1
+        return await prune_frozen(FROZEN_DIR, Path(args.cases))
 
     if args.rank:
         error = validate_rank(args.rank)

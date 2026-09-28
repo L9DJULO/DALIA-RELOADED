@@ -15,7 +15,7 @@ import shutil
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Set
 
 MANIFEST = "MANIFEST.json"
 
@@ -79,6 +79,30 @@ def extend(live: Path, frozen: Path) -> Dict[str, Any]:
     manifest["entries"] = sum(1 for p in frozen.glob("*.json") if p.name != MANIFEST)
     manifest["added"] = added
     manifest.setdefault("extended", []).append({"at": time.time(), "added": added})
+    (frozen / MANIFEST).write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+    return manifest
+
+
+def prune(frozen: Path, keep: Set[str]) -> Dict[str, Any]:
+    """Ne garde du gel que les entrées `keep` (noms de fichiers lus par la suite).
+
+    Le gel est versionné depuis le chantier 9 : on n'y garde que ce que la suite lit
+    réellement (684 entrées sur 2 710 le 28/09/2026). Un ensemble vide est refusé —
+    c'est un enregistrement en panne, et il viderait le gel.
+    """
+    frozen = Path(frozen)
+    manifest = load_manifest(frozen)
+    if manifest is None:
+        raise FileNotFoundError(f"Aucun gel dans {frozen}")
+    if not keep:
+        raise ValueError("Aucune entrée lue : élagage refusé, le gel serait vidé")
+    removed = 0
+    for entry in frozen.glob("*.json"):
+        if entry.name != MANIFEST and entry.name not in keep:
+            entry.unlink()
+            removed += 1
+    manifest["entries"] = sum(1 for p in frozen.glob("*.json") if p.name != MANIFEST)
+    manifest.setdefault("pruned", []).append({"at": time.time(), "removed": removed})
     (frozen / MANIFEST).write_text(json.dumps(manifest, indent=2), encoding="utf-8")
     return manifest
 

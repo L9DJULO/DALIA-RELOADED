@@ -101,3 +101,45 @@ def test_extend_refuses_a_missing_snapshot(tmp_path):
     import pytest
     with pytest.raises(FileNotFoundError):
         frozen_cache.extend(tmp_path / "cache", tmp_path / "frozen")
+
+
+def _frozen_with(tmp_path, *keys):
+    live, frozen = tmp_path / "cache", tmp_path / "frozen"
+    live.mkdir()
+    for k in keys:
+        FileCache(str(live)).set(k, {"k": k})
+    frozen_cache.freeze(live, frozen, tier="master_plus")
+    return frozen
+
+
+def test_prune_keeps_only_the_entries_the_suite_reads_and_dates_it(tmp_path):
+    """Chantier 9 : on versionne les seules entrées lues (684 sur 2 710 le 28/09)."""
+    frozen = _frozen_with(tmp_path, "lola_list_middle", "lola_counter_zed_middle", "lola_list_top")
+    read = {f"{cache_key('lola_list_middle')}.json", f"{cache_key('lola_list_top')}.json"}
+
+    manifest = frozen_cache.prune(frozen, read)
+
+    assert {p.name for p in frozen.glob("*.json")} == read | {"MANIFEST.json"}
+    assert manifest["entries"] == 2 and manifest["pruned"][-1]["removed"] == 1
+    assert json.loads((frozen / "MANIFEST.json").read_text(encoding="utf-8"))["entries"] == 2
+
+
+def test_prune_refuses_an_empty_read_set_and_a_missing_snapshot(tmp_path):
+    """Un enregistrement vide viderait le gel : c'est une panne, pas un résultat."""
+    import pytest
+    frozen = _frozen_with(tmp_path, "lola_list_middle")
+    with pytest.raises(ValueError):
+        frozen_cache.prune(frozen, set())
+    assert (frozen / f"{cache_key('lola_list_middle')}.json").exists()
+    with pytest.raises(FileNotFoundError):
+        frozen_cache.prune(tmp_path / "absent", {"x.json"})
+
+
+async def test_reads_through_the_run_fetcher_are_recorded(tmp_path):
+    frozen = _frozen_with(tmp_path, "lola_list_middle", "lola_list_top")
+    fetcher, _ = run_calibration.build_fetcher(frozen)
+    read = run_calibration.record_reads(fetcher)
+
+    assert fetcher._cache.get("lola_list_middle") == {"k": "lola_list_middle"}, "la lecture passe toujours"
+    assert read == {f"{cache_key('lola_list_middle')}.json"}
+    await fetcher.close()
