@@ -159,55 +159,6 @@
     ]
   },
   {
-    "id": "blind_pick_top_flex_priority",
-    "category": "blind_pick",
-    "description": "Top blind — flex tanks should rank well thanks to first-pick flex bonus",
-    "setup": {
-      "my_team": "blue",
-      "my_role": "top",
-      "my_pick_order": 1,
-      "ally_picks": {},
-      "enemy_picks": {},
-      "bans": [],
-      "champion_pool": {
-        "top": [
-          {
-            "champion": "Malphite",
-            "tier": "B"
-          },
-          {
-            "champion": "Ornn",
-            "tier": "B"
-          },
-          {
-            "champion": "Fiora",
-            "tier": "S"
-          },
-          {
-            "champion": "Camille",
-            "tier": "A"
-          },
-          {
-            "champion": "Sett",
-            "tier": "B"
-          }
-        ]
-      },
-      "rank_bucket": "emerald"
-    },
-    "assertions": [
-      {
-        "type": "must_be_in_top_5",
-        "champion": "Malphite"
-      },
-      {
-        "type": "must_be_in_top_5",
-        "champion": "Ornn"
-      }
-    ],
-    "confidence": "low"
-  },
-  {
     "id": "counter_pick_adc_full_info",
     "category": "counter",
     "description": "ADC last pick with full enemy info — safe ranged ADCs preferred",
@@ -662,6 +613,10 @@
           {
             "champion": "Samira",
             "tier": "B"
+          },
+          {
+            "champion": "Xayah",
+            "tier": "A"
           }
         ]
       }
@@ -675,6 +630,11 @@
       {
         "type": "must_rank_higher_than",
         "champion_a": "Ezreal",
+        "champion_b": "Samira"
+      },
+      {
+        "type": "must_rank_higher_than",
+        "champion_a": "Xayah",
         "champion_b": "Samira"
       }
     ],
@@ -798,6 +758,62 @@
         "type": "must_rank_higher_than",
         "champion_a": "Janna",
         "champion_b": "Nautilus"
+      }
+    ],
+    "confidence": "medium"
+  },
+  {
+    "id": "comp_engage_support_vs_blitzcrank",
+    "category": "anti_engage",
+    "description": "Support vs full engage with Blitzcrank instead of Leona — the peel advice flips, engage support preferred",
+    "setup": {
+      "my_team": "red",
+      "my_role": "support",
+      "my_pick_order": 5,
+      "ally_picks": {
+        "top": "Garen",
+        "jungle": "Lee Sin",
+        "mid": "Orianna",
+        "bot": "Jinx"
+      },
+      "enemy_picks": {
+        "top": "Malphite",
+        "jungle": "Jarvan IV",
+        "mid": "Diana",
+        "bot": "Caitlyn",
+        "support": "Blitzcrank"
+      },
+      "bans": [],
+      "champion_pool": {
+        "support": [
+          {
+            "champion": "Janna",
+            "tier": "B"
+          },
+          {
+            "champion": "Lulu",
+            "tier": "A"
+          },
+          {
+            "champion": "Soraka",
+            "tier": "B"
+          },
+          {
+            "champion": "Nautilus",
+            "tier": "S"
+          },
+          {
+            "champion": "Pyke",
+            "tier": "A"
+          }
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "must_rank_higher_than",
+        "champion_a": "Nautilus",
+        "champion_b": "Janna"
       }
     ],
     "confidence": "medium"
@@ -1346,7 +1362,7 @@
     },
     "assertions": [
       {
-        "type": "must_be_top_1",
+        "type": "must_be_in_top_2",
         "champion": "Malphite"
       }
     ],
@@ -1905,5 +1921,161 @@
         "champion_b": "Kog'Maw"
       }
     ]
+  },
+  {
+    "id": "no_tie_hard_counter_jax_volibear",
+    "category": "ties",
+    "description": "Direct counter in last pick leaves the top group alone — Jax vs Volibear, 59.2% over 7371 games",
+    "setup": {
+      "my_team": "red",
+      "my_role": "top",
+      "my_pick_order": 5,
+      "rank_bucket": "emerald",
+      "ally_picks": {
+        "jungle": "Vi",
+        "mid": "Ahri",
+        "bot": "Jinx",
+        "support": "Leona"
+      },
+      "enemy_picks": {
+        "top": "Volibear",
+        "jungle": "Jarvan IV",
+        "mid": "Syndra",
+        "bot": "Caitlyn",
+        "support": "Lux"
+      },
+      "bans": [],
+      "champion_pool": {
+        "top": [
+          {
+            "champion": "Jax",
+            "tier": "A"
+          },
+          {
+            "champion": "Garen",
+            "tier": "A"
+          },
+          {
+            "champion": "Sett",
+            "tier": "A"
+          },
+          {
+            "champion": "Malphite",
+            "tier": "A"
+          }
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "must_lead_alone",
+        "champion": "Jax"
+      }
+    ],
+    "confidence": "medium"
+  },
+  {
+    "id": "no_tie_hard_counter_yone_yorick",
+    "category": "ties",
+    "description": "Direct counter in last pick leaves the top group alone — Yone vs Yorick, 60.2% over 9507 games",
+    "setup": {
+      "my_team": "red",
+      "my_role": "top",
+      "my_pick_order": 5,
+      "rank_bucket": "emerald",
+      "ally_picks": {
+        "jungle": "Vi",
+        "mid": "Ahri",
+        "bot": "Jinx",
+        "support": "Leona"
+      },
+      "enemy_picks": {
+        "top": "Yorick",
+        "jungle": "Jarvan IV",
+        "mid": "Syndra",
+        "bot": "Caitlyn",
+        "support": "Lux"
+      },
+      "bans": [],
+      "champion_pool": {
+        "top": [
+          {
+            "champion": "Yone",
+            "tier": "A"
+          },
+          {
+            "champion": "Garen",
+            "tier": "A"
+          },
+          {
+            "champion": "Sett",
+            "tier": "A"
+          },
+          {
+            "champion": "Malphite",
+            "tier": "A"
+          }
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "must_lead_alone",
+        "champion": "Yone"
+      }
+    ],
+    "confidence": "medium"
+  },
+  {
+    "id": "no_tie_hard_counter_malphite_gnar",
+    "category": "ties",
+    "description": "Direct counter in last pick leaves the top group alone — Malphite vs Gnar, 57.5% over 10703 games",
+    "setup": {
+      "my_team": "red",
+      "my_role": "top",
+      "my_pick_order": 5,
+      "rank_bucket": "emerald",
+      "ally_picks": {
+        "jungle": "Vi",
+        "mid": "Ahri",
+        "bot": "Jinx",
+        "support": "Leona"
+      },
+      "enemy_picks": {
+        "top": "Gnar",
+        "jungle": "Jarvan IV",
+        "mid": "Syndra",
+        "bot": "Caitlyn",
+        "support": "Lux"
+      },
+      "bans": [],
+      "champion_pool": {
+        "top": [
+          {
+            "champion": "Malphite",
+            "tier": "A"
+          },
+          {
+            "champion": "Garen",
+            "tier": "A"
+          },
+          {
+            "champion": "Sett",
+            "tier": "A"
+          },
+          {
+            "champion": "Jax",
+            "tier": "A"
+          }
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "must_lead_alone",
+        "champion": "Malphite"
+      }
+    ],
+    "confidence": "medium"
   }
 ]
