@@ -765,7 +765,7 @@ class DraftEngine:
             gaps.append("no_ap")
         if avg_phys < 25:
             gaps.append("no_ad")
-        if not any(c.ratings.tankiness >= 4 or "Tank" in c.tags for c in enemies):
+        if not any(c.is_frontline for c in enemies):
             gaps.append("no_frontline")
         if not any("Marksman" in c.tags or c.ratings.dps >= 4 for c in enemies):
             gaps.append("no_dps")
@@ -779,7 +779,7 @@ class DraftEngine:
         if gap == "no_ad":
             return champ.damage.physical >= 60
         if gap == "no_frontline":
-            return champ.ratings.tankiness >= 4 or "Tank" in champ.tags
+            return champ.is_frontline
         if gap == "no_dps":
             return "Marksman" in champ.tags or champ.ratings.dps >= 4
         return False

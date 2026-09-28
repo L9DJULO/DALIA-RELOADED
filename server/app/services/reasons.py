@@ -85,7 +85,7 @@ def _cand_patterns(cand: Champion) -> set:
         p.add("range_advantage")
     if c.utility >= 4 and ("Mage" in tags or "Support" in tags):
         p.add("disengage")
-    if c.tankiness >= 4 or "Tank" in tags:
+    if cand.is_frontline:
         p.add("tank")
     if c.dps >= 4:
         p.add("sustained_dps")
@@ -123,7 +123,7 @@ def _enemy_patterns(enemy: Champion) -> set:
         p.add("poke")
     if o.burst >= 4 or "Assassin" in tags:
         p.add("burst")
-    if o.tankiness >= 4 or "Tank" in tags:
+    if enemy.is_frontline:
         p.add("tank")
     if enemy.key in {"Soraka", "Yuumi", "Sona", "Aatrox", "Vladimir", "DrMundo", "Zac", "Senna"}:
         p.add("sustain")
@@ -143,7 +143,7 @@ def _ally_patterns(ally: Champion) -> set:
         p.add("cc")
     if a.utility >= 4:
         p.add("peel")
-    if a.tankiness >= 4 or "Tank" in tags:
+    if ally.is_frontline:
         p.add("tank")
     if a.poke >= 4:
         p.add("poke")
@@ -293,9 +293,8 @@ def _composition_reasons(
         elif ad_ratio < 0.30 and cand.damage.physical >= 55:
             reasons.append(_mk("Apporte de l'AD dans une comp AP-heavy", "info"))
 
-    # Missing frontline
-    team_max_tank = max((t.ratings.tankiness for t in team), default=0)
-    if team_max_tank < 3 and c.tankiness >= 4:
+    # Missing frontline (tank + Divers, joueur, 28/09)
+    if cand.is_frontline and not any(t.is_frontline for t in team):
         reasons.append(_mk("Apporte le front manquant", "info"))
 
     # Missing engage

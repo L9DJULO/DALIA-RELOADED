@@ -215,7 +215,7 @@ def archetype_counter_adjust(candidate: Champion, enemy_archetype: Archetype) ->
         or ("Fighter" in tags and r.splitpush >= 3)
         or r.engage >= 4
     )
-    is_tank = "Tank" in tags or r.tankiness >= 4
+    is_tank = candidate.is_tank   # Vanguard, Warden, Juggernaut (joueur, 28/09) : ce qui encaisse
     has_peel = r.utility >= 4
     has_hard_engage = r.engage >= 4
     has_poke = r.poke >= 4
@@ -266,7 +266,7 @@ def archetype_counter_adjust(candidate: Champion, enemy_archetype: Archetype) ->
         if "Assassin" in tags:                       adj += 0.09
         if has_mobility_proxy:                       adj += 0.06
         if has_poke:                                 adj += 0.05   # chip through shields
-        if r.engage >= 4 and "Tank" in tags:         adj -= 0.04   # eats all the peel, bricks
+        if r.engage >= 4 and is_tank:                adj -= 0.04   # eats all the peel, bricks
         if is_immobile_carry and not has_peel:       adj -= 0.03
 
     elif enemy_archetype == Archetype.PICK:

@@ -88,14 +88,12 @@ class CompositionAnalyzer:
                 message=f"Comp à tendance AP ({(1-ad_ratio)*100:.0f}% magique) — attention à l'équilibre.",
             ))
 
-        # ── 2. Frontline / Tank ──────────────────────────────────────────
-        tanks = sum(1 for c in team if c.ratings.tankiness >= 4)
-        frontline = sum(1 for c in team if c.ratings.tankiness >= 3)
-
-        if n >= 3 and tanks == 0 and frontline <= 1:
+        # ── 2. Frontline ─────────────────────────────────────────────────
+        # Tank + Divers (joueur, 28/09) : quelqu'un qui tient le contact.
+        if n >= 3 and not any(c.is_frontline for c in team):
             warns.append(CompositionWarning(
                 severity="warning",
-                message="Pas de vrai tank/frontlane — l'équipe manque de résistance.",
+                message="Pas de frontline — personne pour tenir le contact.",
             ))
 
         # ── 3. CC ────────────────────────────────────────────────────────

@@ -30,7 +30,8 @@
     ],
     "properties": [
       "reception_partielle",
-      "tank"
+      "tank",
+      "frontline"
     ],
     "damage_type": "physical"
   },
@@ -140,7 +141,8 @@
     "ratings_source": "joueur",
     "properties": [
       "reception",
-      "tank"
+      "tank",
+      "frontline"
     ],
     "damage_type": "magic"
   },
@@ -173,7 +175,8 @@
       3
     ],
     "properties": [
-      "reception"
+      "reception",
+      "frontline"
     ],
     "damage_type": "physical"
   },
@@ -196,7 +199,8 @@
     "ratings_source": "joueur",
     "damage_type": "magic",
     "properties": [
-      "tank"
+      "tank",
+      "frontline"
     ]
   },
   "Anivia": {
@@ -487,7 +491,8 @@
     "ratings_source": "joueur",
     "properties": [
       "reception",
-      "tank"
+      "tank",
+      "frontline"
     ],
     "damage_type": "magic"
   },
@@ -518,7 +523,10 @@
       3,
       3
     ],
-    "damage_type": "physical"
+    "damage_type": "physical",
+    "properties": [
+      "frontline"
+    ]
   },
   "Caitlyn": {
     "roles": [
@@ -570,7 +578,10 @@
       5,
       3
     ],
-    "damage_type": "physical"
+    "damage_type": "physical",
+    "properties": [
+      "frontline"
+    ]
   },
   "Cassiopeia": {
     "roles": [
@@ -694,7 +705,8 @@
     ],
     "properties": [
       "reception",
-      "tank"
+      "tank",
+      "frontline"
     ],
     "damage_type": "physical"
   },
@@ -726,7 +738,10 @@
       3,
       3
     ],
-    "damage_type": "magic"
+    "damage_type": "magic",
+    "properties": [
+      "frontline"
+    ]
   },
   "Draven": {
     "roles": [
@@ -775,7 +790,8 @@
     ],
     "damage_type": "mixed",
     "properties": [
-      "tank"
+      "tank",
+      "frontline"
     ]
   },
   "Ekko": {
@@ -995,7 +1011,8 @@
     "ratings_source": "joueur",
     "properties": [
       "reception",
-      "tank"
+      "tank",
+      "frontline"
     ],
     "damage_type": "magic"
   },
@@ -1060,7 +1077,8 @@
     ],
     "damage_type": "physical",
     "properties": [
-      "tank"
+      "tank",
+      "frontline"
     ]
   },
   "Gnar": {
@@ -1114,7 +1132,8 @@
     "ratings_source": "joueur",
     "properties": [
       "reception",
-      "tank"
+      "tank",
+      "frontline"
     ],
     "damage_type": "magic"
   },
@@ -1204,7 +1223,10 @@
       3,
       3
     ],
-    "damage_type": "physical"
+    "damage_type": "physical",
+    "properties": [
+      "frontline"
+    ]
   },
   "Heimerdinger": {
     "roles": [
@@ -1278,7 +1300,8 @@
     ],
     "damage_type": "physical",
     "properties": [
-      "tank"
+      "tank",
+      "frontline"
     ]
   },
   "Irelia": {
@@ -1309,7 +1332,10 @@
       3,
       3
     ],
-    "damage_type": "physical"
+    "damage_type": "physical",
+    "properties": [
+      "frontline"
+    ]
   },
   "Ivern": {
     "roles": [
@@ -1389,7 +1415,10 @@
       3,
       3
     ],
-    "damage_type": "physical"
+    "damage_type": "physical",
+    "properties": [
+      "frontline"
+    ]
   },
   "Jax": {
     "roles": [
@@ -1858,7 +1887,8 @@
     ],
     "properties": [
       "reception",
-      "tank"
+      "tank",
+      "frontline"
     ],
     "damage_type": "physical"
   },
@@ -1918,7 +1948,10 @@
       3,
       3
     ],
-    "damage_type": "physical"
+    "damage_type": "physical",
+    "properties": [
+      "frontline"
+    ]
   },
   "Leona": {
     "roles": [
@@ -1938,7 +1971,8 @@
     "ratings_source": "joueur",
     "damage_type": "magic",
     "properties": [
-      "tank"
+      "tank",
+      "frontline"
     ]
   },
   "Lillia": {
@@ -2113,7 +2147,8 @@
     "ratings_source": "joueur",
     "damage_type": "magic",
     "properties": [
-      "tank"
+      "tank",
+      "frontline"
     ]
   },
   "Malzahar": {
@@ -2168,7 +2203,8 @@
     "ratings_source": "joueur",
     "properties": [
       "reception_partielle",
-      "tank"
+      "tank",
+      "frontline"
     ],
     "damage_type": "magic"
   },
@@ -2300,7 +2336,10 @@
       3,
       3
     ],
-    "damage_type": "physical"
+    "damage_type": "physical",
+    "properties": [
+      "frontline"
+    ]
   },
   "Mordekaiser": {
     "roles": [
@@ -2331,7 +2370,8 @@
     ],
     "damage_type": "magic",
     "properties": [
-      "tank"
+      "tank",
+      "frontline"
     ]
   },
   "Morgana": {
@@ -2435,7 +2475,8 @@
     ],
     "damage_type": "physical",
     "properties": [
-      "tank"
+      "tank",
+      "frontline"
     ]
   },
   "Nautilus": {
@@ -2456,7 +2497,8 @@
     "ratings_source": "joueur",
     "damage_type": "magic",
     "properties": [
-      "tank"
+      "tank",
+      "frontline"
     ]
   },
   "Neeko": {
@@ -2583,7 +2625,8 @@
     ],
     "damage_type": "magic",
     "properties": [
-      "tank"
+      "tank",
+      "frontline"
     ]
   },
   "Olaf": {
@@ -2614,7 +2657,8 @@
       3
     ],
     "properties": [
-      "ignore_cc"
+      "ignore_cc",
+      "frontline"
     ],
     "damage_type": "physical"
   },
@@ -2679,7 +2723,8 @@
     ],
     "properties": [
       "reception",
-      "tank"
+      "tank",
+      "frontline"
     ],
     "damage_type": "magic"
   },
@@ -2702,7 +2747,8 @@
     "ratings_source": "joueur",
     "damage_type": "physical",
     "properties": [
-      "sur_en_blind"
+      "sur_en_blind",
+      "frontline"
     ]
   },
   "Poppy": {
@@ -2724,7 +2770,8 @@
     "ratings_source": "joueur",
     "properties": [
       "reception",
-      "tank"
+      "tank",
+      "frontline"
     ],
     "damage_type": "physical"
   },
@@ -2862,7 +2909,8 @@
     ],
     "properties": [
       "reception",
-      "tank"
+      "tank",
+      "frontline"
     ],
     "damage_type": "magic"
   },
@@ -2893,7 +2941,10 @@
       3,
       3
     ],
-    "damage_type": "physical"
+    "damage_type": "physical",
+    "properties": [
+      "frontline"
+    ]
   },
   "Rell": {
     "roles": [
@@ -2913,7 +2964,8 @@
     "ratings_source": "joueur",
     "damage_type": "magic",
     "properties": [
-      "tank"
+      "tank",
+      "frontline"
     ]
   },
   "Renata": {
@@ -2964,7 +3016,10 @@
       3,
       3
     ],
-    "damage_type": "physical"
+    "damage_type": "physical",
+    "properties": [
+      "frontline"
+    ]
   },
   "Rengar": {
     "roles": [
@@ -3132,7 +3187,8 @@
     ],
     "properties": [
       "reception",
-      "tank"
+      "tank",
+      "frontline"
     ],
     "damage_type": "magic"
   },
@@ -3194,7 +3250,8 @@
     "ratings_source": "joueur",
     "properties": [
       "reception",
-      "tank"
+      "tank",
+      "frontline"
     ],
     "damage_type": "physical"
   },
@@ -3235,7 +3292,8 @@
     "ratings_source": "joueur",
     "properties": [
       "reception",
-      "tank"
+      "tank",
+      "frontline"
     ],
     "damage_type": "mixed"
   },
@@ -3267,7 +3325,8 @@
       3
     ],
     "properties": [
-      "reception"
+      "reception",
+      "frontline"
     ],
     "damage_type": "mixed"
   },
@@ -3329,7 +3388,8 @@
     ],
     "properties": [
       "reception",
-      "tank"
+      "tank",
+      "frontline"
     ],
     "damage_type": "physical"
   },
@@ -3383,7 +3443,8 @@
     ],
     "properties": [
       "reception",
-      "tank"
+      "tank",
+      "frontline"
     ],
     "damage_type": "physical"
   },
@@ -3554,7 +3615,8 @@
     "properties": [
       "reception",
       "protege_carry",
-      "tank"
+      "tank",
+      "frontline"
     ],
     "damage_type": "magic"
   },
@@ -3639,7 +3701,8 @@
     "ratings_source": "joueur",
     "properties": [
       "reception",
-      "tank"
+      "tank",
+      "frontline"
     ],
     "damage_type": "magic"
   },
@@ -3744,7 +3807,8 @@
     ],
     "damage_type": "physical",
     "properties": [
-      "tank"
+      "tank",
+      "frontline"
     ]
   },
   "Tryndamere": {
@@ -3856,7 +3920,8 @@
     ],
     "damage_type": "mixed",
     "properties": [
-      "tank"
+      "tank",
+      "frontline"
     ]
   },
   "Urgot": {
@@ -3888,7 +3953,8 @@
     ],
     "properties": [
       "reception",
-      "tank"
+      "tank",
+      "frontline"
     ],
     "damage_type": "physical"
   },
@@ -4048,7 +4114,8 @@
       3
     ],
     "properties": [
-      "reception_partielle"
+      "reception_partielle",
+      "frontline"
     ],
     "damage_type": "physical"
   },
@@ -4177,7 +4244,8 @@
     ],
     "damage_type": "mixed",
     "properties": [
-      "tank"
+      "tank",
+      "frontline"
     ]
   },
   "Warwick": {
@@ -4208,7 +4276,10 @@
       3,
       3
     ],
-    "damage_type": "mixed"
+    "damage_type": "mixed",
+    "properties": [
+      "frontline"
+    ]
   },
   "Xayah": {
     "roles": [
@@ -4279,7 +4350,8 @@
       3
     ],
     "properties": [
-      "reception"
+      "reception",
+      "frontline"
     ],
     "damage_type": "physical"
   },
@@ -4362,7 +4434,8 @@
     ],
     "damage_type": "physical",
     "properties": [
-      "tank"
+      "tank",
+      "frontline"
     ]
   },
   "Yunara": {
@@ -4462,7 +4535,8 @@
     ],
     "damage_type": "magic",
     "properties": [
-      "tank"
+      "tank",
+      "frontline"
     ]
   },
   "Zed": {

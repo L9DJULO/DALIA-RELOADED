@@ -185,7 +185,7 @@ class MechanicsAnalyzer:
         result = set()
         if champion.damage.magical >= 60: result.add("magic_damage")
         if champion.damage.physical >= 60: result.add("physical_damage")
-        if r.tankiness >= 4: result.add("frontline")
+        if champion.is_frontline: result.add("frontline")
         if r.engage >= 4 and r.cc >= 3: result.add("engage")
         if r.poke >= 4: result.add("range")
         if champion.key in PEEL or champion.key == "Morgana": result.add("peel")

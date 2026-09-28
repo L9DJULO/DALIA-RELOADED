@@ -88,6 +88,12 @@ class Champion(BaseModel):
         return "tank" in self.properties
 
     @property
+    def is_frontline(self) -> bool:
+        """Propriété `frontline` du joueur (28/09) : tank + Divers du wiki, sans Elise ni
+        Rengar. Ce qui tient le contact, là où le tank est ce qui encaisse."""
+        return "frontline" in self.properties
+
+    @property
     def primary_damage_type(self) -> str:
         if self.damage.physical >= 60:
             return "AD"

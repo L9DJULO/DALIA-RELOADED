@@ -141,7 +141,7 @@ class SynergyAnalyzer:
             if support_champ.ratings.utility >= 4:
                 score += 7
             # Tank support = good
-            if support_champ.ratings.tankiness >= 4:
+            if support_champ.is_tank:
                 score += 5
             # Mage supports provide poke
             if "Mage" in support_champ.tags and support_champ.ratings.poke >= 3:
@@ -201,7 +201,7 @@ class SynergyAnalyzer:
                     delta += 5.0  # engage support with ADC
                 if ally.ratings.utility >= 4:
                     delta += 4.5  # enchanter with ADC
-                if ally.ratings.tankiness >= 4:
+                if ally.is_tank:
                     delta += 3.0  # tank support
                 if ally.ratings.cc >= 4:
                     delta += 2.0  # CC support
@@ -224,7 +224,7 @@ class SynergyAnalyzer:
                 delta += 2.5
 
             # Tank + carry
-            if ally.ratings.tankiness >= 4 and candidate.ratings.dps >= 4:
+            if ally.is_tank and candidate.ratings.dps >= 4:
                 delta += 2.0
 
             # Both squishy assassins/mages → slight negative
