@@ -31,6 +31,8 @@ Useful flags:
 | `--rank <rank>` | Player rank applied to cases without an explicit `rank_bucket` |
 | `--diagnose` | Sort ordering assertions by decidability instead of judging pass/fail |
 | `--freeze-cache` | Snapshot the live cache into `cache-frozen/` and exit |
+| `--extend-frozen` | Add the live cache entries missing from the snapshot, and exit |
+| `--prune-frozen` | Replay the whole suite on the snapshot, keep only the entries it reads, and exit |
 | `--live-cache` | Ignore the snapshot and read the live cache (data may drift) |
 
 The script returns exit code **0** when every assertion passes, **1** otherwise
@@ -55,7 +57,11 @@ python tests/calibration/run_calibration.py --freeze-cache --rank master_plus
 
 Le cache vivant est **copié** dans `server/app/data/cache-frozen/` (une copie, pas un gel
 sur place : le cache vivant est réécrit dès que l'application tourne), avec un
-`MANIFEST.json` qui date le snapshot. Le dossier n'est pas versionné — il se régénère.
+`MANIFEST.json` qui date le snapshot. **Le gel est versionné depuis le 28/09/2026**
+(chantier 9), avec les snapshots de comparaison (`snapshots/`) : un clone frais rejoue la
+calibration hors ligne, à l'identique. On n'y garde que les entrées que la suite lit
+(`--prune-frozen`) ; un nouveau cas passe par `--live-cache` sur ce seul cas, puis
+`--extend-frozen`, puis un commit du gel — sans quoi l'extension ne vit que sur la machine.
 
 **Dès qu'un snapshot existe, la calibration l'utilise par défaut**, sans TTL et réseau
 interdit. Chaque run affiche en tête le mode et la date du gel. Il faut demander
@@ -962,3 +968,17 @@ au passage : `blind_pick_mid_no_zed_akali` testait Lux > Akali, attente rejetée
 inversée en Akali > Lux, elle échoue (Lux n°1, Akali n°3). Moteur inchangé.
 
 Référence suivante : `snapshots/baseline_v16.json`, **57/64**, même gel.
+
+## Gel versionné (chantier 9, 28/09/2026)
+
+Le gel n'existait que sur une machine : un `git clean -x` ou un autre poste rendait les
+références v8 à v16 impossibles à rejouer, et chaque `--extend-frozen` restait local.
+
+- **Élagage** : `--prune-frozen` rejoue toute la suite sur le gel en notant chaque entrée lue,
+  puis retire les autres. 684 entrées lues sur 2 710 (8,6 Mo) ; le reste venait de copies du
+  cache vivant jamais lues. Copie complète gardée hors dépôt
+  (`app/data/cache-frozen-2026-09-28-complet/`) pour rejouer les anciens moteurs.
+- **Contrôle** : gel élagué contre `baseline_v16` — 0 assertion basculée, 0 changement de
+  rang, 0 déplacement. Puis clone frais du dépôt, sans cache vivant : calibration hors ligne,
+  **57/64**, même contrôle, aucun mouvement.
+- Gel et snapshots marqués `-diff linguist-generated` ; manifeste et snapshots écrits en LF.

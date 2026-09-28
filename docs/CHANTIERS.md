@@ -296,6 +296,11 @@ apparus : ce sont des cas à instruire, pas une régression.
 plus rejouable à l'identique. Si ça devient gênant, versionner les seules entrées que la suite lit
 réellement.
 
+**Soldé le 28/09** : gel élagué aux 684 entrées que la suite lit (`--prune-frozen`, 8,6 Mo) et
+versionné avec les snapshots de comparaison. Clone frais, sans cache vivant : calibration hors
+ligne à l'identique de `baseline_v16` (57/64, aucun mouvement). Un nouveau cas se termine
+désormais par un commit du gel étendu.
+
 ---
 
 ## 10. Dette mineure

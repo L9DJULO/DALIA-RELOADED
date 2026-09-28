@@ -43,7 +43,7 @@ def build(rank: Optional[str], cache: Optional[Dict[str, Any]], cases: Dict[str,
 def write(path: Path, snap: Dict[str, Any]) -> None:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(snap, indent=1, ensure_ascii=False), encoding="utf-8")
+    path.write_text(json.dumps(snap, indent=1, ensure_ascii=False), encoding="utf-8", newline="\n")
 
 
 def read(path: Path) -> Dict[str, Any]:

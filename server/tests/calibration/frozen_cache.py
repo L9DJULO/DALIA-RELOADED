@@ -6,7 +6,8 @@ sans une ligne de code changée — le TTL de six heures avait expiré et Lolaly
 resservi des statistiques fraîches au milieu d'une mesure.
 
 Le snapshot est une **copie** du cache vivant, pas un gel sur place : le cache vivant
-est réécrit dès que l'application tourne.
+est réécrit dès que l'application tourne. Il est versionné depuis le chantier 9, élagué
+aux seules entrées que la suite lit : un clone frais rejoue la calibration hors ligne.
 """
 from __future__ import annotations
 
@@ -54,7 +55,7 @@ def freeze(live: Path, frozen: Path, ddragon_version: str = "", tier: str = "") 
         entries += 1
     manifest = {"frozen_at": time.time(), "entries": entries, "source": str(live),
                 "ddragon_version": ddragon_version, "tier": tier}
-    (frozen / MANIFEST).write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+    (frozen / MANIFEST).write_text(json.dumps(manifest, indent=2), encoding="utf-8", newline="\n")
     return manifest
 
 
@@ -79,7 +80,7 @@ def extend(live: Path, frozen: Path) -> Dict[str, Any]:
     manifest["entries"] = sum(1 for p in frozen.glob("*.json") if p.name != MANIFEST)
     manifest["added"] = added
     manifest.setdefault("extended", []).append({"at": time.time(), "added": added})
-    (frozen / MANIFEST).write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+    (frozen / MANIFEST).write_text(json.dumps(manifest, indent=2), encoding="utf-8", newline="\n")
     return manifest
 
 
@@ -103,7 +104,7 @@ def prune(frozen: Path, keep: Set[str]) -> Dict[str, Any]:
             removed += 1
     manifest["entries"] = sum(1 for p in frozen.glob("*.json") if p.name != MANIFEST)
     manifest.setdefault("pruned", []).append({"at": time.time(), "removed": removed})
-    (frozen / MANIFEST).write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+    (frozen / MANIFEST).write_text(json.dumps(manifest, indent=2), encoding="utf-8", newline="\n")
     return manifest
 
 

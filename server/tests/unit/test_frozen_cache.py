@@ -143,3 +143,14 @@ async def test_reads_through_the_run_fetcher_are_recorded(tmp_path):
     assert fetcher._cache.get("lola_list_middle") == {"k": "lola_list_middle"}, "la lecture passe toujours"
     assert read == {f"{cache_key('lola_list_middle')}.json"}
     await fetcher.close()
+
+
+def test_versioned_files_are_written_with_lf_endings(tmp_path):
+    """Gel et snapshots sont versionnés (chantier 9) : LF, comme le reste du dépôt."""
+    import snapshot
+    frozen = _frozen_with(tmp_path, "lola_list_middle")
+    frozen_cache.prune(frozen, {f"{cache_key('lola_list_middle')}.json"})
+    assert b"\r\n" not in (frozen / "MANIFEST.json").read_bytes()
+    snap = tmp_path / "snap.json"
+    snapshot.write(snap, {"cases": {"a": {"ranking": []}}})
+    assert b"\r\n" not in snap.read_bytes()
