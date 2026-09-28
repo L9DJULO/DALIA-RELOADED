@@ -87,3 +87,43 @@ def test_unknown_rank_is_rejected_with_accepted_values_listed():
     assert message is not None and "diamnod" in message, "une faute de frappe doit etre signalee, pas absorbee"
     for rank in run_calibration.RANKS:
         assert rank in message, f"{rank} doit figurer parmi les valeurs acceptees"
+
+
+evaluate_assertion = run_calibration.evaluate_assertion
+
+
+def test_top_2_accepts_the_second_and_rejects_the_third():
+    assert evaluate_assertion({"type": "must_be_in_top_2", "champion": "Jinx"}, RECS)[0]
+    assert not evaluate_assertion({"type": "must_be_in_top_2", "champion": "Ezreal"}, RECS)[0]
+
+
+def test_top_2_separation_compares_against_the_second_slot():
+    gap, _, label = assertion_separation({"type": "must_be_in_top_2", "champion": "Ezreal"}, RECS)
+    assert math.isclose(gap, 2.5), "Ezreal (0.0) contre le 2e, Jinx (2.5)"
+    assert "Jinx" in label
+
+
+def _tied(recs, n):
+    """Les n premiers forment le groupe de tête du moteur."""
+    for i, r in enumerate(recs):
+        r.tie_with_leader = i < n
+    return recs
+
+
+def test_lead_alone_requires_the_leader_to_be_out_of_any_tie():
+    alone = _tied([rec("Jax", 5.0, 1.0), rec("Malphite", 1.0, 1.0)], 1)
+    tied = _tied([rec("Jax", 5.0, 1.0), rec("Malphite", 4.5, 1.0)], 2)
+    assert evaluate_assertion({"type": "must_lead_alone", "champion": "Jax"}, alone)[0]
+    assert not evaluate_assertion({"type": "must_lead_alone", "champion": "Jax"}, tied)[0], \
+        "n°1 mais à égalité avec Malphite : il ne se détache pas"
+
+
+def test_lead_alone_rejects_a_champion_that_is_not_first():
+    recs = _tied([rec("Malphite", 5.0, 1.0), rec("Jax", 1.0, 1.0)], 1)
+    assert not evaluate_assertion({"type": "must_lead_alone", "champion": "Jax"}, recs)[0]
+
+
+def test_lead_alone_separation_compares_the_leader_to_the_runner_up():
+    recs = _tied([rec("Jax", 5.0, 1.0), rec("Malphite", 1.0, 1.0)], 1)
+    gap, _, label = assertion_separation({"type": "must_lead_alone", "champion": "Jax"}, recs)
+    assert math.isclose(gap, 4.0) and "Malphite" in label

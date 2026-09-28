@@ -183,6 +183,27 @@ def evaluate_assertion(a: Dict[str, Any], recs: List) -> Tuple[bool, str]:
             return False, f"{a['champion']} not in recommendations"
         return False, f"{a['champion']} is #{rank + 1}, expected #1"
 
+    if t == "must_be_in_top_2":
+        rank, _ = find_rank(recs, a["champion"])
+        if rank is not None and rank < 2:
+            return True, f"{a['champion']} is #{rank + 1}"
+        if rank is None:
+            return False, f"{a['champion']} not in top 15"
+        return False, f"{a['champion']} is #{rank + 1}, expected ≤ 2"
+
+    if t == "must_lead_alone":
+        # Se détacher du groupe de tête : n°1, et personne d'autre à égalité
+        # statistique avec lui (tie_with_leader, calculé par le moteur).
+        rank, _ = find_rank(recs, a["champion"])
+        if rank is None:
+            return False, f"{a['champion']} not in recommendations"
+        if rank != 0:
+            return False, f"{a['champion']} is #{rank + 1}, expected #1 alone"
+        tied = [r.champion_name for r in recs[1:] if getattr(r, "tie_with_leader", False)]
+        if tied:
+            return False, f"{a['champion']} is #1 but tied with {', '.join(tied)}"
+        return True, f"{a['champion']} is #1, alone in the top group"
+
     if t == "must_be_in_top_3":
         rank, _ = find_rank(recs, a["champion"])
         if rank is not None and rank < 3:
@@ -264,8 +285,8 @@ def evaluate_assertion(a: Dict[str, Any], recs: List) -> Tuple[bool, str]:
 
 
 # Boundary slot index tested by each position assertion.
-_BOUNDARY_SLOT = {"must_be_top_1": 0, "must_be_in_top_3": 2,
-                  "must_be_in_top_5": 4, "must_not_be_top_3": 2}
+_BOUNDARY_SLOT = {"must_be_top_1": 0, "must_lead_alone": 0, "must_be_in_top_2": 1,
+                  "must_be_in_top_3": 2, "must_be_in_top_5": 4, "must_not_be_top_3": 2}
 
 
 def assertion_separation(a: Dict[str, Any], recs: List) -> Optional[Tuple[float, float, str]]:

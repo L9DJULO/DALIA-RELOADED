@@ -117,6 +117,8 @@ Append an object to `cases.json` with this shape:
 | Type | Fields | Meaning |
 |------|--------|---------|
 | `must_be_top_1` | `champion` | Champion must be #1 in the recommendations |
+| `must_lead_alone` | `champion` | Champion must be #1 with no other champion in the engine's top group (`tie_with_leader`) : il se détache |
+| `must_be_in_top_2` | `champion` | Champion must be in indices 0..1 |
 | `must_be_in_top_3` | `champion` | Champion must be in indices 0..2 |
 | `must_be_in_top_5` | `champion` | Champion must be in indices 0..4 |
 | `must_not_be_top_3` | `champion` | Champion must be absent from indices 0..2 (absent from top 15 also passes) |
