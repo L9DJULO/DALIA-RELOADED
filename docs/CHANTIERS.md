@@ -4,7 +4,8 @@ Tout ce qu'on a identifié et volontairement mis de côté, avec ce qui le bloqu
 pas le faire. Tenu à jour au fil des découvertes : rien ne doit disparaître dans l'historique de
 conversation.
 
-Dernière mise à jour : 28 septembre 2026, synergie mesurée par paire (chantier 3).
+Dernière mise à jour : 28 septembre 2026, arbitrages des cas en attente et définition du tank
+(chantiers 4, 6, 7, 17 et 18).
 
 ---
 
@@ -126,6 +127,9 @@ contre le fichier d'overrides). Elle révèle que **`teamfight` est saturée** �
 de bot lane à 4 ou 5 — et laisse trois points à trancher avec le joueur avant de noter les 102 :
 réarbitrer `teamfight`, fixer les ancres hautes de `splitpush`, départager Brand et Vel'Koz.
 
+**Les trois sont tranchés** : ancres `splitpush` et Brand/Vel'Koz le 25/09
+(`ARBITRAGE_JOUEUR.md`), `teamfight` mesurée sur les parties pros (chantier 14).
+
 ---
 
 ## 4bis. Le fichier d'overrides n'a pas suivi les sorties récentes
@@ -165,6 +169,11 @@ Gragas, Heimerdinger et Sett ne sont plus proposés support. **Shaco le reste** 
 Master+ s'y jouent, au-dessus du seuil de 15 %. À trancher avec le joueur si ce pick doit sortir
 malgré la donnée.
 
+**Sorti le 28/09** (choix du joueur : pick rate 0,87 % au poste, tier le plus bas).
+`ROLE_EXCLUSIONS` de `scripts/refresh_roles.py` le retire du poste à chaque régénération ; la
+distribution des rôles adverses le garde support à 20 %. Calibration : aucun mouvement ;
+concordance neutre (top-3 +3 −3, top-10 +0 −1).
+
 **Reste ouvert** : les notes par rôle.
 
 ---
@@ -196,13 +205,18 @@ encore. Suite : réarbitrer `teamfight` et noter les mids (chantier 4), puis re-
 Attentes **non arbitrées** : le joueur les a évoquées sans trancher le résultat attendu. Ne pas les
 inventer, les lui faire préciser.
 
-1. **Xayah dans le pool de `comp_engage_adc_kite`** — « Xayah encore mieux ici », elle n'y est pas.
-2. **Nilah bot contre une compo full auto-attaque** — miroir du cas Jax top.
-3. **Généraliser `edge_case_malphite_vs_full_ad`** à K'Sante et Sion.
-4. **Support avec Blitzcrank en face** — « le matchup est chiant », le conseil peel/engage doit-il
-   changer face à un engage à skillshot plutôt qu'à un engage dur ?
-5. **Généraliser `edge_case_tryndamere_no_cc`** — la règle « aucun CC dur en face » ne devrait pas
-   être propre à Tryndamere.
+1. ~~**Xayah dans le pool de `comp_engage_adc_kite`**~~ — fait le 28/09 : Xayah > Samira (devant
+   Jinx, les données disent égalité).
+2. ~~**Nilah bot contre une compo full auto-attaque**~~ — tranché le 28/09 : pas de cas. La règle
+   d'esquive s'applique ; les données ne placent pas Nilah devant Jinx dans cette compo.
+3. ~~**Généraliser `edge_case_malphite_vs_full_ad`** à K'Sante et Sion~~ — tranché le 28/09 par la
+   définition du tank (chantier 18). K'Sante et Sion perdent contre Darius (49,0 et 48,1 %) :
+   pas de cas. Le cas Malphite passe à « top 2 », Ornn étant au palier A.
+4. ~~**Support avec Blitzcrank en face**~~ — fait le 28/09 : `comp_engage_support_vs_blitzcrank`,
+   Nautilus > Janna. Le moteur renverse son conseil avec le seul support adverse, comme les
+   données (Nautilus 51,5 % contre Blitzcrank, 47,6 % contre Leona).
+5. ~~**Généraliser `edge_case_tryndamere_no_cc`**~~ — sans objet : le cas est retiré depuis le
+   27/09, les données avaient raison.
 6. ~~**Remplacer `synergy_senna_tahmkench`**~~ — fait le 28/09 : remplacé par
    `synergy_senna_jhin_over_tristana`, avec quatre autres cas de synergie tirés des données et
    validés par le joueur (chantier 3).
@@ -213,7 +227,9 @@ inventer, les lui faire préciser.
 
 1. **`blind_pick_top_flex_priority`** — la prémisse du cas confond **sûr** et **fort**. Mot du joueur :
    « le plus safe c'est Ornn ou Malphite mais c'est clairement pas les picks les plus forts, genre
-   Camille c'est strong ». À reformuler avec lui.
+   Camille c'est strong ». À reformuler avec lui. **Retiré le 28/09** : ses assertions étaient
+   vides (cinq champions au pool, « top 5 »), et le premier pick sûr est déjà une propriété
+   (`sur_en_blind`).
 2. **`edge_case_garen_vs_darius`, Garen > Camille** — « les 2 se jouent, faudra me refaire des tests,
    je vais demander à mes potes master main top ». **Retiré le 27/09** : face aux données
    (Garen 50,8 % contre Darius, Sett 53,9 %), « les données ont raison ».
@@ -640,7 +656,9 @@ contrôle », 51 + 6 partiels) ; calibration 44/60, concordance top-10 +0,3 poin
   Échelle de maîtrise inchangée.
 - ~~Désaccords cas / données~~ : « les données ont raison » (27/09). Tryndamere, Garen et
   Vayne retirés ; calibration 44/56 (`baseline_v11`). `no_tie_hard_counter` est à réécrire
-  avec un counter confirmé par les données.
+  avec un counter confirmé par les données. **Réécrit le 28/09** : Jax contre Volibear, Yone
+  contre Yorick, Malphite contre Gnar (57 à 60 % sur 7 000 à 10 000 parties), assertion
+  `must_lead_alone` — le counter sort seul du groupe de tête.
 - ~~Ekko~~ : « pas trop réception » (27/09), laissé sans.
 
 **Risque du blind (27/09)** : le joueur tient que Yasuo en blind est plus risqué que Syndra, mais
@@ -667,3 +685,15 @@ consignés : ruées (Janna, Milio, Taliyah, Vex). Sans réponse : cibles immobil
 **Chantier ouvert par la reprise** : les profils de dégâts viennent des tags (Diana 82 %
 physique). Les corriger seuls coûte 1,2 point de concordance top-10, la composition étant réglée
 dessus : à corriger avec un réglage de la composition, pas avant.
+
+**Tank redéfini le 28/09.** « Encaisser » et « contre les tanks » lisaient `is_tank` = tag Riot
+Tank ou `tankiness` ≥ 4 : 53 champions, dont Xayah, Tristana, Yuumi et Bard ; dans le cas
+Malphite, les quatre champions du pool prenaient le même bonus. Le joueur retient les
+sous-classes Vanguard, Warden et Juggernaut du wiki (propriété `tank`, 35 champions).
+Calibration 55/63 inchangée (0 assertion basculée, 3 rangs) ; concordance top-3 16,3 → 16,5 %
+(+21 −14, z +1,2), top-10 40,5 → 40,6 % (z +0,8). Appliqué.
+
+**Reste ouvert** : deux copies de l'ancienne définition vivent hors de `Champion.is_tank`.
+`composition_archetype.py` donne au « tank » un bonus d'archétype (encaisser l'engage ou le
+poke) et `reasons.py` écrit « Frontline {allié} protège {candidat} », qui peut nommer Xayah. Les
+aligner touche le scoring de composition : à mesurer comme une vague.

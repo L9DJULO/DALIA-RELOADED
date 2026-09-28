@@ -90,7 +90,7 @@ Ce sont des pistes, pas des assertions : l'attente exacte n'a pas été tranché
 
 ## En suspens — ne pas trancher sans lui
 
-1. **`blind_pick_top_flex_priority` — Malphite top 5.** « Le plus safe c'est Ornn ou Malphite mais
+1. **`blind_pick_top_flex_priority` — Malphite top 5.** *Retiré le 28/09.* « Le plus safe c'est Ornn ou Malphite mais
    c'est clairement pas les picks les plus forts, genre Camille c'est strong. »
    → La prémisse du cas (« un tank flex doit bien se classer grâce au bonus de first pick ») confond
    **sûr** et **fort**. À reformuler avec lui, pas à corriger d'office.
@@ -108,6 +108,8 @@ Ce sont des pistes, pas des assertions : l'attente exacte n'a pas été tranché
 2. **Nilah bot contre une compo full auto-attaque.** « Nilah pour le bot ça s'applique aussi » (miroir de Jax top).
 3. **Généraliser `edge_case_malphite_vs_full_ad`** à K'Sante et Sion — tout ce qui stack l'armure.
 4. Rappel du 1er passage : Blitzcrank en face pour le cas support, généraliser le cas « aucun CC dur ».
+
+**Tranchés le 28/09** : voir « Arbitrages du 28/09 » en fin de document.
 
 ---
 
@@ -181,3 +183,22 @@ stats, à toi de trancher (mon avis est celui d'un master adc) ».
 | Brand et Vel'Koz identiques | Vel'Koz `utility` +1 ; Brand répond aux gros PV | « Vel'Koz a plus d'utilité que Brand, et Brand plus de dégâts sur les persos à haut PV, sinon pas grand-chose qui les différencie » |
 | Note `teamfight` saturée | À réarbitrer, mais depuis les parties pros plutôt qu'à la main | « la notion de team fight est trop vague […] des champions qui jouent ou pas les TF en fonction des games » ; « serait intéressante si on regardait les games de pro » |
 
+## Arbitrages du 28/09 — cas à préciser et définition du tank
+
+Présentés avec le classement du moteur (gel du 25/09) et les données Lolalytics Émeraude+ sur
+30 jours.
+
+| Question | Décision du joueur | Données | Dans la suite |
+|---|---|---|---|
+| Xayah dans `comp_engage_adc_kite` (« Xayah encore mieux ici ») | Xayah > Samira | Xayah 53,9 % contre Leona, Jinx 54,0 % : devant Jinx, égalité | Xayah au pool (A), `Xayah > Samira` |
+| Nilah bot contre une composition full auto-attaque | Pas de cas | La règle d'esquive joue (+2,1) ; contre Vayne, Nilah 55,8 % (1 204 parties), Jinx 56,8 % (18 841), Caitlyn 55,0 % | — |
+| Support contre Blitzcrank (« le matchup est chiant ») | Nautilus > Janna | Nautilus 51,5 % contre Blitzcrank, 47,6 % contre Leona ; Lulu 49,2 % contre Blitzcrank | `comp_engage_support_vs_blitzcrank`, jumeau du cas peel |
+| Qui est un tank, pour « encaisser » et « contre les tanks » | Vanguard, Warden et Juggernaut du wiki | L'ancien `is_tank` (tag Tank ou tankiness ≥ 4) comptait 53 champions, dont Xayah, Tristana, Yuumi, Bard | propriété `tank`, 35 champions |
+| `edge_case_malphite_vs_full_ad`, Ornn en palier A | Malphite top 2 | Ornn 54,2 % contre Darius, Malphite 53,6 % | `must_be_in_top_2` |
+| K'Sante et Sion contre full AD | Couverts par la propriété, pas de cas | K'Sante 49,0 % et Sion 48,1 % contre Darius | — |
+| `blind_pick_top_flex_priority` (sûr contre fort) | Retiré | Assertions vides : cinq champions au pool, « top 5 » | retiré |
+| `no_tie_hard_counter` à réécrire | Les trois counters proposés | Jax contre Volibear 59,2 % (7 371), Yone contre Yorick 60,2 % (9 507), Malphite contre Gnar 57,5 % (10 703) | trois cas `must_lead_alone` |
+| Shaco support | Sorti | 20 % de ses parties Master+, pick rate 0,87 % au poste, tier le plus bas | `ROLE_EXCLUSIONS` de `refresh_roles.py` |
+
+Généraliser `edge_case_tryndamere_no_cc` : sans objet, le cas est retiré depuis le 27/09 (les
+données avaient raison). Brand et Vel'Koz : déjà départagés le 25/09.

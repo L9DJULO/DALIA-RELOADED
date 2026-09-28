@@ -161,6 +161,17 @@ Contre une composition à ≥ 75 % de dégâts physiques ou ≥ 60 % magiques (a
 connus), tout tank (`Champion.is_tank`) encaisse ; exception nommée : **Kassadin** contre l'AP
 (`encaisse_ap` : « son passif et son Q »). Malphite n'est plus un cas à part.
 
+**Tank redéfini le 28/09** par le joueur : les sous-classes **Vanguard, Warden et Juggernaut** du
+wiki (`app/data/champion_facts.json`), portées par la propriété `tank`, que lit
+`Champion.is_tank`. L'ancienne définition (tag Riot Tank ou `tankiness` ≥ 4) comptait 53
+champions, dont Xayah, Tristana, Yuumi et Bard : la note `tankiness` mesure la survie (dash,
+intouchabilité), pas la résistance. Les 35 : Aatrox, Alistar, Amumu, Braum, Darius, Dr. Mundo,
+Galio, Garen, Gragas, Illaoi, K'Sante, Leona, Malphite, Maokai, Mordekaiser, Nasus, Nautilus,
+Nunu, Ornn, Poppy, Rammus, Rell, Sejuani, Sett, Shen, Sion, Skarner, Tahm Kench, Taric,
+Trundle, Udyr, Urgot, Volibear, Yorick, Zac. Hors liste : Cho'Gath et Singed (Spécialistes),
+les Divers (Jarvan IV, Vi, Hecarim…). Un test vérifie que la propriété suit les sous-classes ;
+un écart voulu par le joueur s'y nomme.
+
 **Paquet 2 — ignorer le CC.** « Tricky » : **Olaf** et **Gangplank** seulement (`ignore_cc`),
 contre au moins trois sources de CC dur. Morgana garde sa règle propre (bouclier noir). CC dur :
 mécaniques du wiki (`app/data/kit_mechanics.json`, `scripts/refresh_kit_mechanics.py`) —

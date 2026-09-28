@@ -877,3 +877,37 @@ Référence suivante : `snapshots/baseline_v13.json`, **51/60**, gel du 25/09 13
 **Palier des mesures** : sans `rank_bucket`, un cas se joue au palier par défaut du fetcher,
 Émeraude+. Le « master_plus » du manifeste est l'étiquette posée au gel (`--rank master_plus`),
 pas le palier des requêtes.
+
+## Arbitrages du 28/09 et définition du tank (28/09/2026)
+
+**Cas** (`docs/ARBITRAGE_JOUEUR.md`). Xayah au pool de `comp_engage_adc_kite` (Xayah >
+Samira) ; `comp_engage_support_vs_blitzcrank`, jumeau du cas peel avec Blitzcrank à la place
+de Leona (Nautilus > Janna) ; `edge_case_malphite_vs_full_ad` en top 2, Ornn étant au palier
+A ; `no_tie_hard_counter` réécrit en trois cas — Jax contre Volibear, Yone contre Yorick,
+Malphite contre Gnar — avec une nouvelle assertion, `must_lead_alone` (n°1 et personne d'autre
+dans le groupe de tête) ; `blind_pick_top_flex_priority` retiré, ses assertions étaient vides.
+Gel étendu de 133 entrées (2 710). Moteur inchangé : **55/63** (`baseline_v14_pre`) ; les
+cinq nouvelles assertions passent, Malphite aussi.
+
+**Tank.** `is_tank` lisait le tag Riot Tank ou `tankiness` ≥ 4, soit 53 champions dont Xayah,
+Tristana, Yuumi et Bard. Le joueur retient Vanguard, Warden et Juggernaut (propriété `tank`,
+35 champions). Contre `baseline_v14_pre` : 0 assertion basculée ; Vayne passe n°2 contre la
+composition de tanks, Lee Sin passe devant Jarvan IV (Diver, n'encaisse plus) ; 29
+déplacements de score, dont Renekton −1,2 contre la composition full auto-attaque.
+
+**Shaco** n'est plus proposé support : calibration inchangée.
+
+**Concordance** : 5 250 décisions, cache vivant sans expiration, variantes basculées dans le
+même lanceur (ancien `is_tank`, Shaco support) pour lire exactement les mêmes entrées.
+
+| Variante | Top-3 | Top-10 | Rang moyen | Écart apparié top-3 |
+|---|---|---|---|---|
+| avant | 16,3 % | 40,5 % | 11,09 | — |
+| tank | 16,5 % | 40,6 % | 11,08 | +21 −14 (z +1,2) |
+| tank + Shaco | 16,5 % | 40,6 % | 11,09 | +23 −16 (z +1,1) contre avant |
+
+Top-3 par poste, avant → après : bot 24,4 → 24,5, jungle 20,3 → 20,7, mid 12,8 → 12,8,
+support 18,1 → 18,6, top 6,2 → 5,9.
+
+Référence suivante : `snapshots/baseline_v14.json`, **55/63**, gel du 25/09 13h29 étendu le
+28/09 (2 710 entrées).
