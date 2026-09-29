@@ -7,37 +7,55 @@ import useDraftStore from '../../stores/draftStore';
 import useLCUStore from '../../stores/lcuStore';
 import { champIcon, ROLE_LABEL } from '../../data/mock';
 import { timerView } from '../../lib/timer';
+import useTimerRemaining from '../../lib/useTimerRemaining';
 import { turnView } from '../../lib/draftView';
 import ChampionSearch from './ChampionSearch';
 
 const ROLES = ['top', 'jungle', 'mid', 'bot', 'support'];
 
-// ── Emplacement de pick ─────────────────────────
-function PickSlot({ side, label, champ, mine, onClick }) {
-  const display = ROLE_LABEL[label] ?? label;
+// ── Retirer un champion mis à la main ───────────
+// Clic droit sur l'emplacement, ou la croix qui apparaît au survol.
+function Removable({ champ, onRemove, children }) {
+  if (!onRemove) return children;
   return (
-    <button
-      className={`slot ${champ ? '' : 'slot--empty'} ${mine ? 'slot--mine se-corners' : ''}`}
-      aria-label={`${side} ${label} : ${champ?.name || 'vide'}`}
-      title={champ ? `${champ.name} · ${display}` : `${display} : ajouter un champion`}
-      onClick={onClick}
-    >
-      {champ ? <img src={champIcon(champ.key)} alt="" width="46" height="46"/> : <span className="slot__role">{display}</span>}
-    </button>
+    <span className="slot-wrap" onContextMenu={e => { e.preventDefault(); onRemove(); }}>
+      {children}
+      <button className="slot__remove" aria-label={`Retirer ${champ.name}`} title={`Retirer ${champ.name}`} onClick={onRemove}>×</button>
+    </span>
+  );
+}
+
+// ── Emplacement de pick ─────────────────────────
+function PickSlot({ side, label, champ, mine, onClick, onRemove }) {
+  const display = ROLE_LABEL[label] ?? label;
+  const hint = onRemove ? ' · clic droit pour retirer' : '';
+  return (
+    <Removable champ={champ} onRemove={onRemove}>
+      <button
+        className={`slot ${champ ? '' : 'slot--empty'} ${mine ? 'slot--mine se-corners' : ''}`}
+        aria-label={`${side} ${label} : ${champ?.name || 'vide'}`}
+        title={champ ? `${champ.name} · ${display}${hint}` : `${display} : ajouter un champion`}
+        onClick={onClick}
+      >
+        {champ ? <img src={champIcon(champ.key)} alt="" width="46" height="46"/> : <span className="slot__role">{display}</span>}
+      </button>
+    </Removable>
   );
 }
 
 // ── Emplacement de ban ──────────────────────────
-function BanSlot({ side, index, champ, onClick }) {
+function BanSlot({ side, index, champ, onClick, onRemove }) {
   return (
-    <button
-      className={`ban ${champ ? 'ban--filled' : ''}`}
-      aria-label={`${side} ban ${index + 1} : ${champ?.name || 'vide'}`}
-      title={champ ? `${champ.name} (banni)` : 'Ajouter un ban'}
-      onClick={onClick}
-    >
-      {champ ? <img src={champIcon(champ.key)} alt="" width="24" height="24"/> : <span aria-hidden="true">+</span>}
-    </button>
+    <Removable champ={champ} onRemove={onRemove}>
+      <button
+        className={`ban ${champ ? 'ban--filled' : ''}`}
+        aria-label={`${side} ban ${index + 1} : ${champ?.name || 'vide'}`}
+        title={champ ? `${champ.name} (banni)${onRemove ? ' · clic droit pour retirer' : ''}` : 'Ajouter un ban'}
+        onClick={onClick}
+      >
+        {champ ? <img src={champIcon(champ.key)} alt="" width="24" height="24"/> : <span aria-hidden="true">+</span>}
+      </button>
+    </Removable>
   );
 }
 
@@ -64,26 +82,31 @@ function Turn() {
   const inChampSelect = useLCUStore(s => s.inChampSelect);
   const actionType = useLCUStore(s => s.currentActionType);
   const isMyTurn = useLCUStore(s => s.isMyTurn);
+  const actionIsAlly = useLCUStore(s => s.currentActionIsAlly);
+  const phase = useLCUStore(s => s.timerPhase);
   const pickCount = useLCUStore(s => s.pickSequence.length);
-  const remaining = useLCUStore(s => s.timerRemaining);
-  const turn = turnView({ live: mode === 'live' && connected, inChampSelect, actionType, isMyTurn, pickCount, myTeam });
+  const remaining = useTimerRemaining(connected && inChampSelect && isMyTurn);
+  const turn = turnView({ live: mode === 'live' && connected, inChampSelect, actionType, isMyTurn,
+    actionIsAlly: actionType ? actionIsAlly : undefined, phase, pickCount, myTeam });
   if (!turn) return null;
   const urgent = turn.mine && timerView({ active: true, remaining }).danger;
   return <p className={`turn ${turn.mine ? 'turn--mine' : ''} ${urgent ? 'turn--hot' : ''}`} aria-live="polite">{turn.label}</p>;
 }
 
 // ── Une équipe : bans + picks ───────────────────
-function TeamSide({ side, ally, picks, bans, myRole, onPick, onBan }) {
+function TeamSide({ side, ally, picks, bans, myRole, onPick, onBan, removal }) {
   const slots = ROLES.map((role, i) => {
     const label = ally ? role : `P${i + 1}`;
     const champ = ally ? picks[role] : picks[i];
     return (
-      <PickSlot key={role} side={side} label={label} champ={champ} mine={ally && role === myRole && !champ} onClick={() => onPick(role, i)}/>
+      <PickSlot key={role} side={side} label={label} champ={champ} mine={ally && role === myRole && !champ}
+        onClick={() => onPick(role, i)} onRemove={removal({ type: 'pick', team: side, role, index: i })}/>
     );
   });
   const banRow = (
     <div className="bans" role="group" aria-label={`Bans ${side}`}>
-      {bans.map((b, i) => <BanSlot key={i} side={side} index={i} champ={b} onClick={() => onBan(i)}/>)}
+      {bans.map((b, i) => <BanSlot key={i} side={side} index={i} champ={b} onClick={() => onBan(i)}
+        onRemove={removal({ type: 'ban', team: side, index: i })}/>)}
     </div>
   );
   return (
@@ -98,7 +121,8 @@ function TeamSide({ side, ally, picks, bans, myRole, onPick, onBan }) {
 }
 
 export default function DraftStrip() {
-  const { myTeam, myRole, allyPicks, enemyPicks, blueBans, redBans, setBan, setAllyPick, setEnemyPick, getAllUnavailableIds } = useDraftStore();
+  const { myTeam, myRole, allyPicks, enemyPicks, blueBans, redBans, editSlot, isManualSlot, getAllUnavailableIds } = useDraftStore();
+  useLCUStore(s => s.inChampSelect); // which slots are removable depends on the live champion select
   const [active, setActive] = useState(null);
   const blueIsAlly = myTeam === 'blue';
   const unavailable = useMemo(() => getAllUnavailableIds(), [allyPicks, enemyPicks, blueBans, redBans]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -115,17 +139,19 @@ export default function DraftStrip() {
       setActive(null);
       return;
     }
-    useDraftStore.getState().setMode('manual');
-    if (type === 'ban') setBan(team, index, champ);
-    else if (isAllySide) setAllyPick(role, champ);
-    else setEnemyPick(index, champ);
+    // During a live champion select this corrects the board and the sync goes on;
+    // otherwise the draft becomes manual.
+    editSlot({ type, team, role, index }, champ);
     setActive(null);
   }
+
+  // Only champions put there by hand can be removed: the League client refills its own.
+  const removal = slot => isManualSlot(slot) ? () => editSlot(slot, null) : null;
 
   const sideProps = side => {
     const ally = (side === 'blue') === blueIsAlly;
     return {
-      side, ally, myRole,
+      side, ally, myRole, removal,
       picks: ally ? allyPicks : enemyPicks,
       bans: side === 'blue' ? blueBans : redBans,
       onPick: (role, index) => setActive({ type: 'pick', team: side, role, index, title: ally ? `${side} ${ROLE_LABEL[role]}` : `${side} P${index + 1}` }),

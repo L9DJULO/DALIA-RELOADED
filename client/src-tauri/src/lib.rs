@@ -3,7 +3,7 @@
 /// Owns an always-on background supervisor that keeps the LCU connection
 /// healthy without the frontend having to poll. The supervisor:
 ///   - probes every 3 s while disconnected
-///   - polls draft state every 500 ms during champ select, 2 s otherwise
+///   - polls draft state every 500 ms during champ select, 1 s otherwise
 ///   - emits Tauri events on every state/phase/connection transition so
 ///     the UI can react immediately instead of waiting for the next pull
 mod lcu;
@@ -132,8 +132,10 @@ async fn supervisor_loop(app: AppHandle) {
                 }
                 let _ = app.emit("lcu:state_updated", &new_state);
 
-                // Tight loop during champ select (500 ms), relaxed elsewhere (5 s).
-                let sleep_ms = if in_champ_select { 500 } else { 5000 };
+                // Tight loop during champ select (500 ms). Elsewhere only the gameflow
+                // phase is read, so 1 s costs nothing and catches the start of champ
+                // select (role, team) without a visible delay.
+                let sleep_ms = if in_champ_select { 500 } else { 1000 };
                 tokio::time::sleep(Duration::from_millis(sleep_ms)).await;
             }
         }

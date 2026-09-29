@@ -52,8 +52,10 @@ export const lcuStatus = async () => {
       ally_picks: {},
       enemy_picks: {},
       current_action_type: '',
+      current_action_is_ally: false,
       is_my_turn: false,
       timer_remaining: 0,
+      timer_phase: '',
     };
   }
   try {

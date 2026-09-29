@@ -8,8 +8,8 @@ let identityCheckedAt = 0;
 const IDENTITY_RETRY_MS = 10000;
 const empty = () => ({ connected: false, inChampSelect: false, gamePhase: '', myTeam: '', myRole: '',
   myPickOrder: 1, currentAction: 0, summoner: null, allyBans: [], enemyBans: [], allyPicks: {}, enemyPicks: {},
-  enemyPicksOrder: [], allyPrepicks: {}, pickSequence: [], currentActionType: '', isMyTurn: false,
-  timerRemaining: 0, polling: false, pollInterval: null, lastUpdate: null, error: null, autoSync: true });
+  enemyPicksOrder: [], allyPrepicks: {}, pickSequence: [], currentActionType: '', currentActionIsAlly: false, isMyTurn: false,
+  timerRemaining: 0, timerPhase: '', timerSyncedAt: 0, polling: false, pollInterval: null, lastUpdate: null, error: null, autoSync: true });
 const useLCUStore = create((set, get) => ({
   ...empty(),
   setAutoSync: autoSync => set({ autoSync }),
@@ -23,14 +23,17 @@ const useLCUStore = create((set, get) => ({
         currentAction: data.current_action || 0, allyBans: data.ally_bans || [], enemyBans: data.enemy_bans || [],
         allyPicks: data.ally_picks || {}, enemyPicks: data.enemy_picks || {}, enemyPicksOrder: data.enemy_picks_order || [],
         allyPrepicks: data.ally_prepicks || {}, pickSequence: data.pick_sequence || [],
-        currentActionType: data.current_action_type || '', isMyTurn: !!data.is_my_turn,
-        timerRemaining: data.timer_remaining || 0,
+        currentActionType: data.current_action_type || '', currentActionIsAlly: !!data.current_action_is_ally,
+        isMyTurn: !!data.is_my_turn, timerRemaining: data.timer_remaining || 0, timerPhase: data.timer_phase || '',
         ...(!data.connected ? { summoner: null } : {}) };
       // The supervisor answers every 500 ms; publish only real changes so subscribers
       // (draft sync, timeline, badges) do not re-render twice a second for nothing.
       const previous = get();
       const changed = Object.keys(next).some(k => JSON.stringify(next[k]) !== JSON.stringify(previous[k]));
-      if (changed) set({ ...next, lastUpdate: new Date(), error: null });
+      // League sends a snapshot of the timer, recomputed only when the session changes:
+      // date it, and the countdown runs locally from there (lib/timer remainingAt).
+      const timerMoved = next.timerRemaining !== previous.timerRemaining || next.timerPhase !== previous.timerPhase;
+      if (changed) set({ ...next, ...(timerMoved ? { timerSyncedAt: Date.now() } : {}), lastUpdate: new Date(), error: null });
       else if (previous.error) set({ error: null });
       if (!data.connected) identityCheckedAt = 0;
       if (data.connected && !get().summoner && !identityPending && Date.now() - identityCheckedAt >= IDENTITY_RETRY_MS) await get().fetchSummonerInfo();

@@ -53,6 +53,18 @@
   background: linear-gradient(to top right, transparent calc(50% - 1px), var(--accent-text) calc(50% - 1px), var(--accent-text) calc(50% + 1px), transparent calc(50% + 1px));
 }
 
+/* Champion mis à la main : croix au survol, clic droit pour retirer */
+.slot-wrap { position: relative; display: inline-flex; }
+.slot__remove {
+  position: absolute; top: -7px; right: -7px; z-index: 1;
+  width: 18px; height: 18px; display: grid; place-items: center;
+  font: 700 15px/1 var(--f-mono); color: var(--bone-0);
+  background: var(--accent); border: 1px solid var(--ink-1);
+  opacity: 0; transition: opacity var(--dur-fast);
+}
+.slot-wrap:hover .slot__remove, .slot__remove:focus-visible { opacity: 1; }
+@media (hover: none) { .slot__remove { opacity: 1; } }
+
 .strip__center { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 150px; }
 .turn { font: 700 12px/1 var(--f-display); letter-spacing: 0.14em; color: var(--bone-2); white-space: nowrap; }
 .turn--mine { color: var(--bone-0); }

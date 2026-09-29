@@ -10,6 +10,10 @@ const emptyAllies = () => Object.fromEntries(ROLES.map(r => [r, null]));
 const emptySlots = () => Array(5).fill(null);
 const fresh = () => ({ myTeam: 'blue', myRole: 'mid', myPickOrder: 1, autoDetected: false,
   blueBans: emptySlots(), redBans: emptySlots(), allyPicks: emptyAllies(), enemyPicks: emptySlots(), allyPrepicks: emptyAllies(), currentAction: 0 });
+// Corrections made by hand during a live champion select. The League client stays the
+// source of truth: a manual champion fills a slot the client leaves empty and gives way as
+// soon as the client puts a champion there (or anywhere else on the board).
+const emptyOverrides = () => ({ myRole: null, allyPicks: {}, enemyPicks: [], blueBans: [], redBans: [] });
 const resultFields = () => ({ recommendations: [], banSuggestions: [], banImpact: [], compSummary: {}, warnings: [], winProbability: null, dataStatus: null });
 
 // Session tokens. Only a new session (new draft, replay load, fork, logout) discards an
@@ -19,11 +23,26 @@ const resultFields = () => ({ recommendations: [], banSuggestions: [], banImpact
 let requestController = null;
 let sessionNumber = 0;
 const snapshot = s => Object.fromEntries(Object.keys(fresh()).map(k => [k, structuredClone(s[k])]));
-const abortSession = () => { sessionNumber++; requestController?.abort(); requestController = null; };
+const abortSession = () => { sessionNumber++; requestController?.abort(); requestController = null; liveData = null; };
+// Last snapshot received from the League client, merged again after each manual correction.
+let liveData = null;
+
+function mergeLive(data, overrides, current) {
+  const used = new Set([...data.blueBans, ...data.redBans, ...Object.values(data.allyPicks), ...(data.enemyPicksOrder || [])]
+    .filter(Boolean).map(c => c.id));
+  const take = c => { if (!c || used.has(c.id)) return null; used.add(c.id); return c; };
+  const allyPicks = Object.fromEntries(ROLES.map(role => [role, data.allyPicks[role] || take(overrides.allyPicks[role])]));
+  const list = (fromClient, manual) => [...fromClient.filter(Boolean), ...manual.map(take).filter(Boolean), ...emptySlots()].slice(0, 5);
+  return { myTeam: data.myTeam || current.myTeam, myRole: overrides.myRole || data.myRole || current.myRole,
+    myPickOrder: data.myPickOrder || current.myPickOrder, currentAction: data.currentAction ?? current.currentAction,
+    blueBans: list(data.blueBans, overrides.blueBans), redBans: list(data.redBans, overrides.redBans), allyPicks,
+    enemyPicks: list(data.enemyPicksOrder || [], overrides.enemyPicks), allyPrepicks: data.allyPrepicks, autoDetected: !overrides.myRole };
+}
+const listKey = slot => slot.type === 'ban' ? (slot.team === 'blue' ? 'blueBans' : 'redBans') : 'enemyPicks';
 
 const useDraftStore = create((set, get) => ({
   ...fresh(), ...resultFields(), sessionId: crypto.randomUUID(), revision: 0,
-  loading: false, error: null, stale: false, mode: 'live', timeline: [], undoStack: [], replayPosition: null,
+  loading: false, error: null, stale: false, mode: 'live', timeline: [], undoStack: [], replayPosition: null, overrides: emptyOverrides(),
   change: (patch, record = true) => {
     const before = snapshot(get());
     const after = { ...before, ...patch };
@@ -32,8 +51,50 @@ const useDraftStore = create((set, get) => ({
     set(s => ({ ...patch, revision: s.revision + 1, stale: s.recommendations.length > 0, replayPosition: null,
       ...(record ? { timeline: [...(s.timeline.length ? s.timeline : [{ at: step.at, state: before }]), step].slice(-100), undoStack: [...s.undoStack, before].slice(-50) } : {}) }));
   },
-  setMyTeam: myTeam => { get().setMode('manual'); get().change({ myTeam, autoDetected: false }); },
-  setMyRole: myRole => { get().setMode('manual'); get().change({ myRole, autoDetected: false }); },
+  /** A live champion select is on screen: manual edits correct it instead of ending the sync. */
+  liveEditing: () => {
+    const lcu = useLCUStore.getState();
+    return get().mode === 'live' && lcu.connected && lcu.inChampSelect && liveData !== null;
+  },
+  // The League client knows the team for sure; the buttons are disabled while it is live.
+  setMyTeam: myTeam => { if (get().liveEditing()) return; get().setMode('manual'); get().change({ myTeam, autoDetected: false }); },
+  setMyRole: myRole => {
+    if (get().liveEditing()) { set(s => ({ overrides: { ...s.overrides, myRole } })); get().change(mergeLive(liveData, get().overrides, get())); return; }
+    get().setMode('manual'); get().change({ myRole, autoDetected: false });
+  },
+  /** Put a champion (or nothing) in a slot of the strip: { type: 'pick' | 'ban', team, role, index }. */
+  editSlot: (slot, champion) => {
+    const s = get();
+    const allySide = slot.team === s.myTeam;
+    if (!s.liveEditing()) {
+      s.setMode('manual');
+      if (slot.type === 'ban') s.setBan(slot.team, slot.index, champion);
+      else if (allySide) s.setAllyPick(slot.role, champion);
+      else s.setEnemyPick(slot.index, champion);
+      return;
+    }
+    const overrides = structuredClone(s.overrides);
+    if (slot.type === 'pick' && allySide) overrides.allyPicks[slot.role] = champion;
+    else {
+      const key = listKey(slot), shown = s[key][slot.index];
+      const at = overrides[key].findIndex(c => c.id === shown?.id);
+      const manual = overrides[key].filter(c => c.id !== shown?.id);
+      if (champion) manual.splice(at >= 0 ? at : manual.length, 0, champion);
+      overrides[key] = manual;
+    }
+    set({ overrides });
+    get().change(mergeLive(liveData, overrides, get()));
+  },
+  /** Whether the champion shown in a slot was put there by hand (and can be removed). */
+  isManualSlot: slot => {
+    const s = get();
+    const ally = slot.type === 'pick' && slot.team === s.myTeam;
+    const shown = ally ? s.allyPicks[slot.role] : s[listKey(slot)][slot.index];
+    if (!shown) return false;
+    if (!s.liveEditing()) return true;
+    if (ally) return s.overrides.allyPicks[slot.role]?.id === shown.id;
+    return s.overrides[listKey(slot)].some(c => c.id === shown.id);
+  },
   setMyPickOrder: myPickOrder => get().change({ myPickOrder: Number(myPickOrder) }),
   setMode: mode => {
     const current = get().mode;
@@ -46,10 +107,8 @@ const useDraftStore = create((set, get) => ({
   invalidateResults: () => set(s => ({ revision: s.revision + 1, stale: s.recommendations.length > 0 })),
   applyLCU: data => {
     if (get().mode !== 'live') return;
-    get().change({ myTeam: data.myTeam || get().myTeam, myRole: data.myRole || get().myRole,
-      myPickOrder: data.myPickOrder || get().myPickOrder, currentAction: data.currentAction ?? get().currentAction,
-      blueBans: data.blueBans, redBans: data.redBans, allyPicks: data.allyPicks,
-      enemyPicks: [...(data.enemyPicksOrder || []), ...emptySlots()].slice(0, 5), allyPrepicks: data.allyPrepicks, autoDetected: true });
+    liveData = data;
+    get().change(mergeLive(data, get().overrides, get()));
   },
   setBan: (team, index, champion) => {
     const key = team === 'blue' ? 'blueBans' : 'redBans';
@@ -68,7 +127,7 @@ const useDraftStore = create((set, get) => ({
     abortSession();
     const { myTeam, myRole, myPickOrder } = get();
     set(s => ({ ...fresh(), ...resultFields(), myTeam, myRole, myPickOrder, sessionId: crypto.randomUUID(), revision: s.revision + 1,
-      timeline: [], undoStack: [], loading: false, stale: false, error: null, mode, replayPosition: null }));
+      timeline: [], undoStack: [], loading: false, stale: false, error: null, mode, replayPosition: null, overrides: emptyOverrides() }));
   },
   getAllBannedIds: () => [...get().blueBans, ...get().redBans].filter(Boolean).map(c => c.id),
   getAllPickedIds: () => [...Object.values(get().allyPicks), ...get().enemyPicks].filter(Boolean).map(c => c.id),
@@ -114,12 +173,13 @@ const useDraftStore = create((set, get) => ({
     abortSession();
     const step = steps[index]; if (!step) return;
     set(s => ({ ...fresh(), ...step.state, ...resultFields(), mode: 'replay', autoDetected: false, loading: false, error: null, stale: false,
-      sessionId: newSession || s.mode !== 'replay' ? crypto.randomUUID() : s.sessionId, revision: s.revision + 1, timeline: steps, undoStack: [], replayPosition: index }));
+      sessionId: newSession || s.mode !== 'replay' ? crypto.randomUUID() : s.sessionId, revision: s.revision + 1, timeline: steps, undoStack: [], replayPosition: index,
+      overrides: emptyOverrides() }));
   },
   forkReplay: () => {
     abortSession();
     set(s => ({ mode: 'manual', sessionId: crypto.randomUUID(), timeline: s.timeline.slice(0, (s.replayPosition ?? s.timeline.length - 1) + 1),
-      replayPosition: null, undoStack: [], loading: false, ...resultFields(), stale: false }));
+      replayPosition: null, undoStack: [], loading: false, ...resultFields(), stale: false, overrides: emptyOverrides() }));
   },
 }));
 window.addEventListener('dalia:logout', () => useDraftStore.getState().resetDraft('manual'));

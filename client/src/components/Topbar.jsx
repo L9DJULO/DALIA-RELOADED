@@ -6,6 +6,7 @@ import DaliaLogo from './DaliaLogo';
 import useDraftStore from '../stores/draftStore';
 import useLCUStore from '../stores/lcuStore';
 import { timerView, pickOrderLabel } from '../lib/timer';
+import useTimerRemaining from '../lib/useTimerRemaining';
 
 export const NAV_TABS = [
   { id: 'draft',    label: 'DRAFT' },
@@ -26,6 +27,8 @@ function DraftContext() {
   const setMyTeam = useDraftStore(s => s.setMyTeam);
   const setMyRole = useDraftStore(s => s.setMyRole);
   const autoDetected = useDraftStore(s => s.autoDetected);
+  const mode = useDraftStore(s => s.mode);
+  const liveSelect = useLCUStore(s => s.connected && s.inChampSelect) && mode === 'live';
   const [open, setOpen] = useState(false);
   const menuRef = useRef(null);
 
@@ -42,7 +45,8 @@ function DraftContext() {
     <div className="ctx">
       <div className="seg side-seg" role="group" aria-label="Mon équipe">
         {['blue', 'red'].map(side => (
-          <button key={side} data-side={side} aria-pressed={myTeam === side} onClick={() => setMyTeam(side)}>
+          <button key={side} data-side={side} aria-pressed={myTeam === side} onClick={() => setMyTeam(side)}
+            disabled={liveSelect} title={liveSelect ? 'Équipe lue dans le client League' : undefined}>
             {side.toUpperCase()}
           </button>
         ))}
@@ -82,8 +86,9 @@ function LcuStatus() {
 function Timer() {
   const connected = useLCUStore(s => s.connected);
   const inChampSelect = useLCUStore(s => s.inChampSelect);
-  const remaining = useLCUStore(s => s.timerRemaining);
-  const view = timerView({ active: connected && inChampSelect, remaining });
+  const active = connected && inChampSelect;
+  const remaining = useTimerRemaining(active);
+  const view = timerView({ active, remaining });
   return (
     <>
       <div className={`timer ${view.text === '--' ? 'timer--idle' : ''} ${view.danger ? 'timer--danger' : ''}`}

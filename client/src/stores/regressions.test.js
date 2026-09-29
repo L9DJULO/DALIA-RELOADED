@@ -169,6 +169,21 @@ it('publishes League state only when it changes', async () => {
   expect(useLCUStore.getState().pickSequence).toEqual([{ team: 'blue', champId: 103 }]);
 });
 
+it('dates the League timer when its value changes, so the countdown runs between updates', async () => {
+  const { lcuStatus } = await import('../services/lcu');
+  vi.setSystemTime(10000);
+  lcuStatus.mockResolvedValue({ connected: true, in_champ_select: true, timer_remaining: 27, timer_phase: 'BAN_PICK',
+    current_action_type: 'pick', current_action_is_ally: false });
+  await useLCUStore.getState().fetchStatus();
+  expect(useLCUStore.getState()).toMatchObject({ timerRemaining: 27, timerSyncedAt: 10000, timerPhase: 'BAN_PICK', currentActionIsAlly: false });
+  vi.setSystemTime(12000);
+  await useLCUStore.getState().fetchStatus();
+  expect(useLCUStore.getState().timerSyncedAt).toBe(10000);
+  lcuStatus.mockResolvedValue({ connected: true, in_champ_select: true, timer_remaining: 24, timer_phase: 'BAN_PICK', current_action_type: 'pick', current_action_is_ally: true });
+  await useLCUStore.getState().fetchStatus();
+  expect(useLCUStore.getState()).toMatchObject({ timerSyncedAt: 12000, currentActionIsAlly: true });
+});
+
 it('serves the cached catalogue immediately and keeps it when the server is unreachable', async () => {
   localStorage.setItem('dalia_champions_v1', JSON.stringify({ ts: Date.now() - 48 * 3600 * 1000, patch: '16.16.1', data: [ahri] }));
   const patch = deferred(); api.fetchPatch.mockReturnValueOnce(patch.promise);
@@ -213,6 +228,65 @@ it('synchronizes a live snapshot but respects manual mode', async () => {
   useDraftStore.getState().setMode('manual');
   useLCUStore.setState({ allyPicks: {} });
   expect(useDraftStore.getState().allyPicks.mid.id).toBe(103);
+  stop();
+});
+
+const yasuo = { id: 157, key: 'Yasuo', name: 'Yasuo' };
+const liveSelect = extra => useLCUStore.setState({ connected: true, inChampSelect: true, myTeam: 'blue', myRole: 'mid', myPickOrder: 1,
+  allyPicks: {}, enemyPicksOrder: [], allyBans: [], enemyBans: [], allyPrepicks: {}, ...extra });
+const startLive = async () => {
+  useChampionsStore.setState({ loaded: true, byId: { 103: ahri, 61: orianna, 157: yasuo } });
+  useDraftStore.getState().setMode('live');
+  const stop = startDraftSession(); await Promise.resolve();
+  liveSelect();
+  return stop;
+};
+
+it('keeps following the League client after a champion is added by hand', async () => {
+  const stop = await startLive();
+  useDraftStore.getState().editSlot({ type: 'pick', team: 'red', index: 0 }, orianna);
+  expect(useDraftStore.getState().mode).toBe('live');
+  expect(useDraftStore.getState().enemyPicks[0]).toEqual(orianna);
+  liveSelect({ allyPicks: { mid: 103 }, enemyPicksOrder: [157] });
+  expect(useDraftStore.getState().allyPicks.mid).toEqual(ahri);
+  expect(useDraftStore.getState().enemyPicks.slice(0, 2)).toEqual([yasuo, orianna]);
+  expect(useDraftStore.getState().isManualSlot({ type: 'pick', team: 'red', index: 1 })).toBe(true);
+  expect(useDraftStore.getState().isManualSlot({ type: 'pick', team: 'red', index: 0 })).toBe(false);
+  useDraftStore.getState().editSlot({ type: 'pick', team: 'red', index: 1 }, null);
+  expect(useDraftStore.getState().enemyPicks.slice(0, 2)).toEqual([yasuo, null]);
+  stop();
+});
+
+it('lets the League client win a slot and drops a manual duplicate', async () => {
+  const stop = await startLive();
+  useDraftStore.getState().editSlot({ type: 'pick', team: 'blue', role: 'top' }, orianna);
+  useDraftStore.getState().editSlot({ type: 'ban', team: 'red', index: 0 }, yasuo);
+  expect(useDraftStore.getState().allyPicks.top).toEqual(orianna);
+  liveSelect({ allyPicks: { top: 157 }, enemyPicksOrder: [61] });
+  expect(useDraftStore.getState().allyPicks.top).toEqual(yasuo);
+  expect(useDraftStore.getState().enemyPicks[0]).toEqual(orianna);
+  expect(useDraftStore.getState().redBans.filter(Boolean)).toEqual([]);
+  stop();
+});
+
+it('keeps a role chosen by hand for the rest of the live draft', async () => {
+  const stop = await startLive();
+  useDraftStore.getState().setMyRole('top');
+  liveSelect({ allyPicks: { mid: 103 } });
+  expect(useDraftStore.getState()).toMatchObject({ mode: 'live', myRole: 'top', autoDetected: false });
+  expect(useDraftStore.getState().allyPicks.mid).toEqual(ahri);
+  stop();
+});
+
+it('goes back to the League client, with its role, when a new champion select starts', async () => {
+  const stop = await startLive();
+  useLCUStore.setState({ inChampSelect: false });
+  useDraftStore.getState().setMyRole('top');
+  useDraftStore.getState().setAllyPick('top', orianna);
+  expect(useDraftStore.getState().mode).toBe('manual');
+  liveSelect({ myRole: 'jungle', myTeam: 'red' });
+  expect(useDraftStore.getState()).toMatchObject({ mode: 'live', myRole: 'jungle', myTeam: 'red', autoDetected: true });
+  expect(useDraftStore.getState().allyPicks.top).toBeNull();
   stop();
 });
 

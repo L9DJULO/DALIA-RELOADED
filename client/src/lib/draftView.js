@@ -6,12 +6,19 @@
 /** Pick order of a League draft, blue first. */
 export const PICK_TEAMS = ['blue', 'red', 'red', 'blue', 'blue', 'red', 'red', 'blue', 'blue', 'red'];
 
-/** "PICK 8 · À TOI", "PHASE DE BAN"… or null when there is no live turn to show. */
-export function turnView({ live, inChampSelect, actionType, isMyTurn, pickCount = 0, myTeam }) {
+/**
+ * "PICK 8 · À TOI", "PHASE DE BAN"… or null when there is no live turn to show.
+ * `actionIsAlly` is who the League client says is acting; without it the standard
+ * pick order decides.
+ */
+export function turnView({ live, inChampSelect, actionType, isMyTurn, actionIsAlly, phase, pickCount = 0, myTeam }) {
   if (!live || !inChampSelect) return null;
+  if (phase === 'PLANNING') return { label: 'INTENTIONS', mine: false };
+  if (phase === 'FINALIZATION') return { label: 'FINALISATION', mine: false };
   if (actionType === 'ban') return isMyTurn ? { label: 'BAN · À TOI', mine: true } : { label: 'PHASE DE BAN', mine: false };
   if (actionType !== 'pick' || pickCount >= PICK_TEAMS.length) return null;
-  const who = isMyTurn ? 'À TOI' : PICK_TEAMS[pickCount] === myTeam ? 'ALLIÉ' : 'ENNEMI';
+  const ally = actionIsAlly ?? PICK_TEAMS[pickCount] === myTeam;
+  const who = isMyTurn ? 'À TOI' : ally ? 'ALLIÉ' : 'ENNEMI';
   return { label: `PICK ${pickCount + 1} · ${who}`, mine: !!isMyTurn };
 }
 

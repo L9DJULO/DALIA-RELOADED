@@ -114,3 +114,14 @@ test('save and replay a draft without future information', async ({ page }) => {
   await page.getByRole('button', { name: 'Tester une variante' }).click();
   await expect(page.getByRole('button', { name: 'Étape suivante' })).toHaveCount(0);
 });
+
+test('a champion put by hand is removed from its slot, with the cross or a right click', async ({ page }) => {
+  await pick(page, 'red P1 : vide', 'Jarvan IV');
+  await pick(page, 'blue top : vide', 'Nasus');
+  await page.getByRole('button', { name: 'red P1 : Jarvan IV', exact: true }).hover();
+  await page.screenshot({ path: 'test-results/retrait.png', clip: { x: 0, y: 40, width: 1280, height: 90 } });
+  await page.getByRole('button', { name: 'Retirer Jarvan IV', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'red P1 : vide', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'blue top : Nasus', exact: true }).click({ button: 'right' });
+  await expect(page.getByRole('button', { name: 'blue top : vide', exact: true })).toBeVisible();
+});

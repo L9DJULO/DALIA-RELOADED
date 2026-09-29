@@ -20,6 +20,16 @@ describe('turnView', () => {
     expect(turnView({ ...live, actionType: 'ban', pickCount: 0, isMyTurn: false })).toEqual({ label: 'PHASE DE BAN', mine: false });
   });
 
+  it('trusts the League client on who is acting', () => {
+    expect(turnView({ ...live, actionType: 'pick', pickCount: 3, actionIsAlly: false })).toEqual({ label: 'PICK 4 · ENNEMI', mine: false });
+    expect(turnView({ ...live, actionType: 'pick', pickCount: 1, actionIsAlly: true })).toEqual({ label: 'PICK 2 · ALLIÉ', mine: false });
+  });
+
+  it('names the phases around the picks', () => {
+    expect(turnView({ ...live, phase: 'PLANNING' })).toEqual({ label: 'INTENTIONS', mine: false });
+    expect(turnView({ ...live, phase: 'FINALIZATION' })).toEqual({ label: 'FINALISATION', mine: false });
+  });
+
   it('stops after the tenth pick', () => {
     expect(turnView({ ...live, actionType: 'pick', pickCount: 10 })).toBeNull();
   });

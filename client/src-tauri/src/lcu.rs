@@ -40,9 +40,16 @@ pub struct LiveDraftState {
     pub my_pick_order: usize,
     pub current_action: usize,
     pub ally_prepicks: HashMap<String, i64>,
+    /// Type of the action in progress ("ban", "pick"), whoever is acting.
     pub current_action_type: String,
+    /// The action in progress belongs to the local player's team.
+    pub current_action_is_ally: bool,
     pub is_my_turn: bool,
+    /// Seconds left when the session was last computed. The LCU recomputes the
+    /// session only when something changes, so this value does not tick by itself.
     pub timer_remaining: f64,
+    /// "PLANNING", "BAN_PICK", "FINALIZATION"…
+    pub timer_phase: String,
 }
 
 /// Summoner identity from LCU (linked Riot account).
@@ -684,9 +691,10 @@ pub fn parse_champ_select(session: serde_json::Value, mut state: LiveDraftState)
                         }
                     }
 
-                    if is_me && is_in_progress {
-                        state.is_my_turn = true;
+                    if is_in_progress && (action_type == "ban" || action_type == "pick") {
                         state.current_action_type = action_type.to_string();
+                        if is_ally { state.current_action_is_ally = true; }
+                        if is_me { state.is_my_turn = true; }
                     }
 
                     if champion_id == 0 {
@@ -761,6 +769,7 @@ pub fn parse_champ_select(session: serde_json::Value, mut state: LiveDraftState)
             .and_then(|v| v.as_f64())
             .unwrap_or(0.0);
         state.timer_remaining = (total / 1000.0).max(0.0);
+        state.timer_phase = timer.get("phase").and_then(|v| v.as_str()).unwrap_or("").to_string();
     }
 
     state
@@ -874,5 +883,30 @@ mod tests {
         assert_eq!(result.pick_sequence[0]["team"], "blue");
         assert_eq!(result.pick_sequence[1]["champId"], 75);
         assert_eq!(result.timer_remaining, 12.5);
+    }
+
+    #[test]
+    fn turn_follows_whoever_is_acting_not_only_the_local_player() {
+        let session = serde_json::json!({
+            "localPlayerCellId": 0,
+            "myTeam": [{"cellId": 0, "team": 1, "assignedPosition": "top", "championId": 0}],
+            "theirTeam": [{"cellId": 5, "team": 2, "assignedPosition": "", "championId": 0}],
+            "actions": [
+                [{"id": 1, "actorCellId": 0, "type": "pick", "championId": 0, "completed": false, "isInProgress": false}],
+                [{"id": 2, "actorCellId": 5, "type": "pick", "championId": 0, "completed": false, "isInProgress": true}]
+            ], "timer": {"adjustedTimeLeftInPhase": 27000, "phase": "BAN_PICK"}
+        });
+        let enemy_turn = parse_champ_select(session.clone(), LiveDraftState::default());
+        assert_eq!(enemy_turn.current_action_type, "pick");
+        assert!(!enemy_turn.current_action_is_ally);
+        assert!(!enemy_turn.is_my_turn);
+        assert_eq!(enemy_turn.timer_phase, "BAN_PICK");
+
+        let mut mine = session;
+        mine["actions"][0][0]["isInProgress"] = serde_json::json!(true);
+        mine["actions"][1][0]["isInProgress"] = serde_json::json!(false);
+        let my_turn = parse_champ_select(mine, LiveDraftState::default());
+        assert!(my_turn.is_my_turn);
+        assert!(my_turn.current_action_is_ally);
     }
 }

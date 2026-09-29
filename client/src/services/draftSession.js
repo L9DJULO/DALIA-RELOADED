@@ -4,9 +4,11 @@ import useChampionsStore from '../stores/championsStore';
 
 export function startDraftSession() {
   const sync = (live, previous) => {
+    // A new champion select always follows the League client, even after a manual draft
+    // or a replay: its role, team and picks are what the player needs now.
+    if (live.inChampSelect && previous && !previous.inChampSelect) useDraftStore.getState().resetDraft('live');
     const draft = useDraftStore.getState();
     if (draft.mode !== 'live') return;
-    if (live.inChampSelect && previous && !previous.inChampSelect) draft.resetDraft('live');
     const catalog = useChampionsStore.getState();
     // Without the catalogue every champion would be recorded as "Champion 157" with a
     // broken icon, permanently, in the timeline and saved replays. Wait for the names;
