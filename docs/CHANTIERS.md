@@ -4,7 +4,7 @@ Tout ce qu'on a identifié et volontairement mis de côté, avec ce qui le bloqu
 pas le faire. Tenu à jour au fil des découvertes : rien ne doit disparaître dans l'historique de
 conversation.
 
-Dernière mise à jour : 28 septembre 2026, composition sur des dégâts mesurés (chantiers 5 et 18).
+Dernière mise à jour : 30 septembre 2026, bans conseillés (chantier 19).
 
 ---
 
@@ -750,3 +750,41 @@ Bilan contre la référence du 28/09 : calibration **56 → 58/64**, concordance
 - Profils par poste et variantes de build : Kai'Sa, Varus et Dr. Mundo sortent sources des deux
   types (chantier 8).
 - La note `tankiness` ne définit plus rien mais reste lue ailleurs comme survie (chantier 1).
+
+---
+
+## 19. Bans conseillés : l'adversaire de lane joué, pas le pick rare
+
+Test du joueur le 30/09, pool ADC de 18 champions : bans conseillés Taliyah, Corki et Lux,
+« Counter ton pool — Vayne, Kalista ». Sa règle : un ban vise **un champion qui counter beaucoup
+ou un champion de ton rôle, la plupart du temps de ton rôle, et joué beaucoup** ; « ça doit dans
+aucun monde me conseiller ça ».
+
+**Diagnostic.** La stratégie `counter_my_pool` triait la page de counters bot contre bot sur le
+seul `d2`, sans nombre de parties ni pick rate. Taliyah bot contre Vayne : −6,5 sur 130 parties,
+0,07 % des parties de Vayne ; le bruit d'un win rate sur 130 parties est de ±4,4 points. Le score
+saturait à 100 : sur le cache du 30/09, les trois bans étaient Vel'Koz, **Nilah et Karthus, deux
+champions du pool du joueur**, à égalité. Sans pool, `patch_broken` (win rate ≥ 52 % seul)
+sortait Zilean, Heimerdinger et Hwei, les mêmes en bot et en mid.
+
+**Règle** (`app/scoring/ban_threat.py`). Un ban vaut les points de win rate qu'il évite :
+part de pick rate de l'adversaire parmi les champions joués à mon poste (≥ 0,5 %, le filtre de
+l'adversaire futur) × perte moyenne du pool face à lui (matchup rétréci, `k_matchup`, pondéré par
+palier). Un champion n'est « counter de ton pool » que s'il coûte au moins un demi-point à l'un
+des champions du pool. Deux places vont à ces adversaires de lane, une à la plus forte menace
+méta ailleurs (le score méta pèse déjà la popularité, chantier 13) ; sans pool, les deux places
+vont aux picks méta S du rôle. Les champions du pool ne sont jamais proposés ; `patch_broken`
+est retiré.
+
+**Résultat.** Pool du joueur : **Ezreal** (11,4 % de pick, coûte à Varus, Jinx, Caitlyn),
+**Aphelios** (8,8 %, Vayne, Kai'Sa, Kalista), **Thresh** (méta S). Suivent Zeri et Lucian. Sans
+pool : bot Jinx, Yunara, Thresh ; mid Ahri, Viktor, Jinx. Calibration et recommandations
+inchangées (snapshot avant/après : aucun rang ni score déplacé).
+
+**Reste ouvert** :
+
+- La menace méta hors rôle et l'`enemy_comp_completion` gardent leurs sévérités 0-100 d'origine ;
+  seule leur place (le troisième ban) change.
+- `POST /api/draft/bans` (`services/ban_recommender.py`) garde l'ancienne logique, sans filtre de
+  parties. Le client ne l'appelle pas (`fetchBanRecommendations` n'a aucun appelant) : à retirer
+  ou à brancher sur `ban_threat`.

@@ -30,6 +30,7 @@ from app.models.draft import (
     ScoreTerm,
     SynergyDetail,
 )
+from app.scoring.ban_threat import PoolCounters, Threat, choose_bans, pool_counter_threats
 from app.scoring.aggregate import apply_preferences, confidence_from_sd, reference_mean, top_group
 from app.scoring.composition_term import archetype_term, composition_term
 from app.scoring.heuristic_terms import mechanics_term, model_term, synergy_term, teamfight_term
@@ -356,11 +357,12 @@ class DraftEngine:
             if top_rec.breakdown.ml_explanation and top_rec.breakdown.ml_explanation.win_probability:
                 win_prob = round(top_rec.breakdown.ml_explanation.win_probability * 100, 1)
 
-        # 7. Ban suggestions — 4 parallel strategies, top 3 across all
+        # 7. Ban suggestions — mostly my lane opponents, then the strongest threat elsewhere
         ban_suggestions = await self._compute_ban_suggestions(
             draft=draft,
             pool=pool,
             unavailable=unavailable,
+            tier=tier,
         )
 
         # 8. Ban impact — which bans notably helped the top recommendations
@@ -558,106 +560,81 @@ class DraftEngine:
 
         return impact
 
-    # ── Ban suggestions (4 strategies merged) ────────────────────────────
+    # ── Ban suggestions ──────────────────────────────────────────────────
     async def _compute_ban_suggestions(
         self,
         draft: DraftState,
         pool: Dict[str, List[PoolEntry]],
         unavailable: set,
+        tier: Optional[str] = None,
     ) -> List[BanSuggestion]:
-        """Suggest 3 champions to ban.
+        """Suggest 3 champions to ban: two lane opponents that cost my pool the
+        most, one threat from elsewhere (docs/CHANTIERS.md, chantier 19).
 
-        Four strategies run in parallel and each emits weighted candidates;
-        the final list is the top-3 *across* strategies (deduped by champion,
-        keeping the highest severity wins). Strategies:
-
-          1. counter_my_pool      — disabled when the user's pool is empty
-                                    for the current role.
-          2. meta_threat          — S-tier picks on the current patch that
-                                    haven't been picked or banned yet.
+          1. counter_my_pool      — champions played in my role, ranked by the
+                                    win rate they are expected to cost my pool
+                                    (pick-rate share × shrunk matchup). Skipped
+                                    when the pool is empty for the role.
+          2. meta_threat          — top-of-meta picks in every role; the meta
+                                    score already weighs popularity.
           3. enemy_comp_completion — fill an obvious gap in the enemy comp
                                      (no engage / no AP / no frontline …).
-          4. patch_broken         — winrate ≥ 52 % in high elo, large
-                                    sample size only.
+
+        My own pool champions are never suggested.
         """
         role = draft.my_role
+        tier = tier or self.fetcher.TIER
         pool_entries = pool.get(role, [])
-        pool_active = bool(pool_entries)
+        excluded = set(unavailable) | {pe.champion_id for pe in pool_entries}
 
-        # Each candidate keeps the highest-severity strategy that picked it.
-        # {cid: {champ, severity, strategy, reason_text, counters_pool, threatens_allies}}
+        # Other strategies: {cid: {champ, severity, strategy, reason_text}}, highest severity kept.
         candidates: Dict[int, Dict[str, Any]] = {}
 
-        def _consider(
-            strategy: str,
-            cid: int,
-            champ: Champion,
-            severity: float,
-            reason_text: str,
-            counters_pool: Optional[List[str]] = None,
-        ) -> None:
+        def _consider(strategy: str, cid: int, champ: Champion, severity: float, reason_text: str) -> None:
             existing = candidates.get(cid)
             if existing is None or severity > existing["severity"]:
-                candidates[cid] = {
-                    "champ": champ,
-                    "severity": severity,
-                    "strategy": strategy,
-                    "reason_text": reason_text,
-                    "counters_pool": list(counters_pool or []),
-                    "threatens_allies": [],
-                }
+                candidates[cid] = {"champ": champ, "severity": severity, "strategy": strategy, "reason_text": reason_text}
 
         # ── Strategy 1 — counter_my_pool ─────────────────────────────────
-        # Skipped entirely when the player has no pool entries for the
-        # current role: the signal would be derived from a placeholder
-        # filler and produce nonsense bans.
-        if pool_active:
+        role_threats: List[Threat] = []
+        if pool_entries:
             TIER_W = {"S": 1.0, "A": 0.8, "B": 0.6, "C": 0.4, "D": 0.25}
-            per_champ: Dict[int, Dict[str, Any]] = {}
+            await self.meta.load_tierlist(role, tier)
+            pick_rates = {}
+            for x in self.db.champions_for_role(role):
+                stats = self.meta.stats(x.id, role, tier)
+                if x.id not in excluded and stats and stats.pick_rate >= config.scoring.min_opponent_pick_rate:
+                    pick_rates[x.id] = stats.pick_rate
+            pool_counters: List[PoolCounters] = []
             for pe in pool_entries:
                 pool_champ = self.db.get_by_id(pe.champion_id)
                 if not pool_champ:
                     continue
-                tier_w = TIER_W.get(pe.tier, 0.5)
                 try:
-                    await self.matchup.load_matchups(pe.champion_id, role)
+                    await self.matchup.load_matchups(pe.champion_id, role, tier=tier)
                 except Exception:
                     continue
-                counters = self.matchup.get_top_counters(pe.champion_id, role, n=10)
-                for opp_id, d2 in counters:
-                    if opp_id in unavailable or d2 >= -1.5:
-                        continue
-                    opp = self.db.get_by_id(opp_id)
-                    if not opp:
-                        continue
-                    bucket = per_champ.setdefault(opp_id, {
-                        "champ": opp, "score": 0.0, "names": [],
-                    })
-                    bucket["score"] += (-d2) * tier_w
-                    if pool_champ.name not in bucket["names"]:
-                        bucket["names"].append(pool_champ.name)
-            for cid, bucket in per_champ.items():
-                severity = min(100.0, bucket["score"] * 9.0)
-                short = ", ".join(bucket["names"][:2])
-                _consider(
-                    "counter_my_pool", cid, bucket["champ"], severity,
-                    f"Counter ton pool — {short}",
-                    counters_pool=bucket["names"][:3],
-                )
+                counters = self.matchup.counters(pe.champion_id, role, tier)
+                pool_counters.append(PoolCounters(pool_champ.name, TIER_W.get(pe.tier, 0.5),
+                                                  {cid: (d[1], d[3]) for cid, d in counters.items()}))
+            role_threats = pool_counter_threats(pick_rates, pool_counters, config.scoring.k_matchup)
 
         # ── Strategy 2 — meta_threat ─────────────────────────────────────
         # Top-of-meta picks across roles the enemy could still draft.
         # We scan every role to surface universally strong picks
         # (mid assassins, jungle stompers, etc.).
         threat_roles = ("top", "jungle", "mid", "bot", "support")
+        my_role_meta: Dict[int, float] = {}
         for r in threat_roles:
             try:
                 meta_scores = await self.meta.scores_for_role(r)
             except Exception:
                 continue
+            if r == role:
+                my_role_meta = meta_scores
             top_meta = sorted(meta_scores.items(), key=lambda x: -x[1])[:8]
             for cid, m_score in top_meta:
-                if cid in unavailable or m_score < 70.0:
+                if cid in excluded or m_score < 70.0:
                     continue
                 champ = self.db.get_by_id(cid)
                 if not champ:
@@ -695,7 +672,7 @@ class DraftEngine:
                         continue
                     sorted_by_meta = sorted(meta_scores.items(), key=lambda x: -x[1])[:25]
                     for cid, m_score in sorted_by_meta:
-                        if cid in unavailable:
+                        if cid in excluded:
                             continue
                         champ = self.db.get_by_id(cid)
                         if not champ or not self._fills_gap(champ, primary_gap):
@@ -707,44 +684,27 @@ class DraftEngine:
                         )
                         break  # one nominee per open role is plenty
 
-        # ── Strategy 4 — patch_broken ────────────────────────────────────
-        # Anomalously high winrate on the current patch with a real sample.
-        BROKEN_WR = 52.0
-        for r in threat_roles:
-            try:
-                await self.meta.load_tierlist(r)
-            except Exception:
-                continue
-            for champ in self.db.all_champions():
-                if champ.id in unavailable:
-                    continue
-                stats = self.db.get_stats(champ.id, r)
-                if not stats or stats.games < config.min_games_reliable:
-                    continue
-                if stats.win_rate >= BROKEN_WR:
-                    excess = stats.win_rate - BROKEN_WR
-                    severity = min(100.0, 60.0 + excess * 8.0)
-                    _consider(
-                        "patch_broken", champ.id, champ, severity,
-                        f"Broken sur ce patch ({stats.win_rate:.1f}%)",
-                    )
-
-        if not candidates:
-            return []
-
-        # ── Final ranking — top 3 across all strategies ──────────────────
-        ranked = sorted(candidates.values(), key=lambda e: -e["severity"])[:3]
+        # ── Final ranking — my lane first, then the strongest threat elsewhere ─
+        by_threat = {t.champion_id: t for t in role_threats}
+        others = [cid for cid, _ in sorted(candidates.items(), key=lambda kv: -kv[1]["severity"])]
+        # Without a pool, my lane opponents are the meta threats of my own role.
+        mine = [t.champion_id for t in role_threats] if pool_entries else             [cid for cid, sc in sorted(my_role_meta.items(), key=lambda kv: -kv[1]) if cid in candidates and sc >= 70.0]
         suggestions: List[BanSuggestion] = []
-        for entry in ranked:
-            suggestions.append(BanSuggestion(
-                champion_id=entry["champ"].id,
-                champion_key=entry["champ"].key,
-                champion_name=entry["champ"].name,
-                severity=round(entry["severity"], 1),
-                reason=entry["reason_text"],
-                counters_pool=entry["counters_pool"],
-                threatens_allies=entry["threatens_allies"],
-            ))
+        for cid in choose_bans(mine, others):
+            if cid in by_threat:
+                t = by_threat[cid]
+                suggestions.append(BanSuggestion(
+                    champion_id=cid, champion_key=self.db.get_by_id(cid).key, champion_name=self.db.get_by_id(cid).name,
+                    # Points de win rate évités × 100 : 1 point = sévérité 100.
+                    severity=round(min(100.0, t.value * 100.0), 1),
+                    reason=f"Counter ton pool — {', '.join(t.countered[:2])}", counters_pool=t.countered[:3],
+                ))
+            else:
+                entry = candidates[cid]
+                suggestions.append(BanSuggestion(
+                    champion_id=cid, champion_key=entry["champ"].key, champion_name=entry["champ"].name,
+                    severity=round(entry["severity"], 1), reason=entry["reason_text"],
+                ))
         return suggestions
 
     # ── Comp-gap detection (for enemy_comp_completion strategy) ──────────
