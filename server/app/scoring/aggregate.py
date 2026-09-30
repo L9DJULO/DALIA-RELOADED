@@ -85,6 +85,18 @@ def top_group(items: Sequence[Tuple[float, Sequence]]) -> List[int]:
     return group
 
 
+def rank_shortlist(recs: Sequence) -> Tuple[List, List[int]]:
+    """Recommandations dans l'ordre des points ; à points égaux, la moins exposée d'abord.
+
+    Renvoie la liste triée et le groupe de tête, borné à `top_group_max`. Le risque
+    subi ne renverse jamais l'ordre des points (joueur, 30/09) : il ne départage
+    que des points égaux, et pèse sur les points via `risk_aversion`.
+    """
+    ranked = sorted(recs, key=lambda r: (-r.total_score, r.outcome_sd))
+    group = top_group([(r.total_score, r.breakdown.terms) for r in ranked])[:config.scoring.top_group_max]
+    return ranked, group
+
+
 def confidence_from_sd(sd: float) -> float:
     raw = 100.0 * (1.0 - sd / config.scoring.confidence_sd_scale)
     return round(min(95.0, max(8.0, raw)), 1)

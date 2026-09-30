@@ -4,7 +4,7 @@ Tout ce qu'on a identifié et volontairement mis de côté, avec ce qui le bloqu
 pas le faire. Tenu à jour au fil des découvertes : rien ne doit disparaître dans l'historique de
 conversation.
 
-Dernière mise à jour : 30 septembre 2026, bans conseillés (chantier 19).
+Dernière mise à jour : 30 septembre 2026, bans conseillés et ordre de la shortlist (chantiers 19 et 20).
 
 ---
 
@@ -788,3 +788,32 @@ inchangées (snapshot avant/après : aucun rang ni score déplacé).
 - `POST /api/draft/bans` (`services/ban_recommender.py`) garde l'ancienne logique, sans filtre de
   parties. Le client ne l'appelle pas (`fetchBanRecommendations` n'a aucun appelant) : à retirer
   ou à brancher sur `ban_threat`.
+
+---
+
+## 20. La shortlist suit l'ordre des points
+
+Test du joueur le 30/09, blind bot, Twitch en S et seize ADC en B : Yunara +1,3 n°1, Twitch
++2,9 n°6. Sa règle : **« classer par ordre de point, si un perso a +3 le mettre devant »**, un
+groupe de tête **« top 3 »** ; safe et flex doivent compter, « mais ici ça devrait pas être
+ordonné comme ça ».
+
+**Diagnostic.** Depuis le 18/09 (`018ee9b`), l'intérieur du groupe de tête était trié par risque
+subi (`outcome_sd`) contre l'ordre des points. Avec des σ de ±3, l'écart Twitch–Jhin (2,1) reste
+sous l'incertitude de la comparaison : toute la shortlist entrait dans le groupe et la plus sûre
+passait devant. Sur la calibration, 8 cas sur 42 affichaient une liste hors de l'ordre des points.
+
+**Règle** (`rank_shortlist`, `app/scoring/aggregate.py`). Les points décident de l'ordre ; à
+points égaux, le moins exposé passe devant. Le groupe de tête garde son critère (écart sous
+l'incertitude de la comparaison), borné à 3 (`top_group_max`).
+
+**Mesure** (gel, master_plus) : 57/64 → 57/64. Gagnées : Akali > Lux (blind mid sans Zed),
+Syndra > Malzahar (first pick). Perdues : **Syndra > Yasuo** (blind mid, arbitrage du 14/09,
+« Yasuo c'est du bait ») et Orianna > Malzahar. Le départage cachait que les points eux-mêmes
+placent Yasuo 2,3 points devant Syndra en blind. Le levier `risk_aversion` (γ, risque subi payé
+en points dans `future_opponent`) est en place et laissé à 0 : γ = 0,25 à 0,75 ne change rien,
+γ = 1 donne 58/64 (Orianna > Malzahar tient) mais ne reprend que 0,2 point sur Yasuo.
+
+**Reste ouvert — étape suivante du joueur** : faire compter safe et flex **dans les points**.
+Yasuo en blind mid est le cas témoin ; γ seul n'y suffit pas (il faudrait ≈ 10). À mesurer aussi
+sur la concordance pro avant de retenir un γ.

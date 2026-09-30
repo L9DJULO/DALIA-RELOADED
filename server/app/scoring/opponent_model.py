@@ -74,6 +74,8 @@ async def future_opponent_term(matchup, meta, db, champion: Champion, role: str,
     lam_q = counter_lambda(rank) * role_identification_probability(champion, role, unfilled)
     dist = opponent_distribution(candidates, lam_q, c.counter_alpha)
     value, sd = expected_delta(dist, deltas)
+    # Un pick exposé coûte en espérance : ce qu'on ne peut pas savoir se paie en points.
+    value -= c.risk_aversion * sd
     # La dispersion sur les adversaires possibles est exactement un risque subi :
     # le joueur ne peut pas savoir qui sera pické. La branche sans données, elle,
     # garde outcome_sd à 0 — c'est de l'ignorance, pas du risque.

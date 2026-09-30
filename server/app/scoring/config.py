@@ -69,6 +69,16 @@ class ScoringConstants(BaseModel):
     # suite saura trancher ces cas.
     counter_alpha: float = 1.0
     future_sd_floor: float = 1.0
+    # Classement de la shortlist (chantier 20, joueur le 30/09 : « classer par ordre de
+    # point, si un perso a +3 le mettre devant » ; groupe de tête « top 3 »).
+    # risk_aversion = γ : prix en points d'un point de risque subi (dispersion de
+    # l'adversaire futur), retiré de `future_opponent`. Le risque est alors dans les
+    # points affichés et l'ordre suit les points.
+    # Mesure du 30/09 (gel, master_plus) : 0 / 0,25 / 0,5 / 0,75 -> 57/64, 1,0 -> 58/64
+    # (Orianna > Malzahar tient). Yasuo mène le blind mid de 2,3 points devant
+    # Syndra ; γ = 1 n'en reprend que 0,2. Laissé à 0 : c'est l'étape « safe et flex ».
+    risk_aversion: float = 0.0
+    top_group_max: int = 3
     future_no_data_sd: float = 4.0
     # Rang → tier Lolalytics. Buckets vérifiés le 14/09/2026 : Lolalytics ne
     # fournit de bucket `_plus` qu'à partir de gold (silver_plus, bronze_plus

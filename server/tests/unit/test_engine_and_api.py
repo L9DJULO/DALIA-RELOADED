@@ -8,7 +8,7 @@ from app.auth.deps import get_optional_user
 from app.db.session import get_db
 from app.middleware import TrafficLimits
 from app.models.draft import DraftRequest, Recommendation, ScoreBreakdown, ScoreTerm
-from app.scoring.aggregate import top_group
+from app.scoring.aggregate import rank_shortlist, top_group
 from app.services.draft_engine import DraftEngine
 
 
@@ -200,17 +200,6 @@ async def test_profile_rank_is_used_when_request_has_none(catalog):
     assert explicit.rank_bucket == "gold"
 
 
-def _reorder_head_by_risk(scored):
-    """Reproduit le departage du moteur sur une liste deja triee par esperance."""
-    # Depuis la vague 0,5, top_group prend les termes et non le sigma absolu.
-    group = top_group([(r.total_score, r.breakdown.terms) for r in scored])
-    if len(group) > 1:
-        head = sorted((scored[i] for i in group), key=lambda r: r.outcome_sd)
-        for slot, rec in zip(group, head):
-            scored[slot] = rec
-    return scored, group
-
-
 def _rec(cid, name, score, sd, outcome_sd):
     """Une reco portant un terme observe dont l'abs_sd est son sigma.
 
@@ -225,26 +214,31 @@ def _rec(cid, name, score, sd, outcome_sd):
                               ScoreTerm(name="future_opponent", value=score, sd=sd, abs_sd=sd)]))
 
 
-def test_safest_candidate_leads_a_statistical_tie():
-    """Yasuo +1.82 ±3.29 (risque 2.52) contre Lux +1.06 ±2.68 (risque 1.64)."""
-    scored = [_rec(157, "Yasuo", 1.82, 3.29, 2.52), _rec(99, "Lux", 1.06, 2.68, 1.64)]
-    scored, group = _reorder_head_by_risk(scored)
-    assert len(group) == 2, "l'ecart 0.76 reste sous l'incertitude combinee 4.24"
-    assert scored[0].champion_name == "Lux"
+def test_points_decide_the_order_even_inside_a_statistical_tie():
+    """Joueur, 30/09 : « si un perso a +3, le mettre devant ». Twitch +2.9 ne passe
+    plus derrière Yunara +1.3 parce qu'elle est moins exposée."""
+    scored = [_rec(1, "Yunara", 1.3, 3.2, 0.5), _rec(2, "Twitch", 2.9, 3.0, 2.0), _rec(3, "Jinx", 1.5, 3.3, 1.0)]
+    scored, group = rank_shortlist(scored)
+    assert [r.champion_name for r in scored] == ["Twitch", "Jinx", "Yunara"]
+    assert group == [0, 1, 2]
 
 
-def test_clear_favourite_is_never_demoted_by_its_risk():
-    """Hors groupe de tete, l'esperance seule classe : le risque ne renverse rien."""
-    scored = [_rec(1, "Fort", 9.0, 0.5, 0.5), _rec(2, "Sur", 1.0, 0.5, 0.0)]
-    scored, group = _reorder_head_by_risk(scored)
+def test_at_equal_points_the_less_exposed_pick_leads():
+    scored = [_rec(1, "Expose", 1.0, 3.0, 2.5), _rec(2, "Sur", 1.0, 3.0, 0.5)]
+    scored, _ = rank_shortlist(scored)
+    assert [r.champion_name for r in scored] == ["Sur", "Expose"]
+
+
+def test_top_group_holds_three_picks_at_most():
+    scored = [_rec(i, f"C{i}", 2.0 - i * 0.1, 3.0, 0.0) for i in range(6)]
+    _, group = rank_shortlist(scored)
+    assert group == [0, 1, 2], "six picks à 0.5 point d'écart : seuls les trois premiers forment le groupe"
+
+
+def test_clear_favourite_stays_alone_at_the_top():
+    scored = [_rec(1, "Sur", 1.0, 0.5, 0.0), _rec(2, "Fort", 9.0, 0.5, 0.5)]
+    scored, group = rank_shortlist(scored)
     assert group == [0] and scored[0].champion_name == "Fort"
-
-
-def test_tiebreak_is_inert_when_no_candidate_carries_outcome_risk():
-    """En last pick, future_opponent est absent : outcome_sd nul partout."""
-    scored = [_rec(1, "A", 2.0, 3.0, 0.0), _rec(2, "B", 1.5, 3.0, 0.0)]
-    scored, _ = _reorder_head_by_risk(scored)
-    assert [r.champion_name for r in scored] == ["A", "B"], "ordre de l'esperance conserve"
 
 
 def test_meta_s_tag_survives_the_quarter_win_rate_weight(catalog):

@@ -31,7 +31,7 @@ from app.models.draft import (
     SynergyDetail,
 )
 from app.scoring.ban_threat import PoolCounters, Threat, choose_bans, pool_counter_threats
-from app.scoring.aggregate import apply_preferences, confidence_from_sd, reference_mean, top_group
+from app.scoring.aggregate import apply_preferences, confidence_from_sd, rank_shortlist, reference_mean
 from app.scoring.composition_term import archetype_term, composition_term
 from app.scoring.heuristic_terms import mechanics_term, model_term, synergy_term, teamfight_term
 from app.scoring.synergy_term import observed_synergy_term
@@ -316,16 +316,7 @@ class DraftEngine:
             rec.score_sd = round(rec.score_sd, 2)
             rec.score_range = [round(rec.total_score - rec.score_sd, 2), round(rec.total_score + rec.score_sd, 2)]
             rec.confidence = confidence_from_sd(rec.score_sd)
-        scored.sort(key=lambda r: r.total_score, reverse=True)
-        group = top_group([(r.total_score, r.breakdown.terms) for r in scored])
-        if len(group) > 1:
-            # À égalité statistique, le plus sûr passe devant. Seul le risque
-            # subi départage : l'incertitude d'estimation dit qu'on manque de
-            # données, pas que le pick est risqué. En last pick, future_opponent
-            # est absent, outcome_sd est nul partout et ce départage est inerte.
-            head = sorted((scored[i] for i in group), key=lambda r: r.outcome_sd)
-            for slot, rec in zip(group, head):
-                scored[slot] = rec
+        scored, group = rank_shortlist(scored)
         for i in group:
             scored[i].tie_with_leader = True
         top_group_ids = [scored[i].champion_id for i in group]
