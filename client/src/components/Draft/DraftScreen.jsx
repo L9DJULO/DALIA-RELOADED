@@ -3,7 +3,7 @@
 // bandeau · (replay) · héros + shortlist | pourquoi · barre d'état
 // ─────────────────────────────────────────────
 import React, { useEffect, useState } from 'react';
-import useDraftStore from '../../stores/draftStore';
+import { useDraft, useDraftApi } from '../../stores/draftContext';
 import HeroPanel from '../HeroPanel';
 import DraftStrip from './DraftStrip';
 import ReplayBar from './ReplayBar';
@@ -15,9 +15,10 @@ const INTERACTIVE = 'input, select, textarea, button, a[href], summary, [role="b
 
 export default function DraftScreen() {
   const [selected, setSelected] = useState(0);
-  const recommendations = useDraftStore(s => s.recommendations);
-  const loading = useDraftStore(s => s.loading);
-  const mode = useDraftStore(s => s.mode);
+  const draftApi = useDraftApi();
+  const recommendations = useDraft(s => s.recommendations);
+  const loading = useDraft(s => s.loading);
+  const mode = useDraft(s => s.mode);
   const hasRecs = recommendations.length > 0;
 
   useEffect(() => { setSelected(0); }, [recommendations]);
@@ -27,12 +28,12 @@ export default function DraftScreen() {
     const onKey = e => {
       if (e.key !== 'Enter' || e.defaultPrevented || e.repeat || e.ctrlKey || e.altKey || e.metaKey) return;
       if (document.activeElement?.closest(INTERACTIVE)) return;
-      const draft = useDraftStore.getState();
+      const draft = draftApi.getState();
       if (!draft.loading) draft.getRecommendations();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, []);
+  }, [draftApi]);
 
   return (
     <div className="draft">

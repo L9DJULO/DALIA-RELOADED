@@ -4,10 +4,10 @@
 // · Shortlist : un intervalle ±σ par pick, groupe de tête encadré
 // ─────────────────────────────────────────────
 import React from 'react';
-import { champSplash, SHORTLIST, hasPoolForCurrentRole } from '../data/mock';
+import { champSplash, shortlist, hasPoolForRole } from '../data/mock';
 import { Portrait, Tag, tagLabel } from './Primitives';
 import { StaleBanner } from './Draft/DraftStates';
-import useDraftStore from '../stores/draftStore';
+import { useDraft } from '../stores/draftContext';
 import { formatAdvantage, formatSd } from '../lib/scores';
 import { heroNameSize, intervalGeometry, intervalScale } from '../lib/terms';
 import { groupPeer, topGroupSize } from '../lib/draftView';
@@ -70,10 +70,10 @@ const Row = React.memo(function Row({ pick, idx, selected, scale, onSelect }) {
 
 // ── HeroPanel ──────────────────────────────────
 function HeroPanel({ selected, onSelect }) {
-  // Subscribed so a new analysis re-renders even when `selected` stays at 0.
-  useDraftStore(s => s.recommendations);
-  const stale = useDraftStore(s => s.stale);
-  const picks = SHORTLIST.map(p => p);
+  const recommendations = useDraft(s => s.recommendations);
+  const myRole = useDraft(s => s.myRole);
+  const stale = useDraft(s => s.stale);
+  const picks = shortlist(recommendations);
   const pick = picks[selected] || picks[0];
   const scale = intervalScale(picks);
   const groupSize = topGroupSize(picks);
@@ -91,7 +91,7 @@ function HeroPanel({ selected, onSelect }) {
           <span className="axis" aria-hidden="true"><span>−{scale}</span><span>0</span><span>+{scale}</span></span>
           <span/>
         </div>
-        {!hasPoolForCurrentRole() && (
+        {!hasPoolForRole(myRole) && (
           <p className="notice notice--warn">Aucun pool pour ce rôle : toutes les recommandations sont affichées.</p>
         )}
         <div className="shortlist__rows">

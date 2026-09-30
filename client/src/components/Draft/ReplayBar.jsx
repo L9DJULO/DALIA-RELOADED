@@ -2,13 +2,13 @@
 // ReplayBar.jsx — avancer dans un replay, étape par étape
 // ─────────────────────────────────────────────
 import React from 'react';
-import useDraftStore from '../../stores/draftStore';
+import { useDraft } from '../../stores/draftContext';
 
 export default function ReplayBar() {
-  const timeline = useDraftStore(s => s.timeline);
-  const position = useDraftStore(s => s.replayPosition) ?? 0;
-  const loadReplay = useDraftStore(s => s.loadReplay);
-  const forkReplay = useDraftStore(s => s.forkReplay);
+  const timeline = useDraft(s => s.timeline);
+  const position = useDraft(s => s.replayPosition) ?? 0;
+  const loadReplay = useDraft(s => s.loadReplay);
+  const forkReplay = useDraft(s => s.forkReplay);
   return (
     <div className="replaybar" role="group" aria-label="Replay">
       <span className="replaybar__lbl">REPLAY</span>

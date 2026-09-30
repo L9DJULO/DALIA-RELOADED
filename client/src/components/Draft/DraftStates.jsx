@@ -2,7 +2,7 @@
 // DraftStates.jsx — avant analyse, analyse en cours, conseils périmés
 // ─────────────────────────────────────────────
 import React from 'react';
-import useDraftStore from '../../stores/draftStore';
+import { useDraft, useDraftApi } from '../../stores/draftContext';
 import useUserStore from '../../stores/userStore';
 import useChampionsStore from '../../stores/championsStore';
 import { ROLE_LABEL } from '../../data/mock';
@@ -18,9 +18,9 @@ function frenchList(names) {
 
 // ── Avant la première analyse ───────────────────
 export function BeforeAnalysis() {
-  const myRole = useDraftStore(s => s.myRole);
-  const myPickOrder = useDraftStore(s => s.myPickOrder);
-  const enemyPicks = useDraftStore(s => s.enemyPicks);
+  const myRole = useDraft(s => s.myRole);
+  const myPickOrder = useDraft(s => s.myPickOrder);
+  const enemyPicks = useDraft(s => s.enemyPicks);
   const pool = useUserStore(s => s.championPool[myRole] || []);
   const byId = useChampionsStore(s => s.byId);
   const entries = [...pool].sort((a, b) => TIER_ORDER.indexOf(a.tier) - TIER_ORDER.indexOf(b.tier)).slice(0, 8);
@@ -72,13 +72,14 @@ export function AnalysisSkeleton() {
 // L'analyse se relance d'elle-même (pick, ban, survol, préférences) : le bouton ne sert
 // qu'après un échec, que l'automatisme ne retente pas en boucle.
 export function StaleBanner() {
-  const failed = useDraftStore(s => !s.loading && !!s.error);
+  const draftApi = useDraftApi();
+  const failed = useDraft(s => !s.loading && !!s.error);
   return (
     <div className="banner banner--warn stale-banner" role="status">
       {failed
         ? <span>La draft a changé et l'analyse n'a pas abouti.</span>
         : <span>La draft a changé : nouvelle analyse en cours…</span>}
-      {failed && <button className="btn btn--sm" onClick={() => useDraftStore.getState().getRecommendations()}>Relancer</button>}
+      {failed && <button className="btn btn--sm" onClick={() => draftApi.getState().getRecommendations()}>Relancer</button>}
     </div>
   );
 }

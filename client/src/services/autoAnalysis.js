@@ -28,9 +28,9 @@ export function draftSignature(state) {
   ]);
 }
 
-/** Start listening to the draft and the preferences; returns the function that stops it. */
-export function startAutoAnalysis({ delay = AUTO_ANALYSIS_DELAY, refreshDelay = AUTO_REFRESH_DELAY } = {}) {
-  let last = draftSignature(useDraftStore.getState());
+/** Start listening to a draft (the live one by default) and the preferences; returns the function that stops it. */
+export function startAutoAnalysis({ store = useDraftStore, delay = AUTO_ANALYSIS_DELAY, refreshDelay = AUTO_REFRESH_DELAY } = {}) {
+  let last = draftSignature(store.getState());
   let timer = null;
   let pending = null; // 'draft' | 'refresh'
 
@@ -39,13 +39,13 @@ export function startAutoAnalysis({ delay = AUTO_ANALYSIS_DELAY, refreshDelay = 
     pending = kind;
     timer = setTimeout(() => { timer = null; pending = null; run(); }, wait);
   };
-  const analyse = () => useDraftStore.getState().getRecommendations();
+  const analyse = () => store.getState().getRecommendations();
   const refresh = () => {
-    const s = useDraftStore.getState();
+    const s = store.getState();
     if (!s.loading && s.stale && !s.error) analyse();
   };
 
-  const off = useDraftStore.subscribe((state, prev) => {
+  const off = store.subscribe((state, prev) => {
     const next = draftSignature(state);
     if (next !== last) {
       last = next;

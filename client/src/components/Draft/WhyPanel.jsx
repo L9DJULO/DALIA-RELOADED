@@ -3,9 +3,9 @@
 // Raisons du moteur, termes groupés, lane, interactions de kits, comparaison.
 // ─────────────────────────────────────────────
 import React from 'react';
-import useDraftStore from '../../stores/draftStore';
+import { useDraft, useIsStudio } from '../../stores/draftContext';
 import useLCUStore from '../../stores/lcuStore';
-import { SHORTLIST, champIcon } from '../../data/mock';
+import { shortlist, champIcon } from '../../data/mock';
 import { ReasonItem } from '../Primitives';
 import { ComparePanel, MechanicsDetails } from '../DraftWorkshop';
 import { WhyEmpty } from './DraftStates';
@@ -17,10 +17,10 @@ const pct = n => `${n.toFixed(1).replace('.', ',')} %`;
 
 // ── Bans conseillés (phase de ban seulement) ────
 function BanAdvice() {
-  const suggestions = useDraftStore(s => s.banSuggestions);
-  const mode = useDraftStore(s => s.mode);
-  const allyPicks = useDraftStore(s => s.allyPicks);
-  const enemyPicks = useDraftStore(s => s.enemyPicks);
+  const suggestions = useDraft(s => s.banSuggestions);
+  const mode = useDraft(s => s.mode);
+  const allyPicks = useDraft(s => s.allyPicks);
+  const enemyPicks = useDraft(s => s.enemyPicks);
   const actionType = useLCUStore(s => s.currentActionType);
   const pickCount = Object.values(allyPicks).filter(Boolean).length + enemyPicks.filter(Boolean).length;
   if (!suggestions?.length || !showBanAdvice({ mode, actionType, pickCount })) return null;
@@ -114,9 +114,11 @@ function Lane({ pick }) {
 }
 
 export default function WhyPanel({ selected }) {
-  const recommendations = useDraftStore(s => s.recommendations);
+  const recommendations = useDraft(s => s.recommendations);
+  const studio = useIsStudio();
   const hasRecs = recommendations.length > 0;
-  const pick = SHORTLIST[selected] || SHORTLIST[0];
+  const picks = shortlist(recommendations);
+  const pick = picks[selected] || picks[0];
 
   return (
     <div className="why">
@@ -150,10 +152,17 @@ export default function WhyPanel({ selected }) {
           </section>
         </>
       ) : <WhyEmpty/>}
-      <details className="disclosure compare-disclosure">
-        <summary>Comparer deux champions</summary>
-        <div className="disclosure__body"><ComparePanel/></div>
-      </details>
+      {studio ? (
+        <details className="disclosure compare-disclosure">
+          <summary>Comparer deux champions</summary>
+          <div className="disclosure__body"><ComparePanel/></div>
+        </details>
+      ) : hasRecs && (
+        <details className="disclosure compare-disclosure">
+          <summary>Comparer {pick.name} avec un autre champion</summary>
+          <div className="disclosure__body"><ComparePanel key={pick.id} fixed={pick}/></div>
+        </details>
+      )}
     </div>
   );
 }

@@ -3,7 +3,7 @@
 // (fusion de l'ancienne page Données)
 // ─────────────────────────────────────────────
 import React, { useEffect, useRef, useState } from 'react';
-import useDraftStore from '../stores/draftStore';
+import useDraftStore, { useStudioStore } from '../stores/draftStore';
 import useHistoryStore from '../stores/historyStore';
 import { fetchHistory, fetchHistoryEntry, updateHistoryResult, deleteHistoryEntry, apiErrorText } from '../services/api';
 import { downloadReplay, validateReplay } from '../lib/replay';
@@ -76,7 +76,7 @@ export default function HistoryPage({ onReplay }) {
   useEffect(() => { alive.current = true; void load(); return () => { alive.current = false; }; }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   function replay(session) {
-    try { const valid = validateReplay(session); useDraftStore.getState().loadReplay(valid.steps, 0, true); onReplay(); }
+    try { const valid = validateReplay(session); useStudioStore.getState().loadReplay(valid.steps, 0, true); onReplay(); }
     catch (e) { setError(e.message); }
   }
   async function withTimeline(entry, action) {

@@ -1,12 +1,8 @@
 // ─────────────────────────────────────────────
 // DALIA — data wired to real Zustand stores
 // Static helpers (champIcon, champLoading, labels, tag/kind configs) are unchanged.
-// DRAFT properties are live getters over draftStore / lcuStore.
-// SHORTLIST is a Proxy over draftStore.recommendations (falls back to mock while empty).
+// shortlist() maps a draft's recommendations for display (placeholder while empty).
 // ─────────────────────────────────────────────
-import useDraftStore      from '../stores/draftStore';
-import useLCUStore        from '../stores/lcuStore';
-import useChampionsStore  from '../stores/championsStore';
 import useUserStore       from '../stores/userStore';
 import { getDDragonChampUrl } from '../lib/constants';
 
@@ -17,78 +13,6 @@ export const champIcon = getDDragonChampUrl;
 export const champLoading = (key) => `${DD_LOADING}/${key}_0.jpg`;
 /** Wide splash art, for the hero. */
 export const champSplash = (key) => `${DD_SPLASH}/${key}_0.jpg`;
-
-// Normalize a store champion {id, key, name} (or null) for component consumption.
-function norm(c) {
-  if (!c) return null;
-  return { key: c.key, name: c.name };
-}
-
-// Convert an ordered enemyPicks array to role-keyed format (best-effort, pick order ≠ role order).
-const ROLE_ORDER = ['top', 'jungle', 'mid', 'bot', 'support'];
-function orderedToRoleKeyed(arr) {
-  const out = { top: null, jungle: null, mid: null, bot: null, support: null };
-  (arr || []).forEach((c, i) => {
-    if (i < ROLE_ORDER.length) out[ROLE_ORDER[i]] = norm(c);
-  });
-  return out;
-}
-
-// ── Draft state ───────────────────────────────
-export const DRAFT = {
-  // Branché — useDraftStore
-  get myTeam()        { return useDraftStore.getState().myTeam; },
-  get myRole()        { return useDraftStore.getState().myRole; },
-  get currentAction() { return useDraftStore.getState().currentAction; },
-
-  // Branché — useLCUStore
-  get timerLeft()     { return useLCUStore.getState().timerRemaining; },
-
-  // Branché — bans (store: array of {id,key,name}|null, 5 slots)
-  get blueBans() {
-    const s = useDraftStore.getState();
-    return (s.myTeam === 'blue' ? s.blueBans : s.redBans).map(norm);
-  },
-  get redBans() {
-    const s = useDraftStore.getState();
-    return (s.myTeam === 'blue' ? s.redBans : s.blueBans).map(norm);
-  },
-
-  // Branché — bluePicks: role-keyed object (DraftPanel uses bluePicks[role])
-  get bluePicks() {
-    const s = useDraftStore.getState();
-    if (s.myTeam === 'blue') {
-      const ap = s.allyPicks;
-      return {
-        top:     norm(ap.top),
-        jungle:  norm(ap.jungle),
-        mid:     norm(ap.mid),
-        bot:     norm(ap.bot),
-        support: norm(ap.support),
-      };
-    }
-    // myTeam='red' — blue is the enemy; store only has an ordered array, no roles
-    return orderedToRoleKeyed(s.enemyPicks);
-  },
-
-  // Branché — redPicks: ordered array (DraftPanel uses redPicks.map(...))
-  get redPicks() {
-    const s = useDraftStore.getState();
-    if (s.myTeam === 'blue') {
-      return (s.enemyPicks || []).map(norm);
-    }
-    // myTeam='red' — red is ally, role-keyed → flatten to ordered array
-    const ap = s.allyPicks;
-    return ROLE_ORDER.map((r) => norm(ap[r]));
-  },
-
-  // Branché — pickOrder depuis lcuStore.pickSequence (accumulé au polling LCU)
-  // buildPickOrderTimeline() reconstruit les 10 slots dans l'ordre LoL standard.
-  get pickOrder() {
-    const champById = useChampionsStore.getState().byId;
-    return useLCUStore.getState().buildPickOrderTimeline(champById);
-  },
-};
 
 // ═════════════════════════════════════════════════════════════════════════
 //  SHORTLIST → draftStore.recommendations (avec mapping de noms de champs)
@@ -106,6 +30,7 @@ export function mapRec(rec) {
   const winProb = Number.isFinite(probability) ? probability * 100 : null;
 
   return {
+    id:         rec.champion_id,
     key:        rec.champion_key,
     name:       rec.champion_name,
     score,
@@ -160,20 +85,14 @@ const _emptyPlaceholder = {
 };
 const _mockShortlist = [_emptyPlaceholder];
 
-export const SHORTLIST = new Proxy([], {
-  get(_target, prop) {
-    const recs = useDraftStore.getState().recommendations;
-    const live = recs.length > 0 ? recs.map(mapRec) : _mockShortlist;
-    const val = live[prop];
-    return typeof val === 'function' ? val.bind(live) : val;
-  },
-});
+/** The recommendations of a draft, mapped for display; one placeholder while there are none. */
+export function shortlist(recommendations) {
+  return recommendations?.length ? recommendations.map(mapRec) : _mockShortlist;
+}
 
-// True when the user has at least one champion configured in their
-// pool for the currently selected role. UI uses this to show the
-// "Aucun pool défini" warning.
-export function hasPoolForCurrentRole() {
-  const role = useDraftStore.getState().myRole;
+// True when the user has at least one champion configured in their pool for this role.
+// UI uses this to show the "Aucun pool défini" warning.
+export function hasPoolForRole(role) {
   const pool = useUserStore.getState().championPool || {};
   return (pool[role] || []).length > 0;
 }

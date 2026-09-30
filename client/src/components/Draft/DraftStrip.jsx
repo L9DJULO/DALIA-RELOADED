@@ -3,7 +3,7 @@
 // Remplace le board complet : chaque emplacement est un bouton qui ouvre la recherche.
 // ─────────────────────────────────────────────
 import React, { useMemo, useState } from 'react';
-import useDraftStore from '../../stores/draftStore';
+import { useDraft, useDraftApi } from '../../stores/draftContext';
 import useLCUStore from '../../stores/lcuStore';
 import { champIcon, ROLE_LABEL } from '../../data/mock';
 import { timerView } from '../../lib/timer';
@@ -61,11 +61,12 @@ function BanSlot({ side, index, champ, onClick, onRemove }) {
 
 // ── Bouton ANALYSER ─────────────────────────────
 function AnalyseButton() {
-  const loading = useDraftStore(s => s.loading);
+  const draftApi = useDraftApi();
+  const loading = useDraft(s => s.loading);
   return (
     <button
       className="btn btn--primary analyse-btn"
-      onClick={() => useDraftStore.getState().getRecommendations()}
+      onClick={() => draftApi.getState().getRecommendations()}
       disabled={loading}
       title="L'analyse se relance à chaque pick. Ce bouton la relance à la main (raccourci : Entrée)."
     >
@@ -76,8 +77,8 @@ function AnalyseButton() {
 
 // ── Tour en cours (mode direct) ─────────────────
 function Turn() {
-  const mode = useDraftStore(s => s.mode);
-  const myTeam = useDraftStore(s => s.myTeam);
+  const mode = useDraft(s => s.mode);
+  const myTeam = useDraft(s => s.myTeam);
   const connected = useLCUStore(s => s.connected);
   const inChampSelect = useLCUStore(s => s.inChampSelect);
   const actionType = useLCUStore(s => s.currentActionType);
@@ -121,7 +122,7 @@ function TeamSide({ side, ally, picks, bans, myRole, onPick, onBan, removal }) {
 }
 
 export default function DraftStrip() {
-  const { myTeam, myRole, allyPicks, enemyPicks, blueBans, redBans, editSlot, isManualSlot, getAllUnavailableIds } = useDraftStore();
+  const { myTeam, myRole, allyPicks, enemyPicks, blueBans, redBans, editSlot, isManualSlot, getAllUnavailableIds } = useDraft();
   useLCUStore(s => s.inChampSelect); // which slots are removable depends on the live champion select
   const [active, setActive] = useState(null);
   const blueIsAlly = myTeam === 'blue';

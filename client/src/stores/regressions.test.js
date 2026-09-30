@@ -5,7 +5,7 @@ vi.mock('../services/api', async importOriginal => ({ ...await importOriginal(),
 vi.mock('../services/lcu', () => ({ lcuStatus: vi.fn(async () => ({ connected: false })), lcuConnect: vi.fn(), lcuDisconnect: vi.fn(), lcuSummonerInfo: vi.fn() }));
 import * as api from '../services/api';
 import useUserStore from './userStore';
-import useDraftStore from './draftStore';
+import useDraftStore, { useStudioStore } from './draftStore';
 import useLCUStore from './lcuStore';
 import useChampionsStore from './championsStore';
 import useDuoStore from './duoStore';
@@ -287,6 +287,19 @@ it('goes back to the League client, with its role, when a new champion select st
   liveSelect({ myRole: 'jungle', myTeam: 'red' });
   expect(useDraftStore.getState()).toMatchObject({ mode: 'live', myRole: 'jungle', myTeam: 'red', autoDetected: true });
   expect(useDraftStore.getState().allyPicks.top).toBeNull();
+  stop();
+});
+
+it('keeps the Studio draft apart from the live draft', async () => {
+  const stop = await startLive();
+  useStudioStore.getState().editSlot({ type: 'pick', team: 'blue', role: 'mid' }, orianna);
+  useStudioStore.getState().setMyTeam('red');
+  liveSelect({ allyPicks: { mid: 103 }, enemyPicksOrder: [157] });
+  expect(useDraftStore.getState()).toMatchObject({ mode: 'live', myTeam: 'blue' });
+  expect(useDraftStore.getState().allyPicks.mid).toEqual(ahri);
+  expect(useStudioStore.getState()).toMatchObject({ mode: 'manual', myTeam: 'red' });
+  expect(useStudioStore.getState().allyPicks.mid).toEqual(orianna);
+  expect(useStudioStore.getState().enemyPicks.filter(Boolean)).toEqual([]);
   stop();
 });
 

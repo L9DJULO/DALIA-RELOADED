@@ -4,7 +4,8 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import Topbar              from './components/Topbar';
 import DraftScreen         from './components/Draft/DraftScreen';
-import useDraftStore       from './stores/draftStore';
+import useDraftStore, { useStudioStore } from './stores/draftStore';
+import { DraftContext }    from './stores/draftContext';
 import useUserStore        from './stores/userStore';
 import useAuthStore        from './stores/authStore';
 import useDuoStore         from './stores/duoStore';
@@ -20,7 +21,10 @@ const HistoryPage        = lazy(() => import('./components/HistoryPage'));
 export default function App() {
   const [page, setPage] = useState('draft');
 
-  const draftError = useDraftStore(s => s.error);
+  const liveError = useDraftStore(s => s.error);
+  const studioError = useStudioStore(s => s.error);
+  const shownStore = page === 'studio' ? useStudioStore : useDraftStore;
+  const draftError = page === 'studio' ? studioError : liveError;
 
   // Auth gate — re-render whenever the token changes (login/logout).
   const token = useAuthStore(s => s.token);
@@ -36,7 +40,8 @@ export default function App() {
     useDuoStore.getState().loadDuoState();
     const stopSession = startDraftSession();
     const stopAutoAnalysis = startAutoAnalysis();
-    return () => { stopAutoAnalysis(); stopSession(); };
+    const stopStudioAnalysis = startAutoAnalysis({ store: useStudioStore });
+    return () => { stopStudioAnalysis(); stopAutoAnalysis(); stopSession(); };
   }, [isAuthed, userId]);
 
   // Not logged in → auth page (replaces the whole shell).
@@ -53,16 +58,17 @@ export default function App() {
       {draftError && (
         <div className="app-alert banner banner--bad" role="alert">
           <span>Analyse impossible<span className="banner__detail">{draftError}</span></span>
-          <button className="btn btn--sm btn--ghost" onClick={() => useDraftStore.setState({ error: null })}>Fermer</button>
+          <button className="btn btn--sm btn--ghost" onClick={() => shownStore.setState({ error: null })}>Fermer</button>
         </div>
       )}
 
       <main className="app__page" id="contenu" tabIndex={-1}>
         {page === 'draft' && <DraftScreen/>}
+        {page === 'studio' && <DraftContext.Provider value={useStudioStore}><DraftScreen/></DraftContext.Provider>}
         <Suspense fallback={fallback}>
           {page === 'pool' && <ChampionPoolEditor/>}
           {page === 'duo' && <div className="page"><DuoPanel/></div>}
-          {page === 'history' && <div className="page"><HistoryPage onReplay={() => setPage('draft')}/></div>}
+          {page === 'history' && <div className="page"><HistoryPage onReplay={() => setPage('studio')}/></div>}
           {page === 'settings' && <SettingsPage/>}
         </Suspense>
       </main>

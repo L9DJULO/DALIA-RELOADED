@@ -49,6 +49,8 @@ async function pick(page, slot, name) {
 test('manual editing, automatic analysis, comparison and refresh after a change', async ({ page }) => {
   const errors = []; page.on('pageerror', e => errors.push(e.message));
   const analyses = []; page.on('request', req => { if (req.url().endsWith('/api/draft/recommend')) analyses.push(req.postDataJSON().draft_state); });
+  await page.getByRole('button', { name: 'STUDIO', exact: true }).click();
+  await expect(page.getByRole('group', { name: 'Mon équipe' })).toBeVisible();
   await pick(page, 'red P1 : vide', 'Jarvan IV');
   // No click on ANALYSER: each pick launches the analysis on its own.
   await expect(page.getByText('+2.1', { exact: false }).first()).toBeVisible();
@@ -60,7 +62,7 @@ test('manual editing, automatic analysis, comparison and refresh after a change'
   await page.getByLabel('Champion B', { exact: true }).selectOption('61');
   await page.getByRole('button', { name: 'Comparer', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Ahri est préféré de 4.2 points de win rate' })).toBeVisible();
-  await page.screenshot({ path: 'test-results/comparaison.png', fullPage: true });
+  await page.screenshot({ path: 'test-results/studio.png', fullPage: true });
   await page.locator('summary').filter({ hasText: 'Comparer deux champions' }).click();
   await page.getByRole('button', { name: 'red P1 : Jarvan IV', exact: true }).click();
   await page.getByRole('button', { name: 'Vider cet emplacement' }).click();
@@ -124,4 +126,19 @@ test('a champion put by hand is removed from its slot, with the cross or a right
   await expect(page.getByRole('button', { name: 'red P1 : vide', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'blue top : Nasus', exact: true }).click({ button: 'right' });
   await expect(page.getByRole('button', { name: 'blue top : vide', exact: true })).toBeVisible();
+});
+
+test('the automatic draft asks no side and compares the selected pick with one champion', async ({ page }) => {
+  await expect(page.getByRole('group', { name: 'Mon équipe' })).toHaveCount(0);
+  await expect(page.getByRole('combobox', { name: 'Mode' })).toHaveCount(0);
+  await pick(page, 'red P1 : vide', 'Jarvan IV');
+  await expect(page.getByText('+2.1', { exact: false }).first()).toBeVisible();
+  await page.locator('summary').filter({ hasText: 'Comparer Ahri avec un autre champion' }).click();
+  await page.getByLabel('Comparer avec', { exact: true }).selectOption('61');
+  await page.getByRole('button', { name: 'Comparer', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Ahri est préféré de 4.2 points de win rate' })).toBeVisible();
+  await page.screenshot({ path: 'test-results/draft-auto.png', fullPage: true });
+  // The Studio keeps its own draft: the live board is not there.
+  await page.getByRole('button', { name: 'STUDIO', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'red P1 : vide', exact: true })).toBeVisible();
 });

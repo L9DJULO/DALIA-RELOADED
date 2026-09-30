@@ -4,7 +4,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { formatAdvantage, formatSd } from '../lib/scores';
 import { TERM_LABEL, TERM_TECHNICAL } from '../lib/terms';
-import useDraftStore from '../stores/draftStore';
+import { useDraft, useDraftApi } from '../stores/draftContext';
 import useUserStore from '../stores/userStore';
 import useChampionsStore from '../stores/championsStore';
 import useLCUStore from '../stores/lcuStore';
@@ -28,23 +28,25 @@ export function MechanicsDetails({ rules = [] }) {
   );
 }
 
-export function ComparePanel() {
+/** Two champions in the same draft; with `fixed`, the first one is that pick (live draft). */
+export function ComparePanel({ fixed = null }) {
   // Subscribe to the exact inputs of a comparison; whole-store subscriptions made this
   // panel re-render (and re-sort the catalogue) on every LCU tick and pool autosave.
-  const revision = useDraftStore(s => s.revision);
-  const myRole = useDraftStore(s => s.myRole);
+  const draftApi = useDraftApi();
+  const revision = useDraft(s => s.revision);
+  const myRole = useDraft(s => s.myRole);
   const championPool = useUserStore(s => s.championPool);
   const weightOverrides = useUserStore(s => s.weightOverrides);
   const duoActive = useDuoStore(s => s.duoActive);
   const partnerRole = useDuoStore(s => s.partnerRole);
   const champions = useChampionsStore(s => s.champions);
-  const [left, setLeft] = useState('');
+  const [left, setLeft] = useState(fixed ? String(fixed.id) : '');
   const [right, setRight] = useState('');
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const controller = useRef(null);
-  const unavailable = useMemo(() => useDraftStore.getState().getAllUnavailableIds(), [revision]);
+  const unavailable = useMemo(() => draftApi.getState().getAllUnavailableIds(), [draftApi, revision]);
   const options = useMemo(() => champions.filter(c => !unavailable.has(c.id)).sort((a, b) => a.name.localeCompare(b.name)), [champions, unavailable]);
   useEffect(() => {
     controller.current?.abort(); setData(null); setError(''); setLoading(false);
@@ -54,7 +56,7 @@ export function ComparePanel() {
     controller.current?.abort();
     const pending = new AbortController(); controller.current = pending;
     setLoading(true); setError(''); setData(null);
-    const draft = useDraftStore.getState();
+    const draft = draftApi.getState();
     const user = useUserStore.getState();
     const partner = useDuoStore.getState().getDuoOptions();
     const summoner = useLCUStore.getState().summoner;
@@ -73,14 +75,16 @@ export function ComparePanel() {
   const blocked = loading || !left || !right || left === right || unavailable.has(Number(left)) || unavailable.has(Number(right));
   return (
     <div className="compare">
-      <p className="muted">Même draft, même rôle, mêmes préférences. Choisis deux alternatives disponibles.</p>
+      <p className="muted">{fixed
+        ? `Même draft, même rôle, mêmes préférences. Choisis le champion à mettre face à ${fixed.name}.`
+        : 'Même draft, même rôle, mêmes préférences. Choisis deux alternatives disponibles.'}</p>
       <div className="compare__controls">
-        {[['Champion A', left, setLeft], ['Champion B', right, setRight]].map(([label, value, setter]) => (
+        {(fixed ? [['Comparer avec', right, setRight]] : [['Champion A', left, setLeft], ['Champion B', right, setRight]]).map(([label, value, setter]) => (
           <label key={label} className="compare__field">
             <span className="field-label">{label}</span>
             <select className="select" aria-label={label} value={value} onChange={e => setter(e.target.value)}>
               <option value="">Choisir…</option>
-              {options.map(c => <option value={c.id} key={c.id}>{c.name}{c.roles?.includes(myRole) ? '' : ' · autre rôle'}</option>)}
+              {options.filter(c => !fixed || c.id !== fixed.id).map(c => <option value={c.id} key={c.id}>{c.name}{c.roles?.includes(myRole) ? '' : ' · autre rôle'}</option>)}
             </select>
           </label>
         ))}
