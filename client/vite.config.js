@@ -40,20 +40,5 @@ export default defineConfig({
         comments: false,
       },
     },
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          if (!id.includes('node_modules')) return undefined;
-          if (id.includes('react-dom') || id.includes('scheduler')) return 'react-dom';
-          if (id.includes('/react/') || id.includes('react-router')) return 'react';
-          if (id.includes('@dnd-kit')) return 'dnd';
-          if (id.includes('lucide-react')) return 'icons';
-          if (id.includes('zustand')) return 'state';
-          if (id.includes('axios')) return 'http';
-          if (id.includes('@tauri-apps')) return 'tauri';
-          return 'vendor';
-        },
-      },
-    },
   },
 });
